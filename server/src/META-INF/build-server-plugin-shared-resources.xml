@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd"
+       default-autowire="constructor">
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean id="sharedResourcesBuildFeature" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean id="sharedResourcesBuildAgentsFilter" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildAgentsFilter"/>
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean id="sharedResourcesPluginController" class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
+
+  <bean id="sharedResourcesPluginContext" class="jetbrains.buildServer.sharedResources.server.SharedResourcesFeatureContext"/>
+
+</beans>
