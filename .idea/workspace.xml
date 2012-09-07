@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e3fbf716-848a-45eb-9693-0309c03f8244" name="Default" comment="code cleanup">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="e3fbf716-848a-45eb-9693-0309c03f8244" name="Default" comment="code cleanup" />
     <ignored path="TeamCity.PluginTemplate.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,23 +18,6 @@
     <disable_hints />
   </component>
   <component name="DebuggerManager">
-    <line_breakpoints default_suspend_policy="SuspendAll" default_condition_enabled="true">
-      <breakpoint url="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java" line="103" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature$1" package="jetbrains.buildServer.sharedResources.server">
-        <option name="ENABLED" value="false" />
-        <option name="LOG_ENABLED" value="false" />
-        <option name="LOG_EXPRESSION_ENABLED" value="false" />
-        <option name="SUSPEND_POLICY" value="SuspendAll" />
-        <option name="COUNT_FILTER_ENABLED" value="false" />
-        <option name="COUNT_FILTER" value="0" />
-        <option name="CONDITION_ENABLED" value="true" />
-        <option name="CLASS_FILTERS_ENABLED" value="false" />
-        <option name="INSTANCE_FILTERS_ENABLED" value="false" />
-        <option name="CONDITION" value="" />
-        <option name="LOG_MESSAGE" value="" />
-      </breakpoint>
-    </line_breakpoints>
-    <breakpoint_rules default_suspend_policy="SuspendAll" default_condition_enabled="true" />
-    <ui_properties default_suspend_policy="SuspendAll" default_condition_enabled="true" />
     <breakpoint_any default_suspend_policy="SuspendAll" default_condition_enabled="true">
       <breakpoint>
         <option name="NOTIFY_CAUGHT" value="true" />
@@ -69,6 +50,23 @@
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
     </breakpoint_any>
+    <ui_properties default_suspend_policy="SuspendAll" default_condition_enabled="true" />
+    <line_breakpoints default_suspend_policy="SuspendAll" default_condition_enabled="true">
+      <breakpoint url="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java" line="103" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature$1" package="jetbrains.buildServer.sharedResources.server">
+        <option name="ENABLED" value="false" />
+        <option name="LOG_ENABLED" value="false" />
+        <option name="LOG_EXPRESSION_ENABLED" value="false" />
+        <option name="SUSPEND_POLICY" value="SuspendAll" />
+        <option name="COUNT_FILTER_ENABLED" value="false" />
+        <option name="COUNT_FILTER" value="0" />
+        <option name="CONDITION_ENABLED" value="true" />
+        <option name="CLASS_FILTERS_ENABLED" value="false" />
+        <option name="INSTANCE_FILTERS_ENABLED" value="false" />
+        <option name="CONDITION" value="" />
+        <option name="LOG_MESSAGE" value="" />
+      </breakpoint>
+    </line_breakpoints>
+    <breakpoint_rules default_suspend_policy="SuspendAll" default_condition_enabled="true" />
     <breakpoint_rules />
     <ui_properties />
   </component>
@@ -101,7 +99,7 @@
       <file leaf-file-name="SharedResourcesBuildFeature.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="60" column="53" selection-start="1639" selection-end="1639" vertical-scroll-proportion="0.47635728">
+            <state line="70" column="64" selection-start="2031" selection-end="2031" vertical-scroll-proportion="0.32749563">
               <folding>
                 <element signature="e#3328#3345#0" expanded="true" />
               </folding>
@@ -112,7 +110,7 @@
       <file leaf-file-name="StringUtil.class" pinned="false" current="false" current-in-tab="false">
         <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/util.jar!/com/intellij/openapi/util/text/StringUtil.class">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="168" column="24" selection-start="11339" selection-end="11339" vertical-scroll-proportion="-12.88">
+            <state line="168" column="24" selection-start="11339" selection-end="11339" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -130,7 +128,7 @@
       <file leaf-file-name="ActionErrors.class" pinned="false" current="false" current-in-tab="false">
         <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/controllers/ActionErrors.class">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="-7.44">
+            <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -149,10 +147,7 @@
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesFeatureContext.java">
           <provider selected="true" editor-type-id="text-editor">
             <state line="21" column="35" selection-start="463" selection-end="463" vertical-scroll-proportion="0.0">
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#415#423#0" expanded="true" />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -170,10 +165,7 @@
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java">
           <provider selected="true" editor-type-id="text-editor">
             <state line="53" column="70" selection-start="1989" selection-end="1989" vertical-scroll-proportion="0.0">
-              <folding>
-                <element signature="imports" expanded="true" />
-                <element signature="e#2393#2401#0" expanded="true" />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -239,6 +231,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="Scope">
         <subPane subId="Project Files">
           <PATH>
@@ -581,7 +574,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -592,8 +584,8 @@
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="recentsLimit" value="5" />
-    <property name="options.lastSelected" value="reference.settingsdialog.IDE.editor.colors.Console Colors" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.idea" />
+    <property name="options.lastSelected" value="project.propVCSSupport.Mappings" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
@@ -601,8 +593,8 @@
     <property name="restartRequiresConfirmation" value="true" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="GoToClass.includeLibraries" value="false" />
-    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
+    <property name="options.splitter.details.proportions" value="0.2" />
   </component>
   <component name="RunManager" selected="Tomcat Server.Tomcat 6 TeamCity (1)">
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
@@ -617,19 +609,6 @@
       <option name="SHMEM_ADDRESS" value="javadebug" />
       <option name="HOST" value="localhost" />
       <option name="PORT" value="5005" />
-      <method />
-    </configuration>
-    <configuration default="true" type="Applet" factoryName="Applet">
-      <module name="" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="HTML_FILE_NAME" />
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <option name="VM_PARAMETERS" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="TestNG" factoryName="TestNG">
@@ -658,6 +637,19 @@
       <envs />
       <properties />
       <listeners />
+      <method />
+    </configuration>
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <module name="" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
@@ -861,7 +853,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1186" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -869,11 +861,10 @@
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2497332" sideWeight="0.6705653" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39961013" sideWeight="0.85752404" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49359658" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39961013" sideWeight="0.13874066" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.39961013" sideWeight="0.13874066" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.6705653" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
@@ -884,6 +875,7 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
@@ -962,44 +954,32 @@
   <component name="editorHistoryManager">
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/serverSide/SBuildServer.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="17" selection-start="179" selection-end="179" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="6" column="17" selection-start="179" selection-end="179" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/buildDistribution/StartingBuildAgentsFilter.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="28" column="17" selection-start="1069" selection-end="1069" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="28" column="17" selection-start="1069" selection-end="1069" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server.jar!/jetbrains/buildServer/serverSide/impl/auth/SecuredPersonalBuildManager.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="13" selection-start="185" selection-end="185" vertical-scroll-proportion="-0.68">
-          <folding />
-        </state>
+        <state line="6" column="13" selection-start="185" selection-end="185" vertical-scroll-proportion="-0.68" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/SBuildServer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/BuildsManager.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="27" column="0" selection-start="854" selection-end="854" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="27" column="0" selection-start="854" selection-end="854" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/web.jar!/jetbrains/buildServer/controllers/admin/projects/EditBuildTypeFormFactory.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="30" column="87" selection-start="2466" selection-end="2495" vertical-scroll-proportion="-19.72">
-          <folding />
-        </state>
+        <state line="30" column="87" selection-start="2466" selection-end="2495" vertical-scroll-proportion="-19.72" />
       </provider>
     </entry>
     <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/controllers/BaseController.java">
@@ -1025,7 +1005,7 @@
     </entry>
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/controllers/ActionErrors.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="-7.44">
+        <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -1040,20 +1020,14 @@
     <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="53" column="70" selection-start="1989" selection-end="1989" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#2393#2401#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesFeatureContext.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="21" column="35" selection-start="463" selection-end="463" vertical-scroll-proportion="0.0">
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#415#423#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1066,14 +1040,14 @@
     </entry>
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/util.jar!/com/intellij/openapi/util/text/StringUtil.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="168" column="24" selection-start="11339" selection-end="11339" vertical-scroll-proportion="-12.88">
+        <state line="168" column="24" selection-start="11339" selection-end="11339" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="60" column="53" selection-start="1639" selection-end="1639" vertical-scroll-proportion="0.47635728">
+        <state line="70" column="64" selection-start="2031" selection-end="2031" vertical-scroll-proportion="0.32749563">
           <folding>
             <element signature="e#3328#3345#0" expanded="true" />
           </folding>
