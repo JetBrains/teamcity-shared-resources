@@ -1,12 +1,11 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeatureBean;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.util.FeatureUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -19,19 +18,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.*;
 
 /**
  *
  * @author Oleg Rybak
  */
 public class SharedResourcesPluginController extends BaseController {
-
-  private static final Logger LOG = Logger.getInstance(SharedResourcesPluginController.class.getName());
 
   @NotNull
   private final PluginDescriptor myDescriptor;
@@ -62,15 +58,22 @@ public class SharedResourcesPluginController extends BaseController {
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean bean = form.getBuildFeaturesBean();
     final Set<String> otherResourceNames = new HashSet<String>();
-    final String myResourceName = bean.getPropertiesBean().getProperties().get(RESOURCE_PARAM_KEY);
-    final Collection<BuildFeatureBean> beans = bean.getBuildFeatureDescriptors();
+    final Map<String, String> properties = bean.getPropertiesBean().getProperties();
+    final SBuildType buildType = form.getSettingsBuildType();
 
-    for (BuildFeatureBean b: beans) {
-      FeatureUtil.extractResource(otherResourceNames, b.getDescriptor());
+    if (buildType != null) {
+      // let feature know, to what configuration it belongs
+      final String buildTypeId = buildType.getBuildTypeId();
+      request.setAttribute(SharedResourcesPluginConstants.BUILD_ID_KEY, buildType.getBuildTypeId());
+      final String myResourceName = properties.get(RESOURCE_PARAM_KEY);
+      final Collection<BuildFeatureBean> beans = bean.getBuildFeatureDescriptors();
+      for (BuildFeatureBean b: beans) {
+        FeatureUtil.extractResource(otherResourceNames, b.getDescriptor());
+      }
+
+      otherResourceNames.remove(myResourceName);
+      myContext.putNamesInContext(buildTypeId, otherResourceNames);
     }
-
-    otherResourceNames.remove(myResourceName);
-    myContext.putNamesInContext(otherResourceNames);
     return result;
   }
 }

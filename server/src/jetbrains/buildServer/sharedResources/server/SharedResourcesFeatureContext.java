@@ -1,11 +1,9 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,16 +14,18 @@ import java.util.Set;
  */
 public class SharedResourcesFeatureContext {
 
-  @NotNull
-  private final Set<String> resourceNames = new HashSet<String>();
+  private final ConcurrentMap<String, Set<String>> context = new ConcurrentHashMap<String, Set<String>>();
 
-  public void putNamesInContext(Collection<String> names) {
-    resourceNames.clear();
-    resourceNames.addAll(names);
+  public void putNamesInContext(String buildId, Set<String> resourceNames) {
+    context.put(buildId, resourceNames);
   }
 
-  public Set<String> getNames() {
-    return Collections.unmodifiableSet(resourceNames);
+  public Set<String> getNames(String buildId) {
+    return Collections.unmodifiableSet(context.get(buildId));
+  }
+
+  public void clear(String buildId) {
+    context.remove(buildId);
   }
 
 }

@@ -1,6 +1,5 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
@@ -19,7 +18,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  */
 public class SharedResourcesBuildFeature extends BuildFeature {
 
-  private static final Logger LOG = Logger.getInstance(SharedResourcesBuildFeature.class.getName());
 
   @NotNull
   private final PluginDescriptor myDescriptor;
@@ -59,7 +57,10 @@ public class SharedResourcesBuildFeature extends BuildFeature {
 
   @Override
   public Map<String, String> getDefaultParameters() {
-    return Collections.singletonMap(new SharedResourcesPluginConstants().getResourceKey(), "");
+    final Map<String, String> result = new HashMap<String, String>();
+    result.put(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY, "");
+    result.put(SharedResourcesPluginConstants.BUILD_ID_KEY, "");
+    return result;
   }
 
   @NotNull
@@ -78,9 +79,9 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   public PropertiesProcessor getParametersProcessor() {
     return new PropertiesProcessor() {
 
-      final SharedResourcesPluginConstants c = new SharedResourcesPluginConstants();
+      private final SharedResourcesPluginConstants c = new SharedResourcesPluginConstants();
 
-      final Set<String> values = myContext.getNames();
+      private Set<String> values;
 
       private void checkNotEmpty(@NotNull final Map<String, String> properties,
                                  @NotNull final String key,
@@ -103,9 +104,16 @@ public class SharedResourcesBuildFeature extends BuildFeature {
       public Collection<InvalidProperty> process(Map<String, String> properties) {
         final Collection<InvalidProperty> result = new ArrayList<InvalidProperty>();
         if (properties != null) {
+          String buildId = properties.remove(SharedResourcesPluginConstants.BUILD_ID_KEY);
+          values = myContext.getNames(buildId);
           checkNotEmpty(properties, c.getResourceKey(), "Resource name must not be empty", result);
           checkUnique(properties, c.getResourceKey(), "Resource name is already used in current configuration", result);
+          if (result.isEmpty()) {
+            // we have no errors. Need to clear context
+            myContext.clear(buildId);
+          }
         }
+
         return result;
       }
 
