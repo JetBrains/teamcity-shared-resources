@@ -6,9 +6,8 @@
 <tr class="noBorder">
   <th><label for="${keys.resourceKey}">Resource name:</label></th>
   <td>
-    <props:textProperty name="${keys.resourceKey}" className="longField"  style="width: 100%;"/>
-    <%--suppress CheckEmptyScriptTag --%>
-    <span class="error" id="error_${keys.resourceKey}" />
+    <props:textProperty name="${keys.resourceKey}" className="longField"/>
+    <span class="error" id="error_${keys.resourceKey}"></span>
     <span class="smallNote">Specify shared resource name</span>
   </td>
 </tr>
