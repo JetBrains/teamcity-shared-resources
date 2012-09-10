@@ -5,14 +5,14 @@
        default-autowire="constructor">
 
   <!--suppress SpringBeanConstructorArgInspection -->
-  <bean id="sharedResourcesBuildFeature" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
 
   <!--suppress SpringBeanConstructorArgInspection -->
-  <bean id="sharedResourcesBuildAgentsFilter" class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildAgentsFilter"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildAgentsFilter"/>
 
   <!--suppress SpringBeanConstructorArgInspection -->
-  <bean id="sharedResourcesPluginController" class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
 
-  <bean id="sharedResourcesPluginContext" class="jetbrains.buildServer.sharedResources.server.SharedResourcesFeatureContext"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesFeatureContext"/>
 
 </beans>
