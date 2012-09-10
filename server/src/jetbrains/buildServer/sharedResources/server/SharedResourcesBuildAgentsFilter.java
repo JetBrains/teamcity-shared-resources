@@ -3,7 +3,7 @@ package jetbrains.buildServer.sharedResources.server;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.util.FeatureUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,13 +38,7 @@ public class SharedResourcesBuildAgentsFilter implements StartingBuildAgentsFilt
     final Set<String> locks = new HashSet<String>();
 
     if (buildType != null) {
-      Collection<SBuildFeatureDescriptor> buildFeatures = buildType.getBuildFeatures();
-      // gather all locks
-      for (SBuildFeatureDescriptor descriptor: buildFeatures) {
-        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-          locks.add(descriptor.getParameters().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY));
-        }
-      }
+      locks.addAll(FeatureUtil.extractLocks(buildType));
     }
 
     if (!locks.isEmpty())  {
@@ -54,17 +48,14 @@ public class SharedResourcesBuildAgentsFilter implements StartingBuildAgentsFilt
       for (SRunningBuild build: runningBuilds) {
         SBuildType type = build.getBuildType();
         if (type != null) {
-          Collection<SBuildFeatureDescriptor> buildFeatures = type.getBuildFeatures();
-          for (SBuildFeatureDescriptor descriptor: buildFeatures) {
-            if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-              if (locks.contains(descriptor.getParameters().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY))) {
-                locksAvailable = false;
-                break;
-              }
-            }
+          final Set<String> otherLocks = FeatureUtil.extractLocks(type);
+          if (FeatureUtil.lockSetsCrossing(locks, otherLocks)) {
+            locksAvailable = false;
+            break;
           }
         }
       }
+
       if (!locksAvailable) {
         result.setFilteredConnectedAgents(Collections.<SBuildAgent>emptyList());
         result.setWaitReason(WAIT_FOR_LOCK);

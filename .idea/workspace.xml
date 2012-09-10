@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e3fbf716-848a-45eb-9693-0309c03f8244" name="Default" comment="code cleanup">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="$PROJECT_DIR$/.idea/.name" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/ant.xml" afterPath="$PROJECT_DIR$/.idea/ant.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/util/FeatureUtil.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java" afterPath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java" afterPath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java" afterPath="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java" />
     </list>
     <ignored path="TeamCity.PluginTemplate.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -85,7 +87,7 @@
       <file leaf-file-name="SharedResourcesPluginConstants.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="7" column="13" selection-start="134" selection-end="134" vertical-scroll-proportion="0.0">
+            <state line="17" column="71" selection-start="468" selection-end="468" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -94,28 +96,19 @@
       <file leaf-file-name="build-server-plugin-shared-resources.xml" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/src/META-INF/build-server-plugin-shared-resources.xml">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="17" column="121" selection-start="1027" selection-end="1027" vertical-scroll-proportion="0.0">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SharedResourcesBuildFeature.java" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="SharedResourcesBuildFeature.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="99" column="82" selection-start="3171" selection-end="3171" vertical-scroll-proportion="0.62691134">
+            <state line="21" column="0" selection-start="689" selection-end="689" vertical-scroll-proportion="0.0">
               <folding>
                 <element signature="e#3328#3345#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="StringUtil.class" pinned="false" current="false" current-in-tab="false">
-        <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/util.jar!/com/intellij/openapi/util/text/StringUtil.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="168" column="24" selection-start="11339" selection-end="11339" vertical-scroll-proportion="0.0">
-              <folding />
             </state>
           </provider>
         </entry>
@@ -124,24 +117,6 @@
         <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/BuildFeature.java">
           <provider selected="true" editor-type-id="text-editor">
             <state line="71" column="29" selection-start="2109" selection-end="2109" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ActionErrors.class" pinned="false" current="false" current-in-tab="false">
-        <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/controllers/ActionErrors.class">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="BaseController.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/controllers/BaseController.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="90" column="222" selection-start="3486" selection-end="3486" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -156,10 +131,33 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SharedResourcesBuildAgentsFilter.java" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="SharedResourcesBuildAgentsFilter.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="28" column="35" selection-start="975" selection-end="975" vertical-scroll-proportion="0.0">
+            <state line="17" column="13" selection-start="475" selection-end="475" vertical-scroll-proportion="0.18604651">
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="FeatureUtil.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/util/FeatureUtil.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="56" column="3" selection-start="1838" selection-end="1838" vertical-scroll-proportion="0.0">
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#638#646#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="README.md" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/README.md">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -168,7 +166,16 @@
       <file leaf-file-name="SharedResourcesPluginController.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="53" column="70" selection-start="1989" selection-end="1989" vertical-scroll-proportion="0.0">
+            <state line="59" column="61" selection-start="2435" selection-end="2435" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="BuildFeatureBean.class" pinned="false" current="false" current-in-tab="false">
+        <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/web.jar!/jetbrains/buildServer/controllers/admin/projects/BuildFeatureBean.class">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="6" column="13" selection-start="191" selection-end="191" vertical-scroll-proportion="-3.4">
               <folding />
             </state>
           </provider>
@@ -193,13 +200,15 @@
         <option value="$PROJECT_DIR$/server/teamcity-server-plugin.xml" />
         <option value="$PROJECT_DIR$/server/src/META-INF/build-server-plugin-sample.xml" />
         <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/CheckLockBuildPrecondition.java" />
-        <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java" />
-        <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java" />
         <option value="$PROJECT_DIR$/server/resources/editFeature.jsp" />
         <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesFeatureContext.java" />
+        <option value="$PROJECT_DIR$/tests/src/SimpleTest.java" />
         <option value="$PROJECT_DIR$/server/src/META-INF/build-server-plugin-shared-resources.xml" />
+        <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java" />
         <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java" />
         <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java" />
+        <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java" />
+        <option value="$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/util/FeatureUtil.java" />
       </list>
     </option>
   </component>
@@ -241,6 +250,140 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="TeanCity.SharedResources" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tests" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tests" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jetbrains" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="buildServer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="sharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jetbrains" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="buildServer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="sharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="util" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="TeanCity.SharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jetbrains" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="buildServer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="sharedResources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
@@ -387,9 +530,10 @@
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="recentsLimit" value="5" />
-    <property name="options.lastSelected" value="project.propVCSSupport.Mappings" />
+    <property name="options.lastSelected" value="com.intellij.tasks.config.TaskRepositoriesConfigurable" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="project.structure.side.proportion" value="0.2" />
+    <property name="GoToClass.includeJavaFiles" value="false" />
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
@@ -631,8 +775,24 @@
       <created>1346935509518</created>
       <updated>1346935509518</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
-    <servers />
+    <task id="LOCAL-00003" summary="Removed IDs from spring context file">
+      <created>1347265798789</created>
+      <updated>1347265798789</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers>
+      <GitHub shared="false">
+        <commitMessageFormat>{id} {summary}</commitMessageFormat>
+        <password>dfccdfc1dfc9df9ddf93dfc4dfc1dfc6</password>
+        <option name="repoAuthor" value="orybak" />
+        <option name="repoName" value="TeamCity.SharedResources" />
+        <option name="shouldFormatCommitMessage" value="false" />
+        <option name="url" value="https://github.com" />
+        <option name="useHttpAuthentication" value="true" />
+        <option name="useProxy" value="false" />
+        <username>orybak</username>
+      </GitHub>
+    </servers>
   </component>
   <component name="TodoView" selected-index="0">
     <todo-panel id="selected-file">
@@ -656,10 +816,11 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1186" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2497332" sideWeight="0.6705653" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39961013" sideWeight="0.85752404" order="3" side_tool="false" content_ui="tabs" />
@@ -668,17 +829,16 @@
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.6705653" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23639274" sideWeight="0.60038984" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.26705652" sideWeight="0.6963714" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23639274" sideWeight="0.75633526" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24366471" sideWeight="0.6963714" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3294347" sideWeight="0.49786553" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
@@ -718,7 +878,7 @@
     <option name="SHOW_VCS_ERROR_NOTIFICATIONS" value="true" />
     <option name="FORCE_NON_EMPTY_COMMENT" value="false" />
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="false" />
-    <option name="LAST_COMMIT_MESSAGE" value="code cleanup" />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed IDs from spring context file" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="false" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT" value="false" />
@@ -735,6 +895,7 @@
     <MESSAGE value="added project structure and libraries" />
     <MESSAGE value="It's working now" />
     <MESSAGE value="code cleanup" />
+    <MESSAGE value="Removed IDs from spring context file" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -744,26 +905,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/serverSide/SBuildServer.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="17" selection-start="179" selection-end="179" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/buildDistribution/StartingBuildAgentsFilter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="28" column="17" selection-start="1069" selection-end="1069" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server.jar!/jetbrains/buildServer/serverSide/impl/auth/SecuredPersonalBuildManager.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="13" selection-start="185" selection-end="185" vertical-scroll-proportion="-0.68" />
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/SBuildServer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
     <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/BuildsManager.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="27" column="0" selection-start="854" selection-end="854" vertical-scroll-proportion="0.0" />
@@ -781,51 +922,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server/src/META-INF/build-server-plugin-shared-resources.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="121" selection-start="1027" selection-end="1027" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="13" selection-start="134" selection-end="134" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/jetbrains/buildServer/controllers/ActionErrors.class">
       <provider selected="true" editor-type-id="text-editor">
         <state line="27" column="14" selection-start="1242" selection-end="1242" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/BuildFeature.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="71" column="29" selection-start="2109" selection-end="2109" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="53" column="70" selection-start="1989" selection-end="1989" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesFeatureContext.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="21" column="35" selection-start="463" selection-end="463" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="28" column="35" selection-start="975" selection-end="975" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -837,11 +936,86 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tests/src/SimpleTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="52" selection-start="252" selection-end="252" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/META-INF/build-server-plugin-shared-resources.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$TeamCityDistribution$/devPackage/src/openApi-source.jar!/jetbrains/buildServer/serverSide/BuildFeature.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="71" column="29" selection-start="2109" selection-end="2109" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/web.jar!/jetbrains/buildServer/controllers/admin/projects/BuildFeatureBean.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="13" selection-start="191" selection-end="191" vertical-scroll-proportion="-3.4">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesFeatureContext.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="21" column="35" selection-start="463" selection-end="463" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildFeature.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="99" column="82" selection-start="3171" selection-end="3171" vertical-scroll-proportion="0.62691134">
+        <state line="21" column="0" selection-start="689" selection-end="689" vertical-scroll-proportion="0.0">
           <folding>
             <element signature="e#3328#3345#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/util/FeatureUtil.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="3" selection-start="1838" selection-end="1838" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#638#646#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/SharedResourcesPluginConstants.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="71" selection-start="468" selection-end="468" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesPluginController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="59" column="61" selection-start="2435" selection-end="2435" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/jetbrains/buildServer/sharedResources/server/SharedResourcesBuildAgentsFilter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="13" selection-start="475" selection-end="475" vertical-scroll-proportion="0.18604651">
+          <folding>
+            <element signature="imports" expanded="true" />
           </folding>
         </state>
       </provider>

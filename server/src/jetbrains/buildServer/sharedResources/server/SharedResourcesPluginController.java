@@ -8,6 +8,7 @@ import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.util.FeatureUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
 
 /**
  *
@@ -45,7 +50,7 @@ public class SharedResourcesPluginController extends BaseController {
     myDescriptor = descriptor;
     myContext = context;
     myFormFactory = formFactory;
-    web.registerController(myDescriptor.getPluginResourcesPath("editFeature.html"), this);
+    web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
 
@@ -53,19 +58,17 @@ public class SharedResourcesPluginController extends BaseController {
   @Override
   protected ModelAndView doHandle(@NotNull HttpServletRequest request,
                                   @NotNull HttpServletResponse response) throws Exception {
-    final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath("editFeature.jsp"));
+    final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean bean = form.getBuildFeaturesBean();
     final Set<String> otherResourceNames = new HashSet<String>();
-    final String myResourceName = bean.getPropertiesBean().getProperties().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY);
+    final String myResourceName = bean.getPropertiesBean().getProperties().get(RESOURCE_PARAM_KEY);
     final Collection<BuildFeatureBean> beans = bean.getBuildFeatureDescriptors();
 
     for (BuildFeatureBean b: beans) {
-      SBuildFeatureDescriptor descriptor = b.getDescriptor();
-      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-        otherResourceNames.add(descriptor.getParameters().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY));
-      }
+      FeatureUtil.extractResource(otherResourceNames, b.getDescriptor());
     }
+
     otherResourceNames.remove(myResourceName);
     myContext.putNamesInContext(otherResourceNames);
     return result;

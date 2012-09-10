@@ -11,7 +11,12 @@ public class SharedResourcesPluginConstants {
 
   public static final String RESOURCE_PARAM_KEY = "resource-name";
 
-  @NotNull public String getResourceKey() {
+  public static final String EDIT_FEATURE_PATH_HTML = "editFeature.html";
+
+  public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
+
+  @NotNull
+  public String getResourceKey() {
     return RESOURCE_PARAM_KEY;
   }
 
