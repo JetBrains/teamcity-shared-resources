@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
+
 /**
  *
  * @author Oleg Rybak
@@ -24,7 +26,7 @@ public class FeatureUtil {
   public static Set<String> extractLocks(@NotNull SBuildType type) {
     Set<String> result = new HashSet<String>();
     for (SBuildFeatureDescriptor descriptor: type.getBuildFeatures()) {
-      extractResource(result, descriptor);
+      extractResources(result, descriptor);
     }
     return result;
   }
@@ -34,9 +36,9 @@ public class FeatureUtil {
    * @param result resulting set of resources
    * @param descriptor descriptor to extract resource from
    */
-  public static void extractResource(@NotNull Set<String> result, @NotNull SBuildFeatureDescriptor descriptor) {
+  public static void extractResources(@NotNull Set<String> result, @NotNull SBuildFeatureDescriptor descriptor) {
     if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-      result.add(descriptor.getParameters().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY));
+      result.addAll(FeatureUtil.toCollection(descriptor.getParameters().get(RESOURCE_PARAM_KEY)));
     }
   }
 
