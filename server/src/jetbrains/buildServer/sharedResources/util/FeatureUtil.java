@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -55,4 +56,33 @@ public class FeatureUtil {
     }
     return result;
   }
+
+  @NotNull
+  public static Collection<String> toCollection(@NotNull String str) {
+    List<String> result = new LinkedList<String>();
+    String[] lines = str.split(" *[,\n\r] *");
+    for (String line: lines) {
+      String trimmed = line.trim();
+      if (!StringUtil.isEmptyOrSpaces(trimmed)) {
+        result.add(trimmed);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static String fromCollection(@NotNull Collection<String> strings) {
+    String result;
+    if (strings.isEmpty()) {
+      result = "";
+    } else {
+      StringBuilder builder = new StringBuilder();
+      for (String str: strings) {
+        builder.append(str).append('\n');
+      }
+      result = builder.substring(0, builder.length() - 1);
+    }
+    return result;
+  }
+
 }

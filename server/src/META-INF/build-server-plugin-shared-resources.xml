@@ -13,6 +13,4 @@
   <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesFeatureContext"/>
-
 </beans>

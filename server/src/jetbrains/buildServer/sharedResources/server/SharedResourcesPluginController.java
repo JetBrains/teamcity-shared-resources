@@ -32,20 +32,10 @@ public class SharedResourcesPluginController extends BaseController {
   @NotNull
   private final PluginDescriptor myDescriptor;
 
-  @NotNull
-  private final SharedResourcesFeatureContext myContext;
-
-  @NotNull
-  private final EditBuildTypeFormFactory myFormFactory;
-
   public SharedResourcesPluginController(
           @NotNull PluginDescriptor descriptor,
-          @NotNull SharedResourcesFeatureContext context,
-          @NotNull WebControllerManager web,
-          @NotNull EditBuildTypeFormFactory formFactory) {
+          @NotNull WebControllerManager web) {
     myDescriptor = descriptor;
-    myContext = context;
-    myFormFactory = formFactory;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
@@ -54,26 +44,9 @@ public class SharedResourcesPluginController extends BaseController {
   @Override
   protected ModelAndView doHandle(@NotNull HttpServletRequest request,
                                   @NotNull HttpServletResponse response) throws Exception {
-    final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
-    final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
-    final BuildFeaturesBean bean = form.getBuildFeaturesBean();
-    final Set<String> otherResourceNames = new HashSet<String>();
-    final Map<String, String> properties = bean.getPropertiesBean().getProperties();
-    final SBuildType buildType = form.getSettingsBuildType();
 
-    if (buildType != null) {
-      // let feature know, to what configuration it belongs
-      final String buildTypeId = buildType.getBuildTypeId();
-      request.setAttribute(SharedResourcesPluginConstants.BUILD_ID_KEY, buildType.getBuildTypeId());
-      final String myResourceName = properties.get(RESOURCE_PARAM_KEY);
-      final Collection<BuildFeatureBean> beans = bean.getBuildFeatureDescriptors();
-      for (BuildFeatureBean b: beans) {
-        FeatureUtil.extractResource(otherResourceNames, b.getDescriptor());
-      }
-
-      otherResourceNames.remove(myResourceName);
-      myContext.putNamesInContext(buildTypeId, otherResourceNames);
-    }
-    return result;
+    return new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
   }
+
+
 }

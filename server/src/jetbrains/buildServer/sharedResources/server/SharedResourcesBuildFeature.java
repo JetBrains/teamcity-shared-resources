@@ -4,6 +4,8 @@ import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.util.FeatureUtil;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
 
 /**
  *
@@ -18,18 +21,12 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  */
 public class SharedResourcesBuildFeature extends BuildFeature {
 
-
   @NotNull
   private final PluginDescriptor myDescriptor;
 
-  @NotNull
-  private final SharedResourcesFeatureContext myContext;
-
-  public SharedResourcesBuildFeature(
-          @NotNull PluginDescriptor descriptor,
-          @NotNull SharedResourcesFeatureContext context) {
+  public SharedResourcesBuildFeature(@NotNull PluginDescriptor descriptor) {
     myDescriptor = descriptor;
-    myContext = context;
+
   }
 
   @NotNull
@@ -47,18 +44,18 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @Nullable
   @Override
   public String getEditParametersUrl() {
-    return myDescriptor.getPluginResourcesPath("editFeature.html");
+    return myDescriptor.getPluginResourcesPath(SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML);
   }
 
   @Override
   public boolean isMultipleFeaturesPerBuildTypeAllowed() {
-    return true;
+    return false;
   }
 
   @Override
   public Map<String, String> getDefaultParameters() {
     final Map<String, String> result = new HashMap<String, String>();
-    result.put(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY, "");
+    result.put(RESOURCE_PARAM_KEY, "");
     result.put(SharedResourcesPluginConstants.BUILD_ID_KEY, "");
     return result;
   }
@@ -66,7 +63,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull Map<String, String> params) {
-    String resourceName = params.get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY);
+    String resourceName = params.get(RESOURCE_PARAM_KEY);
     if (isEmptyOrSpaces(resourceName)) {
       return "Shared resource is not defined yet";
     } else {
@@ -77,48 +74,42 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @Nullable
   @Override
   public PropertiesProcessor getParametersProcessor() {
+
     return new PropertiesProcessor() {
+
+      private final String ERROR_EMPTY = "Resource name must not be empty";
+
+      private final String ERROR_NON_UNIQUE = "Non unique resource names found";
 
       private final SharedResourcesPluginConstants c = new SharedResourcesPluginConstants();
 
-      private Set<String> values;
-
-      private void checkNotEmpty(@NotNull final Map<String, String> properties,
-                                 @NotNull final String key,
-                                 @NotNull final String message,
+      private void checkNotEmpty(@NotNull final Collection<String> strings,
                                  @NotNull final Collection<InvalidProperty> res) {
-        if (isEmptyOrSpaces(properties.get(key))) {
-          res.add(new InvalidProperty(key, message));
+        if (strings.isEmpty()) {
+          res.add(new InvalidProperty(RESOURCE_PARAM_KEY, ERROR_EMPTY));
         }
       }
 
-      private void checkUnique(@NotNull final Map<String, String> properties,
-                               @NotNull final String key,
-                               @NotNull final String message,
+      private void checkUnique(@NotNull final Collection<String> strings,
                                @NotNull final Collection<InvalidProperty> res) {
-        if (values.contains(properties.get(key))) {
-          res.add(new InvalidProperty(key, message));
+        Set<String> set = new HashSet<String>(strings.size());
+        set.addAll(strings);
+        if (set.size() != strings.size()) {
+          res.add(new InvalidProperty(RESOURCE_PARAM_KEY, ERROR_NON_UNIQUE));
         }
       }
 
       public Collection<InvalidProperty> process(Map<String, String> properties) {
         final Collection<InvalidProperty> result = new ArrayList<InvalidProperty>();
         if (properties != null) {
-          String buildId = properties.remove(SharedResourcesPluginConstants.BUILD_ID_KEY);
-          values = myContext.getNames(buildId);
-          checkNotEmpty(properties, c.getResourceKey(), "Resource name must not be empty", result);
-          checkUnique(properties, c.getResourceKey(), "Resource name is already used in current configuration", result);
-          if (result.isEmpty()) {
-            // we have no errors. Need to clear context
-            myContext.clear(buildId);
-          }
+          final Collection<String> resourceNames = FeatureUtil.toCollection(properties.get(RESOURCE_PARAM_KEY));
+          checkNotEmpty(resourceNames, result);
+          checkUnique(resourceNames, result);
+          properties.put(RESOURCE_PARAM_KEY, FeatureUtil.fromCollection(resourceNames));
         }
-
         return result;
       }
-
     };
   }
-
 
 }

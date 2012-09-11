@@ -3,21 +3,19 @@
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
-
+<jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
 
 <tr class="noBorder">
   <th><label for="${keys.resourceKey}">Resource name:</label></th>
   <td>
-    <props:textProperty name="${keys.resourceKey}" className="longField"/>
+    <props:multilineProperty name="${keys.resourceKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="3" value="${propertiesBean.properties['resource-name']}"/>
     <span class="error" id="error_${keys.resourceKey}"></span>
-    <span class="smallNote">Specify shared resource name</span>
+    <span class="smallNote">Specify shared resource name(s)</span>
   </td>
 </tr>
 
-<props:hiddenProperty name="${keys.buildIdKey}" value="${buildId}"/>
-
 <tr class="noBorder">
   <td colspan="2">
-    <p>Please specify a shared resource that must be locked during build</p>
+    <p>Please specify shared resource(s) that must be locked during build</p>
   </td>
 </tr>
