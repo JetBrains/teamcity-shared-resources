@@ -59,6 +59,11 @@ public class FeatureUtil {
     return result;
   }
 
+  /**
+   * Takes string with multiple parameters and converts it t collection of separate parameters
+   * @param str string, with each parameter on new line
+   * @return collection of individual parameters
+   */
   @NotNull
   public static Collection<String> toCollection(@NotNull String str) {
     List<String> result = new LinkedList<String>();
@@ -72,6 +77,11 @@ public class FeatureUtil {
     return result;
   }
 
+  /**
+   * Takes collection of separate parameters and joins them into a string, separated by new line char
+   * @param strings collection of separate parameters
+   * @return string, with each parameter on new line
+   */
   @NotNull
   public static String fromCollection(@NotNull Collection<String> strings) {
     String result;

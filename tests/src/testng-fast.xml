@@ -3,6 +3,7 @@
   <test name="PLUGIN tests">
     <classes>
       <class name="SimpleTest"/>
+      <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
     </classes>
   </test>
 </suite>
