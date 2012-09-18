@@ -22,9 +22,4 @@ public class SharedResourcesPluginConstants {
     return RESOURCE_PARAM_KEY;
   }
 
-  @NotNull
-  public String getBuildIdKey() {
-    return BUILD_ID_KEY;
-  }
-
 }

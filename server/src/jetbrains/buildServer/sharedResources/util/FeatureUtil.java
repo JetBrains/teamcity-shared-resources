@@ -7,6 +7,8 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
 
@@ -96,5 +98,4 @@ public class FeatureUtil {
     }
     return result;
   }
-
 }

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
@@ -74,42 +76,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @Nullable
   @Override
   public PropertiesProcessor getParametersProcessor() {
-
-    return new PropertiesProcessor() {
-
-      private final String ERROR_EMPTY = "Resource name must not be empty";
-
-      private final String ERROR_NON_UNIQUE = "Non unique resource names found";
-
-      private final SharedResourcesPluginConstants c = new SharedResourcesPluginConstants();
-
-      private void checkNotEmpty(@NotNull final Collection<String> strings,
-                                 @NotNull final Collection<InvalidProperty> res) {
-        if (strings.isEmpty()) {
-          res.add(new InvalidProperty(RESOURCE_PARAM_KEY, ERROR_EMPTY));
-        }
-      }
-
-      private void checkUnique(@NotNull final Collection<String> strings,
-                               @NotNull final Collection<InvalidProperty> res) {
-        Set<String> set = new HashSet<String>(strings.size());
-        set.addAll(strings);
-        if (set.size() != strings.size()) {
-          res.add(new InvalidProperty(RESOURCE_PARAM_KEY, ERROR_NON_UNIQUE));
-        }
-      }
-
-      public Collection<InvalidProperty> process(Map<String, String> properties) {
-        final Collection<InvalidProperty> result = new ArrayList<InvalidProperty>();
-        if (properties != null) {
-          final Collection<String> resourceNames = FeatureUtil.toCollection(properties.get(RESOURCE_PARAM_KEY));
-          checkNotEmpty(resourceNames, result);
-          checkUnique(resourceNames, result);
-          properties.put(RESOURCE_PARAM_KEY, FeatureUtil.fromCollection(resourceNames));
-        }
-        return result;
-      }
-    };
+    return new BuildFeatureParametersProcessor();
   }
 
 }

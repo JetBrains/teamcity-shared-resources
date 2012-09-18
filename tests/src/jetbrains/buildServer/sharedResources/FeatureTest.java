@@ -82,6 +82,7 @@ public class FeatureTest extends BaseTestCase {
       oneOf(myBuildPromotion).getBuildType();
       will(returnValue(myBuildType));
 
+
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(new ArrayList<SBuildFeatureDescriptor>() {{add(myBuildFeatureDescriptor);}}));
 
