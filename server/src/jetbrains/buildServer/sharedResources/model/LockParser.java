@@ -43,12 +43,11 @@ public final class LockParser {
     if (!done) {
       Matcher m = SIMPLE_LOCK_PATTERN.matcher(input);
       if (m.matches()) {
-        done = true;
+        //done = true;
         String name = m.group(1);
         result = new LockImpl(name, LockType.SIMPLE);
       }
     }
-
     return result;
   }
 

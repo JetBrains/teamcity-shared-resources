@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -26,8 +27,6 @@ public class BuildFeatureParametersProcessor implements PropertiesProcessor {
   static final String ERROR_NON_UNIQUE = "Non unique resource names found";
 
   static final String ERROR_WRONG_FORMAT = "Wrong format found at line(s): ";
-
-  private final SharedResourcesPluginConstants c = new SharedResourcesPluginConstants();
 
   private void checkNotEmpty(@NotNull final Collection<String> strings,
                              @NotNull final Collection<InvalidProperty> res) {

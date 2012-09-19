@@ -36,11 +36,11 @@ public class SharedResourcesBuildAgentsFilter implements StartingBuildAgentsFilt
     final AgentsFilterResult result = new AgentsFilterResult();
     final QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final BuildPromotionEx promo = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
-    final BuildTypeEx mybuild = promo.getBuildType();
+    final BuildTypeEx myBuild = promo.getBuildType();
 
-    if (mybuild != null) {
+    if (myBuild != null) {
       // get my locks into map
-      final Map<LockType, Set<Lock>> myLocks = FeatureUtil.getLocksMap(FeatureUtil.extractLocks(mybuild));
+      final Map<LockType, Set<Lock>> myLocks = FeatureUtil.getLocksMap(FeatureUtil.extractLocks(myBuild));
       if (!mapEmpty(myLocks))  {
         // if we have some locks, check them against other running builds
         boolean locksAvailable = true;
@@ -51,30 +51,35 @@ public class SharedResourcesBuildAgentsFilter implements StartingBuildAgentsFilt
           SBuildType type = build.getBuildType();
           if (type != null && locksAvailable) {
             final Map<LockType, Set<Lock>> otherLocks = FeatureUtil.getLocksMap(FeatureUtil.extractLocks(type));
-            //    check simple vs simple
+            //    check simple vs all
             if (!mapEmpty(otherLocks)) {
               Set<Lock> locks = myLocks.get(LockType.SIMPLE);
               if (!locks.isEmpty()) {
-                if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.SIMPLE))) {
+                if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.SIMPLE))
+                        || FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.READ))
+                        || FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE))
+                        ) {
                   locksAvailable = false;
                 }
               }
-              //    check read vs write
+              //    check read vs write & simple
               if (locksAvailable) {
                 locks = myLocks.get(LockType.READ);
                 if (!locks.isEmpty()) {
-                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE))) {
+                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE))
+                          || FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.SIMPLE))) {
                     locksAvailable = false;
                   }
                 }
               }
-
               //    check read vs write
               if (locksAvailable) {
                 locks = myLocks.get(LockType.WRITE);
                 if (!locks.isEmpty()) {
-                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE)) ||
-                          FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.READ))) {
+                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE))
+                          || FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.READ))
+                          || FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.SIMPLE))
+                          ) {
                     locksAvailable = false;
                   }
                 }

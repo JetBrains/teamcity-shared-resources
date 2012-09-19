@@ -70,7 +70,7 @@ public class FeatureUtil {
   @NotNull
   public static Collection<String> toCollection(String str) {
     List<String> result = new LinkedList<String>();
-    if (str != null) {
+    if (!StringUtil.isEmptyOrSpaces(str)) {
       String[] lines = str.split(" *[,\n\r] *");
       for (String line: lines) {
         String trimmed = line.trim();
