@@ -11,4 +11,6 @@ public interface Lock {
 
   public String getName();
 
+  public LockType getType();
+
 }

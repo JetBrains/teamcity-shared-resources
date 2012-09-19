@@ -33,9 +33,9 @@ public final class LockParser {
       if (m.matches()) {
         done = true;
         String name = m.group(1);
-        ReadWriteLock.LOCK_TYPE type = ReadWriteLock.LOCK_TYPE.fromString(m.group(2));
+        LockType type = LockType.fromString(m.group(2));
         if (type != null) {
-          result = ReadWriteLock.createReadWriteLock(name, type);
+          result = new LockImpl(name, type);
         }
       }
     }
@@ -45,7 +45,7 @@ public final class LockParser {
       if (m.matches()) {
         done = true;
         String name = m.group(1);
-        result = NamedLock.createNamedLock(name);
+        result = new LockImpl(name, LockType.SIMPLE);
       }
     }
 

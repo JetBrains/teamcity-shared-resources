@@ -3,6 +3,8 @@ package jetbrains.buildServer.sharedResources.server;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.util.FeatureUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,35 +36,74 @@ public class SharedResourcesBuildAgentsFilter implements StartingBuildAgentsFilt
     final AgentsFilterResult result = new AgentsFilterResult();
     final QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final BuildPromotionEx promo = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
-    final BuildTypeEx buildType = promo.getBuildType();
-    final Set<String> locks = new HashSet<String>();
+    final BuildTypeEx mybuild = promo.getBuildType();
 
-    if (buildType != null) {
-      locks.addAll(FeatureUtil.extractLocks(buildType));
-    }
+    if (mybuild != null) {
+      // get my locks into map
+      final Map<LockType, Set<Lock>> myLocks = FeatureUtil.getLocksMap(FeatureUtil.extractLocks(mybuild));
+      if (!mapEmpty(myLocks))  {
+        // if we have some locks, check them against other running builds
+        boolean locksAvailable = true;
 
-    if (!locks.isEmpty())  {
-      // if we have some locks, check them against other running builds
-      boolean locksAvailable = true;
-      List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
-      for (SRunningBuild build: runningBuilds) {
-        SBuildType type = build.getBuildType();
-        if (type != null) {
-          final Set<String> otherLocks = FeatureUtil.extractLocks(type);
-          if (FeatureUtil.lockSetsCrossing(locks, otherLocks)) {
-            locksAvailable = false;
-            break;
+        // for each running build
+        final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
+        for (SRunningBuild build: runningBuilds) {
+          SBuildType type = build.getBuildType();
+          if (type != null && locksAvailable) {
+            final Map<LockType, Set<Lock>> otherLocks = FeatureUtil.getLocksMap(FeatureUtil.extractLocks(type));
+            //    check simple vs simple
+            if (!mapEmpty(otherLocks)) {
+              Set<Lock> locks = myLocks.get(LockType.SIMPLE);
+              if (!locks.isEmpty()) {
+                if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.SIMPLE))) {
+                  locksAvailable = false;
+                }
+              }
+              //    check read vs write
+              if (locksAvailable) {
+                locks = myLocks.get(LockType.READ);
+                if (!locks.isEmpty()) {
+                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE))) {
+                    locksAvailable = false;
+                  }
+                }
+              }
+
+              //    check read vs write
+              if (locksAvailable) {
+                locks = myLocks.get(LockType.WRITE);
+                if (!locks.isEmpty()) {
+                  if (FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.WRITE)) ||
+                          FeatureUtil.lockSetsCrossing(locks, otherLocks.get(LockType.READ))) {
+                    locksAvailable = false;
+                  }
+                }
+              }
+            }
           }
         }
-      }
 
-      if (!locksAvailable) {
-        result.setFilteredConnectedAgents(Collections.<SBuildAgent>emptyList());
-        result.setWaitReason(WAIT_FOR_LOCK);
-        LOG.debug("(SharedResourcesBuildAgentsFilter) putting build on wait");
+        if (!locksAvailable) {
+          result.setFilteredConnectedAgents(Collections.<SBuildAgent>emptyList());
+          result.setWaitReason(WAIT_FOR_LOCK);
+          LOG.debug("(SharedResourcesBuildAgentsFilter) putting build on wait");
+        }
       }
     }
+
+
     LOG.debug("(SharedResourcesBuildAgentsFilter) finish");
+    return result;
+  }
+
+  private static <K, V>boolean mapEmpty(Map<K, Set<V>> map) {
+    boolean result = true;
+    for (Set<V> val: map.values()) {
+      if (!val.isEmpty()) {
+        result = false;
+        break;
+      }
+    }
     return result;
   }
 }

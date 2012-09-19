@@ -4,11 +4,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockParser;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_PARAM_KEY;
 
@@ -25,7 +26,7 @@ public class FeatureUtil {
    *
    */
   @NotNull
-  public static Set<String> extractLocks(@NotNull SBuildType type) {
+  public static Set<String>  extractLocks(@NotNull SBuildType type) {
     Set<String> result = new HashSet<String>();
     for (SBuildFeatureDescriptor descriptor: type.getBuildFeatures()) {
       extractResources(result, descriptor);
@@ -50,10 +51,10 @@ public class FeatureUtil {
    * @param takenLocks taken locks
    * @return {@code true} if there is an intersection, {@code false} otherwise
    */
-  public static boolean lockSetsCrossing(@NotNull Set<String> requiredLocks, @NotNull Set<String> takenLocks) {
+  public static boolean lockSetsCrossing(@NotNull Set<Lock> requiredLocks, @NotNull Set<Lock> takenLocks) {
     boolean result = false;
-    for (String str: requiredLocks) {
-      if (takenLocks.contains(str)) {
+    for (Lock lock: requiredLocks) {
+      if (takenLocks.contains(lock)) {
         result = true;
         break;
       }
@@ -67,13 +68,15 @@ public class FeatureUtil {
    * @return collection of individual parameters
    */
   @NotNull
-  public static Collection<String> toCollection(@NotNull String str) {
+  public static Collection<String> toCollection(String str) {
     List<String> result = new LinkedList<String>();
-    String[] lines = str.split(" *[,\n\r] *");
-    for (String line: lines) {
-      String trimmed = line.trim();
-      if (!StringUtil.isEmptyOrSpaces(trimmed)) {
-        result.add(trimmed);
+    if (str != null) {
+      String[] lines = str.split(" *[,\n\r] *");
+      for (String line: lines) {
+        String trimmed = line.trim();
+        if (!StringUtil.isEmptyOrSpaces(trimmed)) {
+          result.add(trimmed);
+        }
       }
     }
     return result;
@@ -95,6 +98,20 @@ public class FeatureUtil {
         builder.append(str).append('\n');
       }
       result = builder.substring(0, builder.length() - 1);
+    }
+    return result;
+  }
+
+  public static Map<LockType, Set<Lock>> getLocksMap(@NotNull Collection<String> serializedLocks) {
+    Map<LockType, Set<Lock>> result = new HashMap<LockType, Set<Lock>>();
+    for (LockType type: LockType.values()) {
+      result.put(type, new HashSet<Lock>());
+    }
+    for (String str: serializedLocks) {
+      Lock lock = LockParser.parse(str);
+      if (lock != null) { // todo: what should we do in case of corrupt data from file?
+        result.get(lock.getType()).add(lock);
+      }
     }
     return result;
   }

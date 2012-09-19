@@ -113,6 +113,9 @@ public class FeatureTest extends BaseTestCase {
       oneOf(myParamMap).get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY);
       will(returnValue(otherBuildLocksCrossing));
 
+      oneOf(otherRunningBuild2).getBuildType();
+      will(returnValue(otherBuildType2));
+
     }});
 
     AgentsFilterResult result = mySharedResourcesBuildAgentsFilter.filterAgents(myAgentsFilterContext);

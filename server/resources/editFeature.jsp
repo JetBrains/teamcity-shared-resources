@@ -8,7 +8,7 @@
 <tr class="noBorder">
   <th><label for="${keys.resourceKey}">Resource name:</label></th>
   <td>
-    <props:multilineProperty name="${keys.resourceKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="3" value="${propertiesBean.properties['resource-name']}"/>
+    <props:multilineProperty name="${keys.resourceKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="3" value="${propertiesBean.properties['resource-name']}" expanded="${true}"/>
     <span class="error" id="error_${keys.resourceKey}"></span>
     <span class="smallNote">Specify shared resource name(s)</span>
   </td>

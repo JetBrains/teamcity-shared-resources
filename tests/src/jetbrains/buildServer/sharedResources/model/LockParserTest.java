@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 public class LockParserTest extends BaseTestCase {
 
   @Test
-  @TestFor (testForClass = {NamedLock.class, LockParser.class})
+  @TestFor (testForClass = {LockImpl.class, LockType.class, LockParser.class})
   public void testParseNamedLock() throws Exception {
     String[] validStrings = {
             "name",
@@ -38,8 +38,8 @@ public class LockParserTest extends BaseTestCase {
     for(String str: validStrings) {
       Lock lock = LockParser.parse(str);
       assertNotNull(lock);
-      assertTrue(lock instanceof NamedLock);
-      assertEquals(str, ((NamedLock)lock).getName());
+      assertEquals(LockType.SIMPLE, lock.getType());
+      assertEquals(str, lock.getName());
     }
 
     for (String str: invalidStrings) {
@@ -48,7 +48,7 @@ public class LockParserTest extends BaseTestCase {
   }
 
   @Test
-  @TestFor (testForClass = {ReadWriteLock.class, LockParser.class})
+  @TestFor (testForClass = {LockImpl.class, LockType.class, LockParser.class})
   public void testParseReadWriteLock() {
     final String lockName = "name";
     String[] validStringsRead = {
@@ -69,18 +69,19 @@ public class LockParserTest extends BaseTestCase {
             "name(  write  )"
     };
 
-    Map<ReadWriteLock.LOCK_TYPE, List<String>> validData = new HashMap<ReadWriteLock.LOCK_TYPE, List<String>>();
-    validData.put(ReadWriteLock.LOCK_TYPE.READ, Arrays.asList(validStringsRead));
-    validData.put(ReadWriteLock.LOCK_TYPE.WRITE, Arrays.asList(validStringsWrite));
+
+    Map<LockType, List<String>> validData = new HashMap<LockType, List<String>>();
+    validData.put(LockType.READ, Arrays.asList(validStringsRead));
+    validData.put(LockType.WRITE, Arrays.asList(validStringsWrite));
 
 
-    for (ReadWriteLock.LOCK_TYPE type: validData.keySet()) {
+
+    for (LockType type: validData.keySet()) {
       for (String str: validData.get(type)) {
         Lock lock = LockParser.parse(str);
         assertNotNull(lock);
-        assertTrue(lock instanceof ReadWriteLock);
-        assertEquals(type, ((ReadWriteLock)lock).getLockType());
-        assertEquals(lockName, ((ReadWriteLock)lock).getName());
+        assertEquals(type, lock.getType());
+        assertEquals(lockName, lock.getName());
       }
     }
 
@@ -101,8 +102,12 @@ public class LockParserTest extends BaseTestCase {
     for (String str: invalidStrings) {
       assertNull(LockParser.parse(str));
     }
+  }
 
-    ReadWriteLock.LOCK_TYPE type = ReadWriteLock.LOCK_TYPE.fromString("some invalid type");
+  @Test
+  @TestFor(testForClass = LockType.class)
+  public void testInvalidLockName() {
+    LockType type = LockType.fromString("some invalid type");
     assertNull(type);
   }
 }
