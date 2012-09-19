@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 
 /**
  *
@@ -109,5 +108,16 @@ public class LockParserTest extends BaseTestCase {
   public void testInvalidLockName() {
     LockType type = LockType.fromString("some invalid type");
     assertNull(type);
+  }
+
+  @Test
+  @TestFor(testForClass = LockType.class)
+  public void testValidLockNames() {
+    LockType type = LockType.fromString("read");
+    assertEquals(LockType.READ, type);
+    type = LockType.fromString("write");
+    assertEquals(LockType.WRITE, type);
+    type = LockType.fromString("");
+    assertEquals(LockType.SIMPLE, type);
   }
 }

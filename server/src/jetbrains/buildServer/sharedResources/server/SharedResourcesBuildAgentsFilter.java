@@ -8,7 +8,10 @@ import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.util.FeatureUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Class {SharedResourcesBuildAgentsFilter}

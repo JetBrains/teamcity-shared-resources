@@ -1,6 +1,5 @@
 package jetbrains.buildServer.sharedResources;
 
-import com.thoughtworks.xstream.io.naming.NoNameCoder;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterContext;
@@ -35,17 +34,10 @@ public class FeatureTest extends BaseTestCase {
   private Map myParamMap;
 
   private SRunningBuild otherRunningBuild1;
-  private SRunningBuild otherRunningBuild2;
 
   private SBuildType otherBuildType1;
-  private SBuildType otherBuildType2;
-
 
   private static final String currentBuildLocks = "my_lock_1\nmy_lock_2";
-  private static final String otherBuildLocksCrossing = "my_lock_2\nmylock_3";
-  private static final String otherBuildLocksNotCrossing = "my_lock_3\nmylock_4";
-
-
   private static final String simpleLocks = "my_lock_1\nmy_lock_1\nmy_lock_1\n";
   private static final String readLocks = "my_lock_1(read)\nmy_lock_2(read)\nmy_lock_3(read)\n";
   private static final String writeLocks = "my_lock_1(write)\nmy_lock_2(write)\nmy_lock_3(write)\n";
@@ -67,9 +59,7 @@ public class FeatureTest extends BaseTestCase {
     myParamMap = m.mock(Map.class);
 
     otherRunningBuild1 = m.mock(SRunningBuild.class, "other-running-build-1");
-    otherRunningBuild2 = m.mock(SRunningBuild.class, "other-running-build-2");
     otherBuildType1 = m.mock(SBuildType.class, "other-build-type-1");
-    otherBuildType2 = m.mock(SBuildType.class, "other-build-type-2");
   }
 
   private void setCommonExpectationsForTwoBuilds(@NotNull final String myLocks, @NotNull final String otherLocks) {

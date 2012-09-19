@@ -1,9 +1,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockParser;
 import jetbrains.buildServer.sharedResources.util.FeatureUtil;
