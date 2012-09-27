@@ -8,9 +8,7 @@
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
 
   <!--suppress SpringBeanConstructorArgInspection -->
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildAgentsFilter"/>
-
-  <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 
 </beans>

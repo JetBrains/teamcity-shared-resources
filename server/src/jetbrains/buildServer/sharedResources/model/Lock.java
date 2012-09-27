@@ -1,16 +1,45 @@
 package jetbrains.buildServer.sharedResources.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * Created with IntelliJ IDEA.
- * Date: 17.09.12
- * Time: 15:53
+ * Typed lock implementation
  *
  * @author Oleg Rybak
  */
-public interface Lock {
+public class Lock {
 
-  public String getName();
+  private final String myName;
 
-  public LockType getType();
+  private final LockType myType;
 
+  public Lock(@NotNull String name, @NotNull LockType type) {
+    myName = name;
+    myType = type;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
+  }
+
+  @NotNull
+  public LockType getType() {
+    return myType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Lock)) return false;
+
+    Lock lock = (Lock) o;
+
+    return myName.equals(lock.myName);
+  }
+
+  @Override
+  public int hashCode() {
+    return myName.hashCode();
+  }
 }

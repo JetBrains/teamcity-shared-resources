@@ -1,7 +1,5 @@
 package jetbrains.buildServer.sharedResources.model;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Created with IntelliJ IDEA.
  * Date: 19.09.12
@@ -10,19 +8,16 @@ import org.jetbrains.annotations.NotNull;
  * @author Oleg Rybak
  */
 public enum LockType {
-  SIMPLE,
-  READ,
-  WRITE;
+  READ("readLock"),
+  WRITE("writeLock");
 
-  public static LockType fromString(@NotNull String str) {
-    if ("read".equals(str)) {
-      return READ;
-    } else if ("write".equals(str)) {
-      return WRITE;
-    } else if ("".equals(str)) {
-      return SIMPLE;
-    }else {
-      return null;
-    }
+  private final String name;
+
+  private LockType(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
   }
 }
