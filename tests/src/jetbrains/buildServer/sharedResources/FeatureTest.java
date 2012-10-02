@@ -5,16 +5,13 @@ import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition;
 import jetbrains.buildServer.util.TestFor;
-import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Contains tests for {@code SharedResourcesBuildFeature}
@@ -51,43 +48,41 @@ public class FeatureTest extends BaseTestCase {
   }
 
 
-  //@Test todo: not ready yet
+  @Test // todo: not ready yet
   public void testSingleBuild() {
-    m.checking(new Expectations() {{
-      oneOf(myQueuedBuildInfo).getBuildPromotionInfo();
-      will(returnValue(myBuildPromotion));
-
-      oneOf(myBuildDistributorInput).getRunningBuilds();
-      will(returnValue(Collections.<BuildPromotionInfo>emptyList()));
-
-      oneOf(myCanBeStarted).keySet();
-      will(returnValue(Collections.<QueuedBuildInfo>emptySet()));
-    }});
-
-
-    myWaitPrecondition.canStart(myQueuedBuildInfo, myCanBeStarted, myBuildDistributorInput, false);
-    m.assertIsSatisfied();
+//    final Map<String, String> buildParams = new HashMap<String, String>() {{
+////       put(TestUtils.generateLockAsParam(), "");
+////       put(TestUtils.generateLockAsParam(), "");
+////       put(TestUtils.generateLockAsParam(), "");
+////       put(TestUtils.generateLockAsParam(), "");
+////       put(TestUtils.generateLockAsParam(), "");
+////       put(TestUtils.generateRandomSystemParam(), "");
+//       put(TestUtils.generateRandomSystemParam(), "");
+//       put(TestUtils.generateRandomSystemParam(), "");
+//       put(TestUtils.generateRandomSystemParam(), "");
+//    }};
+//
+//
+//    m.checking(new Expectations() {{
+//      oneOf(myQueuedBuildInfo).getBuildPromotionInfo();
+//      will(returnValue(myBuildPromotion));
+//
+//      oneOf(myBuildPromotion).getBuildParameters();
+//      will(returnValue(buildParams));
+//
+//      oneOf(myBuildDistributorInput).getRunningBuilds();
+//      will(returnValue(Collections.<BuildPromotionInfo>emptyList()));
+//
+//      oneOf(myCanBeStarted).keySet();
+//      will(returnValue(Collections.<QueuedBuildInfo>emptySet()));
+//
+//    }});
+//
+//
+//    WaitReason result = myWaitPrecondition.canStart(myQueuedBuildInfo, myCanBeStarted, myBuildDistributorInput, false);
+//    assertNull(result);
+//    m.assertIsSatisfied();
   }
 
-
-
-
-  /**
-   * Generates lock representation as it is in build parameters
-   * @param name name of the lock
-   * @param type type of the lock
-   * @return lock representation as a parameter
-   */
-  private static String generateLockAsParam(String name, LockType type) {
-    return SharedResourcesPluginConstants.LOCK_PREFIX + type.getName() + "." + name;
-  }
-
-  /**
-   * Generates random system parameter
-   * @return random system parameter as String
-   */
-  private static String generateRandomSystemParam() {
-    return "system." + UUID.randomUUID().toString();
-  }
 
 }
