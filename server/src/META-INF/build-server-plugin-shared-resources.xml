@@ -13,4 +13,6 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.services.InMemoryLockingService"/>
 
+  <bean class="jetbrains.buildServer.sharedResources.server.services.SharedResourcesContextProcessor"/>
+
 </beans>
