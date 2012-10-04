@@ -11,4 +11,6 @@
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 
+  <bean class="jetbrains.buildServer.sharedResources.server.services.InMemoryLockingService"/>
+
 </beans>

@@ -19,8 +19,6 @@ import static jetbrains.buildServer.sharedResources.server.WaitPreconditionUtils
  */
 public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
 
-  //private static final Logger LOG = Logger.getInstance(SharedResourcesWaitPrecondition.class.getName());
-
   @Nullable
   public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuild, @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted, @NotNull BuildDistributorInput buildDistributorInput, boolean emulationMode) {
     if (emulationMode) return null;
