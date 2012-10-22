@@ -16,7 +16,6 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 /**
  * Class {@code SharedResourcesUtils}
  *
- *
  * @author Oleg Rybak
  */
 final class SharedResourcesUtils {
@@ -27,6 +26,7 @@ final class SharedResourcesUtils {
 
   /**
    * Extracts lock from build parameter name
+   *
    * @param paramName name of the build parameter
    * @return {@code Lock} of appropriate type, if parsing was successful, {@code null} otherwise
    */
@@ -36,7 +36,7 @@ final class SharedResourcesUtils {
     if (paramName.startsWith(LOCK_PREFIX)) {
       String lockString = paramName.substring(PREFIX_OFFSET);
       LockType lockType = null;
-      for (LockType type: LockType.values()) {
+      for (LockType type : LockType.values()) {
         if (lockString.startsWith(type.getName())) {
           lockType = type;
           break;
@@ -51,12 +51,12 @@ final class SharedResourcesUtils {
       try {
         String lockName = lockString.substring(lockType.getName().length() + 1);
         if (lockName.length() == 0) {
-          LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'system.locks.[read|write]Lock.<lock name>'");
+          LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
           return null;
         }
         result = new Lock(lockName, lockType);
       } catch (IndexOutOfBoundsException e) {
-        LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'system.locks.[read|write]Lock.<lock name>'");
+        LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
         return null;
       }
     }
@@ -65,6 +65,7 @@ final class SharedResourcesUtils {
 
   /**
    * Extracts lock names and types from given build promotion
+   *
    * @param buildPromotionInfo build promotion
    * @return collection of locks, that correspond to given promotion
    */
@@ -72,7 +73,7 @@ final class SharedResourcesUtils {
   static Collection<Lock> extractLocksFromPromotion(@NotNull BuildPromotionInfo buildPromotionInfo) {
     Collection<Lock> result = new HashSet<Lock>();
     Map<String, String> buildParameters = buildPromotionInfo.getParameters();
-    for (Map.Entry<String, String> param: buildParameters.entrySet()) {
+    for (Map.Entry<String, String> param : buildParameters.entrySet()) {
       Lock lock = getLockFromBuildParam(param.getKey());
       if (lock != null) {
         result.add(lock);
@@ -83,17 +84,18 @@ final class SharedResourcesUtils {
 
   /**
    * Extracts build promotions from build server state, represented by running and queued builds
+   *
    * @param runningBuilds running builds
-   * @param queuedBuilds queued builds
+   * @param queuedBuilds  queued builds
    * @return collection of build promotions, that correspond to given builds
    */
   @NotNull
   static Collection<BuildPromotionInfo> getBuildPromotions(@NotNull Collection<RunningBuildInfo> runningBuilds, @NotNull Collection<QueuedBuildInfo> queuedBuilds) {
     ArrayList<BuildPromotionInfo> result = new ArrayList<BuildPromotionInfo>(runningBuilds.size() + queuedBuilds.size());
-    for (RunningBuildInfo runningBuildInfo: runningBuilds){
+    for (RunningBuildInfo runningBuildInfo : runningBuilds) {
       result.add(runningBuildInfo.getBuildPromotionInfo());
     }
-    for (QueuedBuildInfo queuedBuildInfo: queuedBuilds){
+    for (QueuedBuildInfo queuedBuildInfo : queuedBuilds) {
       result.add(queuedBuildInfo.getBuildPromotionInfo());
     }
     return result;
@@ -101,7 +103,8 @@ final class SharedResourcesUtils {
 
   /**
    * Finds locks that are unavailable (taken) at the moment
-   * @param locksToTake locks, requested by the build
+   *
+   * @param locksToTake     locks, requested by the build
    * @param buildPromotions other builds (running and queued)
    * @return collection of unavailable locks
    */
@@ -109,7 +112,7 @@ final class SharedResourcesUtils {
   static Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake, @NotNull Collection<BuildPromotionInfo> buildPromotions) {
     List<Lock> result = new ArrayList<Lock>();
     Map<String, TakenLockInfo> takenLocks = collectTakenLocks(buildPromotions);
-    for (Lock lock: locksToTake) {
+    for (Lock lock : locksToTake) {
       TakenLockInfo takenLock = takenLocks.get(lock.getName());
       switch (lock.getType()) {
         case READ:
@@ -129,15 +132,16 @@ final class SharedResourcesUtils {
 
   /**
    * Collects taken locks from build promotions (representing running and queued builds)
+   *
    * @param buildPromotions build promotions (representing running and queued builds)
    * @return collection of locks that are already taken
    */
   @NotNull
   private static Map<String, TakenLockInfo> collectTakenLocks(@NotNull Collection<BuildPromotionInfo> buildPromotions) {
     Map<String, TakenLockInfo> takenLocks = new HashMap<String, TakenLockInfo>();
-    for (BuildPromotionInfo info: buildPromotions) {
+    for (BuildPromotionInfo info : buildPromotions) {
       Collection<Lock> locks = extractLocksFromPromotion(info);
-      for (Lock lock: locks) {
+      for (Lock lock : locks) {
         TakenLockInfo takenLock = takenLocks.get(lock.getName());
         if (takenLock == null) {
           takenLock = new TakenLockInfo();
@@ -158,7 +162,7 @@ final class SharedResourcesUtils {
 
   /**
    * Class {@code TakenLockInfo}
-   *
+   * <p/>
    * Helper class for taken locks representation
    */
   static final class TakenLockInfo {

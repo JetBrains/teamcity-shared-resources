@@ -13,4 +13,8 @@ public class SharedResourcesPluginConstants {
 
   public static final String LOCK_PREFIX = "teamcity.locks.";
 
+  public static final String ATTR_READ_LOCKS = "readLocks";
+
+  public static final String ATTR_WRITE_LOCKS = "writeLocks";
+
 }

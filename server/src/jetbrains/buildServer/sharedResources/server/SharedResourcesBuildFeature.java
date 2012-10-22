@@ -6,8 +6,9 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
- *
  * @author Oleg Rybak
  */
 public class SharedResourcesBuildFeature extends BuildFeature {
@@ -42,4 +43,9 @@ public class SharedResourcesBuildFeature extends BuildFeature {
     return false;
   }
 
+  @NotNull
+  @Override
+  public String describeParameters(@NotNull Map<String, String> params) {
+    return "Click 'Edit' to display feature state and instructions";
+  }
 }
