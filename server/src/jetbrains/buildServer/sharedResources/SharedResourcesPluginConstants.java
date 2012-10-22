@@ -11,6 +11,6 @@ public class SharedResourcesPluginConstants {
 
   public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
 
-  public static final String LOCK_PREFIX = "system.locks.";
+  public static final String LOCK_PREFIX = "teamcity.locks.";
 
 }

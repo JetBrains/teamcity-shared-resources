@@ -1,14 +1,20 @@
 package jetbrains.buildServer.sharedResources.model;
 
 /**
- * Created with IntelliJ IDEA.
- * Date: 19.09.12
- * Time: 13:27
+ * Lock type
  *
  * @author Oleg Rybak
  */
 public enum LockType {
+
+  /**
+   * Shared lock
+   */
   READ("readLock"),
+
+  /**
+   * Exclusive lock
+   */
   WRITE("writeLock");
 
   private final String name;
@@ -20,4 +26,5 @@ public enum LockType {
   public String getName() {
     return name;
   }
+
 }

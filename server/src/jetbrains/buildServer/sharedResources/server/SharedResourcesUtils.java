@@ -7,6 +7,7 @@ import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -16,13 +17,19 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  *
  * @author Oleg Rybak
  */
-final class WaitPreconditionUtils {
+final class SharedResourcesUtils {
 
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
-  private static final Logger LOG = Logger.getInstance(WaitPreconditionUtils.class.getName());
+  private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
 
-  static Lock getLockFromBuildParam(String paramName) {
+  /**
+   * Extracts lock from build parameter name
+   * @param paramName name of the build parameter
+   * @return {@code Lock} of appropriate type, if parsing was successful, {@code null} otherwise
+   */
+  @Nullable
+  static Lock getLockFromBuildParam(@NotNull String paramName) {
     Lock result = null;
     if (paramName.startsWith(LOCK_PREFIX)) {
       String lockString = paramName.substring(PREFIX_OFFSET);
@@ -55,9 +62,9 @@ final class WaitPreconditionUtils {
   }
 
   @NotNull
-  static Collection<Lock> extractLocksFromPromotion(BuildPromotionInfo buildPromotionInfo) {
+  static Collection<Lock> extractLocksFromPromotion(@NotNull BuildPromotionInfo buildPromotionInfo) {
     Collection<Lock> result = new HashSet<Lock>();
-    Map<String, String> buildParameters = buildPromotionInfo.getBuildParameters();
+    Map<String, String> buildParameters = buildPromotionInfo.getParameters();
     for (Map.Entry<String, String> param: buildParameters.entrySet()) {
       Lock lock = getLockFromBuildParam(param.getKey());
       if (lock != null) {
@@ -79,7 +86,29 @@ final class WaitPreconditionUtils {
     return result;
   }
 
-  static boolean locksAvailable(Collection<Lock> locksToTake, Collection<BuildPromotionInfo> buildPromotions) {
+  static Collection<Lock> getUnavailableLocks(Collection<Lock> locksToTake, Collection<BuildPromotionInfo> buildPromotions) {
+    List<Lock> result = new ArrayList<Lock>();
+    Map<String, TakenLockInfo> takenLocks = collectTakenLocks(buildPromotions);
+
+    for (Lock lock: locksToTake) {
+      TakenLockInfo takenLock = takenLocks.get(lock.getName());
+      switch (lock.getType()) {
+        case READ:
+          if (takenLock != null && !takenLock.writeLocks.isEmpty()) {
+            result.add(lock);
+          }
+          break;
+        case WRITE:
+          if (takenLock != null && (!takenLock.readLocks.isEmpty() || !takenLock.writeLocks.isEmpty())) {
+            result.add(lock);
+          }
+          break;
+      }
+    }
+    return result;
+  }
+
+  private static Map<String, TakenLockInfo> collectTakenLocks(Collection<BuildPromotionInfo> buildPromotions) {
     Map<String, TakenLockInfo> takenLocks = new HashMap<String, TakenLockInfo>();
     for (BuildPromotionInfo info: buildPromotions) {
       Collection<Lock> locks = extractLocksFromPromotion(info);
@@ -99,24 +128,7 @@ final class WaitPreconditionUtils {
         }
       }
     }
-
-    boolean result = true;
-    for (Lock lock: locksToTake) {
-      TakenLockInfo takenLock = takenLocks.get(lock.getName());
-      switch (lock.getType()) {
-        case READ:
-          if (takenLock != null && !takenLock.writeLocks.isEmpty()) {
-            return false;
-          }
-          break;
-        case WRITE:
-          if (takenLock != null && (!takenLock.readLocks.isEmpty() || !takenLock.writeLocks.isEmpty())) {
-            return false;
-          }
-          break;
-      }
-    }
-    return result;
+    return takenLocks;
   }
 
   static final class TakenLockInfo {

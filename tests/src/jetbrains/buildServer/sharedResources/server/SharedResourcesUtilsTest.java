@@ -22,7 +22,7 @@ import java.util.*;
  *
  * @author Oleg Rybak
  */
-public class WaitPreconditionUtilsTest extends BaseTestCase {
+public class SharedResourcesUtilsTest extends BaseTestCase {
 
   private static final int MAX_BUILDS = 20;
 
@@ -60,7 +60,7 @@ public class WaitPreconditionUtilsTest extends BaseTestCase {
   public void testGetLockFromBuildParam_Read() throws Exception {
     final String lockName = "myReadLock";
     String paramName = TestUtils.generateLockAsParam(LockType.READ, lockName);
-    Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+    Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
     assertNotNull(lock);
     assertEquals(LockType.READ, lock.getType());
     assertEquals(lockName, lock.getName());
@@ -70,7 +70,7 @@ public class WaitPreconditionUtilsTest extends BaseTestCase {
   public void testGetLockFromBuildParam_Write() throws Exception {
     final String lockName = "myWriteLock";
     String paramName = TestUtils.generateLockAsParam(LockType.WRITE, lockName);
-    Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+    Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
     assertNotNull(lock);
     assertEquals(LockType.WRITE, lock.getType());
     assertEquals(lockName, lock.getName());
@@ -80,25 +80,25 @@ public class WaitPreconditionUtilsTest extends BaseTestCase {
   public void testGetLockFromBuildParam_invalid() throws Exception {
     { // invalid format
       String paramName = TestUtils.generateRandomSystemParam();
-      Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+      Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
 
     { // invalid type
       String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "someInvalidLockType";
-      Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+      Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
 
     { // no name specified
       String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "readLock";
-      Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+      Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
 
     { // invalid name (empty string) specified
       String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "writeLock.";
-      Lock lock = WaitPreconditionUtils.getLockFromBuildParam(paramName);
+      Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
   }
@@ -116,10 +116,10 @@ public class WaitPreconditionUtilsTest extends BaseTestCase {
     params.put(TestUtils.generateRandomSystemParam(), "");
     params.put(TestUtils.generateRandomSystemParam(), "");
     m.checking(new Expectations() {{
-      oneOf(myBuildPromotion).getBuildParameters();
+      oneOf(myBuildPromotion).getParameters();
       will(returnValue(params));
     }});
-    Collection<Lock> locks = WaitPreconditionUtils.extractLocksFromPromotion(myBuildPromotion);
+    Collection<Lock> locks = SharedResourcesUtils.extractLocksFromPromotion(myBuildPromotion);
     assertNotNull(locks);
     assertEquals(6, locks.size());
   }
@@ -136,7 +136,7 @@ public class WaitPreconditionUtilsTest extends BaseTestCase {
 
     }});
 
-    Collection<BuildPromotionInfo> buildPromotions = WaitPreconditionUtils.getBuildPromotions(myRunningBuilds, myQueuedBuilds);
+    Collection<BuildPromotionInfo> buildPromotions = SharedResourcesUtils.getBuildPromotions(myRunningBuilds, myQueuedBuilds);
     assertNotNull(buildPromotions);
     assertEquals(myRunningBuilds.size() + myQueuedBuilds.size(), buildPromotions.size());
 

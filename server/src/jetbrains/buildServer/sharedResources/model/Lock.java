@@ -9,8 +9,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Lock {
 
+  /**
+   * Name of the lock
+   */
   private final String myName;
 
+  /**
+   * Type of the lock
+   */
   private final LockType myType;
 
   public Lock(@NotNull String name, @NotNull LockType type) {
@@ -41,5 +47,14 @@ public class Lock {
   @Override
   public int hashCode() {
     return myName.hashCode();
+  }
+
+
+  @Override
+  public String toString() {
+    return "Lock {" +
+            "name ='" + myName + '\'' +
+            ", type ='" + myType.getName() + '\'' +
+            '}';
   }
 }
