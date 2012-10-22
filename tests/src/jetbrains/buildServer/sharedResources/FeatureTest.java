@@ -5,8 +5,6 @@ import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition;
-import jetbrains.buildServer.util.TestFor;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -18,12 +16,11 @@ import java.util.Map;
  *
  * @author Oleg Rybak
  */
-@TestFor (testForClass = SharedResourcesWaitPrecondition.class)
 public class FeatureTest extends BaseTestCase {
 
   private Mockery m;
   // tested class
-  private SharedResourcesWaitPrecondition myWaitPrecondition;
+//  private SharedResourcesWaitPrecondition myWaitPrecondition;
   // mocked data
   private QueuedBuildInfo myQueuedBuildInfo;
   private Map<QueuedBuildInfo, BuildAgent> myCanBeStarted;
@@ -44,7 +41,6 @@ public class FeatureTest extends BaseTestCase {
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
     myBuildPromotion = m.mock(BuildPromotionInfo.class);
 
-    myWaitPrecondition = new SharedResourcesWaitPrecondition();
   }
 
 

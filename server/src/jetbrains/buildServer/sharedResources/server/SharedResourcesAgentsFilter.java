@@ -46,23 +46,4 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     }
     return result;
   }
-
-
-/*  {
-    final Map<Lock, Set<BuildPromotionInfo>> unavailableLocks = SharedResourcesUtils.getUnavailableLocksMap(locksToTake, buildPromotions);
-    if (!unavailableLocks.isEmpty()) {
-      result.setFilteredConnectedAgents(Collections.<SBuildAgent>emptyList());
-      StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
-      for (Lock lock: unavailableLocks.keySet()) {
-        Set<BuildPromotionInfo> promotions = unavailableLocks.get(lock);
-        builder.append(lock).append(" taken by: ");
-        for (BuildPromotionInfo info: promotions) {
-          builder.append(info.getId()).append(" ");
-        }
-        builder.append("\n");
-      }
-      result.setWaitReason(new SimpleWaitReason(builder.toString()));
-    }
-  }*/
-
 }
