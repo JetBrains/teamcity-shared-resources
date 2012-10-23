@@ -11,9 +11,9 @@ import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.
 import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.getBuildPromotions;
 
 /**
- * Created with IntelliJ IDEA.
- * Date: 19.10.12
- * Time: 15:33
+ * Class {@code SharedResourcesAgentsFilter}
+ * <p/>
+ * Filters all agents if some required locks are unavailable
  *
  * @author Oleg Rybak
  */
@@ -33,7 +33,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // locks that are needed, but occupied
     final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
     if (!unavailableLocks.isEmpty()) {
-      StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
+      final StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
       for (Lock lock : unavailableLocks) {
         builder.append(lock.getName()).append(", ");
       }

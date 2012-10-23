@@ -26,6 +26,8 @@ public class SharedResourcesPluginController extends BaseController {
 
   @NotNull
   private final PluginDescriptor myDescriptor;
+
+  @NotNull
   private EditBuildTypeFormFactory myFormFactory;
 
   public SharedResourcesPluginController(

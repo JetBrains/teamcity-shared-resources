@@ -3,7 +3,7 @@ package jetbrains.buildServer.sharedResources.model;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Typed lock implementation
+ * Named lock implementation
  *
  * @author Oleg Rybak
  */

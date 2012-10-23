@@ -139,6 +139,43 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     Collection<BuildPromotionInfo> buildPromotions = SharedResourcesUtils.getBuildPromotions(myRunningBuilds, myQueuedBuilds);
     assertNotNull(buildPromotions);
     assertEquals(myRunningBuilds.size() + myQueuedBuilds.size(), buildPromotions.size());
+  }
+
+  @Test
+  public void testGetUnavailableLocks() throws Exception {
+
+    // taken locks
+    final List<Map<String, String>> paramsList = new ArrayList<Map<String, String>>();
+    paramsList.add(new HashMap<String, String>() {{
+      put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
+      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+    }});
+    paramsList.add(new HashMap<String, String>() {{
+      put(TestUtils.generateLockAsParam(LockType.WRITE, "lock1"), "");
+      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+    }});
+
+    final List<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock("lock1", LockType.WRITE));
+      add(new Lock("lock2", LockType.READ));
+    }};
+
+    final List<BuildPromotionInfo> promotions = new ArrayList<BuildPromotionInfo>();
+    promotions.add(m.mock(BuildPromotionInfo.class, "promo-1"));
+    promotions.add(m.mock(BuildPromotionInfo.class, "promo-2"));
+
+    m.checking(new Expectations() {{
+      oneOf(promotions.get(0)).getParameters();
+      will(returnValue(paramsList.get(0)));
+
+      oneOf(promotions.get(1)).getParameters();
+      will(returnValue(paramsList.get(1)));
+    }});
+
+    Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, promotions);
+    assertNotNull(unavailableLocks);
+    assertNotEmpty(unavailableLocks);
+    assertEquals(1, unavailableLocks.size());
 
   }
 
