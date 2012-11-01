@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%--@elvariable id="readLocks" type="java.util.List"--%>
 <%--@elvariable id="writeLocks" type="java.util.List"--%>
+<jsp:useBean id="bean" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean" scope="request"/>
 
 
 <tr class="noBorder">
@@ -55,3 +56,24 @@
     </tr>
   </c:otherwise>
 </c:choose>
+
+
+<tr>
+  <td>
+    <forms:select name="res">
+      <c:forEach var="resourceName" items="${bean.sharedResourcesNames}">
+        <forms:option value="${resourceName}">
+          <c:out value="${resourceName}"/>
+        </forms:option>
+      </c:forEach>
+    </forms:select>
+  </td>
+  <td>
+    <forms:select name="type">
+      <forms:option value="read"><c:out value="read"/></forms:option>
+      <forms:option value="write"><c:out value="write"/></forms:option>
+    </forms:select>
+    <forms:addButton/>
+  </td>
+</tr>
+

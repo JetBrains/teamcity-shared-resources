@@ -17,6 +17,6 @@ public final class SharedResourcesSettingsFactory implements ProjectSettingsFact
   @NotNull
   @Override
   public ProjectSettings createProjectSettings(String projectId) {
-    return new SharedResourcesTabProjectSettings();
+    return new SharedResourcesProjectSettings();
   }
 }

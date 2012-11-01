@@ -2,6 +2,7 @@ package jetbrains.buildServer.sharedResources.settings;
 
 import jetbrains.buildServer.serverSide.settings.ProjectSettings;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,11 +10,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Class {@code SharedResourcesTabProjectSettings}
+ * Class {@code SharedResourcesProjectSettings}
  *
  * @author Oleg Rybak
  */
-public final class SharedResourcesTabProjectSettings implements ProjectSettings {
+public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   /**
    * XMl Tag names
@@ -25,7 +26,7 @@ public final class SharedResourcesTabProjectSettings implements ProjectSettings 
 
   private List<String> mySharedResourceNames = new ArrayList<String>();
 
-  public SharedResourcesTabProjectSettings() {
+  public SharedResourcesProjectSettings() {
   }
 
   @Override
@@ -58,9 +59,13 @@ public final class SharedResourcesTabProjectSettings implements ProjectSettings 
   }
 
   public void putSampleData() {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 3; i++) {
       mySharedResourceNames.add(UUID.randomUUID().toString());
     }
+  }
+
+  public void addResource(@NotNull String resourceName) {
+    mySharedResourceNames.add(resourceName);
   }
 
   public void remove(String str) {

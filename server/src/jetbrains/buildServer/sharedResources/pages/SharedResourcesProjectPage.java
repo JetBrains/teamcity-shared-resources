@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.settings.SharedResourcesTabProjectSettings;
+import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -47,17 +47,16 @@ public class SharedResourcesProjectPage extends ProjectTab {
 
   @Override
   protected void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request, @NotNull SProject project, @Nullable SUser user) {
-    SharedResourcesTabProjectSettings settings = (SharedResourcesTabProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
-    String str = request.getParameter("delete");
-    if (str != null) {
-      settings.remove(str);
+    SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
+    if (isPost(request)) {
+      final String newResource = request.getParameter("new_resource");
+      if (newResource != null && !"".equals(newResource)) {
+        settings.addResource(newResource);
+        project.persist();
+      }
     }
-    str = request.getParameter("sample");
-    if (str != null && "true".equals(str)) {
-      settings.putSampleData();
-    }
-    project.persist();
-    SharedResourcesBean bean = new SharedResourcesBean(project, settings.getSharedResourceNames());
+
+    SharedResourcesBean bean = new SharedResourcesBean(settings.getSharedResourceNames());
     model.put("bean", bean);
   }
 }
