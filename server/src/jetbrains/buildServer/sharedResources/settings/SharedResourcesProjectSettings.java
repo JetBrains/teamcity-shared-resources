@@ -17,7 +17,7 @@ import java.util.UUID;
 public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   /**
-   * XMl Tag names
+   * XML Tag names
    */
   private interface XML {
     public static final String RESOURCE = "resource";

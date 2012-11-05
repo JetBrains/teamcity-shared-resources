@@ -33,10 +33,10 @@ public class SharedResourcesBuildFeatureController extends BaseController {
   private final PluginDescriptor myDescriptor;
 
   @NotNull
-  private EditBuildTypeFormFactory myFormFactory;
+  private final EditBuildTypeFormFactory myFormFactory;
 
   @NotNull
-  private ProjectSettingsManager myProjectSettingsManager;
+  private final ProjectSettingsManager myProjectSettingsManager;
 
   public SharedResourcesBuildFeatureController(
           @NotNull PluginDescriptor descriptor,
@@ -82,8 +82,13 @@ public class SharedResourcesBuildFeatureController extends BaseController {
 
 
     final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings)myProjectSettingsManager.getSettings(project.getProjectId(), SharedResourcesPluginConstants.SERVICE_NAME);
-    SharedResourcesBean bean = new SharedResourcesBean(settings.getSharedResourceNames());
+    final SharedResourcesBean bean = new SharedResourcesBean(settings.getSharedResourceNames());
     model.put("bean", bean);
     return result;
   }
 }
+/*
+ * 1) How do we add parameter to build configuration?
+ * 2) How do we remove parameter from build configuration?
+ * 3) What is the correct way to deal with parameters?
+ */

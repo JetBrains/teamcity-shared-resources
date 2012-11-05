@@ -26,22 +26,24 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   public AgentsFilterResult filterAgents(@NotNull AgentsFilterContext context) {
     final AgentsFilterResult result = new AgentsFilterResult();
     final QueuedBuildInfo queuedBuild = context.getStartingBuild();
-    final Collection<RunningBuildInfo> running = context.getDistributorInput().getRunningBuilds();
-    final Collection<QueuedBuildInfo> distributed = context.getDistributedBuilds().keySet();
     final Collection<Lock> locksToTake = extractLocksFromPromotion(queuedBuild.getBuildPromotionInfo());
-    final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(running, distributed);
-    // locks that are needed, but occupied
-    final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
-    if (!unavailableLocks.isEmpty()) {
-      final StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
-      for (Lock lock : unavailableLocks) {
-        builder.append(lock.getName()).append(", ");
+    if (!locksToTake.isEmpty()) { // if our build has some locks
+      final Collection<RunningBuildInfo> running = context.getDistributorInput().getRunningBuilds();
+      final Collection<QueuedBuildInfo> distributed = context.getDistributedBuilds().keySet();
+      final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(running, distributed);
+      // locks that are needed, but occupied
+      final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
+      if (!unavailableLocks.isEmpty()) {
+        final StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
+        for (Lock lock : unavailableLocks) {
+          builder.append(lock.getName()).append(", ");
+        }
+        final String reasonDescription = builder.substring(0, builder.length() - 2);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Got wait reason: [" + reasonDescription + "]");
+        }
+        result.setWaitReason(new SimpleWaitReason(reasonDescription));
       }
-      final String reasonDescription = builder.substring(0, builder.length() - 2);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Got wait reason: [" + reasonDescription + "]");
-      }
-      result.setWaitReason(new SimpleWaitReason(reasonDescription));
     }
     return result;
   }
