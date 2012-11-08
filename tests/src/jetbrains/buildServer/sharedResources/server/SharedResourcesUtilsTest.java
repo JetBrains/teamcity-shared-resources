@@ -79,7 +79,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   @Test
   public void testGetLockFromBuildParam_invalid() throws Exception {
     { // invalid format
-      String paramName = TestUtils.generateRandomSystemParam();
+      String paramName = TestUtils.generateRandomConfigurationParam();
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
@@ -112,9 +112,9 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     params.put(TestUtils.generateLockAsParam(LockType.WRITE, "write1"), "");
     params.put(TestUtils.generateLockAsParam(LockType.WRITE, "write2"), "");
     params.put(TestUtils.generateLockAsParam(LockType.WRITE, "write3"), "");
-    params.put(TestUtils.generateRandomSystemParam(), "");
-    params.put(TestUtils.generateRandomSystemParam(), "");
-    params.put(TestUtils.generateRandomSystemParam(), "");
+    params.put(TestUtils.generateRandomConfigurationParam(), "");
+    params.put(TestUtils.generateRandomConfigurationParam(), "");
+    params.put(TestUtils.generateRandomConfigurationParam(), "");
     m.checking(new Expectations() {{
       oneOf(myBuildPromotion).getParameters();
       will(returnValue(params));

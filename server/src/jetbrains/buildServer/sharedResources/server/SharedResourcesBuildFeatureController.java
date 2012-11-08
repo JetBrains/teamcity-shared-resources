@@ -18,9 +18,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.*;
 
@@ -39,16 +37,14 @@ public class SharedResourcesBuildFeatureController extends BaseController {
   private final ProjectSettingsManager myProjectSettingsManager;
 
   public SharedResourcesBuildFeatureController(
-          @NotNull PluginDescriptor descriptor,
-          @NotNull WebControllerManager web,
-          @NotNull EditBuildTypeFormFactory formFactory,
-          @NotNull ProjectSettingsManager projectSettingsManager
-  ) {
+          @NotNull final PluginDescriptor descriptor,
+          @NotNull final WebControllerManager web,
+          @NotNull final EditBuildTypeFormFactory formFactory,
+          @NotNull final ProjectSettingsManager projectSettingsManager) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myProjectSettingsManager = projectSettingsManager;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
-
   }
 
   @Nullable
@@ -60,8 +56,16 @@ public class SharedResourcesBuildFeatureController extends BaseController {
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final List<ParameterInfo> configParams = form.getBuildTypeParameters().getConfigurationParameters();
     final SProject project = form.getProject();
+
+    // used resources
     final List<String> readLockNames = new ArrayList<String>();
     final List<String> writeLockNames = new ArrayList<String>();
+
+    // available resources
+    final Set<String> availableResources = new LinkedHashSet<String>();
+
+    final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings)myProjectSettingsManager.getSettings(project.getProjectId(), SharedResourcesPluginConstants.SERVICE_NAME);
+    availableResources.addAll(settings.getSharedResourceNames());
 
     for (ParameterInfo param : configParams) {
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(param.getName());
@@ -69,9 +73,11 @@ public class SharedResourcesBuildFeatureController extends BaseController {
         switch (lock.getType()) {
           case READ:
             readLockNames.add(lock.getName());
+            availableResources.remove(lock.getName());
             break;
           case WRITE:
             writeLockNames.add(lock.getName());
+            availableResources.remove(lock.getName());
             break;
         }
       }
@@ -80,15 +86,20 @@ public class SharedResourcesBuildFeatureController extends BaseController {
     model.put(ATTR_READ_LOCKS, readLockNames);
     model.put(ATTR_WRITE_LOCKS, writeLockNames);
 
-
-    final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings)myProjectSettingsManager.getSettings(project.getProjectId(), SharedResourcesPluginConstants.SERVICE_NAME);
-    final SharedResourcesBean bean = new SharedResourcesBean(settings.getSharedResourceNames());
+    final SharedResourcesBean bean = new SharedResourcesBean(availableResources);
     model.put("bean", bean);
+
+    /*BuildTypeSettings _settings = form.getSettings();
+    _settings.addParameter(
+            new SimpleParameter("teamcity.locks.readLock.hello", "")
+
+    );
+    form.persistSettings();*/
     return result;
   }
 }
 /*
- * 1) How do we add parameter to build configuration?
- * 2) How do we remove parameter from build configuration?
+ * 1) How do we add parameter to build configuration?       BuildTypeSettings#addParameter
+ * 2) How do we remove parameter from build configuration?  BuildTypeSettings#removeBuildParameter
  * 3) What is the correct way to deal with parameters?
  */

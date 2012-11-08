@@ -16,6 +16,7 @@
         <thead>
         <tr>
           <th>Resource name</th>
+          <th>Usage</th>
           <th>Operations</th>
         </tr>
         </thead>
@@ -24,6 +25,7 @@
         <c:forEach var="resourceName" items="${bean.sharedResourcesNames}">
         <tr>
           <td><c:out value="${resourceName}"/></td>
+          <td> ... </td>
           <td><span onclick="BS.SharedResourcesActions.deleteResource('${project.projectId}', '${resourceName}');">Delete</span></td>
         </tr>
         </c:forEach>
@@ -37,14 +39,14 @@
 
 
   <script type="text/javascript">
+    //noinspection FunctionWithInconsistentReturnsJS
     BS.SharedResourcesActions = {
       deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
       deleteResource: function(project_id, shared_resource) {
         if (!confirm('Are you sure you want to delete this shared resource?')) return false;
 
         BS.ajaxRequest(this.deleteUrl, {
-          parameters: {'project_id':  project_id,
-            'delete': shared_resource},
+          parameters: {'project_id':  project_id, 'delete': shared_resource},
           onSuccess: function() {
             window.location.reload();
           }

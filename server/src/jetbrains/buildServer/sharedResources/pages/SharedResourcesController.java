@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class SharedResourcesController extends BaseController {
 
-  private ProjectSettingsManager myProjectSettingsManager;
-  private PluginDescriptor myDescriptor;
+  private final ProjectSettingsManager myProjectSettingsManager;
+  private final PluginDescriptor myDescriptor;
 
   public SharedResourcesController(@NotNull SBuildServer server,
                                    @NotNull WebControllerManager manager,

@@ -22,10 +22,10 @@ public class TestUtils {
   }
 
   /**
-   * Generates random system parameter
-   * @return random system parameter as String
+   * Generates random configuration parameter
+   * @return random configuration parameter as String
    */
-  public static String generateRandomSystemParam() {
-    return "system." + UUID.randomUUID().toString();
+  public static String generateRandomConfigurationParam() {
+    return "teamcity." + UUID.randomUUID().toString();
   }
 }
