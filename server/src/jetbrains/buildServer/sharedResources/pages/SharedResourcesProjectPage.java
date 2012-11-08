@@ -9,7 +9,6 @@ import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.PositionConstraint;
-import jetbrains.buildServer.web.openapi.WebControllerManager;
 import jetbrains.buildServer.web.openapi.project.ProjectTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,23 +29,23 @@ public class SharedResourcesProjectPage extends ProjectTab {
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesProjectPage.class.getName());
 
-  private final WebControllerManager myWebControllerManager;
   private ProjectSettingsManager myProjectSettingsManager;
 
   protected SharedResourcesProjectPage(@NotNull PagePlaces pagePlaces,
                                        @NotNull ProjectManager projectManager,
-                                       @NotNull WebControllerManager webControllerManager,
                                        @NotNull PluginDescriptor descriptor,
                                        @NotNull ProjectSettingsManager projectSettingsManager
   ) {
     super("sharedResources", "Shared Resources", pagePlaces, projectManager, descriptor.getPluginResourcesPath("projectPage.jsp"));
-    myWebControllerManager = webControllerManager;
     myProjectSettingsManager = projectSettingsManager;
     setPosition(PositionConstraint.after("problems"));
   }
 
+
+  // unchecked warnings were suppressed to enable compilation against 7.0 codebase
   @Override
-  protected void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request, @NotNull SProject project, @Nullable SUser user) {
+  @SuppressWarnings("unchecked")
+  protected void fillModel(@NotNull Map model, @NotNull HttpServletRequest request, @NotNull SProject project, @Nullable SUser user) {
     SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
     if (isPost(request)) {
       final String newResource = request.getParameter("new_resource");
