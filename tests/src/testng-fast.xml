@@ -5,6 +5,7 @@
       <class name="SimpleTest"/>
       <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesUtilsTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
     </classes>
   </test>
 </suite>
