@@ -4,15 +4,14 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class {@code BuildFeatureParametersProviderTest}
@@ -99,6 +98,29 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testEmptyParams() throws Exception {
+    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
+      add(myBuildFeatureDescriptor);
+    }};
+    myMockery.checking(new Expectations() {{
+      oneOf(myBuild).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildFeatureDescriptor).getParameters();
+      will(returnValue(myEmptyParamMap));
+
+    }});
+
+    Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
+    assertNotNull(result);
+    int size = result.size();
+    assertEquals("Expected empty result. Actual size is [" + size + "]" , 0, size);
+    myMockery.assertIsSatisfied();
 
   }
 
@@ -108,7 +130,30 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testNonEmptyParams() throws Exception {
+    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
+      add(myBuildFeatureDescriptor);
+    }};
+    myMockery.checking(new Expectations() {{
+      oneOf(myBuild).getBuildType();
+      will(returnValue(myBuildType));
 
+      oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildFeatureDescriptor).getParameters();
+      will(returnValue(myNonEmptyParamMap));
+
+    }});
+
+    Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
+    assertNotNull(result);
+    int size = result.size();
+    assertEquals("Expected empty result. Actual size is [" + size + "]" , myNonEmptyParamMap.size(), size);
+    assertSameElements(result.entrySet(), myNonEmptyParamMap.entrySet());
+    myMockery.assertIsSatisfied();
   }
 
 }
