@@ -14,8 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code BuildFeatureParametersProvider}
  *
+ * Exposes {@code SharedResourcesBuildFeature} parameters to build
+ *
+ * @see SharedResourcesBuildFeature
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class BuildFeatureParametersProvider extends AbstractBuildParametersProvider implements BuildParametersProvider {
