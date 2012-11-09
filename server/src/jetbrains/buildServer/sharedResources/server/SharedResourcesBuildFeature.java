@@ -6,6 +6,7 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -46,6 +47,14 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull Map<String, String> params) {
-    return "Click 'Edit' to display feature state and instructions";
+    return "$$$ Add clever message here $$$";
+  }
+
+  @Nullable
+  @Override
+  public Map<String, String> getDefaultParameters() {
+    final Map<String, String> result = new HashMap<String, String>();
+    result.put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "");
+    return result;
   }
 }

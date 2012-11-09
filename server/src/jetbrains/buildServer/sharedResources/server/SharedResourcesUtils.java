@@ -1,15 +1,19 @@
 package jetbrains.buildServer.sharedResources.server;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
 
@@ -23,6 +27,36 @@ final class SharedResourcesUtils {
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
+
+  /**
+   * todo: javadoc
+   * todo: tests
+   * todo: refine matching
+   *
+   *
+   * @param serializedParam parameter stored in feature
+   * @return
+   */
+  @NotNull
+  public static Map<String, String> featureParamToBuildParams(String serializedParam) {
+    final Pattern p = Pattern.compile("([A-za-z0-9]+)\\s+([A-za-z0-9]+)");
+    Map<String, String> result;
+    if (Strings.isNullOrEmpty(serializedParam)) {
+      result = Collections.emptyMap();
+    } else {
+      result = new HashMap<String, String> ();
+      String[] strings = serializedParam.split("\n");
+      for(String str: strings) {
+        Matcher m = p.matcher(str);
+        if (m.matches()) {
+          // group2 - lock type
+          // group1 - lock name
+          result.put(SharedResourcesPluginConstants.LOCK_PREFIX + m.group(2) + "." + m.group(1), "");
+        }
+      }
+    }
+    return result;
+  }
 
   /**
    * Extracts lock from build parameter name

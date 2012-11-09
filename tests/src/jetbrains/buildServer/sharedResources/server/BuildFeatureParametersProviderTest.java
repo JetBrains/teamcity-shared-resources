@@ -35,13 +35,21 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
   /** Build feature parameters */
-  private Map<String, String> myNonEmptyParamMap;
+  private Map<String, String> myNonEmptyParamMapNoLocks;
+
+  /** Build feature parameters with some locks */
+  private Map<String, String> myNonEmptyParamMapSomeLocks;
+
+  /** Number of locks in non empty param map */
+  private final int numTakenLocks = 3;
 
   /** Empty build feature parameters */
   private final Map<String, String> myEmptyParamMap = Collections.emptyMap();
 
   /** Class under test */
   private BuildFeatureParametersProvider myBuildFeatureParametersProvider;
+
+
 
   @BeforeMethod
   @Override
@@ -51,10 +59,18 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myBuild = myMockery.mock(SBuild.class);
     myBuildType = myMockery.mock(SBuildType.class);
     myBuildFeatureDescriptor = myMockery.mock(SBuildFeatureDescriptor.class);
-    myNonEmptyParamMap = new HashMap<String, String>() {{
+    myNonEmptyParamMapNoLocks = new HashMap<String, String>() {{
       put("param1_key", "param1_value");
       put("param2_key", "param2_value");
     }};
+
+    myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
+      put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "lock1 read\nlock2 write\nlock3 read");
+      put("param1_key", "param1_value");
+      put("param2_key", "param2_value");
+    }};
+
+
     myBuildFeatureParametersProvider = new BuildFeatureParametersProvider();
   }
 
@@ -125,11 +141,12 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   }
 
   /**
-   * Test parameters provider when some locks are taken
+   * Test parameters provider when some params are present, though
+   * no locks are taken
    * @throws Exception if something goes wrong
    */
   @Test
-  public void testNonEmptyParams() throws Exception {
+  public void testNonEmptyParamsNoLocks() throws Exception {
     final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
       add(myBuildFeatureDescriptor);
     }};
@@ -144,16 +161,46 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
       oneOf(myBuildFeatureDescriptor).getParameters();
-      will(returnValue(myNonEmptyParamMap));
+      will(returnValue(myNonEmptyParamMapNoLocks));
 
     }});
 
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
-    assertEquals("Expected empty result. Actual size is [" + size + "]" , myNonEmptyParamMap.size(), size);
-    assertSameElements(result.entrySet(), myNonEmptyParamMap.entrySet());
+    assertEquals("Expected empty result. Actual size is [" + size + "]" , 0, size);
     myMockery.assertIsSatisfied();
   }
 
+
+  /**
+   * Test parameters provider when some locks are taken
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testNonEmptyParamsSomeLocks() throws Exception {
+    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
+      add(myBuildFeatureDescriptor);
+    }};
+    myMockery.checking(new Expectations() {{
+      oneOf(myBuild).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildFeatureDescriptor).getParameters();
+      will(returnValue(myNonEmptyParamMapSomeLocks));
+
+    }});
+
+    Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
+    assertNotNull(result);
+    int size = result.size();
+    assertEquals("Wrong locks number. Expected [" + numTakenLocks + "]. Actual size is [" + size + "]" , numTakenLocks, size);
+    myMockery.assertIsSatisfied();
+  }
 }

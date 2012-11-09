@@ -36,8 +36,8 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
         Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
         for (SBuildFeatureDescriptor descriptor: features) {
           if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-            result.putAll(descriptor.getParameters());
-            break;
+            final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+            result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
           }
         }
       }
