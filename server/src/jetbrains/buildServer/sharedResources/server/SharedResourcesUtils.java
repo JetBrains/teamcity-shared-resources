@@ -1,6 +1,5 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
@@ -41,7 +40,7 @@ final class SharedResourcesUtils {
   public static Map<String, String> featureParamToBuildParams(String serializedParam) {
     final Pattern p = Pattern.compile("([A-za-z0-9]+)\\s+([A-za-z0-9]+)");
     Map<String, String> result;
-    if (Strings.isNullOrEmpty(serializedParam)) {
+    if (serializedParam == null || "".equals(serializedParam)) {
       result = Collections.emptyMap();
     } else {
       result = new HashMap<String, String> ();
