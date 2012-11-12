@@ -40,9 +40,6 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** Build feature parameters with some locks */
   private Map<String, String> myNonEmptyParamMapSomeLocks;
 
-  /** Number of locks in non empty param map */
-  private final int numTakenLocks = 3;
-
   /** Empty build feature parameters */
   private final Map<String, String> myEmptyParamMap = Collections.emptyMap();
 
@@ -200,6 +197,8 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
+    /* Number of locks in non empty param map */
+    int numTakenLocks = 3;
     assertEquals("Wrong locks number. Expected [" + numTakenLocks + "]. Actual size is [" + size + "]" , numTakenLocks, size);
     myMockery.assertIsSatisfied();
   }

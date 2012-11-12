@@ -1,6 +1,9 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
@@ -105,11 +108,15 @@ final class SharedResourcesUtils {
   @NotNull
   static Collection<Lock> extractLocksFromPromotion(@NotNull BuildPromotionInfo buildPromotionInfo) {
     Collection<Lock> result = new HashSet<Lock>();
-    Map<String, String> buildParameters = buildPromotionInfo.getParameters();
-    for (Map.Entry<String, String> param : buildParameters.entrySet()) {
-      Lock lock = getLockFromBuildParam(param.getKey());
-      if (lock != null) {
-        result.add(lock);
+    BuildPromotionEx promo  = (BuildPromotionEx) buildPromotionInfo;
+    final SBuildType myBuildType = promo.getBuildType();
+    if (myBuildType != null) {
+      final Collection<SBuildFeatureDescriptor> features = myBuildType.getBuildFeatures();
+      for (SBuildFeatureDescriptor descriptor: features) {
+        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
+          final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          result.addAll(extractLocksFromParams(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams)));
+        }
       }
     }
     return result;
@@ -191,6 +198,17 @@ final class SharedResourcesUtils {
       }
     }
     return takenLocks;
+  }
+
+  static Collection<Lock> extractLocksFromParams(@NotNull Map<String, String> params) {
+    List<Lock> result = new ArrayList<Lock>();
+    for (String str: params.keySet()) {
+      Lock lock = SharedResourcesUtils.getLockFromBuildParam(str);
+      if (lock != null) {
+        result.add(lock);
+      }
+    }
+    return result;
   }
 
   /**

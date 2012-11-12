@@ -27,13 +27,11 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuild, @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted, @NotNull BuildDistributorInput buildDistributorInput, boolean emulationMode) {
     WaitReason result = null;
     if (!emulationMode) {
-
       final Collection<Lock> locksToTake = extractLocksFromPromotion(queuedBuild.getBuildPromotionInfo());
-      //if (!locksToTake.isEmpty()) {
+      if (!locksToTake.isEmpty()) {
         final Collection<RunningBuildInfo> runningBuilds = buildDistributorInput.getRunningBuilds();
         final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
         final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
-
         final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
         if (!unavailableLocks.isEmpty()) {
           final StringBuilder builder = new StringBuilder("Build is waiting for lock(s): \n");
@@ -46,8 +44,10 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
           }
           result = new SimpleWaitReason(reasonDescription);
         }
-      //}
+      }
     }
     return result;
   }
+
+
 }

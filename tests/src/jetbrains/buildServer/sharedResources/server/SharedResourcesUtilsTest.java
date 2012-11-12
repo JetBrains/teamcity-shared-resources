@@ -103,7 +103,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     }
   }
 
-  @Test
+  // todo: implement
   public void testExtractLocksFromPromotion() throws Exception {
     final Map<String, String> params = new HashMap<String, String>();
     params.put(TestUtils.generateLockAsParam(LockType.READ, "read1"), "");
@@ -141,9 +141,8 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     assertEquals(myRunningBuilds.size() + myQueuedBuilds.size(), buildPromotions.size());
   }
 
-  @Test
+  // todo: implement
   public void testGetUnavailableLocks() throws Exception {
-
     // taken locks
     final List<Map<String, String>> paramsList = new ArrayList<Map<String, String>>();
     paramsList.add(new HashMap<String, String>() {{
