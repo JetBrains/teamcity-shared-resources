@@ -29,14 +29,12 @@ public class SharedResourcesPluginController extends BaseController {
   ) {
     myDescriptor = descriptor;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
-
   }
 
   @Nullable
   @Override
   protected ModelAndView doHandle(@NotNull HttpServletRequest request,
                                   @NotNull HttpServletResponse response) throws Exception {
-
     return new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
   }
 
