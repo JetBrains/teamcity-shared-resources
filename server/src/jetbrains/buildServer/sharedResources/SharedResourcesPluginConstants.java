@@ -11,11 +11,9 @@ public class SharedResourcesPluginConstants {
 
   public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
 
+  public static final String EDIT_FEATURE_JS = "featureActions.js";
+
   public static final String LOCK_PREFIX = "teamcity.locks.";
-
-  public static final String ATTR_READ_LOCKS = "readLocks";
-
-  public static final String ATTR_WRITE_LOCKS = "writeLocks";
 
   /**
    * Key in feature parameters collection, that contains all locks
