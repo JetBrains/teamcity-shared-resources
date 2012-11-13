@@ -11,7 +11,7 @@
   <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
 
-  <!--<bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>-->
+  <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 

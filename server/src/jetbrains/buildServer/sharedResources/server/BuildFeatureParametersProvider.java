@@ -9,7 +9,6 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,19 +25,14 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
   @NotNull
   @Override
   public Map<String, String> getParameters(@NotNull SBuild build, boolean emulationMode) {
-    Map<String, String> result;
-    if (emulationMode) {
-      result = Collections.emptyMap();
-    } else {
-      result = new HashMap<String, String>();
-      final SBuildType buildType = build.getBuildType();
-      if (buildType != null) {
-        Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
-        for (SBuildFeatureDescriptor descriptor: features) {
-          if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-            final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
-            result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
-          }
+    final Map<String, String> result = new HashMap<String, String>();
+    final SBuildType buildType = build.getBuildType();
+    if (buildType != null) {
+      Collection<SBuildFeatureDescriptor> features = buildType.getResolvedSettings().getBuildFeatures();
+      for (SBuildFeatureDescriptor descriptor: features) {
+        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
+          final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
         }
       }
     }

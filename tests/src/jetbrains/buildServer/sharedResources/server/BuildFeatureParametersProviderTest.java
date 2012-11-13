@@ -1,6 +1,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
@@ -31,6 +32,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** BuildType under test */
   private SBuildType myBuildType;
 
+  /** Resolved setting of the build type */
+  private ResolvedSettings myResolvedSettings;
+
   /** SharedResources build feature descriptor */
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
@@ -56,6 +60,8 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myBuild = myMockery.mock(SBuild.class);
     myBuildType = myMockery.mock(SBuildType.class);
     myBuildFeatureDescriptor = myMockery.mock(SBuildFeatureDescriptor.class);
+    myResolvedSettings = myMockery.mock(ResolvedSettings.class);
+
     myNonEmptyParamMapNoLocks = new HashMap<String, String>() {{
       put("param1_key", "param1_value");
       put("param2_key", "param2_value");
@@ -81,7 +87,10 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(Collections.emptyList()));
     }});
 
@@ -92,18 +101,6 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myMockery.assertIsSatisfied();
   }
 
-  /**
-   * Tests parameters provider in emulation mode
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testInEmulationMode() throws Exception {
-    Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, true);
-    assertNotNull(result);
-    int size = result.size();
-    assertEquals("Expected empty result. Actual size is [" + size + "]" ,0 , size);
-    myMockery.assertIsSatisfied();
-  }
 
   /**
    * Test parameters provider when none locks are taken
@@ -118,7 +115,10 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();
@@ -151,7 +151,10 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();
@@ -183,7 +186,10 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();

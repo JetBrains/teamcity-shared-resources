@@ -2,6 +2,7 @@ package jetbrains.buildServer.sharedResources;
 
 import jetbrains.buildServer.sharedResources.model.LockType;
 
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -12,6 +13,8 @@ import java.util.UUID;
  * @author Oleg Rybak
  */
 public class TestUtils {
+
+  private static final Random r = new Random(System.currentTimeMillis());
 
   /**
    * Generates lock representation as it is in build parameters
@@ -27,5 +30,13 @@ public class TestUtils {
    */
   public static String generateRandomSystemParam() {
     return "system." + UUID.randomUUID().toString();
+  }
+
+  /**
+   * Generates serialized version of a lock as it is stored in feature parameter
+   * @return serialized lock
+   */
+  public static String generateSerializedLock() {
+    return r.nextInt(100000) + " " + (r.nextInt(1000) % 2 == 0 ? "readLock" : "writeLock");
   }
 }

@@ -1,9 +1,8 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
@@ -26,22 +25,27 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  */
 final class SharedResourcesUtils {
 
+  // todo: remove regexp
+  private static final Pattern p = Pattern.compile("([A-za-z0-9]+)\\s+([A-za-z0-9]+)");
+
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
 
   /**
+   * Parses build feature parameters. Exposes them to the build
+   *
    * todo: javadoc
    * todo: tests
-   * todo: refine matching
    *
+   * @see SharedResourcesPluginConstants#LOCK_PREFIX
+   * @see SharedResourcesPluginConstants#LOCKS_FEATURE_PARAM_KEY
    *
-   * @param serializedParam parameter stored in feature
-   * @return
+   * @param serializedParam parameter stored in build feature
+   * @return map representation of build feature parameter
    */
   @NotNull
   public static Map<String, String> featureParamToBuildParams(String serializedParam) {
-    final Pattern p = Pattern.compile("([A-za-z0-9]+)\\s+([A-za-z0-9]+)");
     Map<String, String> result;
     if (serializedParam == null || "".equals(serializedParam)) {
       result = Collections.emptyMap();
@@ -107,19 +111,8 @@ final class SharedResourcesUtils {
    */
   @NotNull
   static Collection<Lock> extractLocksFromPromotion(@NotNull BuildPromotionInfo buildPromotionInfo) {
-    Collection<Lock> result = new HashSet<Lock>();
-    BuildPromotionEx promo  = (BuildPromotionEx) buildPromotionInfo;
-    final SBuildType myBuildType = promo.getBuildType();
-    if (myBuildType != null) {
-      final Collection<SBuildFeatureDescriptor> features = myBuildType.getBuildFeatures();
-      for (SBuildFeatureDescriptor descriptor: features) {
-        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-          final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
-          result.addAll(extractLocksFromParams(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams)));
-        }
-      }
-    }
-    return result;
+    final ParametersProvider pp = ((BuildPromotionEx)buildPromotionInfo).getParametersProvider();
+    return extractLocksFromParams(pp.getAll());
   }
 
   /**
