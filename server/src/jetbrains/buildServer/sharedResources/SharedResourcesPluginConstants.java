@@ -18,7 +18,7 @@ public class SharedResourcesPluginConstants {
   /**
    * Key in feature parameters collection, that contains all locks
    */
-  public static final String LOCKS_FEATURE_PARAM_KEY = "LOCKS";
+  public static final String LOCKS_FEATURE_PARAM_KEY = "locks-param";
 
   public String getLocksFeatureParamKey() {
     return LOCKS_FEATURE_PARAM_KEY;
