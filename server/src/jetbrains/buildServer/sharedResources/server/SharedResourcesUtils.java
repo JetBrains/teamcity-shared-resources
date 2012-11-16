@@ -26,7 +26,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 final class SharedResourcesUtils {
 
   // todo: remove regexp
-  private static final Pattern p = Pattern.compile("([A-za-z0-9]+)\\s+([A-za-z0-9]+)");
+  private static final Pattern p = Pattern.compile("([A-za-z0-9%]+)\\s+([A-za-z0-9]+)");
 
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
@@ -58,6 +58,27 @@ final class SharedResourcesUtils {
           // group2 - lock type
           // group1 - lock name
           result.put(SharedResourcesPluginConstants.LOCK_PREFIX + m.group(2) + "." + m.group(1), "");
+        }
+      }
+    }
+    return result;
+  }
+
+
+  @NotNull
+  public static Map<String, String> splitFeatureParam(String serializedParam) {
+    Map<String, String> result;
+    if (serializedParam == null || "".equals(serializedParam)) {
+      result = Collections.emptyMap();
+    } else {
+      result = new HashMap<String, String> ();
+      String[] strings = serializedParam.split("\n");
+      for(String str: strings) {
+        Matcher m = p.matcher(str);
+        if (m.matches()) {
+          // group2 - lock type
+          // group1 - lock name
+          result.put(m.group(1) , m.group(2));
         }
       }
     }
