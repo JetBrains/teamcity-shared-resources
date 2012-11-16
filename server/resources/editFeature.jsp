@@ -3,17 +3,18 @@
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
+<jsp:useBean id="locks" scope="request" type="java.util.Map"/>
+
+
 
 
 <script type="text/javascript">
-  /**
-   * contains UI actions for feature editing dialog
-   */
+  //noinspection JSUnusedGlobalSymbols
   BS.AddLockDialog = OO.extend(BS.AbstractModalDialog, {
+
     attachedToRoot: false,
 
     getContainer: function() {
-      console.log("getContainer");
       return $('addLockDialog');
     },
 
@@ -23,6 +24,11 @@
       this.bindCtrlEnterHandler(this.submit.bind(this));
     },
 
+   /**
+    * Shows dialog used to edit lock
+    * @param lockName name of the lock
+    * @param lockType type of the lock
+    */
     showEdit: function(lockName, lockType) {
       console.log("showEdit!");
       $('newLockName').value = lockName;
@@ -54,67 +60,42 @@
     },
 
     validate: function() {
-      /* 1) name not empty
-       * 2) name is not repeated
-       */
-
+      var _name = $('newLockName').value;
+      if (_name.length === 0) {
+        alert('Please enter lock name');
+        return false;
+      }
       return true;
     }
   });
 </script>
 
-
-
 <tr>
   <td colspan="2" style="padding:0; margin:0;">
-    <table class="dark borderBottom" >
-      <%-- title--%>
+    <table class="dark borderBottom">
       <tr>
         <th>Lock Name</th>
         <th style="width: 10%">Lock Type</th>
-        <th style="width: 15%">Operations</th>
+        <th style="width: 5%">&nbsp;</th>
       </tr>
-      <tr>
-        <td>name1</td>
-        <td>Read</td>
-        <td>Edit Delete</td>
-      </tr>
-      <tr>
-        <td>name2 (%template_name2%)</td>
-        <td>Read</td>
-        <td>Edit Delete</td>
-      </tr>
-      <tr>
-        <td>name3</td>
-        <td>Write</td>
-        <td>Edit Delete</td>
-      </tr>
-      <tr>
-        <td>name4 (%another_template%)</td>
-        <td>Write</td>
-        <td>Edit Delete</td>
-      </tr>
-      <tr>
-        <td>name5</td>
-        <td>Read</td>
-        <td>Edit Delete</td>
-      </tr>
+
+      <c:forEach var="item" items="${locks}">
+        <tr>
+          <td><c:out value="${item.key}"/></td>
+          <td><c:out value="${item.value}"/></td>
+          <td>delete</td>
+        </tr>
+      </c:forEach>
     </table>
   </td>
 </tr>
 
-<tr class="noBorder">
+<tr class="noBorder" style="display: none">
   <th><label for="${keys.locksFeatureParamKey}">Resource name:</label></th>
-  <td>                                                                                                                                   <%-- todo: expand --%>
+  <td>
     <props:multilineProperty name="${keys.locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
     <span class="error" id="error_${keys.locksFeatureParamKey}"></span>
-    <span class="smallNote">Specify shared resource name(s)</span>
-  </td>
-</tr>
-
-<tr class="noBorder">
-  <td colspan="2">
-    <p>Please specify shared resource(s) that must be locked during build</p>
+    <span class="smallNote">Please specify shared resources that must be locked during build</span>
   </td>
 </tr>
 
@@ -127,13 +108,15 @@
     <bs:dialog dialogId="addLockDialog" title="Add Lock" closeCommand="BS.AddLockDialog.close()">
       <table class="runnerFormTable">
         <tr>
+          <th><label for="newLockName">Lock name:</label></th>
           <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 98%" className="buildTypeParams" defaultText=""/>
+            <forms:textField id="newLockName" name="newLockName" style="width: 98%" className="longField buildTypeParams" defaultText=""/>
           </td>
         </tr>
         <tr>
+          <th><label for="newLockType">Lock type:</label></th>
           <td>
-            <forms:select name="newLockType" id="newLockType">
+            <forms:select name="newLockType" id="newLockType" style="width: 60%">
               <forms:option value="readLock">Read Lock</forms:option>
               <forms:option value="writeLock">Write Lock</forms:option>
             </forms:select>
@@ -145,9 +128,9 @@
         <forms:submit type="button" label="Add Lock" onclick="BS.AddLockDialog.submit()"/>
       </div>
     </bs:dialog>
-    <script type="text/javascript">
-      BS.MultilineProperties.updateVisible();
-    </script>
+    <%--<script type="text/javascript">--%>
+      <%--BS.MultilineProperties.updateVisible();--%>
+    <%--</script>--%>
   </td>
 </tr>
 
