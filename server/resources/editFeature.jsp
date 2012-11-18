@@ -20,17 +20,17 @@
 
     showDialog: function() {
       $('newLockName').value = "";
+
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
     },
 
-   /**
-    * Shows dialog used to edit lock
-    * @param lockName name of the lock
-    * @param lockType type of the lock
-    */
+    /**
+     * Shows dialog used to edit lock
+     * @param lockName name of the lock
+     * @param lockType type of the lock
+     */
     showEdit: function(lockName, lockType) {
-      console.log("showEdit!");
       $('newLockName').value = lockName;
       $j('#newLockType option').each(function() {
         var self = $j(this);
@@ -39,22 +39,24 @@
       });
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
-
     },
 
     submit: function() {
       if (!this.validate()) return false;
       var element = $('${keys.locksFeatureParamKey}');
+      var lockName = $('newLockName').value;
+      //noinspection JSUnresolvedFunction
+      var lockType = $j('#newLockType option:selected').val();
       var val = element.value;
       if (val[val.length - 1] !== '\n') {
         val += '\n'
       }
-      val += $('newLockName').value;
+      val += lockName;
       val += ' ';
-      //noinspection JSUnresolvedFunction
-      val += $j('#newLockType option:selected').val();
+      val += lockType;
       val += '\n';
       element.value = val;
+      this.addLockToTakenLocks(lockName, lockType);
       this.close();
       return false;
     },
@@ -66,13 +68,27 @@
         return false;
       }
       return true;
+    },
+
+    addLockToTakenLocks: function(lockName, lockType) {
+      var row = "<tr><td>" + lockName + "</td><td>" + lockType +"</td>";
+      row += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.AddLockDialog.deleteLockFromTakenLocks  (' + lockName + '); return false\">delete</a></td>";
+      row += "</tr>";
+      $j('#locksTaken tbody tr:last').after(row);
+    },
+
+    deleteLockFromTakenLocks: function(lockName) {
+      console.log("Deleting lock: [" + lockName + "]");
     }
   });
+
+
+
 </script>
 
 <tr>
   <td colspan="2" style="padding:0; margin:0;">
-    <table class="dark borderBottom">
+    <table id="locksTaken" class="dark borderBottom">
       <tr>
         <th>Lock Name</th>
         <th style="width: 10%">Lock Type</th>
@@ -83,7 +99,7 @@
         <tr>
           <td><c:out value="${item.key}"/></td>
           <td><c:out value="${item.value}"/></td>
-          <td>delete</td>
+          <td class="remove"><a href="#" onclick="BS.AddLockDialog.deleteLockFromTakenLocks('${item.key}'); return false">delete</a></td>
         </tr>
       </c:forEach>
     </table>
@@ -129,7 +145,7 @@
       </div>
     </bs:dialog>
     <%--<script type="text/javascript">--%>
-      <%--BS.MultilineProperties.updateVisible();--%>
+    <%--BS.MultilineProperties.updateVisible();--%>
     <%--</script>--%>
   </td>
 </tr>
