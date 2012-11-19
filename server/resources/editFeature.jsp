@@ -94,10 +94,8 @@
 
     deleteLockFromTakenLocks: function(lockName) {
       console.log("Deleting lock: [" + lockName + "]");
-      if (confirm("Do you want to delete " + lockName + "?")) {
-        delete this.myData[lockName];
-        this.refreshUi();
-      }
+      delete this.myData[lockName];
+      this.refreshUi();
     }
   });
 

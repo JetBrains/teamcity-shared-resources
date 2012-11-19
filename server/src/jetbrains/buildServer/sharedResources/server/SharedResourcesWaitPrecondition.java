@@ -4,7 +4,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,24 +31,38 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   @Override
   public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuild, @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted, @NotNull BuildDistributorInput buildDistributorInput, boolean emulationMode) {
     WaitReason result = null;
-    final ParametersProvider pp = ((BuildPromotionEx)queuedBuild.getBuildPromotionInfo()).getParametersProvider();
-    final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
-    if (!locksToTake.isEmpty()) {
-      final Collection<RunningBuildInfo> runningBuilds = buildDistributorInput.getRunningBuilds();
-      final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
-      final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
-      final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
-      if (!unavailableLocks.isEmpty()) {
-        final StringBuilder builder = new StringBuilder("Build is waiting for ");
-        builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
-        for (Lock lock : unavailableLocks) {
-          builder.append(lock.getName()).append(", ");
+    final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
+    SBuildType buildType = myPromotion.getBuildType();
+    if (buildType != null) {
+      boolean featureFound = false;
+      Collection<SBuildFeatureDescriptor> features = buildType.getResolvedSettings().getBuildFeatures();
+      for (SBuildFeatureDescriptor descriptor: features) {
+        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
+          featureFound = true;
+          break;
         }
-        final String reasonDescription = builder.substring(0, builder.length() - 2);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Got wait reason: [" + reasonDescription + "]");
+      }
+      if (featureFound) {
+        final ParametersProvider pp = myPromotion.getParametersProvider();
+        final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
+        if (!locksToTake.isEmpty()) {
+          final Collection<RunningBuildInfo> runningBuilds = buildDistributorInput.getRunningBuilds();
+          final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
+          final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
+          final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions);
+          if (!unavailableLocks.isEmpty()) {
+            final StringBuilder builder = new StringBuilder("Build is waiting for ");
+            builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
+            for (Lock lock : unavailableLocks) {
+              builder.append(lock.getName()).append(", ");
+            }
+            final String reasonDescription = builder.substring(0, builder.length() - 2);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Got wait reason: [" + reasonDescription + "]");
+            }
+            result = new SimpleWaitReason(reasonDescription);
+          }
         }
-        result = new SimpleWaitReason(reasonDescription);
       }
     }
     return result;
