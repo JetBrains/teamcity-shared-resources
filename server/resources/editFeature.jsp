@@ -6,13 +6,39 @@
 <jsp:useBean id="locks" scope="request" type="java.util.Map"/>
 
 
-
-
 <script type="text/javascript">
   //noinspection JSUnusedGlobalSymbols
   BS.AddLockDialog = OO.extend(BS.AbstractModalDialog, {
 
     attachedToRoot: false,
+
+    myData: {},
+
+    fillData: function() {
+      <c:forEach var="item" items="${locks}">
+      this.myData['${item.key}'] = '${item.value}';
+      </c:forEach>
+    },
+
+    refreshUi: function() {
+      var tableBody = $j('#locksTaken tbody:last');
+      var textArea = $('${keys.locksFeatureParamKey}');
+      tableBody.children().remove();
+      var self = this.myData;
+      var textAreaContent = "";
+      for (var key in self) {
+        //noinspection JSUnfilteredForInLoop
+        var content = "<tr><td>" + key + "</td><td>" + self[key] +"</td>";
+        content += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.AddLockDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
+        content += "</tr>";
+
+        //noinspection JSUnfilteredForInLoop
+        textAreaContent += key + " " + self[key] + "\n";
+        //noinspection JSCheckFunctionSignatures
+        tableBody.append(content);
+      }
+      textArea.value = textAreaContent.trim();
+    },
 
     getContainer: function() {
       return $('addLockDialog');
@@ -47,15 +73,6 @@
       var lockName = $('newLockName').value;
       //noinspection JSUnresolvedFunction
       var lockType = $j('#newLockType option:selected').val();
-      var val = element.value;
-      if (val[val.length - 1] !== '\n') {
-        val += '\n'
-      }
-      val += lockName;
-      val += ' ';
-      val += lockType;
-      val += '\n';
-      element.value = val;
       this.addLockToTakenLocks(lockName, lockType);
       this.close();
       return false;
@@ -71,42 +88,43 @@
     },
 
     addLockToTakenLocks: function(lockName, lockType) {
-      var row = "<tr><td>" + lockName + "</td><td>" + lockType +"</td>";
-      row += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.AddLockDialog.deleteLockFromTakenLocks  (' + lockName + '); return false\">delete</a></td>";
-      row += "</tr>";
-      $j('#locksTaken tbody tr:last').after(row);
+      this.myData[lockName] = lockType;
+      this.refreshUi();
     },
 
     deleteLockFromTakenLocks: function(lockName) {
       console.log("Deleting lock: [" + lockName + "]");
+      if (confirm("Do you want to delete " + lockName + "?")) {
+        delete this.myData[lockName];
+        this.refreshUi();
+      }
     }
   });
-
-
 
 </script>
 
 <tr>
   <td colspan="2" style="padding:0; margin:0;">
     <table id="locksTaken" class="dark borderBottom">
+      <thead>
       <tr>
         <th>Lock Name</th>
         <th style="width: 10%">Lock Type</th>
         <th style="width: 5%">&nbsp;</th>
       </tr>
-
-      <c:forEach var="item" items="${locks}">
-        <tr>
-          <td><c:out value="${item.key}"/></td>
-          <td><c:out value="${item.value}"/></td>
-          <td class="remove"><a href="#" onclick="BS.AddLockDialog.deleteLockFromTakenLocks('${item.key}'); return false">delete</a></td>
-        </tr>
-      </c:forEach>
+      </thead>
+      <tbody>
+      </tbody>
     </table>
   </td>
 </tr>
 
-<tr class="noBorder" style="display: none">
+<script type="text/javascript">
+  BS.AddLockDialog.fillData();
+  BS.AddLockDialog.refreshUi();
+</script>
+
+<tr class="noBorder" <%--style="display: none"--%>>
   <th><label for="${keys.locksFeatureParamKey}">Resource name:</label></th>
   <td>
     <props:multilineProperty name="${keys.locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
@@ -144,9 +162,6 @@
         <forms:submit type="button" label="Add Lock" onclick="BS.AddLockDialog.submit()"/>
       </div>
     </bs:dialog>
-    <%--<script type="text/javascript">--%>
-    <%--BS.MultilineProperties.updateVisible();--%>
-    <%--</script>--%>
   </td>
 </tr>
 
