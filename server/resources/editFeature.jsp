@@ -124,7 +124,7 @@
   BS.AddLockDialog.refreshUi();
 </script>
 
-<tr class="noBorder" <%--style="display: none"--%>>
+<tr class="noBorder" style="display: none">
   <th><label for="${keys.locksFeatureParamKey}">Resource name:</label></th>
   <td>
     <props:multilineProperty name="${keys.locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>

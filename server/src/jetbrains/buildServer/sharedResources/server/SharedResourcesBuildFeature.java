@@ -47,7 +47,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull Map<String, String> params) {
-    return "$$$ Add clever message here $$$";
+    return "Click 'Edit' to add/remove locks on shared resources";
   }
 
   @Nullable
