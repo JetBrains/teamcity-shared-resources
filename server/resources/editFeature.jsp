@@ -8,16 +8,33 @@
 
 <script type="text/javascript">
   //noinspection JSUnusedGlobalSymbols
-  BS.AddLockDialog = OO.extend(BS.AbstractModalDialog, {
+
+  Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+  };
+
+  BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
     attachedToRoot: false,
 
     myData: {},
 
+    myLocksDisplay: {},
+
+    editMode: false,
+
+    currentLockName: "",
+
     fillData: function() {
       <c:forEach var="item" items="${locks}">
       this.myData['${item.key}'] = '${item.value}';
       </c:forEach>
+      this.myLocksDisplay['readLock'] = "Read lock";
+      this.myLocksDisplay['writeLock'] = "Write lock";
     },
 
     refreshUi: function() {
@@ -26,27 +43,39 @@
       tableBody.children().remove();
       var self = this.myData;
       var textAreaContent = "";
-      for (var key in self) {
-        //noinspection JSUnfilteredForInLoop
-        var content = "<tr><td>" + key + "</td><td>" + self[key] +"</td>";
-        content += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.AddLockDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
-        content += "</tr>";
+      var size = Object.size(self);
 
-        //noinspection JSUnfilteredForInLoop
-        textAreaContent += key + " " + self[key] + "\n";
-        //noinspection JSCheckFunctionSignatures
-        tableBody.append(content);
+      if (size > 0) {
+        $j('#locksTaken').css('display', 'table');
+        $j('#noLocksTaken').css('display', 'none');
+        for (var key in self) {
+          //noinspection JSUnfilteredForInLoop
+          var content = "<tr><td>" + key + "</td><td>" + this.myLocksDisplay[self[key]] +"</td>";
+          content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
+          content += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
+          content += "</tr>";
+
+          //noinspection JSUnfilteredForInLoop
+          textAreaContent += key + " " + self[key] + "\n";
+          //noinspection JSCheckFunctionSignatures
+          tableBody.append(content);
+        }
+      } else {
+        $j('#locksTaken').css('display', 'none');
+        $j('#noLocksTaken').css('display', 'table');
       }
       textArea.value = textAreaContent.trim();
     },
 
     getContainer: function() {
-      return $('addLockDialog');
+      return $('locksDialog');
     },
 
     showDialog: function() {
+      this.editMode = false;
+      $j("#locksDialogSubmit").prop('value', 'Add');
       $('newLockName').value = "";
-
+      this.refreshUi();
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
     },
@@ -54,10 +83,13 @@
     /**
      * Shows dialog used to edit lock
      * @param lockName name of the lock
-     * @param lockType type of the lock
      */
-    showEdit: function(lockName, lockType) {
+    showEdit: function(lockName) {
+      this.editMode = true;
+      this.currentLockName = lockName;
+      $j("#locksDialogSubmit").prop('value', 'Save');
       $('newLockName').value = lockName;
+      var lockType = this.myData[lockName];
       $j('#newLockType option').each(function() {
         var self = $j(this);
         //noinspection JSUnresolvedFunction
@@ -73,7 +105,12 @@
       var lockName = $('newLockName').value;
       //noinspection JSUnresolvedFunction
       var lockType = $j('#newLockType option:selected').val();
-      this.addLockToTakenLocks(lockName, lockType);
+      if (this.editMode) {
+        delete this.myData[this.currentLockName];
+        this.currentLockName = "";
+      }
+      this.myData[lockName] = lockType;
+      this.refreshUi();
       this.close();
       return false;
     },
@@ -85,11 +122,6 @@
         return false;
       }
       return true;
-    },
-
-    addLockToTakenLocks: function(lockName, lockType) {
-      this.myData[lockName] = lockType;
-      this.refreshUi();
     },
 
     deleteLockFromTakenLocks: function(lockName) {
@@ -108,18 +140,23 @@
       <tr>
         <th>Lock Name</th>
         <th style="width: 10%">Lock Type</th>
-        <th style="width: 5%">&nbsp;</th>
+        <th colspan="2" style="width: 10%">&nbsp;</th>
       </tr>
       </thead>
       <tbody>
       </tbody>
     </table>
+    <table id="noLocksTaken" style="display: none">
+      <tr>
+        <td>No locks are currently added</td>
+      </tr>
+    </table>
   </td>
 </tr>
 
 <script type="text/javascript">
-  BS.AddLockDialog.fillData();
-  BS.AddLockDialog.refreshUi();
+  BS.LocksDialog.fillData();
+  BS.LocksDialog.refreshUi();
 </script>
 
 <tr class="noBorder" style="display: none">
@@ -133,11 +170,11 @@
 
 <tr class="noBorder">
   <td colspan="2">
-    <forms:addButton id="addNewLock" onclick="BS.AddLockDialog.showDialog(); return false">Add lock</forms:addButton>
-    <%--<forms:addButton id="editLock1" onclick="BS.AddLockDialog.showEdit('name1', 'readLock'); return false">Edit read lock</forms:addButton> &lt;%&ndash;edit read lock &ndash;%&gt;--%>
-    <%--<forms:addButton id="editLock2" onclick="BS.AddLockDialog.showEdit('name2', 'writeLock'); return false">Edit write lock</forms:addButton> &lt;%&ndash; edit write lock &ndash;%&gt;--%>
+    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
+    <%--<forms:addButton id="editLock1" onclick="BS.LocksDialog.showEdit('name1', 'readLock'); return false">Edit read lock</forms:addButton> &lt;%&ndash;edit read lock &ndash;%&gt;--%>
+    <%--<forms:addButton id="editLock2" onclick="BS.LocksDialog.showEdit('name2', 'writeLock'); return false">Edit write lock</forms:addButton> &lt;%&ndash; edit write lock &ndash;%&gt;--%>
 
-    <bs:dialog dialogId="addLockDialog" title="Add Lock" closeCommand="BS.AddLockDialog.close()">
+    <bs:dialog dialogId="locksDialog" title="Lock Managemet" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
         <tr>
           <th><label for="newLockName">Lock name:</label></th>
@@ -156,8 +193,8 @@
         </tr>
       </table>
       <div class="popupSaveButtonsBlock">
-        <forms:cancel onclick="BS.AddLockDialog.close()" showdiscardchangesmessage="false"/>
-        <forms:submit type="button" label="Add Lock" onclick="BS.AddLockDialog.submit()"/>
+        <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
+        <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.LocksDialog.submit()"/>
       </div>
     </bs:dialog>
   </td>
