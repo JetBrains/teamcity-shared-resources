@@ -68,7 +68,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     }};
 
     myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
-      put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "lock1 read\nlock2 write\nlock3 read");
+      put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
       put("param1_key", "param1_value");
       put("param2_key", "param2_value");
     }};

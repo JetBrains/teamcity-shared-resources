@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
@@ -93,11 +94,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
       for (int i = 0; i < num; i++) {
         serializedParams.add(TestUtils.generateSerializedLock());
       }
-      final StringBuilder sb = new StringBuilder();
-      for (String str: serializedParams) {
-        sb.append(str).append("\n");
-      }
-      final String paramsAsString = sb.substring(0, sb.length() - 2);
+      final String paramsAsString = StringUtil.join(serializedParams, "\n");
       final Map<String, String> buildParams = SharedResourcesUtils.featureParamToBuildParams(paramsAsString);
       assertNotNull(buildParams);
       assertFalse("Expected not empty map for input of size [" + num + "]", buildParams.isEmpty());
