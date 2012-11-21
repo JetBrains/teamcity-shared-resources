@@ -6,7 +6,6 @@ import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.StringUtil;
@@ -20,7 +19,9 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 /**
  * Class {@code SharedResourcesUtils}
  *
- * @author Oleg Rybak
+ * Utility methods for SharedResources TeamCity plugin
+ *
+ * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 final class SharedResourcesUtils {
 
@@ -29,13 +30,7 @@ final class SharedResourcesUtils {
   private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
 
   /**
-   * Parses build feature parameters. Exposes them to the build
-   *
-   * todo: javadoc
-   * todo: tests
-   *
-   * @see SharedResourcesPluginConstants#LOCK_PREFIX
-   * @see SharedResourcesPluginConstants#LOCKS_FEATURE_PARAM_KEY
+   * Parses build feature parameters. Exposes them to the build as build parameters
    *
    * @param serializedParam parameter stored in build feature
    * @return map representation of build feature parameter
@@ -50,7 +45,17 @@ final class SharedResourcesUtils {
     return result;
   }
 
-  private static String lockAsBuildParam(Lock lock) {
+
+  /**
+   * Converts given locks to a {@code String} that is suitable to
+   * exposure as a build parameter name
+   *
+   * @see jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants#LOCK_PREFIX
+   * @param lock lock to convert
+   * @return lock as {@code String}
+   */
+  @NotNull
+  static String lockAsBuildParam(@NotNull Lock lock) {
     final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
     sb.append(lock.getType());
     sb.append(".");

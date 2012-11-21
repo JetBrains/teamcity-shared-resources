@@ -11,6 +11,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
@@ -18,29 +19,44 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
+import static jetbrains.buildServer.sharedResources.TestUtils.generateBoundedRandomInt;
+import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName;
+
 /**
- * Created with IntelliJ IDEA.
- * Date: 02.10.12
- * Time: 15:53
+ * Class {@code SharedResourcesUtilsTest}
  *
- * @author Oleg Rybak
+ * Contains tests for SharedResourcesUtils
+ *
+ * @see SharedResourcesUtils
+ * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@TestFor(testForClass = SharedResourcesUtils.class)
 public class SharedResourcesUtilsTest extends BaseTestCase {
 
-  public static final int RANDOM_UPPER_BOUNDARY = 20;
-  private static final int MAX_BUILDS = RANDOM_UPPER_BOUNDARY;
-  private static final Random R = new Random();
+  /** Mocks provider */
   private Mockery m;
+
+  /** Build promotion mock */
   private BuildPromotionEx myBuildPromotion;
+
+  /** Parameters provider mock */
   private ParametersProvider myParametersProvider;
+
+  /**
+   * Collection of mocked queued builds
+   */
   private Collection<QueuedBuildInfo> myQueuedBuilds;
+
+  /**
+   * Collection of mocked running builds
+   */
   private Collection<RunningBuildInfo> myRunningBuilds;
 
 
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
     m = new Mockery();
     myBuildPromotion = m.mock(BuildPromotionEx.class);
     myQueuedBuilds = new ArrayList<QueuedBuildInfo>();
@@ -48,14 +64,14 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     myParametersProvider = m.mock(ParametersProvider.class);
 
     {
-      int numBuilds = 1 + R.nextInt(MAX_BUILDS);
+      int numBuilds = generateBoundedRandomInt();
       for (int i = 0; i < numBuilds; i++) {
         myQueuedBuilds.add(m.mock(QueuedBuildInfo.class, "queuedBuild" + i));
       }
     }
 
     {
-      int numBuilds = R.nextInt(MAX_BUILDS);
+      int numBuilds = generateBoundedRandomInt();
       for (int i = 0; i < numBuilds; i++) {
         myRunningBuilds.add(m.mock(RunningBuildInfo.class, "runningBuild" + i));
       }
@@ -63,7 +79,11 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   }
 
 
+
   /**
+   * Tests {@code featureParamToBuildParams(String)} method on
+   * {@code null} and empty inputs
+   *
    * @see SharedResourcesUtils#featureParamToBuildParams(String)
    * @throws Exception if something goes wrong
    */
@@ -89,7 +109,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   @Test
   public void testFeatureParamToBuildParams_Valid() throws Exception {
     {
-      int num = 1 + R.nextInt(RANDOM_UPPER_BOUNDARY);
+      int num = generateBoundedRandomInt();
       final List<String> serializedParams = new ArrayList<String>(num);
       for (int i = 0; i < num; i++) {
         serializedParams.add(TestUtils.generateSerializedLock());
@@ -102,31 +122,94 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     }
   }
 
-
   /**
-   * @see SharedResourcesUtils#getLockFromBuildParam(String)
+   * Tests conversion of lock to build parameter name
+   *
+   * @see SharedResourcesUtils#lockAsBuildParam(jetbrains.buildServer.sharedResources.model.Lock)
+   * @see SharedResourcesPluginConstants#LOCK_PREFIX
    * @throws Exception if something goes wrong
    */
   @Test
-  public void testGetLockFromBuildParam_Valid() throws Exception {
-    final String lockName = "LOCK";
-    {
-      final String paramName = TestUtils.generateLockAsParam(LockType.READ, lockName);
-      final Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
-      assertNotNull(lock);
-      assertEquals(LockType.READ, lock.getType());
-    }
-
-    {
-      final String paramName = TestUtils.generateLockAsParam(LockType.WRITE, lockName);
-      final Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
-      assertNotNull(lock);
-      assertEquals(LockType.WRITE, lock.getType());
-      assertEquals(lockName, lock.getName());
+  public void testLockAsBuildParam() throws Exception {
+    for (LockType type: LockType.values()) {
+      final String name = generateRandomName();
+      final Lock lock = new Lock(name, type);
+      final String result = SharedResourcesUtils.lockAsBuildParam(lock);
+      assertNotNull(result);
+      assertEquals(LOCK_PREFIX + type + "." + name, result);
     }
   }
 
   /**
+   * Tests {@code getLockNames} method on null and empty inputs
+   *
+   * @see SharedResourcesUtils#getLockNames(String)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testGetLockNames_NullAndEmpty() throws Exception {
+    { // null case
+      final List<List<String>> result = SharedResourcesUtils.getLockNames(null);
+      assertNotNull(result);
+      assertNotEmpty(result);
+      assertEquals(2, result.size());
+      assertNotNull(result.get(0));
+      assertEmpty(result.get(0));
+      assertNotNull(result.get(1));
+      assertEmpty(result.get(1));
+    }
+
+    { // empty case
+      final List<List<String>> result = SharedResourcesUtils.getLockNames("");
+      assertNotNull(result);
+      assertNotEmpty(result);
+      assertEquals(2, result.size());
+      assertNotNull(result.get(0));
+      assertEmpty(result.get(0));
+      assertNotNull(result.get(1));
+      assertEmpty(result.get(1));
+    }
+  }
+
+
+  /**
+   * Tests {@code getLockNames} method on random valid inputs
+   *
+   * @see SharedResourcesUtils#getLockNames(String)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testGetLockNames_Valid() throws Exception {
+    final int readLocksNum = generateBoundedRandomInt();
+    final int writeLocksNum = generateBoundedRandomInt();
+    final List<String> serializedReadLocks = new ArrayList<String>(readLocksNum);
+    final List<String> serializedWriteLocks = new ArrayList<String>(writeLocksNum);
+    for (int i = 0; i < readLocksNum; i++) {
+      serializedReadLocks.add(TestUtils.generateSerializedLock(LockType.READ));
+    }
+
+    for (int i = 0; i < writeLocksNum; i++) {
+      serializedWriteLocks.add(TestUtils.generateSerializedLock(LockType.WRITE));
+    }
+    final Collection<String> allLocks = new ArrayList<String>();
+    allLocks.addAll(serializedReadLocks);
+    allLocks.addAll(serializedWriteLocks);
+
+    final List<List<String>> result = SharedResourcesUtils.getLockNames(StringUtil.join(allLocks, "\n"));
+    assertNotNull(result);
+    assertNotEmpty(result);
+    assertEquals(2, result.size());
+    assertNotNull(result.get(0));
+    assertNotEmpty(result.get(0));
+    assertEquals(readLocksNum, result.get(0).size());
+    assertNotNull(result.get(1));
+    assertNotEmpty(result.get(1));
+    assertEquals(writeLocksNum, result.get(1).size());
+  }
+
+  /**
+   * Tests {@code getLockFromBuildParam} method on invalid inputs
+   *
    * @see SharedResourcesUtils#getLockFromBuildParam(String)
    * @throws Exception if something goes wrong
    */
@@ -139,23 +222,50 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     }
 
     { // invalid type
-      String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "someInvalidLockType";
+      String paramName = LOCK_PREFIX + "someInvalidLockType";
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
 
     { // no name specified
-      String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "readLock";
+      String paramName = LOCK_PREFIX + "readLock";
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
 
     { // invalid name (empty string) specified
-      String paramName = SharedResourcesPluginConstants.LOCK_PREFIX + "writeLock.";
+      String paramName = LOCK_PREFIX + "writeLock.";
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
   }
+
+
+  /**
+   * Tests {@code getLockFromBuildParam} method on valid inputs
+   *
+   * @see SharedResourcesUtils#getLockFromBuildParam(String)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testGetLockFromBuildParam_Valid() throws Exception {
+    final String lockName = generateRandomName();
+    {
+      final String paramName = TestUtils.generateLockAsParam(lockName, LockType.READ);
+      final Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
+      assertNotNull(lock);
+      assertEquals(LockType.READ, lock.getType());
+    }
+
+    {
+      final String paramName = TestUtils.generateLockAsParam(lockName, LockType.WRITE);
+      final Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
+      assertNotNull(lock);
+      assertEquals(LockType.WRITE, lock.getType());
+      assertEquals(lockName, lock.getName());
+    }
+  }
+
 
   /**
    * @see SharedResourcesUtils#extractLocksFromPromotion(jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo)
@@ -164,14 +274,14 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   @Test
   public void testExtractLocksFromPromotion() throws Exception {
     final Map<String, String> params = new HashMap<String, String>();
-    final int numReadLocks = 1 + R.nextInt(RANDOM_UPPER_BOUNDARY);
-    final int numWriteLocks = 1 + R.nextInt(RANDOM_UPPER_BOUNDARY);
-    final int numOtherParams = 1 + R.nextInt(RANDOM_UPPER_BOUNDARY);
+    final int numReadLocks = generateBoundedRandomInt();
+    final int numWriteLocks = generateBoundedRandomInt();
+    final int numOtherParams = generateBoundedRandomInt();
     for (int i = 0; i < numReadLocks; i++) {
-      params.put(TestUtils.generateLockAsParam(LockType.READ, "read" + i), "");
+      params.put(TestUtils.generateLockAsParam("read" + i, LockType.READ), "");
     }
     for (int i = 0; i < numWriteLocks; i++) {
-      params.put(TestUtils.generateLockAsParam(LockType.WRITE, "write" + i), "");
+      params.put(TestUtils.generateLockAsParam("write" + i, LockType.WRITE), "");
     }
     for (int i = 0; i < numOtherParams; i++) {
       params.put(TestUtils.generateRandomSystemParam(), "");
@@ -214,12 +324,12 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     // taken locks
     final List<Map<String, String>> paramsList = new ArrayList<Map<String, String>>();
     paramsList.add(new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+      put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
+      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
     }});
     paramsList.add(new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam(LockType.WRITE, "lock1"), "");
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+      put(TestUtils.generateLockAsParam("lock1", LockType.WRITE), "");
+      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
     }});
 
     final List<Lock> locksToTake = new ArrayList<Lock>() {{

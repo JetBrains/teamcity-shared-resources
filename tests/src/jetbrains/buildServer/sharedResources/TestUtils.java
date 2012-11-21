@@ -14,13 +14,27 @@ import java.util.UUID;
  */
 public class TestUtils {
 
-  private static final Random r = new Random(System.currentTimeMillis());
+  /** For random size of collections */
+  private static final Random R = new Random();
+
+  /** Maximum size of collection */
+  public static final int RANDOM_UPPER_BOUNDARY = 20;
+
+  /** Random provider for other tests */
+  public static int generateBoundedRandomInt() {
+    return generateBoundedRandomInt(RANDOM_UPPER_BOUNDARY);
+  }
+
+  /** Random provider for other tests */
+  public static int generateBoundedRandomInt(int max) {
+    return 1 + R.nextInt(max);
+  }
 
   /**
    * Generates lock representation as it is in build parameters
    * @return lock representation as a parameter
    */
-  public static String generateLockAsParam(LockType type, String name) {
+  public static String generateLockAsParam(String name, LockType type) {
     return SharedResourcesPluginConstants.LOCK_PREFIX + type.getName() + "." + name;
   }
 
@@ -33,10 +47,30 @@ public class TestUtils {
   }
 
   /**
-   * Generates serialized version of a lock as it is stored in feature parameter
+   * Generates serialized version of a lock that has random type as it is stored in feature parameter
    * @return serialized lock
    */
   public static String generateSerializedLock() {
-    return r.nextInt(100000) + " " + (r.nextInt(1000) % 2 == 0 ? "readLock" : "writeLock");
+    final LockType[] allTypes = LockType.values();
+    return generateSerializedLock(allTypes[generateBoundedRandomInt(1000) % allTypes.length]);
+  }
+
+  /**
+   * Generates serialized version of a lock with specified type as it is stored in feature parameter
+   * @param type type of generated lock
+   * @return serialized lock
+   */
+  public static String generateSerializedLock(LockType type) {
+    return generateBoundedRandomInt(100000) + " " + type;
+  }
+
+
+
+  /**
+   * Generates random name that consists of letters, numbers and underscores
+   * @return random name
+   */
+  public static String generateRandomName() {
+    return "my_name_" + generateBoundedRandomInt(100000);
   }
 }

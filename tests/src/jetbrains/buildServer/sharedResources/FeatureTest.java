@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * Contains tests for {@code SharedResourcesBuildFeature}
  *
- * @author Oleg Rybak
+ * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class FeatureTest extends BaseTestCase {
 
@@ -48,8 +48,8 @@ public class FeatureTest extends BaseTestCase {
   @Test
   public void testSingleBuild() throws Exception {
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+      put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
+      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
     }};
 
     final List<RunningBuildInfo> runningBuilds = new ArrayList<RunningBuildInfo>();
@@ -75,18 +75,18 @@ public class FeatureTest extends BaseTestCase {
   public void testMultipleBuildsLocksAvailable() throws Exception {
     final List<Map<String, String>> runningParams = new ArrayList<Map<String, String>>() {{
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
-        put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+        put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
+        put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
       }});
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam(LockType.WRITE, "lock3"), "");
-        put(TestUtils.generateLockAsParam(LockType.WRITE, "lock4"), "");
+        put(TestUtils.generateLockAsParam("lock3", LockType.WRITE), "");
+        put(TestUtils.generateLockAsParam("lock4", LockType.WRITE), "");
       }});
     }};
 
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+      put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
+      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
     }};
 
     final Set<QueuedBuildInfo> queuedBuilds = new HashSet<QueuedBuildInfo>();
@@ -115,18 +115,18 @@ public class FeatureTest extends BaseTestCase {
   public void testMultipleBuildsLocksUnavailable() {
     final List<Map<String, String>> runningParams = new ArrayList<Map<String, String>>() {{
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam(LockType.READ, "lock1"), "");
-        put(TestUtils.generateLockAsParam(LockType.READ, "lock2"), "");
+        put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
+        put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
       }});
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam(LockType.WRITE, "lock3"), "");
-        put(TestUtils.generateLockAsParam(LockType.WRITE, "lock4"), "");
+        put(TestUtils.generateLockAsParam("lock3", LockType.WRITE), "");
+        put(TestUtils.generateLockAsParam("lock4", LockType.WRITE), "");
       }});
     }};
 
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock3"), "");
-      put(TestUtils.generateLockAsParam(LockType.READ, "lock4"), "");
+      put(TestUtils.generateLockAsParam("lock3", LockType.READ), "");
+      put(TestUtils.generateLockAsParam("lock4", LockType.READ), "");
     }};
 
     final Set<QueuedBuildInfo> queuedBuilds = new HashSet<QueuedBuildInfo>();
