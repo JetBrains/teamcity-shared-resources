@@ -4,6 +4,7 @@ import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Map;
+import java.util.List;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.*;
 
@@ -47,30 +48,8 @@ public class SharedResourcesPluginController extends BaseController {
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean bean = form.getBuildFeaturesBean();
     final String myLocksString = bean.getPropertiesBean().getProperties().get(LOCKS_FEATURE_PARAM_KEY);
-    final Map<String, String> locks = SharedResourcesUtils.splitFeatureParam(myLocksString);
+    final List<Lock> locks = SharedResourcesUtils.getLocks(myLocksString);
     result.getModel().put("locks", locks);
     return result;
   }
-
-
-  /*
-   *
-
-    final Set<String> otherResourceNames = new HashSet<String>();
-
-    final Collection<BuildFeatureBean> beans = bean.getBuildFeatureDescriptors();
-
-    for (BuildFeatureBean b: beans) {
-      SBuildFeatureDescriptor descriptor = b.getDescriptor();
-      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-        otherResourceNames.add(descriptor.getParameters().get(SharedResourcesPluginConstants.RESOURCE_PARAM_KEY));
-      }
-    }
-    otherResourceNames.remove(myResourceName);
-    myContext.putNamesInContext(otherResourceNames);
-   *
-   *
-   *
-   */
-
 }

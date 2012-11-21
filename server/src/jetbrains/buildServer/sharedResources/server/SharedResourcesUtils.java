@@ -9,12 +9,11 @@ import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
 
@@ -24,9 +23,6 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  * @author Oleg Rybak
  */
 final class SharedResourcesUtils {
-
-  // todo: remove regexp
-  private static final Pattern p = Pattern.compile("([A-za-z0-9%]+)\\s+([A-za-z0-9]+)");
 
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
@@ -46,44 +42,75 @@ final class SharedResourcesUtils {
    */
   @NotNull
   public static Map<String, String> featureParamToBuildParams(String serializedParam) {
-    Map<String, String> result;
-    if (serializedParam == null || "".equals(serializedParam)) {
-      result = Collections.emptyMap();
-    } else {
-      result = new HashMap<String, String> ();
-      String[] strings = serializedParam.split("\n");
-      for(String str: strings) {
-        Matcher m = p.matcher(str);
-        if (m.matches()) {
-          // group2 - lock type
-          // group1 - lock name
-          result.put(SharedResourcesPluginConstants.LOCK_PREFIX + m.group(2) + "." + m.group(1), "");
-        }
-      }
+    final List<Lock> locks = getLocks(serializedParam);
+    final Map<String, String> result = new HashMap<String, String>();
+    for (Lock lock: locks) {
+      result.put(lockAsBuildParam(lock), "");
     }
     return result;
   }
 
+  private static String lockAsBuildParam(Lock lock) {
+    final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
+    sb.append(lock.getType());
+    sb.append(".");
+    sb.append(lock.getName());
+    return sb.toString();
+  }
 
+  /**
+   * Returns names of taken locks
+   * @param serializedFeatureParam feature parameter, that contains all locks
+   * @return List of lock names, {@code result[0]} - contains readLocks,
+   * {@code result[1]} contains writeLocks
+   */
   @NotNull
-  public static Map<String, String> splitFeatureParam(String serializedParam) {
-    Map<String, String> result;
-    if (serializedParam == null || "".equals(serializedParam)) {
-      result = Collections.emptyMap();
-    } else {
-      result = new HashMap<String, String> ();
-      String[] strings = serializedParam.split("\n");
-      for(String str: strings) {
-        Matcher m = p.matcher(str);
-        if (m.matches()) {
-          // group2 - lock type
-          // group1 - lock name
-          result.put(m.group(1) , m.group(2));
+  public static List<List<String>> getLockNames(String serializedFeatureParam) {
+    final List<List<String>> result = new ArrayList<List<String>>();
+    final List<String> readLockNames = new ArrayList<String>();
+    final List<String> writeLockNames = new ArrayList<String>();
+    final List<Lock> locks = getLocks(serializedFeatureParam);
+    for (Lock lock: locks) {
+      switch (lock.getType()) {
+        case READ:
+          readLockNames.add(lock.getName());
+          break;
+        case WRITE:
+          writeLockNames.add(lock.getName());
+          break;
+      }
+    }
+    result.add(readLockNames);
+    result.add(writeLockNames);
+    return result;
+  }
+
+
+  public static List<Lock> getLocks(String serializedFeatureParam) {
+    final List<Lock> result = new ArrayList<Lock>();
+    if (serializedFeatureParam != null && !"".equals(serializedFeatureParam)) {
+      final List<String> serializedLocks = StringUtil.split(serializedFeatureParam, true, '\n');
+      for (String str: serializedLocks) {
+        final Lock lock = getSingleLockFromString(str);
+        if (lock != null) {
+          result.add(lock);
         }
       }
     }
     return result;
   }
+
+
+  private static Lock getSingleLockFromString(@NotNull String str) {
+    int n = str.lastIndexOf(' ');
+    final LockType type = LockType.byName(str.substring(n + 1));
+    Lock result = null;
+    if (type != null) {
+      result =  new Lock(str.substring(0, n), type);
+    }
+    return result;
+  }
+
 
   /**
    * Extracts lock from build parameter name

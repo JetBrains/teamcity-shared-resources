@@ -3,7 +3,7 @@
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-<jsp:useBean id="locks" scope="request" type="java.util.Map"/>
+<jsp:useBean id="locks" scope="request" type="java.util.List"/>
 
 
 <script type="text/javascript">
@@ -12,7 +12,9 @@
   Object.size = function(obj) {
     var size = 0, key;
     for (key in obj) {
-      if (obj.hasOwnProperty(key)) size++;
+      if (obj.hasOwnProperty(key)) {
+        size++;
+      }
     }
     return size;
   };
@@ -31,7 +33,7 @@
 
     fillData: function() {
       <c:forEach var="item" items="${locks}">
-      this.myData['${item.key}'] = '${item.value}';
+      this.myData['${item.name}'] = '${item.type.name}';
       </c:forEach>
       this.myLocksDisplay['readLock'] = "Read lock";
       this.myLocksDisplay['writeLock'] = "Write lock";

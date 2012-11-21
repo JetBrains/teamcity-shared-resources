@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server;
 
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -7,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,7 +49,26 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull Map<String, String> params) {
-    return "Click 'Edit' to add/remove locks on shared resources";
+    final String locksParam = params.get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+    final StringBuilder sb = new StringBuilder();
+    final List<List<String>> lockNames = SharedResourcesUtils.getLockNames(locksParam);
+    final List<String> readLockNames = lockNames.get(0);
+    final List<String> writeLockNames = lockNames.get(1);
+    if (!readLockNames.isEmpty()) {
+      sb.append("Read locks used: ");
+      sb.append(StringUtil.join(readLockNames, ",   "));
+      sb.append(". ");
+    }
+    if (!writeLockNames.isEmpty()) {
+      sb.append("Write locks used: ");
+      sb.append(StringUtil.join(writeLockNames, ", "));
+      sb.append(". ");
+    }
+    if (sb.length() == 0) {
+      sb.append("No locks are currently used by this build configuration");
+    }
+
+    return sb.toString();
   }
 
   @Nullable
