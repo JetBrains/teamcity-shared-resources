@@ -38,17 +38,16 @@ public class Lock {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Lock)) return false;
-
     Lock lock = (Lock) o;
-
-    return myName.equals(lock.myName);
+    return myName.equals(lock.myName) && myType == lock.myType;
   }
 
   @Override
   public int hashCode() {
-    return myName.hashCode();
+    int result = myName.hashCode();
+    result = 31 * result + myType.hashCode();
+    return result;
   }
-
 
   @Override
   public String toString() {

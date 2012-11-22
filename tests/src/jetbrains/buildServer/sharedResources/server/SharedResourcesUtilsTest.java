@@ -22,6 +22,7 @@ import java.util.*;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
 import static jetbrains.buildServer.sharedResources.TestUtils.generateBoundedRandomInt;
 import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName;
+import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomSystemParam;
 
 /**
  * Class {@code SharedResourcesUtilsTest}
@@ -299,9 +300,14 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     Collection<Lock> locks = SharedResourcesUtils.extractLocksFromPromotion(myBuildPromotion);
     assertNotNull(locks);
     assertEquals(numReadLocks + numWriteLocks, locks.size());
+    m.assertIsSatisfied();
   }
 
 
+  /**
+   * @see SharedResourcesUtils#getBuildPromotions(java.util.Collection, java.util.Collection)
+   * @throws Exception
+   */
   @Test
   public void testGetBuildPromotions() throws Exception {
     m.checking(new Expectations() {{
@@ -313,19 +319,23 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
       }
 
     }});
-
     Collection<BuildPromotionInfo> buildPromotions = SharedResourcesUtils.getBuildPromotions(myRunningBuilds, myQueuedBuilds);
     assertNotNull(buildPromotions);
     assertEquals(myRunningBuilds.size() + myQueuedBuilds.size(), buildPromotions.size());
+    m.assertIsSatisfied();
   }
 
-  // todo: implement
+  /**
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
   public void testGetUnavailableLocks() throws Exception {
     // taken locks
     final List<Map<String, String>> paramsList = new ArrayList<Map<String, String>>();
     paramsList.add(new HashMap<String, String>() {{
       put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
-      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
+      put(TestUtils.generateLockAsParam("lock2", LockType.WRITE), "");
     }});
     paramsList.add(new HashMap<String, String>() {{
       put(TestUtils.generateLockAsParam("lock1", LockType.WRITE), "");
@@ -338,21 +348,54 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     }};
 
     final List<BuildPromotionInfo> promotions = new ArrayList<BuildPromotionInfo>();
-    promotions.add(m.mock(BuildPromotionInfo.class, "promo-1"));
-    promotions.add(m.mock(BuildPromotionInfo.class, "promo-2"));
+    final List<ParametersProvider> providers = new ArrayList<ParametersProvider>();
+
+    for (int i = 0; i < 2; i++) {
+      promotions.add(m.mock(BuildPromotionEx.class, "promo-" + i));
+      providers.add(m.mock(ParametersProvider.class, "pp-" + i));
+    }
 
     m.checking(new Expectations() {{
-      oneOf(promotions.get(0)).getParameters();
-      will(returnValue(paramsList.get(0)));
+      for (int i = 0; i < 2; i++) {
+        oneOf(((BuildPromotionEx)promotions.get(i))).getParametersProvider();
+        will(returnValue(providers.get(i)));
 
-      oneOf(promotions.get(1)).getParameters();
-      will(returnValue(paramsList.get(1)));
+        oneOf(providers.get(i)).getAll();
+        will(returnValue(paramsList.get(i)));
+
+      }
+
     }});
 
     Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, promotions);
     assertNotNull(unavailableLocks);
     assertNotEmpty(unavailableLocks);
-    assertEquals(1, unavailableLocks.size());
+    assertEquals(2, unavailableLocks.size());
+    m.assertIsSatisfied();
   }
 
+
+  /**
+   * @see SharedResourcesUtils#extractLocksFromParams(java.util.Map)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testExtractLocksFromParams() throws Exception {
+    final String lockName = generateRandomName();
+    final String validBuildParamRead = SharedResourcesPluginConstants.LOCK_PREFIX + "readLock." + lockName;
+    final String validBuildParamWrite = SharedResourcesPluginConstants.LOCK_PREFIX + "writeLock." + lockName;
+    final String invalidLockBuildParam = generateRandomSystemParam();
+
+    final Map<String, String> buildParams = new HashMap<String, String>() {{
+       put(validBuildParamRead, "");
+       put(validBuildParamWrite, "");
+       put(invalidLockBuildParam, "");
+    }};
+
+    final Collection<Lock> locks = SharedResourcesUtils.extractLocksFromParams(buildParams);
+    assertNotNull(locks);
+    assertNotEmpty(locks);
+    assertContains(locks, new Lock(lockName, LockType.READ));
+    assertContains(locks, new Lock(lockName, LockType.WRITE));
+  }
 }
