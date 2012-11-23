@@ -87,10 +87,10 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
+//      oneOf(myBuildType).getResolvedSettings();
+//      will(returnValue(myResolvedSettings));
 
-      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myBuildType).getBuildFeatures();
       will(returnValue(Collections.emptyList()));
     }});
 
@@ -115,10 +115,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+//      oneOf(myBuildType).getResolvedSettings();
+//      will(returnValue(myResolvedSettings));
+//
+//      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();
@@ -151,10 +152,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+//      oneOf(myBuildType).getResolvedSettings();
+//      will(returnValue(myResolvedSettings));
+//
+//      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();
@@ -186,10 +188,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+//      oneOf(myBuildType).getResolvedSettings();
+//      will(returnValue(myResolvedSettings));
+//
+//      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(myBuildFeatureDescriptor).getType();

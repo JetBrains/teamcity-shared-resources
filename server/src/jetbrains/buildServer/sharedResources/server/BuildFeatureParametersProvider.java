@@ -28,7 +28,7 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      Collection<SBuildFeatureDescriptor> features = buildType.getResolvedSettings().getBuildFeatures();
+      final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
       for (SBuildFeatureDescriptor descriptor: features) {
         if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
           final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);

@@ -35,7 +35,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null) {
       boolean featureFound = false;
-      Collection<SBuildFeatureDescriptor> features = buildType.getResolvedSettings().getBuildFeatures();
+      final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
       for (SBuildFeatureDescriptor descriptor: features) {
         if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
           featureFound = true;
