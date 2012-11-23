@@ -4,10 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.extractLocksFromParams;
-import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.getBuildPromotions;
+import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,15 +31,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
     SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null) {
-      boolean featureFound = false;
-      final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
-      for (SBuildFeatureDescriptor descriptor: features) {
-        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-          featureFound = true;
-          break;
-        }
-      }
-      if (featureFound) {
+      if (searchForFeature(buildType) != null) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
         if (!locksToTake.isEmpty()) {

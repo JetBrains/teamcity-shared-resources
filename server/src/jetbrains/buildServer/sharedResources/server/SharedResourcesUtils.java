@@ -3,9 +3,12 @@ package jetbrains.buildServer.sharedResources.server;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.StringUtil;
@@ -252,6 +255,19 @@ final class SharedResourcesUtils {
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(str);
       if (lock != null) {
         result.add(lock);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static SBuildFeatureDescriptor searchForFeature(@NotNull SBuildType buildType) {
+    final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
+    SBuildFeatureDescriptor result = null;
+    for (SBuildFeatureDescriptor descriptor: features) {
+      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
+        result = descriptor;
+        break;
       }
     }
     return result;

@@ -8,9 +8,10 @@ import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.searchForFeature;
 
 /**
  * Class {@code BuildFeatureParametersProvider}
@@ -28,12 +29,10 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
-      for (SBuildFeatureDescriptor descriptor: features) {
-        if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType())) {
-          final String serializedBuildParams = descriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
-          result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
-        }
+      final SBuildFeatureDescriptor myFeatureDescriptor = searchForFeature(buildType);
+      if (myFeatureDescriptor != null) {
+        final String serializedBuildParams = myFeatureDescriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+        result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
       }
     }
     return result;

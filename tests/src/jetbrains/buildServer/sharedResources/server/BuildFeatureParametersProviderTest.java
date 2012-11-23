@@ -122,6 +122,12 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
 
+      oneOf(descriptors.iterator().next()).getId();
+      will(returnValue("myBuildFeature"));
+
+      oneOf(myBuildType).isEnabled("myBuildFeature");
+      will(returnValue(true));
+
       oneOf(myBuildFeatureDescriptor).getType();
       will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
@@ -159,6 +165,12 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
 
+      oneOf(descriptors.iterator().next()).getId();
+      will(returnValue("myBuildFeature"));
+
+      oneOf(myBuildType).isEnabled("myBuildFeature");
+      will(returnValue(true));
+
       oneOf(myBuildFeatureDescriptor).getType();
       will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
@@ -194,6 +206,12 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
 //      oneOf(myResolvedSettings).getBuildFeatures();
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(descriptors));
+
+      oneOf(descriptors.iterator().next()).getId();
+      will(returnValue("myBuildFeature"));
+
+      oneOf(myBuildType).isEnabled("myBuildFeature");
+      will(returnValue(true));
 
       oneOf(myBuildFeatureDescriptor).getType();
       will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
