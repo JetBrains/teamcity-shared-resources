@@ -31,7 +31,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
     SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null) {
-      if (searchForFeature(buildType) != null) {
+      if (searchForFeature(buildType, false) != null) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
         if (!locksToTake.isEmpty()) {

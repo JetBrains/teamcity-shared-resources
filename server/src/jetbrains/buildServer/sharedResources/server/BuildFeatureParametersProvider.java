@@ -29,10 +29,13 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      final SBuildFeatureDescriptor myFeatureDescriptor = searchForFeature(buildType);
+      SBuildFeatureDescriptor myFeatureDescriptor = searchForFeature(buildType, false);
       if (myFeatureDescriptor != null) {
-        final String serializedBuildParams = myFeatureDescriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
-        result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
+        myFeatureDescriptor = searchForFeature(buildType, true); // resolving params here
+        if (myFeatureDescriptor != null) {
+          final String serializedBuildParams = myFeatureDescriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
+        }
       }
     }
     return result;

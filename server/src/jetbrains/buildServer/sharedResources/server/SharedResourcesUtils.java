@@ -260,12 +260,13 @@ final class SharedResourcesUtils {
     return result;
   }
 
+  // todo: nullable or collection??
   @Nullable
-  public static SBuildFeatureDescriptor searchForFeature(@NotNull SBuildType buildType) {
-    final Collection<SBuildFeatureDescriptor> features = buildType.getBuildFeatures();
+  public static SBuildFeatureDescriptor searchForFeature(@NotNull SBuildType buildType, boolean useResolvedSettings) {
+    final Collection<SBuildFeatureDescriptor> features = useResolvedSettings ? buildType.getResolvedSettings().getBuildFeatures() : buildType.getBuildFeatures();
     SBuildFeatureDescriptor result = null;
     for (SBuildFeatureDescriptor descriptor: features) {
-      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
+      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType()) && (useResolvedSettings || buildType.isEnabled(descriptor.getId()))) {
         result = descriptor;
         break;
       }
