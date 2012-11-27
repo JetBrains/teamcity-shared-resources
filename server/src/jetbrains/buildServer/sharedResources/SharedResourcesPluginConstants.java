@@ -22,4 +22,11 @@ public class SharedResourcesPluginConstants {
     return LOCKS_FEATURE_PARAM_KEY;
   }
 
+  public static final String PLUGIN_NAME = "JetBrains.SharedResources";
+
+  /**
+   * Name of the service. Used in project settings factory
+   */
+  public static final String SERVICE_NAME = "JetBrains.SharedResources";
+
 }
