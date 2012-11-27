@@ -115,11 +115,16 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-//      oneOf(myBuildType).getResolvedSettings();
-//      will(returnValue(myResolvedSettings));
-//
-//      oneOf(myResolvedSettings).getBuildFeatures();
       oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(descriptors.iterator().next()).getId();
@@ -158,11 +163,16 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-//      oneOf(myBuildType).getResolvedSettings();
-//      will(returnValue(myResolvedSettings));
-//
-//      oneOf(myResolvedSettings).getBuildFeatures();
       oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(descriptors.iterator().next()).getId();
@@ -200,11 +210,16 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-//      oneOf(myBuildType).getResolvedSettings();
-//      will(returnValue(myResolvedSettings));
-//
-//      oneOf(myResolvedSettings).getBuildFeatures();
       oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(descriptors));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+
+      oneOf(myBuildType).getResolvedSettings();
+      will(returnValue(myResolvedSettings));
+
+      oneOf(myResolvedSettings).getBuildFeatures();
       will(returnValue(descriptors));
 
       oneOf(descriptors.iterator().next()).getId();

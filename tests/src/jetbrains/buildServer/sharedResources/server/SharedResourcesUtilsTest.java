@@ -20,9 +20,7 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
-import static jetbrains.buildServer.sharedResources.TestUtils.generateBoundedRandomInt;
-import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName;
-import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomSystemParam;
+import static jetbrains.buildServer.sharedResources.TestUtils.*;
 
 /**
  * Class {@code SharedResourcesUtilsTest}
@@ -217,7 +215,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   @Test
   public void testGetLockFromBuildParam_Invalid() throws Exception {
     { // invalid format
-      String paramName = TestUtils.generateRandomSystemParam();
+      String paramName = generateRandomConfigurationParam();
       Lock lock = SharedResourcesUtils.getLockFromBuildParam(paramName);
       assertNull(lock);
     }
@@ -285,7 +283,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
       params.put(TestUtils.generateLockAsParam("write" + i, LockType.WRITE), "");
     }
     for (int i = 0; i < numOtherParams; i++) {
-      params.put(TestUtils.generateRandomSystemParam(), "");
+      params.put(generateRandomConfigurationParam(), "");
     }
 
     m.checking(new Expectations() {{
@@ -384,7 +382,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     final String lockName = generateRandomName();
     final String validBuildParamRead = SharedResourcesPluginConstants.LOCK_PREFIX + "readLock." + lockName;
     final String validBuildParamWrite = SharedResourcesPluginConstants.LOCK_PREFIX + "writeLock." + lockName;
-    final String invalidLockBuildParam = generateRandomSystemParam();
+    final String invalidLockBuildParam = generateRandomConfigurationParam();
 
     final Map<String, String> buildParams = new HashMap<String, String>() {{
        put(validBuildParamRead, "");
