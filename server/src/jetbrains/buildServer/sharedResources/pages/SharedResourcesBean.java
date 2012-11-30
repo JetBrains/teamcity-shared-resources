@@ -1,5 +1,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -10,14 +12,13 @@ import java.util.Collection;
  */
 public class SharedResourcesBean {
 
-  private Collection<String> mySharedResourcesNames = new ArrayList<String>();
+  private Collection<Resource> myResources = new ArrayList<Resource>();
 
-  public SharedResourcesBean(Collection<String> sharedResourcesNames) {
-    this.mySharedResourcesNames = sharedResourcesNames;
+  public SharedResourcesBean(Collection<Resource> resources) {
+    myResources = resources;
   }
 
-  public Collection<String> getSharedResourcesNames() {
-    return mySharedResourcesNames;
+  public Collection<Resource> getResources() {
+    return myResources;
   }
-
 }

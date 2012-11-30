@@ -1,9 +1,10 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.BaseController;
-import jetbrains.buildServer.serverSide.SBuildServer;
+import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
@@ -22,36 +23,43 @@ import javax.servlet.http.HttpServletResponse;
 public class SharedResourcesController extends BaseController {
 
   private final ProjectSettingsManager myProjectSettingsManager;
-  private final PluginDescriptor myDescriptor;
 
-  public SharedResourcesController(@NotNull SBuildServer server,
-                                   @NotNull WebControllerManager manager,
+  private final PluginDescriptor myDescriptor;
+  private ProjectManager myProjectManager;
+
+  public SharedResourcesController(@NotNull WebControllerManager manager,
                                    @NotNull ProjectSettingsManager projectSettingsManager,
-                                   @NotNull PluginDescriptor descriptor
+                                   @NotNull PluginDescriptor descriptor,
+                                   @NotNull ProjectManager projectManager
   ) {
     myProjectSettingsManager = projectSettingsManager;
     myDescriptor = descriptor;
-    manager.registerController("/sharedResourcesDelete.html", new BaseController() {
-      @Nullable
-      @Override
-      protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
-        final String resourceToDelete = request.getParameter("delete");
-        final String projectId = request.getParameter("project_id");
-        if (resourceToDelete != null) {
-          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).remove(resourceToDelete);
-        }
-        return null;
-      }
-    });
+    myProjectManager = projectManager;
 
     manager.registerController("/sharedResourcesAdd.html", new BaseController() {
       @Nullable
       @Override
       protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
         final String newResource = request.getParameter("new_resource");
+        final int quota = Integer.parseInt(request.getParameter("new_resource_quota"));
         final String projectId = request.getParameter("project_id");
         if (newResource != null) {
-          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).addResource(newResource);
+          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).addResource(Resource.newResource(newResource, quota));
+          myProjectManager.findProjectById(projectId).persist();
+        }
+        return null;
+      }
+    });
+
+    manager.registerController("/sharedResourcesDelete.html", new BaseController() {
+      @Nullable
+      @Override
+      protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
+        final String resourceName = request.getParameter("resource_name");
+        final String projectId = request.getParameter("project_id");
+        if (resourceName != null) {
+//          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).addResource(Resource.newResource(newResource, quota));
+//          myProjectManager.findProjectById(projectId).persist();
         }
         return null;
       }

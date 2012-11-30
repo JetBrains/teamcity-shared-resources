@@ -4,6 +4,7 @@
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
 <jsp:useBean id="locks" scope="request" type="java.util.List"/>
+<jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 
 
 <script type="text/javascript">
@@ -172,16 +173,13 @@
 
 <tr class="noBorder">
   <td colspan="2">
-    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
-    <%--<forms:addButton id="editLock1" onclick="BS.LocksDialog.showEdit('name1', 'readLock'); return false">Edit read lock</forms:addButton> &lt;%&ndash;edit read lock &ndash;%&gt;--%>
-    <%--<forms:addButton id="editLock2" onclick="BS.LocksDialog.showEdit('name2', 'writeLock'); return false">Edit write lock</forms:addButton> &lt;%&ndash; edit write lock &ndash;%&gt;--%>
-
+    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog();   return false">Add lock</forms:addButton>
     <bs:dialog dialogId="locksDialog" title="Lock Managemet" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
         <tr>
           <th><label for="newLockName">Lock name:</label></th>
           <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 98%" className="longField buildTypeParams" defaultText=""/>
+            <forms:textField id="newLockName" name="newLockName" style="width: 98%" maxlength="80" className="longField buildTypeParams" defaultText=""/>
           </td>
         </tr>
         <tr>
@@ -190,6 +188,16 @@
             <forms:select name="newLockType" id="newLockType" style="width: 60%">
               <forms:option value="readLock">Read Lock</forms:option>
               <forms:option value="writeLock">Write Lock</forms:option>
+            </forms:select>
+          </td>
+        </tr>
+        <tr>
+          <th><label for="newLockType">Lock type:</label></th>
+          <td>
+            <forms:select name="lockFromResources" id="lockFromResources" style="width: 60%">
+              <c:forEach items="${bean.resources}" var="resource">
+                <forms:option value="${resource.name}"><c:out value="${resource.name} (${resource.quota})"/></forms:option>
+              </c:forEach>
             </forms:select>
           </td>
         </tr>

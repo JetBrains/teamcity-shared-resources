@@ -4,7 +4,11 @@ import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.pages.SharedResourcesBean;
+import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -28,13 +32,18 @@ public class SharedResourcesPluginController extends BaseController {
   @NotNull
   private final EditBuildTypeFormFactory myFormFactory;
 
+  @NotNull
+  private ProjectSettingsManager myProjectSettingsManager;
+
   public SharedResourcesPluginController(
           @NotNull PluginDescriptor descriptor,
           @NotNull WebControllerManager web,
-          @NotNull EditBuildTypeFormFactory formFactory
+          @NotNull EditBuildTypeFormFactory formFactory,
+          @NotNull ProjectSettingsManager projectSettingsManager
   ) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
+    myProjectSettingsManager = projectSettingsManager;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
   }
 
@@ -45,11 +54,17 @@ public class SharedResourcesPluginController extends BaseController {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
 
 
-    final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
-    final BuildFeaturesBean bean = form.getBuildFeaturesBean();
-    final String myLocksString = bean.getPropertiesBean().getProperties().get(LOCKS_FEATURE_PARAM_KEY);
+      final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
+    final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
+    final String myLocksString = buildFeaturesBean.getPropertiesBean().getProperties().get(LOCKS_FEATURE_PARAM_KEY);
+    final SProject project = form.getProject();
+
+    final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
+    final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources());
+
     final List<Lock> locks = SharedResourcesUtils.getLocks(myLocksString);
     result.getModel().put("locks", locks);
+    result.getModel().put("bean", bean);
     return result;
   }
 }

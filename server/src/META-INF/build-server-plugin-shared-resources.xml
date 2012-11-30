@@ -5,6 +5,9 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd"
        default-autowire="constructor">
 
+
+  <!-- ===  BUILD FEATURE ===-->
+
   <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
 
@@ -14,5 +17,18 @@
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
+
+
+
+  <!-- ===  INTERNALS  === -->
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean class="jetbrains.buildServer.sharedResources.settings.SharedResourcesSettingsManager"/>
+
+  <!--suppress SpringBeanConstructorArgInspection -->
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesController"/>
 
 </beans>
