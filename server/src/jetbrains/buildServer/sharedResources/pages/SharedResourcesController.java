@@ -58,8 +58,8 @@ public class SharedResourcesController extends BaseController {
         final String resourceName = request.getParameter("resource_name");
         final String projectId = request.getParameter("project_id");
         if (resourceName != null) {
-//          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).addResource(Resource.newResource(newResource, quota));
-//          myProjectManager.findProjectById(projectId).persist();
+          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).deleteResource(resourceName);
+          myProjectManager.findProjectById(projectId).persist();
         }
         return null;
       }

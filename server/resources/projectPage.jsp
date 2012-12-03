@@ -18,6 +18,7 @@
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
     },
+
     submit: function() {
       if (!this.validate()) return false;
       this.close();
@@ -29,6 +30,29 @@
       return true;
     }
   });
+
+  //noinspection FunctionWithInconsistentReturnsJS
+  BS.SharedResourcesActions = {
+    addUrl: window['base_uri'] + "/sharedResourcesAdd.html",
+    addResource: function() {
+      BS.ajaxRequest(this.addUrl, {
+        parameters: {'project_id':  '${project.projectId}', 'new_resource': $j('#new_resource').val(), 'new_resource_quota': $j('#new_resource_quota').val()},
+        onSuccess: function() {
+          window.location.reload();
+        }
+      });
+    },
+
+    deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
+    deleteResource: function(resource_name) {
+      BS.ajaxRequest(this.deleteUrl, {
+        parameters: {'project_id':  '${project.projectId}', 'resource_name': resource_name},
+        onSuccess: function() {
+          window.location.reload();
+        }
+      });
+    }
+  };
 
 </script>
 
@@ -48,67 +72,44 @@
     </table>
     <div class="popupSaveButtonsBlock">
       <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
-      <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.ResourceDialog.submit()"/>
+      <forms:submit id="resourcesDialogSubmit" type="button" label="Add Resource" onclick="BS.ResourceDialog.submit()"/>
     </div>
   </bs:dialog>
 
-  <p>
-    <c:choose>
-      <c:when test="${not empty bean.resources}">
-        <l:tableWithHighlighting className="dark borderBottom"  highlightImmediately="true">
-          <%-- title--%>
+
+  <c:choose>
+    <c:when test="${not empty bean.resources}">
+      <l:tableWithHighlighting style="width: 70%" className="parametersTable" highlightImmediately="true">
+        <%-- title--%>
+        <tr>
+          <th>Resource name</th>
+          <th style="width:40%" colspan="4">Quota</th>
+        </tr>
+        <%-- /title--%>
+        <c:forEach var="resource" items="${bean.resources}">
           <tr>
-            <th>Resource name</th>
-            <th>Quota</th>
-            <th style="width:20%">Usage</th>
-            <th style="width:15%" colspan="2">Operations</th>
+            <td><c:out value="${resource.name}"/></td>
+            <c:choose>
+              <c:when test="${resource.infinite}">
+                <td>Infinite</td>
+              </c:when>
+              <c:otherwise>
+                <td><c:out value="${resource.quota}"/></td>
+              </c:otherwise>
+            </c:choose>
+            <td> [Used in X configurations V] </td>
+            <td class="edit"><a href="#">edit</a> </td>
+            <td class="edit"><a href="#" onclick="BS.SharedResourcesActions.deleteResource('${resource.name}')">delete</a> </td>
           </tr>
-          <%-- /title--%>
-          <c:forEach var="resource" items="${bean.resources}">
-            <tr>
-              <td><c:out value="${resource.name}"/></td>
-              <c:choose>
-                <c:when test="${resource.infinite}">
-                  <td>Infinite</td>
-                </c:when>
-                <c:otherwise>
-                  <td><c:out value="${resource.quota}"/></td>
-                </c:otherwise>
-              </c:choose>
-              <td> [Used in X configurations V] </td>
-              <td class="edit"><a href="#">edit</a> </td>
-              <td class="remove"><a href="#">delete</a> </td>
-            </tr>
-          </c:forEach>
-        </l:tableWithHighlighting>
-      </c:when>
-      <c:otherwise>
+        </c:forEach>
+      </l:tableWithHighlighting>
+    </c:when>
+    <c:otherwise>
+      <p>
         <c:out value="There are no resources available. Why don't you add one? =)"/>
-      </c:otherwise>
-    </c:choose>
-  </p>
+      </p>
+    </c:otherwise>
+  </c:choose>
 
-  <div>
-
-    <%--<forms:submit name="submitButton" onclick="BS.SharedResourcesActions.addResource()" label="Add"/>--%>
-  </div>
-
-
-  </p>
 </div>
 
-
-<script type="text/javascript">
-  //noinspection FunctionWithInconsistentReturnsJS
-  BS.SharedResourcesActions = {
-    addUrl: window['base_uri'] + "/sharedResourcesAdd.html",
-    addResource: function() {
-      BS.ajaxRequest(this.addUrl, {
-        parameters: {'project_id':  '${project.projectId}', 'new_resource': $j('#new_resource').val(), 'new_resource_quota': $j('#new_resource_quota').val()},
-        onSuccess: function() {
-          window.location.reload();
-        }
-      });
-    }
-  };
-</script>

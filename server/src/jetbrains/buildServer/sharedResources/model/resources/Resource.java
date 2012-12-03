@@ -36,6 +36,10 @@ public class Resource {
     return new Resource(name, quota);
   }
 
+  public static Resource newInfiniteResource(@NotNull String name) {
+    return new Resource(name, -1);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

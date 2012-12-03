@@ -55,7 +55,7 @@
           //noinspection JSUnfilteredForInLoop
           var content = "<tr><td>" + key + "</td><td>" + this.myLocksDisplay[self[key]] +"</td>";
           content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
-          content += "<td class=\"remove\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
+          content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
           content += "</tr>";
 
           //noinspection JSUnfilteredForInLoop
