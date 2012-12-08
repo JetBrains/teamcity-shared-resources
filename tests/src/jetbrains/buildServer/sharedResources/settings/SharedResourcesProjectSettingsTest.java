@@ -5,13 +5,12 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.util.TestFor;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -141,8 +140,16 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
     // todo: implement
   }
 
-
-  private static Element readXml(String xmlString) throws JDOMException, IOException {
+  /**
+   * Reads {@code xml} supplied as string, returns subtree responsible
+   * for the settings of the current plugin
+   *
+   * @param xmlString {@code xml} file as string
+   * @return subtree responsible for the settings of the current plugin
+   * @throws Exception if something goes wrong
+   */
+  @NotNull
+  private static Element readXml(@NotNull String xmlString) throws Exception {
     final SAXBuilder builder = new SAXBuilder();
     final Document document = builder.build(new ByteArrayInputStream(xmlString.getBytes()));
     final Element root = document.getRootElement();

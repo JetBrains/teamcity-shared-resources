@@ -21,23 +21,24 @@
   };
 
   BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
-
     attachedToRoot: false,
-
-    myData: {},
-
+    myData: {}, // here we have locks
     myLocksDisplay: {},
-
     editMode: false,
-
     currentLockName: "",
+    existingResources: {}, // here are existing resources + resources created in place
 
     fillData: function() {
       <c:forEach var="item" items="${locks}">
       this.myData['${item.name}'] = '${item.type.name}';
       </c:forEach>
+      <c:forEach var="item" items="${bean.resources}">
+      this.existingResources['${item.name}'] = true;
+      </c:forEach>
+
       this.myLocksDisplay['readLock'] = "Read lock";
       this.myLocksDisplay['writeLock'] = "Write lock";
+
     },
 
     refreshUi: function() {
@@ -57,7 +58,6 @@
           content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
           content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
           content += "</tr>";
-
           //noinspection JSUnfilteredForInLoop
           textAreaContent += key + " " + self[key] + "\n";
           //noinspection JSCheckFunctionSignatures
@@ -68,6 +68,7 @@
         $j('#noLocksTaken').css('display', 'table');
       }
       textArea.value = textAreaContent.trim();
+      BS.MultilineProperties.updateVisible();
     },
 
     getContainer: function() {
@@ -78,6 +79,12 @@
       this.editMode = false;
       $j("#locksDialogSubmit").prop('value', 'Add');
       $('newLockName').value = "";
+      $j('#lockSource option').each(function() { // todo: not sure about this
+        var self = $j(this);
+        //noinspection JSUnresolvedFunction
+        self.prop("selected", self.val() == 'choose');
+      });
+      this.syncResourceSelectionState();
       this.refreshUi();
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
@@ -93,19 +100,32 @@
       $j("#locksDialogSubmit").prop('value', 'Save');
       $('newLockName').value = lockName;
       var lockType = this.myData[lockName];
+      $j('#lockSource option').each(function() { // todo: not sure about this
+        var self = $j(this);
+        //noinspection JSUnresolvedFunction
+        self.prop("selected", self.val() == 'choose');
+      }); // restore 'resource is chosen' state
+
+      $j('#lockFromResources option').each(function() {
+        var self = $j(this);
+        //noinspection JSUnresolvedFunction
+        self.prop("selected", self.val() == lockName);
+      }); // restore lock name in selection
+
       $j('#newLockType option').each(function() {
         var self = $j(this);
         //noinspection JSUnresolvedFunction
         self.prop("selected", self.val() == lockType);
-      });
-      this.showCentered();
+      }); // restore lock type
+            this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
     },
 
     submit: function() {
       if (!this.validate()) return false;
+      // todo: add resource creation here
       var element = $('${keys.locksFeatureParamKey}');
-      var lockName = $('newLockName').value;
+      var lockName = $('newLockName').value; // here choose, where to take data from (choose of create)
       //noinspection JSUnresolvedFunction
       var lockType = $j('#newLockType option:selected').val();
       if (this.editMode) {
@@ -118,7 +138,7 @@
       return false;
     },
 
-    validate: function() {
+    validate: function() { // todo: add validation to choose
       var _name = $('newLockName').value;
       if (_name.length === 0) {
         alert('Please enter lock name');
@@ -131,9 +151,53 @@
       console.log("Deleting lock: [" + lockName + "]");
       delete this.myData[lockName];
       this.refreshUi();
-    }
-  });
+    },
 
+    syncResourceSelectionState: function() {
+      //noinspection JSUnresolvedFunction
+      var flag = $j('#lockSource option:selected').val(); // todo: add state syncing to dialog init
+      if (flag === 'choose')  {
+        this.toggleModeChoose();
+      } else if (flag === 'create') {
+        this.toggleModeCreate();
+      }
+      BS.MultilineProperties.updateVisible();
+    },
+
+
+    toggleModeChoose: function() {
+      // choose: show
+      BS.Util.show('row_resourceChoose');
+      // create: hide
+      BS.Util.hide('row_resourceCreate');
+      BS.Util.hide('row_useQuotaSwitch');
+      BS.Util.hide('row_useQuotaInput');
+    },
+
+    toggleModeCreate: function() {
+      // choose: hide
+      BS.Util.hide('row_resourceChoose');
+      // create: show
+      BS.Util.show('row_resourceCreate');
+      BS.Util.show('row_useQuotaSwitch');
+      // quota: hide
+      $j('#use_quota').removeAttr('checked');
+      BS.Util.hide('row_useQuotaInput');
+    },
+
+    toggleUseQuota: function() {
+      if ($j('#use_quota').is(':checked')) {
+        // show
+        BS.Util.show('row_useQuotaInput');
+      } else {
+        //hide
+        BS.Util.hide('row_useQuotaInput');
+      }
+      BS.MultilineProperties.updateVisible();
+    }
+
+
+  });
 </script>
 
 <tr>
@@ -177,28 +241,58 @@
     <bs:dialog dialogId="locksDialog" title="Lock Managemet" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
         <tr>
-          <th><label for="newLockName">Lock name:</label></th>
+          <th><label for="lockSource">Resource selection: </label></th>
           <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 98%" maxlength="80" className="longField buildTypeParams" defaultText=""/>
+            <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
+              <forms:option value="create">Create resource to lock</forms:option><%--todo: ui messages--%>
+              <forms:option value="choose">Choose resource to lock</forms:option><%--todo: ui messages--%>
+            </forms:select>
+            <span class="smallNote">Select, whether you want to create new shared resource or use existing one</span>
           </td>
+        </tr>
+        <tr id="row_resourceChoose">
+          <th><label for="lockFromResources">Resource name:</label></th>
+          <td> <%-- todo: here change bean and jstl to javascript--%>
+            <c:choose>
+              <c:when test="${not empty bean.resources}">
+                <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%">
+                  <c:forEach items="${bean.resources}" var="resource">
+                    <forms:option value="${resource.name}"><c:out value="${resource.name} (${resource.quota})"/></forms:option>
+                  </c:forEach>
+                </forms:select>
+                <span class="smallNote">Choose the resource you want to lock</span>
+              </c:when>
+              <c:otherwise>
+                <c:out value="No resources available"/>
+              </c:otherwise>
+            </c:choose>
+          </td>
+        </tr>
+        <tr id="row_resourceCreate">
+          <th><label for="newLockName">Resource name:</label></th>
+          <td>
+            <forms:textField id="newLockName" name="newLockName" style="width: 98%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
+            <span class="smallNote">Enter name of the resource</span>
+          </td>
+        </tr>
+        <tr id="row_useQuotaSwitch">
+          <th>Use quota:</th>
+          <td>
+            <forms:checkbox name="use_quota" id="use_quota" onclick="BS.LocksDialog.toggleUseQuota()" checked="false"/>
+          </td>
+        </tr>
+        <tr id="row_useQuotaInput" style="display: none">
+          <th><label for="resource_quota">Resource quota:</label> </th>
+          <td><forms:textField name="resource_quota"  style="width: 25%" id='resource_quota' className="longField buildTypeParams" maxlength="3"/></td>
         </tr>
         <tr>
           <th><label for="newLockType">Lock type:</label></th>
           <td>
-            <forms:select name="newLockType" id="newLockType" style="width: 60%">
+            <forms:select name="newLockType" id="newLockType" style="width: 90%">
               <forms:option value="readLock">Read Lock</forms:option>
               <forms:option value="writeLock">Write Lock</forms:option>
             </forms:select>
-          </td>
-        </tr>
-        <tr>
-          <th><label for="newLockType">Lock type:</label></th>
-          <td>
-            <forms:select name="lockFromResources" id="lockFromResources" style="width: 60%">
-              <c:forEach items="${bean.resources}" var="resource">
-                <forms:option value="${resource.name}"><c:out value="${resource.name} (${resource.quota})"/></forms:option>
-              </c:forEach>
-            </forms:select>
+            <span class="smallNote">Select type of lock: read lock (shared), or write lock (exclusive)</span>
           </td>
         </tr>
       </table>

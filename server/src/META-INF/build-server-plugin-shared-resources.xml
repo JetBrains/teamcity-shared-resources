@@ -29,6 +29,6 @@
   <bean class="jetbrains.buildServer.sharedResources.settings.SharedResourcesSettingsManager"/>
 
   <!--suppress SpringBeanConstructorArgInspection -->
-  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesController"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActions"/>
 
 </beans>

@@ -34,4 +34,23 @@ public class SharedResourcesPluginConstants {
   /** Name of the service. Used in project settings factory */
   public static final String SERVICE_NAME = "JetBrains.SharedResources";
 
+  /**
+   * Contains constants for web page - controller interaction
+   */
+  public interface WEB {
+    public static final String PARAM_PROJECT_ID = "project_id";
+    public static final String PARAM_RESOURCE_NAME = "resource_name";
+    public static final String PARAM_RESOURCE_QUOTA = "resource_quota";
+    public static final String PARAM_OLD_RESOURCE_NAME = "old_resource_name";
+
+    //public static final String PARAM_VALUE_TYPE = "value_type";
+
+
+    // quota used -> value is quota;
+    // quota is not used -> value is -1;
+    public static final String VALUE_TYPE_QUOTA = "quota";
+    public static final String VALUE_TYPE_CUSTOM = "custom";
+
+
+  }
 }

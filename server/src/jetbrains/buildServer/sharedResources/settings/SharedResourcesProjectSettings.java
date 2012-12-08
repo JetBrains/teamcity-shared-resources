@@ -21,7 +21,8 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
    *
    * // todo: make proper javadoc
    *
-   * {@code
+   *
+   *
    *   <JetBrains.SharedResources>
    *     <resource>
    *       <name>my_db_connections</name>
@@ -43,8 +44,6 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
    *       </values>
    *      </resource>
    *    </JetBrains.SharedResources>
-   * }
-   *
    *
    */
   private interface XML {
@@ -52,16 +51,14 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
     public static final String TAG_RESOURCE_NAME = "name";
     public static final String ATTR_VALUES_TYPE = "type";
     public static final String TAG_VALUES = "values";
-    public static final String TAG_VALUE = "value";
+//    public static final String TAG_VALUE = "value";
     public static final String TAG_QUOTA = "quota";
     public static final String VALUE_TYPE_QUOTA = "quota";
-    public static final String VALUE_TYPE_CUSTOM = "custom";
+//    public static final String VALUE_TYPE_CUSTOM = "custom";
     public static final String VALUE_QUOTA_INFINITE = "infinite";
   }
 
   private Map<String, Resource> myResourceMap = new HashMap<String, Resource>();
-
-  private Set<Resource> myResources = new LinkedHashSet<Resource>();
 
   public SharedResourcesProjectSettings() {
   }
@@ -73,7 +70,6 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
   @Override
   public void readFrom(Element rootElement) {
     final List children = rootElement.getChildren(XML.TAG_RESOURCE);
-    myResources = new LinkedHashSet<Resource>();
     myResourceMap = new HashMap<String, Resource>();
     if (!children.isEmpty()) {
       for (Object o : children) {
@@ -89,7 +85,6 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
           } else {
             parsedResource = Resource.newResource(resourceName,  Integer.parseInt(resourceQuota));
           }
-          myResources.add(parsedResource);
           myResourceMap.put(resourceName, parsedResource);
         } else {
           LOG.warn("Values type [" + valuesType + "] is not yet supported =((");
@@ -100,7 +95,7 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   @Override
   public void writeTo(Element parentElement) {
-    for (Resource r: myResources) {
+    for (Resource r: myResourceMap.values()) {
       final Element el = new Element(XML.TAG_RESOURCE);
       final Element resourceName = new Element(XML.TAG_RESOURCE_NAME);
       resourceName.setText(r.getName());
@@ -118,24 +113,25 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   public void addResource(Resource resource) {
     myResourceMap.put(resource.getName(), resource);
-    myResources.add(resource);
   }
 
   public void deleteResource(String name) {
-    final Resource r = myResourceMap.remove(name);
-    if (r != null) {
-      myResources.remove(r);
-    }
+    myResourceMap.remove(name);
+  }
+
+  public void editResource(String oldName, Resource resource) {   // todo: concurrency!
+    myResourceMap.remove(oldName);
+    myResourceMap.put(resource.getName(), resource);
   }
 
   public Collection<Resource> getResources() {
-    return Collections.unmodifiableSet(myResources);
+    return Collections.unmodifiableCollection(myResourceMap.values());
   }
 
   public void putSampleData() {
     final int n = new Random(System.currentTimeMillis()).nextInt(1000);
     for (int i = 0; i < n % 4; i++) {
-      addResource(Resource.newResource(UUID.randomUUID().toString(), (n % 3 == 0 ? -1: n % 100)));
+      addResource(Resource.newResource(UUID.randomUUID().toString().substring(0, 12), (n % 3 == 0 ? -1: n % 100)));
     }
   }
 

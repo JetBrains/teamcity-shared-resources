@@ -52,9 +52,7 @@ public class SharedResourcesPluginController extends BaseController {
   protected ModelAndView doHandle(@NotNull HttpServletRequest request,
                                   @NotNull HttpServletResponse response) throws Exception {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
-
-
-      final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
+    final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String myLocksString = buildFeaturesBean.getPropertiesBean().getProperties().get(LOCKS_FEATURE_PARAM_KEY);
     final SProject project = form.getProject();
