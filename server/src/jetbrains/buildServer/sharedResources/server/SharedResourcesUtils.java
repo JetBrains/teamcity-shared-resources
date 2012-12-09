@@ -26,7 +26,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-final class SharedResourcesUtils {
+public final class SharedResourcesUtils {
 
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
@@ -94,7 +94,8 @@ final class SharedResourcesUtils {
   }
 
 
-  public static List<Lock> getLocks(String serializedFeatureParam) {
+  @NotNull
+  public static List<Lock> getLocks(@Nullable String serializedFeatureParam) {
     final List<Lock> result = new ArrayList<Lock>();
     if (serializedFeatureParam != null && !"".equals(serializedFeatureParam)) {
       final List<String> serializedLocks = StringUtil.split(serializedFeatureParam, true, '\n');
@@ -102,6 +103,20 @@ final class SharedResourcesUtils {
         final Lock lock = getSingleLockFromString(str);
         if (lock != null) {
           result.add(lock);
+        }
+      }
+    }
+    return result;
+  }
+
+  public static Map<String, Lock> getLocksMap(@Nullable String serializedFeatureParam) {
+    final Map<String, Lock> result = new HashMap<String, Lock>();
+    if (serializedFeatureParam != null && !"".equals(serializedFeatureParam)) {
+      final List<String> serializedLocks = StringUtil.split(serializedFeatureParam, true, '\n');
+      for (String str: serializedLocks) {
+        final Lock lock = getSingleLockFromString(str);
+        if (lock != null) {
+          result.put(lock.getName(), lock);
         }
       }
     }
@@ -272,6 +287,16 @@ final class SharedResourcesUtils {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static String locksAsString(@NotNull Collection<Lock> values) {  // todo: write test
+    final StringBuilder builder = new StringBuilder();
+    for (Lock lock: values) {
+      builder.append(lock.getName()).append(" ");
+      builder.append(lock.getType()).append("\n");
+    }
+    return builder.substring(0, builder.length() - 1);
   }
 
   /**

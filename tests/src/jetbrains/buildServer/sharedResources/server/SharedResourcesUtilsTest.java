@@ -396,4 +396,15 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     assertContains(locks, new Lock(lockName, LockType.READ));
     assertContains(locks, new Lock(lockName, LockType.WRITE));
   }
+
+  @Test
+  public void testLocksAsString() throws Exception {
+    final String expected = "lock1 readLock\nlock2 writeLock";
+    final Collection<Lock> locks = new ArrayList<Lock>() {{
+      add(new Lock("lock1", LockType.READ));
+      add(new Lock("lock2", LockType.WRITE));
+    }};
+    final String result = SharedResourcesUtils.locksAsString(locks);
+    assertEquals(expected, result);
+  }
 }

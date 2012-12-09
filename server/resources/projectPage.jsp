@@ -52,9 +52,9 @@
       if (!this.validate()) return false;
       this.close();
       if (this.editMode) {
-        BS.SharedResourcesActions.addResource();
-      } else {
         BS.SharedResourcesActions.editResource(this.currentResourceName);
+      } else {
+        BS.SharedResourcesActions.addResource();
       }
       return false;
     },
@@ -85,7 +85,7 @@
     addUrl: window['base_uri'] + "/sharedResourcesAdd.html",
     addResource: function() {
       // if quota checkbox in unchecked, send no quota info
-      if (this.quoted) {
+      if (BS.ResourceDialog.quoted) {
         //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.addUrl, {
           parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val()},
@@ -104,9 +104,9 @@
       }
     },
 
-    editUrl: window['base_uri'] + "/sharedResourcesDelete.html",
+    editUrl: window['base_uri'] + "/sharedResourcesEdit.html",
     editResource: function(old_resource_name) {
-      if (this.quoted) {
+      if (BS.ResourceDialog.quoted) {
         //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.editUrl, {
           parameters: {
@@ -204,7 +204,7 @@
     </c:when>
     <c:otherwise>
       <p>
-        <c:out value="There are no resources available. Why don't you add one? =)"/>
+        <c:out value="There are no resources available. Why don't you add one? =)"/>  <%-- todo: ui string--%>
       </p>
     </c:otherwise>
   </c:choose>

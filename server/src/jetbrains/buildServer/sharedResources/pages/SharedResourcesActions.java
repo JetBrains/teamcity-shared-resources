@@ -3,10 +3,15 @@ package jetbrains.buildServer.sharedResources.pages;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
 import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +21,11 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
 
 /**
@@ -72,14 +82,44 @@ public class SharedResourcesActions {
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
       final String oldResourceName = request.getParameter(WEB.PARAM_OLD_RESOURCE_NAME);
-      final String projectId = request.getParameter(WEB.PARAM_RESOURCE_NAME);
+      final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
         Resource resource = getResourceFromRequest(request);
         if (resource != null) {
           ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).editResource(oldResourceName, resource);
+          if (!resource.getName().equals(oldResourceName)) {
+            // name was changed. update references
+            final List<SBuildType> buildTypes = project.getBuildTypes();
+            for (SBuildType type: buildTypes) {
+              final SBuildFeatureDescriptor descriptor = SharedResourcesUtils.searchForFeature(type, false);
+              if (descriptor != null) {
+                // we have feature. now:
+                // 1) get locks
+                final Map<String, String> parameters = descriptor.getParameters();
+                final String locksString = parameters.get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+                final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString);
+                // 2) search for lock with old resource name
+                final Lock lock = lockMap.get(oldResourceName);
+                if (lock != null) {
+                  // 3) save its type
+                  final LockType lockType = lock.getType();
+                  // 4) remove it
+                  lockMap.remove(oldResourceName);
+                  // 5) add lock with new resource name and saved type
+                  lockMap.put(resource.getName(), new Lock(resource.getName(), lockType));
+                  // 6) serialize locks
+                  final String locksAsString = SharedResourcesUtils.locksAsString(lockMap.values());
+                  // 7) update build feature parameters
+                  Map<String, String> newParams = new HashMap<String, String>(parameters);
+                  newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
+                  // 8) update build feature
+                  type.updateBuildFeature(descriptor.getId(), descriptor.getType(), newParams);
+                }
+              }
+            }
+          }
           project.persist();
-          // go through all build configurations, switch name of the resource
         }
       }
       return null;
