@@ -97,7 +97,7 @@ public class SharedResourcesActions {
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
       final String resourceName = request.getParameter(WEB.PARAM_RESOURCE_NAME);
-      final String projectId = request.getParameter(WEB.PARAM_RESOURCE_NAME);
+      final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
         ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).deleteResource(resourceName);

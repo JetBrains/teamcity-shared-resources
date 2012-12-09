@@ -5,9 +5,10 @@
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 
-<c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
+<c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
+<c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
 
 
 
@@ -18,6 +19,7 @@
   BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     attachedToRoot: false,
     editMode: false,
+    currentResourceName: "",
     getContainer: function() {
       return $('resourceDialog');
     },
@@ -29,15 +31,31 @@
     },
 
     showEdit: function(resource_name, resource_quota) {
-//      this.showCentered();
-//      this.bindCtrlEnterHandler(this.submit.bind(this));
-//      this.editMode = true;
+      this.editMode = true;
+      this.currentResourceName = resource_name;
+      $j('#resource_name').val(resource_name);
+      if (resource_quota > 0) {
+        $j('#use_quota').prop('checked', true);
+        $j('#resource_quota').val(resource_quota);
+      } else {
+        $j('#use_quota').prop('checked', false);
+        $j('#resource_quota').val(1);
+      }
+
+      this.toggleQuotaSwitch();
+      this.showCentered();
+      this.bindCtrlEnterHandler(this.submit.bind(this));
+
     },
 
     submit: function() {
       if (!this.validate()) return false;
       this.close();
-      BS.SharedResourcesActions.addResource();
+      if (this.editMode) {
+        BS.SharedResourcesActions.addResource();
+      } else {
+        BS.SharedResourcesActions.editResource(this.currentResourceName);
+      }
       return false;
     },
 
@@ -84,9 +102,34 @@
           }
         });
       }
+    },
 
-
-
+    editUrl: window['base_uri'] + "/sharedResourcesDelete.html",
+    editResource: function(old_resource_name) {
+      if (this.quoted) {
+        //noinspection JSDuplicatedDeclaration
+        BS.ajaxRequest(this.editUrl, {
+          parameters: {
+            '${PARAM_PROJECT_ID}':'${project.projectId}',
+            '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(),
+            '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val(),
+            '${PARAM_OLD_RESOURCE_NAME}': old_resource_name},
+          onSuccess: function() {
+            window.location.reload();
+          }
+        });
+      } else {
+        //noinspection JSDuplicatedDeclaration
+        BS.ajaxRequest(this.editUrl, {
+          parameters: {
+            '${PARAM_PROJECT_ID}':'${project.projectId}',
+            '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(),
+            '${PARAM_OLD_RESOURCE_NAME}': old_resource_name},
+          onSuccess: function() {
+            window.location.reload();
+          }
+        });
+      }
     },
 
     deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
@@ -141,7 +184,7 @@
         </tr>
         <%-- /title--%>
         <c:forEach var="resource" items="${bean.resources}">
-          <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}, ${resource.quota}')"/>
+          <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}', '${resource.quota}')"/>
           <tr>
             <td class="name highlight" onclick="${onclick}"><c:out value="${resource.name}"/></td>
             <c:choose>
