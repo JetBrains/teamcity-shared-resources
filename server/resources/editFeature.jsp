@@ -57,7 +57,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     var size = Object.size(self);
 
     if (size > 0) {
-      BS.Util.show('LocksTaken');
+      BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
       for (var key in self) {
         //noinspection JSUnfilteredForInLoop
@@ -75,6 +75,13 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       BS.Util.show('noLocksTaken');
     }
     textArea.value = textAreaContent.trim();
+    var resourceDropdown = $j('#lockFromResources');
+    resourceDropdown.children().remove();
+    //noinspection JSDuplicatedDeclaration
+    for (var key in this.existingResources) {
+      //noinspection JSCheckFunctionSignatures
+      resourceDropdown.append("<option value='" + key + "'>" + key + "</option>");
+    }
     BS.MultilineProperties.updateVisible();
   },
 
@@ -112,13 +119,14 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.editMode = true;
     this.currentLockName = lockName;
     $j("#locksDialogSubmit").prop('value', 'Save');
-    $('newLockName').value = lockName;
+    $('newLockName').value = "";
     var lockType = this.myData[lockName];
     $j('#lockSource option').each(function() { // todo: not sure about this
       var self = $j(this);
       //noinspection JSUnresolvedFunction
       self.prop("selected", self.val() == 'choose');
     }); // restore 'resource is chosen' state
+    this.syncResourceSelectionState();
 
     $j('#lockFromResources option').each(function() {
       var self = $j(this);
@@ -137,40 +145,37 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   submit: function() {
     if (!this.validate()) return false;
-    // todo: add resource creation here
-    if (this.editMode) {
-      // we change / add new resource through change
-    } else {
-      // we choose / add new resource through add
-      var flag = $j('#lockSource option:selected').val();
-      // get value lockType dropdown
-      var lockType = $j('#newLockType option:selected').val();
-      // if choose existing
-      if (flag === 'choose') {
-        // get value of lockName dropdown
-        var lockName = $j('#lockFromResources option:selected').val();
-        // update local model
-        this.myData[lockName] = lockType;
-        this.refreshUi();
-        this.close();
-        return false;
-      } else if (flag === 'create') { // else if create
-        var lockName = $('newLockName').value;
-        if (!this.existingResources[lockName]) { // if resource does not exist
-          // ajax to add resource
-          var quota = undefined;
-          if ($j('#use_quota').is(':checked')) {
-            quota = $j('#resource_quota').val();
-          }
-          this.createResourceInPlace(lockName, quota);
-          // add to existing resources if success (perhaps re-read all model)
-          this.existingResources[lockName] = true;
+
+    // we choose / add new resource through add
+    var flag = $j('#lockSource option:selected').val();
+    // get value lockType dropdown
+    var lockType = $j('#newLockType option:selected').val();
+    // if choose existing
+    if (flag === 'choose') {
+      // get value of lockName dropdown
+      var lockName = $j('#lockFromResources option:selected').val();
+      // update local model
+      this.myData[lockName] = lockType;
+      this.refreshUi();
+      this.close();
+      return false;
+    } else if (flag === 'create') { // else if create
+      var lockName = $('newLockName').value;
+      if (!this.existingResources[lockName]) { // if resource does not exist
+        // ajax to add resource
+        var quota = undefined;
+        if ($j('#use_quota').is(':checked')) {
+          quota = $j('#resource_quota').val();
         }
-        // choose newly created resource
-        this.myData[lockName] = lockType;
-        this.refreshUi();
-        this.close();
+        this.createResourceInPlace(lockName, quota);
+        // add to existing resources if success (perhaps re-read all model)
+        this.existingResources[lockName] = true;
       }
+      // choose newly created resource
+      this.myData[lockName] = lockType;
+      this.refreshUi();
+      this.close();
+
     }
     //noinspection JSUnresolvedFunction
     if (this.editMode) {
@@ -178,6 +183,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       this.currentLockName = "";
     }
 
+    this.refreshUi();
+    this.close();
     return false;
   },
 
@@ -255,7 +262,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   createResourceInPlace: function(resource_name, quota) {
     var addUrl = window['base_uri'] + "/sharedResourcesAdd.html";
     if (quota) {
-      alert('Creating resource with quota');
+//      alert('Creating resource with quota');
       //noinspection JSDuplicatedDeclaration
       BS.ajaxRequest(addUrl, {
         parameters: {
@@ -268,7 +275,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         }
       });
     } else {
-      alert('Creating resource without quota');
+//      alert('Creating resource without quota');
       //noinspection JSDuplicatedDeclaration
       BS.ajaxRequest(addUrl, {
         parameters: {
@@ -339,11 +346,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <td> <%-- todo: here change bean and jstl to javascript--%>
             <c:choose>
               <c:when test="${not empty bean.resources}">
-                <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%">
-                  <c:forEach items="${bean.resources}" var="resource">
-                    <forms:option value="${resource.name}"><c:out value="${resource.name}"/></forms:option>
-                  </c:forEach>
-                </forms:select>
+                <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
+                <%--<c:forEach items="${bean.resources}" var="resource">--%>
+                <%--<forms:option value="${resource.name}"><c:out value="${resource.name}"/></forms:option>--%>
+                <%--</c:forEach>--%>
+                <%--</forms:select>--%>
                 <span class="smallNote">Choose the resource you want to lock</span>
               </c:when>
               <c:otherwise>
