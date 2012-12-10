@@ -4,6 +4,7 @@ import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -17,7 +18,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.*;
 
@@ -45,6 +48,7 @@ public class SharedResourcesPluginController extends BaseController {
     myFormFactory = formFactory;
     myProjectSettingsManager = projectSettingsManager;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
+
   }
 
   @Nullable
@@ -58,11 +62,12 @@ public class SharedResourcesPluginController extends BaseController {
     final SProject project = form.getProject();
 
     final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
-    final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources());
-
+    final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: add constructor without usage map
     final List<Lock> locks = SharedResourcesUtils.getLocks(myLocksString);
     result.getModel().put("locks", locks);
     result.getModel().put("bean", bean);
     return result;
   }
+
+
 }

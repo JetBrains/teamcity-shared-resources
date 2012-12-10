@@ -177,16 +177,17 @@
   <c:choose>
     <c:when test="${not empty bean.resources}">
       <l:tableWithHighlighting style="width: 70%" className="parametersTable" mouseovertitle="Click to edit resource" highlightImmediately="true">
-        <%-- title--%>
         <tr>
           <th>Resource name</th>
           <th style="width:40%" colspan="4">Quota</th>
         </tr>
-        <%-- /title--%>
         <c:forEach var="resource" items="${bean.resources}">
           <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}', '${resource.quota}')"/>
+          <c:set var="resourceName" value="${resource.name}"/>
+          <c:set var="usage" value="${bean.usageMap[resourceName]}"/>
+          <c:set var="used" value="${not empty usage}"/>
           <tr>
-            <td class="name highlight" onclick="${onclick}"><c:out value="${resource.name}"/></td>
+            <td class="name highlight" onclick="${onclick}"><c:out value="${resourceName}"/></td>
             <c:choose>
               <c:when test="${resource.infinite}">
                 <td class="highlight" onclick="${onclick}">Infinite</td>
@@ -195,9 +196,44 @@
                 <td class="highlight" onclick="${onclick}"><c:out value="${resource.quota}"/></td>
               </c:otherwise>
             </c:choose>
-            <td class="highlight" onclick="${onclick}"> [Used in X configurations V] </td>
-            <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a> </td>
-            <td class="edit"><a href="#" onclick="BS.SharedResourcesActions.deleteResource('${resource.name}')">delete</a> </td>
+            <c:choose>
+              <c:when test="${used}">
+                <td class="highlight" onclick="${onclick}">
+                  <c:set var="usageSize" value="${fn:length(usage)}"/>
+                  <bs:simplePopup controlId="usage${resourceName}"
+                                  linkOpensPopup="true"
+                                  popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+                    <jsp:attribute name="content">
+                      <div>
+                        <ul class="menuList">
+                          <c:forEach items="${usage}" var="usedInBuildType">
+                            <l:li>
+                              <bs:buildTypeLink buildType="${usedInBuildType}" style="padding-left:0px;"/>
+                            </l:li>
+                          </c:forEach>
+                        </ul>
+                      </div>
+                    </jsp:attribute>
+                    <jsp:body>Used in ${usageSize} build configurations</jsp:body>
+                  </bs:simplePopup>
+                </td>
+              </c:when>
+              <c:otherwise>
+                <td class="highlight" onclick="${onclick}"> Resource is not used</td>
+              </c:otherwise>
+            </c:choose>
+            <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a></td>
+            <td class="edit">
+              <c:choose>
+                <c:when test="${used}">
+                  <%--<p>delete</p>--%> <%-- todo: tooltip ('can't delete used resource')--%>
+                  <a href="#">delete</a>
+                </c:when>
+                <c:otherwise>
+                  <a href="#" onclick="BS.SharedResourcesActions.deleteResource('${resource.name}')">delete</a>
+                </c:otherwise>
+              </c:choose>
+            </td>
           </tr>
         </c:forEach>
       </l:tableWithHighlighting>

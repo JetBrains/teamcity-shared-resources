@@ -78,4 +78,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
     result.put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "");
     return result;
   }
+
+
+
 }

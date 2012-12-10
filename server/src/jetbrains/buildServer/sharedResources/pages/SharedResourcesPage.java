@@ -2,18 +2,21 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
 import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
@@ -38,31 +41,32 @@ public class SharedResourcesPage extends EditProjectTab {
     SharedResourcesBean bean;
     final SProject project = getProject(request);
     if (project != null) {
-      final String projectId = project.getProjectId();
-      // calculate usage here
-
-      // for each build configuration
-      // get plugin
-      // get resolved settings for plugin
-      // parse locks
-      // add associations separately for readLocks and writeLocks
-
-      /*
-
-      Map<String, Set<String>> : map<ResourceName => Set <buildTypeName>>
-
-
-
-
-       */
-      final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
-      if (request.getParameter("add") != null) { // todo: remove sample data
-        settings.putSampleData();
-        project.persist();
+      final List<SBuildType> buildTypes = project.getBuildTypes();
+      // map<ResourceName => Set <buildTypeName>>
+      Map<String, Set<SBuildType>> usageMap = new HashMap<String, Set<SBuildType>>();
+      for (SBuildType type: buildTypes) {
+        final SBuildFeatureDescriptor descriptor = SharedResourcesUtils.searchForFeature(type, false);
+        if (descriptor != null) {
+          // we have feature. now:
+          // 1) get locks
+          final Map<String, String> parameters = descriptor.getParameters();
+          final String locksString = parameters.get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString); // todo: map or simple list? do we need actual locks here?
+          for (String str: lockMap.keySet()) {
+            if (usageMap.get(str) == null) {
+              usageMap.put(str, new HashSet<SBuildType>());
+            }
+            usageMap.get(str).add(type);
+          }
+        }
       }
-      bean = new SharedResourcesBean(settings.getResources());
+      // todo: add associations separately for readLocks and writeLocks
+
+      final String projectId = project.getProjectId();
+      final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
+      bean = new SharedResourcesBean(settings.getResources(), usageMap);
     } else {
-      bean = new SharedResourcesBean(Collections.<Resource>emptyList()); // todo: how to differentiate error vs no resources??!
+      bean = new SharedResourcesBean(Collections.<Resource>emptyList(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: how to differentiate error vs no resources??!
     }
     model.put("bean", bean);
 
