@@ -66,6 +66,7 @@ public class SharedResourcesPluginController extends BaseController {
     final List<Lock> locks = SharedResourcesUtils.getLocks(myLocksString);
     result.getModel().put("locks", locks);
     result.getModel().put("bean", bean);
+    result.getModel().put("project", project);
     return result;
   }
 
