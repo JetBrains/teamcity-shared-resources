@@ -313,6 +313,17 @@ public final class SharedResourcesUtils {
     return builder.substring(0, builder.length() - 1);
   }
 
+
+  static void filterPromotions(String projectId, Collection<BuildPromotionInfo> buildPromotions) {
+    final Iterator<BuildPromotionInfo> promotionInfoIterator = buildPromotions.iterator();
+    while (promotionInfoIterator.hasNext()) {
+      final BuildPromotionEx bpEx = (BuildPromotionEx)promotionInfoIterator.next();
+      if (!projectId.equals(bpEx.getProjectId())) {
+        promotionInfoIterator.remove();
+      }
+    }
+  }
+
   /**
    * Class {@code TakenLockInfo}
    * <p/>

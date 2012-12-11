@@ -325,7 +325,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
   }
 
   /**
-   *
+   * @see SharedResourcesUtils#getUnavailableLocks(java.util.Collection, java.util.Collection, java.util.Map)
    * @throws Exception if something goes wrong
    */
   @Test
@@ -373,6 +373,72 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
     assertEquals(2, unavailableLocks.size());
     m.assertIsSatisfied();
   }
+
+  /**
+   * @see SharedResourcesUtils#filterPromotions(String, java.util.Collection)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testFilterBuildPromotions() throws Exception {
+    final String myProjectId = TestUtils.generateRandomName();
+    final Collection<BuildPromotionInfo> myPromotions = new ArrayList<BuildPromotionInfo>();
+    final Collection<BuildPromotionInfo> otherPromotions = new ArrayList<BuildPromotionInfo>();
+    int myPromotionsSize = TestUtils.generateBoundedRandomInt();
+    for (int i = 0; i < myPromotionsSize; i++) {
+      myPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
+    }
+    int otherPromotionsSize = TestUtils.generateBoundedRandomInt();
+    for (int i = 0; i < otherPromotionsSize; i++) {
+      otherPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
+    }
+    final Collection<BuildPromotionInfo> allPromotions = new ArrayList<BuildPromotionInfo>();
+    allPromotions.addAll(myPromotions);
+    allPromotions.addAll(otherPromotions);
+
+    m.checking(new Expectations() {{
+      for (BuildPromotionInfo info: myPromotions) {
+        oneOf((BuildPromotionEx)info).getProjectId();
+        will(returnValue(myProjectId));
+      }
+
+      for (BuildPromotionInfo info: otherPromotions) {
+        oneOf((BuildPromotionEx)info).getProjectId();
+        will(returnValue(TestUtils.generateRandomName()));
+      }
+    }});
+
+
+    SharedResourcesUtils.filterPromotions(myProjectId, allPromotions);
+
+    assertNotEmpty(allPromotions);
+    assertEquals(myPromotionsSize, allPromotions.size());
+    for (BuildPromotionInfo info: myPromotions) {
+      assertContains(allPromotions, info);
+    }
+    for (BuildPromotionInfo info: otherPromotions) {
+      assertNotContains(allPromotions, info);
+    }
+    m.assertIsSatisfied();
+  }
+
+  /**
+   * @see SharedResourcesUtils#getUnavailableLocks(java.util.Collection, java.util.Collection, java.util.Map)
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testGetUnavailableLocks_WithResources() throws Exception  {
+
+    { // against infinite resource
+
+    }
+
+    { // against finite resource
+
+    }
+
+  }
+
+
 
 
   /**

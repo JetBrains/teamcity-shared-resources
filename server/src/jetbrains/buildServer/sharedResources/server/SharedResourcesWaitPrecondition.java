@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
@@ -55,13 +54,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
           final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
           final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
           // filter promotions by project id of current build
-          final Iterator<BuildPromotionInfo> promotionInfoIterator = buildPromotions.iterator();
-          while (promotionInfoIterator.hasNext()) {
-            final BuildPromotionEx bpex = (BuildPromotionEx)promotionInfoIterator.next();
-            if (!projectId.equals(bpex.getProjectId())) {
-              promotionInfoIterator.remove();
-            }
-          }
+          filterPromotions(projectId, buildPromotions);
           final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
           final Map<String, Resource> resourceMap = settings.getResourceMap();
           final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions, resourceMap);
@@ -82,4 +75,5 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     }
     return result;
   }
+
 }

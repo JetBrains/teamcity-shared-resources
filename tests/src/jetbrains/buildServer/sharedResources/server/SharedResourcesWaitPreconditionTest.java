@@ -49,4 +49,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
   public void testMultipleBuildsLocksNotCrossing() throws Exception {
 
   }
+
+  @Test
+  public void testBuildsFromOtherProjects() throws Exception {
+
+  }
 }
