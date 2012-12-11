@@ -56,13 +56,11 @@ public class SharedResourcesBuildFeature extends BuildFeature {
     final List<String> writeLockNames = lockNames.get(1);
     if (!readLockNames.isEmpty()) {
       sb.append("Read locks used: ");
-      sb.append(StringUtil.join(readLockNames, ",   "));
-      sb.append(". ");
+      sb.append(StringUtil.join(readLockNames, ", "));
     }
     if (!writeLockNames.isEmpty()) {
       sb.append("Write locks used: ");
       sb.append(StringUtil.join(writeLockNames, ", "));
-      sb.append(". ");
     }
     if (sb.length() == 0) {
       sb.append("No locks are currently used by this build configuration");
@@ -78,7 +76,4 @@ public class SharedResourcesBuildFeature extends BuildFeature {
     result.put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "");
     return result;
   }
-
-
-
 }
