@@ -251,23 +251,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 </script>
 
 <tr>
-  <td colspan="2" style="padding:0; margin:0;">
-    <table id="locksTaken" class="dark borderBottom">
+  <td colspan="2" style="padding-right: 8px">
+    <table id="locksTaken" class="parametersTable">
       <thead>
       <tr>
-        <th>Lock Name</th>
-        <th style="width: 10%">Lock Type</th>
-        <th colspan="2" style="width: 10%">&nbsp;</th>
+        <th class="70%">Lock Name</th>
+        <th colspan="3" style="width: 30%">Lock Type</th>
       </tr>
       </thead>
       <tbody>
       </tbody>
     </table>
-    <table id="noLocksTaken" style="display: none">
-      <tr>
-        <td>No locks are currently added</td>
-      </tr>
-    </table>
+    <div id="noLocksTaken" style="display: none">
+        No locks are currently defined
+    </div>
   </td>
 </tr>
 
@@ -276,7 +273,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   BS.LocksDialog.refreshUI();
 </script>
 
-<tr class="noBorder" style="display: none">
+<tr style="display: none">
   <th><label for="${keys.locksFeatureParamKey}">Resource name:</label></th>
   <td>
     <props:multilineProperty name="${keys.locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
@@ -285,8 +282,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   </td>
 </tr>
 
-<tr class="noBorder">
-  <td colspan="2">
+<tr>
+  <td class="noBorder" colspan="2">
     <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
     <bs:dialog dialogId="locksDialog" title="Lock Management" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
@@ -294,8 +291,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockSource">Resource selection: </label></th>
           <td>
             <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
-              <forms:option value="create">Create a resource to lock</forms:option><%--todo: ui messages--%>
-              <forms:option value="choose">Choose a resource to lock</forms:option><%--todo: ui messages--%>
+              <forms:option value="create">Create new</forms:option><%--todo: ui messages--%>
+              <forms:option value="choose">Choose an existing resource</forms:option><%--todo: ui messages--%>
             </forms:select>
             <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
           </td>
@@ -321,8 +318,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <tr id="row_resourceCreate">
           <th><label for="newLockName">Resource name:</label></th>
           <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 98%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
-            <span class="smallNote">Enter the name of resource</span>
+            <forms:textField id="newLockName" name="newLockName" style="width: 100%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
+            <span class="smallNote">Specify the name of resource</span>
           </td>
         </tr>
         <tr id="row_useQuotaSwitch">
@@ -333,7 +330,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         </tr>
         <tr id="row_useQuotaInput" style="display: none">
           <th><label for="resource_quota">Resource quota:</label> </th>
-          <td><forms:textField name="resource_quota"  style="width: 25%" id='resource_quota' className="longField buildTypeParams" maxlength="3"/></td>
+          <td><forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/></td>
         </tr>
         <tr>
           <th><label for="newLockType">Lock type:</label></th>

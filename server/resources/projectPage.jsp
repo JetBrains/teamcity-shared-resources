@@ -142,7 +142,7 @@
       <tr>
         <th><label for="resource_name">Resource name:</label></th>
         <td>
-          <forms:textField name="resource_name" id='resource_name' style="width: 98%" className="longField buildTypeParams" maxlength="40"/>
+          <forms:textField name="resource_name" id="resource_name" style="width: 100%" className="longField buildTypeParams" maxlength="40"/>
           <span class="smallNote">Specify the name of resource</span>
         </td>
       </tr>
@@ -154,7 +154,7 @@
       </tr>
       <tr id="quota_row" style="display: none">
         <th><label for="resource_quota">Resource quota:</label> </th>
-        <td><forms:textField name="resource_quota"  style="width: 15%" id='resource_quota' className="longField buildTypeParams" maxlength="3"/></td>
+        <td><forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/></td>
       </tr>
     </table>
     <div class="popupSaveButtonsBlock">
@@ -230,7 +230,7 @@
     </c:when>
     <c:otherwise>
       <p>
-        <c:out value="There are no resources available. Why don't you add one? =)"/>  <%-- todo: ui string--%>
+        <c:out value="There are no resources defined"/>
       </p>
     </c:otherwise>
   </c:choose>
