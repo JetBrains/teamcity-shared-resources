@@ -15,7 +15,7 @@
 <c:url var="url" value='editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources'/>
 
 <script type="text/javascript">
-
+  //noinspection JSValidateTypes
   BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     attachedToRoot: false,
     editMode: false,
@@ -45,7 +45,6 @@
       this.toggleQuotaSwitch();
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
-
     },
 
     submit: function() {
@@ -65,7 +64,6 @@
 
     toggleQuotaSwitch: function() {
       var show = $j('#use_quota').is(':checked');
-      console.log("toggle switch [" + show + "]");
       if (show) {
         this.quoted = true;
         BS.Util.show("quota_row");
@@ -76,17 +74,13 @@
     },
 
     quoted: false
-
-
   });
 
-  //noinspection FunctionWithInconsistentReturnsJS
   BS.SharedResourcesActions = {
     addUrl: window['base_uri'] + "/sharedResourcesAdd.html",
     addResource: function() {
       // if quota checkbox in unchecked, send no quota info
       if (BS.ResourceDialog.quoted) {
-        //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.addUrl, {
           parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val()},
           onSuccess: function() {
@@ -94,7 +88,6 @@
           }
         });
       } else {
-        //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.addUrl, {
           parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(), '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val()},
           onSuccess: function() {
@@ -107,7 +100,6 @@
     editUrl: window['base_uri'] + "/sharedResourcesEdit.html",
     editResource: function(old_resource_name) {
       if (BS.ResourceDialog.quoted) {
-        //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.editUrl, {
           parameters: {
             '${PARAM_PROJECT_ID}':'${project.projectId}',
@@ -119,7 +111,6 @@
           }
         });
       } else {
-        //noinspection JSDuplicatedDeclaration
         BS.ajaxRequest(this.editUrl, {
           parameters: {
             '${PARAM_PROJECT_ID}':'${project.projectId}',
@@ -134,7 +125,6 @@
 
     deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
     deleteResource: function(resource_name) {
-      //noinspection JSDuplicatedDeclaration
       BS.ajaxRequest(this.deleteUrl, {
         parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}': resource_name},
         onSuccess: function() {
@@ -146,14 +136,14 @@
 </script>
 
 <div>
-  <forms:addButton id="addNewResource" onclick="BS.ResourceDialog.showDialog();   return false">Add new resource</forms:addButton>
+  <forms:addButton id="addNewResource" onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
   <bs:dialog dialogId="resourceDialog" title="Resource Management" closeCommand="BS.ResourceDialog.close()">
     <table class="runnerFormTable">
       <tr>
         <th><label for="resource_name">Resource name:</label></th>
         <td>
           <forms:textField name="resource_name" id='resource_name' style="width: 98%" className="longField buildTypeParams" maxlength="40"/>
-          <span class="smallNote">Specify name of the resource</span>
+          <span class="smallNote">Specify the name of resource</span>
         </td>
       </tr>
       <tr>

@@ -15,18 +15,7 @@
 
 
 <script type="text/javascript">
-//noinspection JSUnusedGlobalSymbols
-
-Object.size = function(obj) {
-  var size = 0, key;
-  for (key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      size++;
-    }
-  }
-  return size;
-};
-
+//noinspection JSValidateTypes
 BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   attachedToRoot: false,
   myData: {}, // here we have locks
@@ -45,29 +34,25 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
     this.myLocksDisplay['readLock'] = "Read lock";
     this.myLocksDisplay['writeLock'] = "Write lock";
-
   },
 
-  refreshUi: function() {
+  refreshUI: function() {
     var tableBody = $j('#locksTaken tbody:last');
     var textArea = $('${keys.locksFeatureParamKey}');
     tableBody.children().remove();
     var self = this.myData;
     var textAreaContent = "";
-    var size = Object.size(self);
+    var size = _.size(self);
 
     if (size > 0) {
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
       for (var key in self) {
-        //noinspection JSUnfilteredForInLoop
         var content = "<tr><td>" + key + "</td><td>" + this.myLocksDisplay[self[key]] +"</td>";
         content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
         content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
         content += "</tr>";
-        //noinspection JSUnfilteredForInLoop
         textAreaContent += key + " " + self[key] + "\n";
-        //noinspection JSCheckFunctionSignatures
         tableBody.append(content);
       }
     } else {
@@ -77,9 +62,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     textArea.value = textAreaContent.trim();
     var resourceDropdown = $j('#lockFromResources');
     resourceDropdown.children().remove();
-    //noinspection JSDuplicatedDeclaration
     for (var key in this.existingResources) {
-      //noinspection JSCheckFunctionSignatures
       resourceDropdown.append("<option value='" + key + "'>" + key + "</option>");
     }
     BS.MultilineProperties.updateVisible();
@@ -91,22 +74,18 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   showDialog: function() {
     this.editMode = false;
-    // Set button title to Add
     $j("#locksDialogSubmit").prop('value', 'Add');
-    // Empty input box
     $('newLockName').value = "";
     $j('#resource_quota').value = "1";
-
 
     // Set dialog mode to choose
     $j('#lockSource option').each(function() {
       var self = $j(this);
-      //noinspection JSUnresolvedFunction
       self.prop("selected", self.val() == 'choose');
     });
     this.syncResourceSelectionState();
 
-    this.refreshUi();
+    this.refreshUI();
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
@@ -123,22 +102,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     var lockType = this.myData[lockName];
     $j('#lockSource option').each(function() { // todo: not sure about this
       var self = $j(this);
-      //noinspection JSUnresolvedFunction
       self.prop("selected", self.val() == 'choose');
     }); // restore 'resource is chosen' state
     this.syncResourceSelectionState();
 
     $j('#lockFromResources option').each(function() {
       var self = $j(this);
-      //noinspection JSUnresolvedFunction
       self.prop("selected", self.val() == lockName);
     }); // restore lock name in selection
 
     $j('#newLockType option').each(function() {
       var self = $j(this);
-      //noinspection JSUnresolvedFunction
       self.prop("selected", self.val() == lockType);
     }); // restore lock type
+
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
@@ -146,24 +123,21 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   submit: function() {
     if (!this.validate()) return false;
 
-    // we choose / add new resource through add
     var flag = $j('#lockSource option:selected').val();
-    // get value lockType dropdown
     var lockType = $j('#newLockType option:selected').val();
-    // if choose existing
+
+    var lockName;
     if (flag === 'choose') {
-      // get value of lockName dropdown
-      var lockName = $j('#lockFromResources option:selected').val();
-      // update local model
+      lockName = $j('#lockFromResources option:selected').val();
       this.myData[lockName] = lockType;
-      this.refreshUi();
+      this.refreshUI();
       this.close();
       return false;
-    } else if (flag === 'create') { // else if create
-      var lockName = $('newLockName').value;
+    } else if (flag === 'create') {
+      lockName = $('newLockName').value;
       if (!this.existingResources[lockName]) { // if resource does not exist
         // ajax to add resource
-        var quota = undefined;
+        var quota;
         if ($j('#use_quota').is(':checked')) {
           quota = $j('#resource_quota').val();
         }
@@ -173,17 +147,16 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       }
       // choose newly created resource
       this.myData[lockName] = lockType;
-      this.refreshUi();
+      this.refreshUI();
       this.close();
-
     }
-    //noinspection JSUnresolvedFunction
+
     if (this.editMode) {
       delete this.myData[this.currentLockName];
       this.currentLockName = "";
     }
 
-    this.refreshUi();
+    this.refreshUI();
     this.close();
     return false;
   },
@@ -209,13 +182,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   },
 
   deleteLockFromTakenLocks: function(lockName) {
-    console.log("Deleting lock: [" + lockName + "]");
     delete this.myData[lockName];
-    this.refreshUi();
+    this.refreshUI();
   },
 
   syncResourceSelectionState: function() {
-    //noinspection JSUnresolvedFunction
     var flag = $j('#lockSource option:selected').val(); // todo: add state syncing to dialog init
     if (flag === 'choose')  {
       this.toggleModeChoose();
@@ -224,7 +195,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
     BS.MultilineProperties.updateVisible();
   },
-
 
   toggleModeChoose: function() {
     // choose: show
@@ -248,12 +218,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   toggleUseQuota: function() {
     if ($j('#use_quota').is(':checked')) {
-      // show
       BS.Util.show('row_useQuotaInput');
     } else {
-      //hide
       BS.Util.hide('row_useQuotaInput');
     }
+
     BS.MultilineProperties.updateVisible();
   },
 
@@ -262,28 +231,18 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   createResourceInPlace: function(resource_name, quota) {
     var addUrl = window['base_uri'] + "/sharedResourcesAdd.html";
     if (quota) {
-//      alert('Creating resource with quota');
-      //noinspection JSDuplicatedDeclaration
       BS.ajaxRequest(addUrl, {
         parameters: {
           '${PARAM_PROJECT_ID}':'${project.projectId}',
           '${PARAM_RESOURCE_NAME}': resource_name,
           '${PARAM_RESOURCE_QUOTA}': quota
-        },
-        onSuccess: function() {
-          console.log('Resource with quota created successfully!');
         }
       });
     } else {
-//      alert('Creating resource without quota');
-      //noinspection JSDuplicatedDeclaration
       BS.ajaxRequest(addUrl, {
         parameters: {
           '${PARAM_PROJECT_ID}':'${project.projectId}',
           '${PARAM_RESOURCE_NAME}':resource_name
-        },
-        onSuccess: function() {
-          console.log('Resource without quota created successfully!');
         }
       });
     }
@@ -314,7 +273,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
 <script type="text/javascript">
   BS.LocksDialog.fillData();
-  BS.LocksDialog.refreshUi();
+  BS.LocksDialog.refreshUI();
 </script>
 
 <tr class="noBorder" style="display: none">
@@ -328,8 +287,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
 <tr class="noBorder">
   <td colspan="2">
-    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog();   return false">Add lock</forms:addButton>
-    <bs:dialog dialogId="locksDialog" title="Lock Managemet" closeCommand="BS.LocksDialog.close()">
+    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
+    <bs:dialog dialogId="locksDialog" title="Lock Management" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
         <tr>
           <th><label for="lockSource">Resource selection: </label></th>
@@ -338,7 +297,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
               <forms:option value="create">Create a resource to lock</forms:option><%--todo: ui messages--%>
               <forms:option value="choose">Choose a resource to lock</forms:option><%--todo: ui messages--%>
             </forms:select>
-            <span class="smallNote">Select, whether you want to create new shared resource or use existing one</span>
+            <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
           </td>
         </tr>
         <tr id="row_resourceChoose">
@@ -363,7 +322,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="newLockName">Resource name:</label></th>
           <td>
             <forms:textField id="newLockName" name="newLockName" style="width: 98%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
-            <span class="smallNote">Enter name of the resource</span>
+            <span class="smallNote">Enter the name of resource</span>
           </td>
         </tr>
         <tr id="row_useQuotaSwitch">
