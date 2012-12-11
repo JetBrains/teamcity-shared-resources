@@ -11,6 +11,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -328,7 +329,7 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
    * @throws Exception if something goes wrong
    */
   @Test
-  public void testGetUnavailableLocks() throws Exception {
+  public void testGetUnavailableLocks_NoResources() throws Exception {
     // taken locks
     final List<Map<String, String>> paramsList = new ArrayList<Map<String, String>>();
     paramsList.add(new HashMap<String, String>() {{
@@ -365,7 +366,8 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
 
     }});
 
-    Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, promotions);
+    // todo: add resources to test
+    final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, promotions, Collections.<String, Resource>emptyMap());
     assertNotNull(unavailableLocks);
     assertNotEmpty(unavailableLocks);
     assertEquals(2, unavailableLocks.size());

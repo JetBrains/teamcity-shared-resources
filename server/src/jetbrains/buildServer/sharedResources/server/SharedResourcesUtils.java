@@ -11,6 +11,7 @@ import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,18 +211,31 @@ public final class SharedResourcesUtils {
    *
    * @param locksToTake     locks, requested by the build
    * @param buildPromotions other builds (running and queued)
+   * @param resourceMap map oof the existing resources
    * @return collection of unavailable locks
    */
   @NotNull
-  static Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake, @NotNull Collection<BuildPromotionInfo> buildPromotions) {
-    List<Lock> result = new ArrayList<Lock>();
-    Map<String, TakenLockInfo> takenLocks = collectTakenLocks(buildPromotions);
+  static Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
+                                              @NotNull Collection<BuildPromotionInfo> buildPromotions,
+                                              @NotNull Map<String, Resource> resourceMap) {
+    // unavailable locks
+    final Set<Lock> result = new HashSet<Lock>();
+    final Map<String, TakenLockInfo> takenLocks = collectTakenLocks(buildPromotions);
     for (Lock lock : locksToTake) {
-      TakenLockInfo takenLock = takenLocks.get(lock.getName());
+      final TakenLockInfo takenLock = takenLocks.get(lock.getName());
       switch (lock.getType()) {
         case READ:
           if (takenLock != null && !takenLock.writeLocks.isEmpty()) {
             result.add(lock);
+          }
+          // check quota
+          final Resource resource = resourceMap.get(lock.getName());
+          // resource exists, resource is not infinite
+          if (resource != null && !resource.isInfinite()) {
+            // all resource instances are taken
+            if (takenLock != null && takenLock.readLocks.size() >= resource.getQuota()) {
+              result.add(lock);
+            }
           }
           break;
         case WRITE:

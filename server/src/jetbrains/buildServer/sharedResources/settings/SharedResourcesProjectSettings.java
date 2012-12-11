@@ -119,7 +119,7 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
     myResourceMap.remove(name);
   }
 
-  public void editResource(String oldName, Resource resource) {   // todo: concurrency!
+  public void editResource(String oldName, Resource resource) {
     myResourceMap.remove(oldName);
     myResourceMap.put(resource.getName(), resource);
   }
@@ -128,11 +128,7 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
     return Collections.unmodifiableCollection(myResourceMap.values());
   }
 
-  public void putSampleData() {
-    final int n = new Random(System.currentTimeMillis()).nextInt(1000);
-    for (int i = 0; i < n % 4; i++) {
-      addResource(Resource.newResource(UUID.randomUUID().toString().substring(0, 12), (n % 3 == 0 ? -1: n % 100)));
-    }
+  public Map<String, Resource> getResourceMap() {
+    return Collections.unmodifiableMap(myResourceMap);
   }
-
 }
