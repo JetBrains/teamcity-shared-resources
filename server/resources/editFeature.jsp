@@ -1,5 +1,21 @@
-<%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
+<%--
+  ~ Copyright 2000-2012 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  --%>
 <%@ include file="/include-internal.jsp" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 
@@ -100,7 +116,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     $j("#locksDialogSubmit").prop('value', 'Save');
     $('newLockName').value = "";
     var lockType = this.myData[lockName];
-    $j('#lockSource option').each(function() { // todo: not sure about this
+    $j('#lockSource option').each(function() {
       var self = $j(this);
       self.prop("selected", self.val() == 'choose');
     }); // restore 'resource is chosen' state
@@ -187,7 +203,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   },
 
   syncResourceSelectionState: function() {
-    var flag = $j('#lockSource option:selected').val(); // todo: add state syncing to dialog init
+    var flag = $j('#lockSource option:selected').val();
     if (flag === 'choose')  {
       this.toggleModeChoose();
     } else if (flag === 'create') {
@@ -291,22 +307,18 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockSource">Resource selection: </label></th>
           <td>
             <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
-              <forms:option value="create">Create new</forms:option><%--todo: ui messages--%>
-              <forms:option value="choose">Choose an existing resource</forms:option><%--todo: ui messages--%>
+              <forms:option value="create">Create new</forms:option>
+              <forms:option value="choose">Choose an existing resource</forms:option>
             </forms:select>
             <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
           </td>
         </tr>
         <tr id="row_resourceChoose">
           <th><label for="lockFromResources">Resource name:</label></th>
-          <td> <%-- todo: here change bean and jstl to javascript--%>
+          <td>
             <c:choose>
               <c:when test="${not empty bean.resources}">
                 <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
-                <%--<c:forEach items="${bean.resources}" var="resource">--%>
-                <%--<forms:option value="${resource.name}"><c:out value="${resource.name}"/></forms:option>--%>
-                <%--</c:forEach>--%>
-                <%--</forms:select>--%>
                 <span class="smallNote">Choose the resource you want to lock</span>
               </c:when>
               <c:otherwise>

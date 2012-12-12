@@ -1,6 +1,21 @@
-<%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
+<%--
+  ~ Copyright 2000-2012 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  --%>
 <%@ include file="/include-internal.jsp" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
@@ -82,14 +97,14 @@
       // if quota checkbox in unchecked, send no quota info
       if (BS.ResourceDialog.quoted) {
         BS.ajaxRequest(this.addUrl, {
-          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val()},
+          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(), '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val()},
           onSuccess: function() {
             window.location.reload();
           }
         });
       } else {
         BS.ajaxRequest(this.addUrl, {
-          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(), '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val()},
+          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val()},
           onSuccess: function() {
             window.location.reload();
           }
@@ -131,7 +146,11 @@
           window.location.reload();
         }
       });
+    },
+    alertCantDelete: function(resource_name) {
+      alert('Resource ' + resource_name + " can't be deleted because it is in use");
     }
+
   };
 </script>
 
@@ -216,8 +235,7 @@
             <td class="edit">
               <c:choose>
                 <c:when test="${used}">
-                  <%--<p>delete</p>--%> <%-- todo: tooltip ('can't delete used resource')--%>
-                  <a href="#">delete</a>
+                  <a href="#" onclick="BS.SharedResourcesActions.alertCantDelete('${resource.name}')">delete</a>
                 </c:when>
                 <c:otherwise>
                   <a href="#" onclick="BS.SharedResourcesActions.deleteResource('${resource.name}')">delete</a>
