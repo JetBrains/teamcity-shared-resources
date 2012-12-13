@@ -66,7 +66,7 @@
 
     adjustDialogDisplay: function(editMode) {
       if (editMode) {
-        $j("#resourceDialogTitle").html('Add Resource');
+        $j("#resourceDialogTitle").html('Edit Resource');
         $j("#resourceDialogSubmit").prop('value', 'Save');
       } else {
         $j("#resourceDialogTitle").html('Add Resource');
