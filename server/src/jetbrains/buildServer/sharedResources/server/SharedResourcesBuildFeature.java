@@ -48,7 +48,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Shared Resources Management";
+    return "Shared Resources";
   }
 
   @Nullable

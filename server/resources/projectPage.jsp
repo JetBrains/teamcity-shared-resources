@@ -40,9 +40,10 @@
     },
 
     showDialog: function() {
+      this.editMode = false;
+      this.adjustDialogDisplay();
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
-      this.editMode = false;
     },
 
     showEdit: function(resource_name, resource_quota) {
@@ -57,9 +58,21 @@
         $j('#resource_quota').val(1);
       }
 
+      this.adjustDialogDisplay(this.editMode);
       this.toggleQuotaSwitch();
       this.showCentered();
       this.bindCtrlEnterHandler(this.submit.bind(this));
+    },
+
+    adjustDialogDisplay: function(editMode) {
+      if (editMode) {
+        $j("#resourceDialogTitle").html('Add Resource');
+        $j("#resourceDialogSubmit").prop('value', 'Save');
+      } else {
+        $j("#resourceDialogTitle").html('Add Resource');
+        $j("#resourceDialogSubmit").prop('value', 'Add Resource');
+
+      }
     },
 
     submit: function() {
@@ -140,12 +153,14 @@
 
     deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
     deleteResource: function(resource_name) {
-      BS.ajaxRequest(this.deleteUrl, {
-        parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}': resource_name},
-        onSuccess: function() {
-          window.location.reload();
-        }
-      });
+      if (confirm('Are you sure you want to delete this resource?')) {
+        BS.ajaxRequest(this.deleteUrl, {
+          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}': resource_name},
+          onSuccess: function() {
+            window.location.reload();
+          }
+        });
+      }
     },
     alertCantDelete: function(resource_name) {
       alert('Resource ' + resource_name + " can't be deleted because it is in use");
@@ -156,7 +171,7 @@
 
 <div>
   <forms:addButton id="addNewResource" onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
-  <bs:dialog dialogId="resourceDialog" title="Resource Management" closeCommand="BS.ResourceDialog.close()">
+  <bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle" title="Resource Management" closeCommand="BS.ResourceDialog.close()">
     <table class="runnerFormTable">
       <tr>
         <th><label for="resource_name">Resource name:</label></th>
@@ -178,7 +193,7 @@
     </table>
     <div class="popupSaveButtonsBlock">
       <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
-      <forms:submit id="resourcesDialogSubmit" type="button" label="Add Resource" onclick="BS.ResourceDialog.submit()"/>
+      <forms:submit id="resourceDialogSubmit" type="button" label="Add Resource" onclick="BS.ResourceDialog.submit()"/>
     </div>
   </bs:dialog>
 
