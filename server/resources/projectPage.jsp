@@ -210,7 +210,7 @@
                 <td class="highlight" onclick="${onclick}">
                   <c:set var="usageSize" value="${fn:length(usage)}"/>
                   <bs:simplePopup controlId="usage${resourceName}"
-                                  linkOpensPopup="true"
+                                  linkOpensPopup="false"
                                   popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
                       <div>
@@ -223,7 +223,7 @@
                         </ul>
                       </div>
                     </jsp:attribute>
-                    <jsp:body>Used in ${usageSize} build configurations</jsp:body>
+                    <jsp:body>Used in ${usageSize} build configuration<bs:s val="${usageSize}"/></jsp:body>
                   </bs:simplePopup>
                 </td>
               </c:when>
