@@ -35,8 +35,15 @@
     attachedToRoot: false,
     editMode: false,
     currentResourceName: "",
+    existingResources: {},
     getContainer: function() {
       return $('resourceDialog');
+    },
+
+    fillData: function() {
+      <c:forEach var="item" items="${bean.resources}">
+      this.existingResources['${item.name}'] = true;
+      </c:forEach>
     },
 
     showDialog: function() {
@@ -86,8 +93,50 @@
       return false;
     },
 
+    clearErrors: function () {
+      BS.Util.hide('error_Name');
+      $j('#error_Name').html("");
+      BS.Util.hide('error_Quota');
+      $j('#error_Quota').html("");
+    },
+
     validate: function() {
-      return true;
+      var errorsPresent = false;
+      this.clearErrors();
+
+
+      // name changed
+      var element = $j('#resource_name');
+      var value = element.val().trim();
+      if (value !== this.currentResourceName) {
+        if (value.length === 0) { // check not empty
+          BS.Util.show('error_Name');
+          $j('#error_Name').html("Name must not be empty");
+          errorsPresent = true;
+        }
+
+        // check unique: add mode or (edit mode + value changed)
+        if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
+          if (this.existingResources[value]) { // check not used
+            BS.Util.show('error_Name');
+            $j('#error_Name').html("Name is already used");
+            errorsPresent = true;
+          }
+        }
+        element.val(value);
+      }
+
+      if (this.quoted) {
+        element = $j('#resource_quota');
+        value = element.val().trim();
+        if (!value.match(/^[0-9]+$/)) {
+          BS.Util.show('error_Quota');
+          $j('#error_Quota').html("Quota value is not valid");
+          errorsPresent = true;
+        }
+        element.val(value);
+      }
+      return !errorsPresent;
     },
 
     toggleQuotaSwitch: function() {
@@ -167,6 +216,11 @@
     }
 
   };
+
+</script>
+
+<script type="text/javascript">
+  BS.ResourceDialog.fillData();
 </script>
 
 <div>
@@ -177,6 +231,7 @@
         <th><label for="resource_name">Resource name:</label></th>
         <td>
           <forms:textField name="resource_name" id="resource_name" style="width: 100%" className="longField buildTypeParams" maxlength="40"/>
+          <span class="error" id="error_Name"></span>
           <span class="smallNote">Specify the name of resource</span>
         </td>
       </tr>
@@ -188,7 +243,11 @@
       </tr>
       <tr id="quota_row" style="display: none">
         <th><label for="resource_quota">Resource quota:</label> </th>
-        <td><forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/></td>
+        <td>
+          <forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/>
+          <span class="error" id="error_Quota"></span>
+          <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on resource</span>
+        </td>
       </tr>
     </table>
     <div class="popupSaveButtonsBlock">

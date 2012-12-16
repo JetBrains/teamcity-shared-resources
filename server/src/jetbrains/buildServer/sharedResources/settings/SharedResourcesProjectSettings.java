@@ -22,6 +22,8 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jdom.Element;
 
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Class {@code SharedResourcesProjectSettings}
@@ -29,6 +31,8 @@ import java.util.*;
  * @author Oleg Rybak
  */
 public final class SharedResourcesProjectSettings implements ProjectSettings {
+
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesProjectSettings.class.getName());
 
@@ -67,10 +71,10 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
     public static final String TAG_RESOURCE_NAME = "name";
     public static final String ATTR_VALUES_TYPE = "type";
     public static final String TAG_VALUES = "values";
-//    public static final String TAG_VALUE = "value";
+    //    public static final String TAG_VALUE = "value";
     public static final String TAG_QUOTA = "quota";
     public static final String VALUE_TYPE_QUOTA = "quota";
-//    public static final String VALUE_TYPE_CUSTOM = "custom";
+    //    public static final String VALUE_TYPE_CUSTOM = "custom";
     public static final String VALUE_QUOTA_INFINITE = "infinite";
   }
 
@@ -85,66 +89,101 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   @Override
   public void readFrom(Element rootElement) {
-    final List children = rootElement.getChildren(XML.TAG_RESOURCE);
-    myResourceMap = new HashMap<String, Resource>();
-    if (!children.isEmpty()) {
-      for (Object o : children) {
-        Element el = (Element) o;
-        final String resourceName = el.getChild(XML.TAG_RESOURCE_NAME).getTextTrim();
-        Element e = el.getChild(XML.TAG_VALUES);
-        final String valuesType = e.getAttributeValue(XML.ATTR_VALUES_TYPE);
-        if (XML.VALUE_TYPE_QUOTA.equals(valuesType)) {
-          final String resourceQuota = e.getChild(XML.TAG_QUOTA).getTextTrim();
-          Resource parsedResource; // todo: move parsing into Resource class
-          if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
-            parsedResource = Resource.newInfiniteResource(resourceName);
+    try {
+      myLock.writeLock().lock();
+      final List children = rootElement.getChildren(XML.TAG_RESOURCE);
+      myResourceMap = new HashMap<String, Resource>();
+      if (!children.isEmpty()) {
+        for (Object o : children) {
+          Element el = (Element) o;
+          final String resourceName = el.getChild(XML.TAG_RESOURCE_NAME).getTextTrim();
+          Element e = el.getChild(XML.TAG_VALUES);
+          final String valuesType = e.getAttributeValue(XML.ATTR_VALUES_TYPE);
+          if (XML.VALUE_TYPE_QUOTA.equals(valuesType)) {
+            final String resourceQuota = e.getChild(XML.TAG_QUOTA).getTextTrim();
+            Resource parsedResource; // todo: move parsing into Resource class
+            if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
+              parsedResource = Resource.newInfiniteResource(resourceName);
+            } else {
+              parsedResource = Resource.newResource(resourceName,  Integer.parseInt(resourceQuota));
+            }
+            myResourceMap.put(resourceName, parsedResource);
           } else {
-            parsedResource = Resource.newResource(resourceName,  Integer.parseInt(resourceQuota));
+            LOG.warn("Values type [" + valuesType + "] is not yet supported =((");
           }
-          myResourceMap.put(resourceName, parsedResource);
-        } else {
-          LOG.warn("Values type [" + valuesType + "] is not yet supported =((");
         }
       }
+    } finally {
+      myLock.writeLock().unlock();
     }
   }
 
   @Override
   public void writeTo(Element parentElement) {
-    for (Resource r: myResourceMap.values()) {
-      final Element el = new Element(XML.TAG_RESOURCE);
-      final Element resourceName = new Element(XML.TAG_RESOURCE_NAME);
-      resourceName.setText(r.getName());
-      el.addContent(resourceName);
-      final Element values = new Element(XML.TAG_VALUES);
-      // todo: resources by type.
-      values.setAttribute(XML.ATTR_VALUES_TYPE, XML.VALUE_TYPE_QUOTA); // todo: support custom (3rd stage)
-      Element quota = new Element(XML.TAG_QUOTA);
-      quota.setText(r.isInfinite() ? XML.VALUE_QUOTA_INFINITE : Integer.toString(r.getQuota()));
-      values.addContent(quota);
-      el.addContent(values);
-      parentElement.addContent(el);
+    try {
+      myLock.readLock().lock();
+      for (Resource r: myResourceMap.values()) {
+        final Element el = new Element(XML.TAG_RESOURCE);
+        final Element resourceName = new Element(XML.TAG_RESOURCE_NAME);
+        resourceName.setText(r.getName());
+        el.addContent(resourceName);
+        final Element values = new Element(XML.TAG_VALUES);
+        // todo: resources by type.
+        values.setAttribute(XML.ATTR_VALUES_TYPE, XML.VALUE_TYPE_QUOTA); // todo: support custom (3rd stage)
+        Element quota = new Element(XML.TAG_QUOTA);
+        quota.setText(r.isInfinite() ? XML.VALUE_QUOTA_INFINITE : Integer.toString(r.getQuota()));
+        values.addContent(quota);
+        el.addContent(values);
+        parentElement.addContent(el);
+      }
+    } finally {
+      myLock.readLock().unlock();
     }
   }
 
   public void addResource(Resource resource) {
-    myResourceMap.put(resource.getName(), resource);
+    try {
+      myLock.writeLock().lock();
+      myResourceMap.put(resource.getName(), resource);
+    } finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public void deleteResource(String name) {
-    myResourceMap.remove(name);
+    try {
+      myLock.writeLock().lock();
+      myResourceMap.remove(name);
+    } finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public void editResource(String oldName, Resource resource) {
-    myResourceMap.remove(oldName);
-    myResourceMap.put(resource.getName(), resource);
+    try {
+      myLock.writeLock().lock();
+      myResourceMap.remove(oldName);
+      myResourceMap.put(resource.getName(), resource);
+    } finally {
+      myLock.writeLock().unlock();
+    }
   }
 
   public Collection<Resource> getResources() {
-    return Collections.unmodifiableCollection(myResourceMap.values());
+    try {
+      myLock.readLock().lock();
+      return Collections.unmodifiableCollection(myResourceMap.values());
+    } finally {
+      myLock.readLock().unlock();
+    }
   }
 
   public Map<String, Resource> getResourceMap() {
-    return Collections.unmodifiableMap(myResourceMap);
+    try {
+      myLock.readLock().lock();
+      return Collections.unmodifiableMap(myResourceMap);
+    } finally {
+      myLock.readLock().unlock();
+    }
   }
 }

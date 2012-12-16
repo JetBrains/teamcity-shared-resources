@@ -64,12 +64,16 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
       for (var key in self) {
-        var content = "<tr><td>" + key + "</td><td>" + this.myLocksDisplay[self[key]] +"</td>";
-        content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
-        content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
-        content += "</tr>";
-        textAreaContent += key + " " + self[key] + "\n";
-        tableBody.append(content);
+        if (self.hasOwnProperty(key)) {
+          var onclick = this.generateOnClickAction(key);
+          <%-- override default style, as we are in the table with disabled border-top --%>
+          var content = "<tr style=\"border-top: 1px solid #CCC\"><td class=\"highlight\" onclick=" + onclick + ">" + key + "</td><td class=\"highlight\" onclick=" + onclick + ">" + this.myLocksDisplay[self[key]] +"</td>";
+          content += "<td class=\"edit highlight\" onclick=" + onclick + "><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
+          content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
+          content += "</tr>";
+          textAreaContent += key + " " + self[key] + "\n";
+          tableBody.append(content);
+        }
       }
     } else {
       BS.Util.hide('locksTaken');
@@ -78,10 +82,21 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     textArea.value = textAreaContent.trim();
     var resourceDropdown = $j('#lockFromResources');
     resourceDropdown.children().remove();
-    for (var key in this.existingResources) {
-      resourceDropdown.append("<option value='" + key + "'>" + key + "</option>");
+    for (var resource in this.existingResources) {
+      resourceDropdown.append("<option value='" + resource + "'>" + resource + "</option>");
     }
+
+    // here rebuild highlighted rows
+    var highlightableElements = $j("#locksTaken td.highlight");
+    highlightableElements.each(function(i, element) {
+      BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
+    });
+
     BS.MultilineProperties.updateVisible();
+  },
+
+  generateOnClickAction: function(key) {
+    return "BS.LocksDialog.showEdit(\'" + key + "\'); return false;";
   },
 
   getContainer: function() {
@@ -91,7 +106,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   showDialog: function() {
     this.editMode = false;
     $j("#locksDialogSubmit").prop('value', 'Add');
-    $('newLockName').value = "";
+    $j('#newLockName').val("");
     $j('#resource_quota').value = "1";
 
     // Set dialog mode to choose
@@ -114,7 +129,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.editMode = true;
     this.currentLockName = lockName;
     $j("#locksDialogSubmit").prop('value', 'Save');
-    $('newLockName').value = "";
+    $j('newLockName').val("");
     var lockType = this.myData[lockName];
     $j('#lockSource option').each(function() {
       var self = $j(this);
@@ -150,7 +165,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       this.close();
       return false;
     } else if (flag === 'create') {
-      lockName = $('newLockName').value;
+      lockName = $j('#newLockName').val();
       if (!this.existingResources[lockName]) { // if resource does not exist
         // ajax to add resource
         var quota;
@@ -177,24 +192,52 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     return false;
   },
 
+  clearErrors: function () {
+    BS.Util.hide('error_Name');
+    $j('#error_Name').html("");
+    BS.Util.hide('error_Quota');
+    $j('#error_Quota').html("");
+  },
+
   validate: function() { // todo: add validation to choose
+    // clean and hide errors here
+    this.clearErrors();
+    var errorsPresent = false;
     var flag = $j('#lockSource option:selected').val();
     if (flag === 'create') {
-      var _name = $('newLockName').value;
-      if (_name.length === 0) {
-        alert('Please enter lock name');
-        return false;
+      // check name
+      var element = $j('#newLockName');
+      var value =  element.val().trim();
+
+      if (value.length === 0) {
+        BS.Util.show('error_Name');
+        $j('#error_Name').html("Name must not be empty");
+        // check for existence
+        errorsPresent = true;
+      }
+      element.val(value);
+
+      // check quota
+      if ($j('#use_quota').is(':checked')) {
+        element = $j('#resource_quota');
+        value = element.val().trim();
+        if (!value.match(/^[0-9]+$/)) {
+          BS.Util.show('error_Quota');
+          $j('#error_Quota').html("Quota value is not valid");
+          errorsPresent = true;
+        }
+        element.val(value);
       }
     } else if (flag === 'choose') {
       var lockName = $j('#lockFromResources option:selected').val();
       if (!lockName) {
+        errorsPresent = true;
         alert('Please create a resource to lock');
-        return false;
       }
     } else {
-      return false;
+      errorsPresent = true;
     }
-    return true;
+    return !errorsPresent;
   },
 
   deleteLockFromTakenLocks: function(lockName) {
@@ -209,6 +252,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     } else if (flag === 'create') {
       this.toggleModeCreate();
     }
+    this.clearErrors();
     BS.MultilineProperties.updateVisible();
   },
 
@@ -279,7 +323,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </tbody>
     </table>
     <div id="noLocksTaken" style="display: none">
-        No locks are currently defined
+      No locks are currently defined
     </div>
   </td>
 </tr>
@@ -307,7 +351,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockSource">Resource selection: </label></th>
           <td>
             <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
-              <forms:option value="create">Create new</forms:option>
+              <forms:option value="create">Create new resource</forms:option>
               <forms:option value="choose">Choose an existing resource</forms:option>
             </forms:select>
             <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
@@ -330,7 +374,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <tr id="row_resourceCreate">
           <th><label for="newLockName">Resource name:</label></th>
           <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 100%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
+            <forms:textField id="newLockName" name="newLockName" style="width: 90%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
+            <span class="error" id="error_Name"></span>
             <span class="smallNote">Specify the name of resource</span>
           </td>
         </tr>
@@ -338,11 +383,15 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th>Use quota:</th>
           <td>
             <forms:checkbox name="use_quota" id="use_quota" onclick="BS.LocksDialog.toggleUseQuota()" checked="false"/>
+            <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on resource</span>
           </td>
         </tr>
         <tr id="row_useQuotaInput" style="display: none">
           <th><label for="resource_quota">Resource quota:</label> </th>
-          <td><forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/></td>
+          <td>
+            <forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/>
+            <span class="error" id="error_Quota"></span>
+          </td>
         </tr>
         <tr>
           <th><label for="newLockType">Lock type:</label></th>
