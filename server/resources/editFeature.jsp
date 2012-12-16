@@ -161,9 +161,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     if (flag === 'choose') {
       lockName = $j('#lockFromResources option:selected').val();
       this.myData[lockName] = lockType;
-      this.refreshUI();
-      this.close();
-      return false;
     } else if (flag === 'create') {
       lockName = $j('#newLockName').val();
       if (!this.existingResources[lockName]) { // if resource does not exist
@@ -178,8 +175,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       }
       // choose newly created resource
       this.myData[lockName] = lockType;
-      this.refreshUI();
-      this.close();
     }
 
     if (this.editMode) {
