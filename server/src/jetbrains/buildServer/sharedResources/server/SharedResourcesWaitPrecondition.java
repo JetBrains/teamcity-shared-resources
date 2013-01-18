@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,16 +56,14 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuild, @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted, @NotNull BuildDistributorInput buildDistributorInput, boolean emulationMode) {
     WaitReason result = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
-    SBuildType buildType = myPromotion.getBuildType();
-    if (buildType != null) {
+    final String projectId = myPromotion.getProjectId();
+    final SBuildType buildType = myPromotion.getBuildType();
+    if (buildType != null && projectId != null) {
       if (searchForFeature(buildType, false) != null) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
-        final String projectId = myPromotion.getProjectId();
-
-        if (!locksToTake.isEmpty() && projectId != null) {
+        if (!locksToTake.isEmpty()) {
           // now deal only with builds that have same projectId as the current one
-
           final Collection<RunningBuildInfo> runningBuilds = buildDistributorInput.getRunningBuilds();
           final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
           final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);

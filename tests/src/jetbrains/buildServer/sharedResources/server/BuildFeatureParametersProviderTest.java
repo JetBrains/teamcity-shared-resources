@@ -30,6 +30,8 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
+
 /**
  * Class {@code BuildFeatureParametersProviderTest}
  *
@@ -84,7 +86,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     }};
 
     myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
-      put(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
+      put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
       put("param1_key", "param1_value");
       put("param2_key", "param2_value");
     }};

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,11 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY;
+import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
 
 /**
@@ -113,7 +112,7 @@ public class SharedResourcesActions {
                 // we have feature. now:
                 // 1) get locks
                 final Map<String, String> parameters = descriptor.getParameters();
-                final String locksString = parameters.get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+                final String locksString = parameters.get(LOCKS_FEATURE_PARAM_KEY);
                 final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString);
                 // 2) search for lock with old resource name
                 final Lock lock = lockMap.get(oldResourceName);

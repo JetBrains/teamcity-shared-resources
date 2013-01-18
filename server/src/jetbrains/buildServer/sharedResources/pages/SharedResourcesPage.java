@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.FeatureParams;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
 import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
 import jetbrains.buildServer.web.openapi.PagePlaces;
@@ -66,7 +67,7 @@ public class SharedResourcesPage extends EditProjectTab {
           // we have feature. now:
           // 1) get locks
           final Map<String, String> parameters = descriptor.getParameters();
-          final String locksString = parameters.get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          final String locksString = parameters.get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
           final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString); // todo: map or simple list? do we need actual locks here?
           for (String str: lockMap.keySet()) {
             if (usageMap.get(str) == null) {

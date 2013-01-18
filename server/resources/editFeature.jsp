@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2000-2012 JetBrains s.r.o.
+  ~ Copyright 2000-2013 JetBrains s.r.o.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 <%@ include file="/include-internal.jsp" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
+<%@ page import="jetbrains.buildServer.sharedResources.server.FeatureParams" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 
@@ -24,6 +25,8 @@
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
 <jsp:useBean id="locks" scope="request" type="java.util.List"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
+
+<c:set var="locksFeatureParamKey" value="<%=FeatureParams.LOCKS_FEATURE_PARAM_KEY%>"/>
 
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
@@ -54,7 +57,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   refreshUI: function() {
     var tableBody = $j('#locksTaken tbody:last');
-    var textArea = $('${keys.locksFeatureParamKey}');
+    var textArea = $('${locksFeatureParamKey}');
     tableBody.children().remove();
     var self = this.myData;
     var textAreaContent = "";
@@ -329,10 +332,10 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 </script>
 
 <tr style="display: none">
-  <th><label for="${keys.locksFeatureParamKey}">Resource name:</label></th>
+  <th><label for="${locksFeatureParamKey}">Resource name:</label></th>
   <td>
-    <props:multilineProperty name="${keys.locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
-    <span class="error" id="error_${keys.locksFeatureParamKey}"></span>
+    <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
+    <span class="error" id="error_${locksFeatureParamKey}"></span>
     <span class="smallNote">Please specify shared resources that must be locked during build</span>
   </td>
 </tr>

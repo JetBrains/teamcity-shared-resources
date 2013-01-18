@@ -8,10 +8,9 @@
 
   <!-- ===  BUILD FEATURE ===-->
 
-  <!--suppress SpringBeanConstructorArgInspection -->
+
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
 
-  <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
@@ -21,14 +20,12 @@
 
 
   <!-- ===  INTERNALS  === -->
+  <bean class="jetbrains.buildServer.sharedResources.server.FeatureParamsImpl"/>
 
-  <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
 
-  <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.settings.SharedResourcesSettingsManager"/>
 
-  <!--suppress SpringBeanConstructorArgInspection -->
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActions"/>
 
 </beans>

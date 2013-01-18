@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,8 @@ public class SharedResourcesPluginConstants {
   /** Page, responsible for feature parameters */
   public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
 
-  /** Page, responsible for resource management */
-  public static final String EDIT_RESOURCES = "editResources.jsp";
-
   /** Lock prefix, used in build parameters */
   public static final String LOCK_PREFIX = "teamcity.locks.";
-
-  /**
-   * Key in feature parameters collection, that contains all locks
-   */
-  public static final String LOCKS_FEATURE_PARAM_KEY = "locks-param";
-
-  public String getLocksFeatureParamKey() {
-    return LOCKS_FEATURE_PARAM_KEY;
-  }
 
   /** Name of the plugin */
   public static final String PLUGIN_NAME = "JetBrains.SharedResources";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.parameters.AbstractBuildParametersProvider;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
       if (myFeatureDescriptor != null) {
         myFeatureDescriptor = searchForFeature(buildType, true); // resolving params here
         if (myFeatureDescriptor != null) {
-          final String serializedBuildParams = myFeatureDescriptor.getParameters().get(SharedResourcesPluginConstants.LOCKS_FEATURE_PARAM_KEY);
+          final String serializedBuildParams = myFeatureDescriptor.getParameters().get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
           result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
         }
       }
