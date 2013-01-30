@@ -18,16 +18,14 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.FeatureParams;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -49,13 +47,13 @@ public class SharedResourcesPage extends EditProjectTab {
   private final ProjectSettingsManager myProjectSettingsManager;
 
   @NotNull
-  private final SharedResourceFeatures myFeatures;
+  private final SharedResourcesFeatures myFeatures;
 
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final ProjectManager projectManager,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final ProjectSettingsManager projectSettingsManager,
-                             @NotNull final SharedResourceFeatures features) {
+                             @NotNull final SharedResourcesFeatures features) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), "Shared Resources", projectManager);
     myProjectSettingsManager = projectSettingsManager;
     myFeatures = features;
@@ -73,14 +71,11 @@ public class SharedResourcesPage extends EditProjectTab {
       // map<ResourceName => Set <buildTypeName>>
       Map<String, Set<SBuildType>> usageMap = new HashMap<String, Set<SBuildType>>();
       for (SBuildType type: buildTypes) {
-        final Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(type);
-        for (SBuildFeatureDescriptor descriptor : descriptors) {
-          // 1) get locks
-          final Map<String, String> parameters = descriptor.getParameters();
-          final String locksString = parameters.get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
-          final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString); // todo: map or simple list? do we need actual locks here?
-          // 2) fill usage map
-          for (String str: lockMap.keySet()) {
+        // todo: investigate here, what happens if we use resolved settings on lock name with %%. Does it change to the value of the parameter?
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(type);
+        for (SharedResourcesFeature feature: features) {
+          final Map<String, Lock> locksMap = feature.getLockedResources();
+          for (String str: locksMap.keySet()) {
             if (usageMap.get(str) == null) {
               usageMap.put(str, new HashSet<SBuildType>());
             }

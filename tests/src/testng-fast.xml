@@ -11,7 +11,7 @@
       <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.FeatureParamsImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
-      <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeaturesImplTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImplTest"/>
     </classes>
   </test>
   <test name="Settings tests">

@@ -62,7 +62,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
 
   @Override
   public boolean isMultipleFeaturesPerBuildTypeAllowed() {
-    return false;
+    return true;
   }
 
   @NotNull

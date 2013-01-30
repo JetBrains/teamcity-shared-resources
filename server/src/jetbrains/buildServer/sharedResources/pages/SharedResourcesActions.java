@@ -19,15 +19,12 @@ package jetbrains.buildServer.sharedResources.pages;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +33,10 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
-import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
  * Class {@code SharedResourcesActions}
@@ -59,7 +52,7 @@ public class SharedResourcesActions {
   public SharedResourcesActions(@NotNull final WebControllerManager manager,
                                 @NotNull final ProjectSettingsManager projectSettingsManager,
                                 @NotNull final ProjectManager projectManager,
-                                @NotNull final SharedResourceFeatures features) {
+                                @NotNull final SharedResourcesFeatures features) {
     manager.registerController(WEB.ACTION_ADD, new AddController(projectSettingsManager, projectManager));
     manager.registerController(WEB.ACTION_EDIT, new EditController(projectSettingsManager, projectManager, features));
     manager.registerController(WEB.ACTION_DELETE, new DeleteController(projectSettingsManager, projectManager));
@@ -94,11 +87,11 @@ public class SharedResourcesActions {
   static final class EditController extends BaseSimpleController {
 
     @NotNull
-    private final SharedResourceFeatures myFeatures;
+    private final SharedResourcesFeatures myFeatures;
 
     public EditController(@NotNull final ProjectSettingsManager projectSettingsManager,
                           @NotNull final ProjectManager projectManager,
-                          @NotNull final SharedResourceFeatures features) {
+                          @NotNull final SharedResourcesFeatures features) {
       super(projectManager, projectSettingsManager);
       myFeatures = features;
     }
@@ -111,41 +104,20 @@ public class SharedResourcesActions {
       final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
-        Resource resource = getResourceFromRequest(request);
+        final Resource resource = getResourceFromRequest(request);
         if (resource != null) {
           ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).editResource(oldResourceName, resource);
           if (!resource.getName().equals(oldResourceName)) {
             // name was changed. update references
             final List<SBuildType> buildTypes = project.getBuildTypes();
             for (SBuildType type: buildTypes) {
-              final Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(type);
-              for (SBuildFeatureDescriptor descriptor: descriptors) {
-                // we have feature. now:
-                // 1) get locks
-                final Map<String, String> parameters = descriptor.getParameters();
-                final String locksString = parameters.get(LOCKS_FEATURE_PARAM_KEY);
-                final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString);
-                // 2) search for lock with old resource name
-                final Lock lock = lockMap.get(oldResourceName);
-                if (lock != null) {
-                  // 3) save its type
-                  final LockType lockType = lock.getType();
-                  // 4) remove it
-                  lockMap.remove(oldResourceName);
-                  // 5) add lock with new resource name and saved type
-                  lockMap.put(resource.getName(), new Lock(resource.getName(), lockType));
-                  // 6) serialize locks
-                  final String locksAsString = SharedResourcesUtils.locksAsString(lockMap.values());
-                  // 7) update build feature parameters
-                  Map<String, String> newParams = new HashMap<String, String>(parameters);
-                  newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
-                  // 8) update build feature
-                  type.updateBuildFeature(descriptor.getId(), descriptor.getType(), newParams);
-                }
+              // todo: do we need resolved features here? Using unresolved for now
+              for (SharedResourcesFeature feature: myFeatures.searchForFeatures(type)) {
+                feature.updateLock(type, oldResourceName, resource.getName());
               }
             }
+            project.persist();
           }
-          project.persist();
         }
       }
       return null;

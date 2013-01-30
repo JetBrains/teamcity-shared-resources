@@ -47,40 +47,6 @@ public final class SharedResourcesUtils {
   private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
 
   /**
-   * Parses build feature parameters. Exposes them to the build as build parameters
-   *
-   * @param serializedParam parameter stored in build feature
-   * @return map representation of build feature parameter
-   */
-  @NotNull
-  public static Map<String, String> featureParamToBuildParams(String serializedParam) {
-    final List<Lock> locks = getLocks(serializedParam);
-    final Map<String, String> result = new HashMap<String, String>();
-    for (Lock lock: locks) {
-      result.put(lockAsBuildParam(lock), "");
-    }
-    return result;
-  }
-
-
-  /**
-   * Converts given locks to a {@code String} that is suitable to
-   * exposure as a build parameter name
-   *
-   * @see jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants#LOCK_PREFIX
-   * @param lock lock to convert
-   * @return lock as {@code String}
-   */
-  @NotNull
-  static String lockAsBuildParam(@NotNull Lock lock) {
-    final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
-    sb.append(lock.getType());
-    sb.append(".");
-    sb.append(lock.getName());
-    return sb.toString();
-  }
-
-  /**
    * Returns names of taken locks
    * @param serializedFeatureParam feature parameter, that contains all locks
    * @return List of lock names, {@code result[0]} - contains readLocks,
@@ -122,21 +88,6 @@ public final class SharedResourcesUtils {
     }
     return result;
   }
-
-  public static Map<String, Lock> getLocksMap(@Nullable String serializedFeatureParam) {
-    final Map<String, Lock> result = new HashMap<String, Lock>();
-    if (serializedFeatureParam != null && !"".equals(serializedFeatureParam)) {
-      final List<String> serializedLocks = StringUtil.split(serializedFeatureParam, true, '\n');
-      for (String str: serializedLocks) {
-        final Lock lock = getSingleLockFromString(str);
-        if (lock != null) {
-          result.put(lock.getName(), lock);
-        }
-      }
-    }
-    return result;
-  }
-
 
   private static Lock getSingleLockFromString(@NotNull String str) {
     int n = str.lastIndexOf(' ');

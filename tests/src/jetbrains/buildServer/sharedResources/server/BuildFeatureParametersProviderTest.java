@@ -19,9 +19,9 @@ package jetbrains.buildServer.sharedResources.server;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuild;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -51,13 +51,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   private SBuildType myBuildType;
 
   /** Resolved setting of the build type */
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})      // todo: add test for resolved settings
   private ResolvedSettings myResolvedSettings;
 
   /** SharedResources build feature descriptor */
-  private SBuildFeatureDescriptor myBuildFeatureDescriptor;
-
-  /** Build feature parameters */
-  private Map<String, String> myNonEmptyParamMapNoLocks;
+  private SharedResourcesFeature myFeature;
 
   /** Build feature parameters with some locks */
   private Map<String, String> myNonEmptyParamMapSomeLocks;
@@ -66,7 +64,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   private final Map<String, String> myEmptyParamMap = Collections.emptyMap();
 
   /** Build feature extractor mock*/
-  private SharedResourceFeatures myFeatures;
+  private SharedResourcesFeatures myFeatures;
 
   /** Class under test */
   private BuildFeatureParametersProvider myBuildFeatureParametersProvider;
@@ -80,14 +78,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myMockery = new Mockery();
     myBuild = myMockery.mock(SBuild.class);
     myBuildType = myMockery.mock(SBuildType.class);
-    myBuildFeatureDescriptor = myMockery.mock(SBuildFeatureDescriptor.class);
+    myFeature = myMockery.mock(SharedResourcesFeature.class);
     myResolvedSettings = myMockery.mock(ResolvedSettings.class);
-    myFeatures = myMockery.mock(SharedResourceFeatures.class);
-
-    myNonEmptyParamMapNoLocks = new HashMap<String, String>() {{
-      put("param1_key", "param1_value");
-      put("param2_key", "param2_value");
-    }};
+    myFeatures = myMockery.mock(SharedResourcesFeatures.class);
 
     myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
       put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
@@ -109,8 +102,8 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(Collections.emptyList()));
+      oneOf(myFeatures).featuresPresent(myBuildType);
+      will(returnValue(false));
 
     }});
 
@@ -128,20 +121,20 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testEmptyParams() throws Exception {
-    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
-      add(myBuildFeatureDescriptor);
+    final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
+      add(myFeature);
     }};
     myMockery.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
+      oneOf(myFeatures).featuresPresent(myBuildType);
+      will(returnValue(true));
 
       oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getParameters();
+      oneOf(myFeature).getBuildParameters();
       will(returnValue(myEmptyParamMap));
 
     }});
@@ -161,21 +154,21 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testNonEmptyParamsNoLocks() throws Exception {
-    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
-      add(myBuildFeatureDescriptor);
+    final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
+      add(myFeature);
     }};
     myMockery.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
+      oneOf(myFeatures).featuresPresent(myBuildType);
+      will(returnValue(true));
 
       oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getParameters();
-      will(returnValue(myNonEmptyParamMapNoLocks));
+      oneOf(myFeature).getBuildParameters();
+      will(returnValue(myEmptyParamMap));
 
     }});
 
@@ -193,20 +186,20 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testNonEmptyParamsSomeLocks() throws Exception {
-    final Collection<SBuildFeatureDescriptor> descriptors = new ArrayList<SBuildFeatureDescriptor>() {{
-      add(myBuildFeatureDescriptor);
+    final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
+      add(myFeature);
     }};
     myMockery.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
+      oneOf(myFeatures).featuresPresent(myBuildType);
+      will(returnValue(true));
 
       oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getParameters();
+      oneOf(myFeature).getBuildParameters();
       will(returnValue(myNonEmptyParamMapSomeLocks));
 
     }});

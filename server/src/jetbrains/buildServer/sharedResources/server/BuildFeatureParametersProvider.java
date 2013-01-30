@@ -17,18 +17,16 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.serverSide.SBuild;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.parameters.AbstractBuildParametersProvider;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
  * Class {@code BuildFeatureParametersProvider}
@@ -41,9 +39,9 @@ import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_F
 public class BuildFeatureParametersProvider extends AbstractBuildParametersProvider implements BuildParametersProvider {
 
   @NotNull
-  private final SharedResourceFeatures myFeatures;
+private final SharedResourcesFeatures myFeatures;
 
-  public BuildFeatureParametersProvider(@NotNull final SharedResourceFeatures features) {
+  public BuildFeatureParametersProvider(@NotNull final SharedResourcesFeatures features) {
     myFeatures = features;
   }
 
@@ -53,13 +51,11 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(buildType);
-      if (!descriptors.isEmpty()) {
+      boolean featuresPresent = myFeatures.featuresPresent(buildType);
+      if (featuresPresent) {
         // we have features. Now get resolved settings
-        descriptors = myFeatures.searchForResolvedFeatures(buildType);
-        for (SBuildFeatureDescriptor descriptor: descriptors) {
-          final String serializedBuildParams = descriptor.getParameters().get(LOCKS_FEATURE_PARAM_KEY);
-          result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
+        for (SharedResourcesFeature feature: myFeatures.searchForResolvedFeatures(buildType)) {
+          result.putAll(feature.getBuildParameters());
         }
       }
     }

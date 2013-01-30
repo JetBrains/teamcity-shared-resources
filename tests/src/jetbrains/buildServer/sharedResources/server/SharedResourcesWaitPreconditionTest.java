@@ -21,7 +21,7 @@ import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.TestUtils;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -90,7 +90,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
     // todo: proper test of filtering
     final SharedResourcesWaitPrecondition p =
-            new SharedResourcesWaitPrecondition(m.mock(ProjectSettingsManager.class), m.mock(SharedResourceFeatures.class));
+            new SharedResourcesWaitPrecondition(m.mock(ProjectSettingsManager.class), m.mock(SharedResourcesFeatures.class));
     p.filterPromotions(myProjectId, allPromotions);
 
     assertNotEmpty(allPromotions);

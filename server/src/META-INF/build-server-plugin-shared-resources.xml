@@ -23,7 +23,7 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.FeatureParamsImpl"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeaturesImpl"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
 

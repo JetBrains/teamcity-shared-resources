@@ -25,7 +25,7 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,10 +50,10 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   private final ProjectSettingsManager myProjectSettingsManager;
 
   @NotNull
-  private final SharedResourceFeatures myFeatures;
+  private final SharedResourcesFeatures myFeatures;
 
   public SharedResourcesWaitPrecondition(@NotNull final ProjectSettingsManager projectSettingsManager,
-                                         @NotNull final SharedResourceFeatures features) {
+                                         @NotNull final SharedResourcesFeatures features) {
     myProjectSettingsManager = projectSettingsManager;
     myFeatures = features;
   }
@@ -68,7 +68,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     final String projectId = myPromotion.getProjectId();
     final SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null && projectId != null) {
-      if (!myFeatures.searchForFeatures(buildType).isEmpty()) {
+      if (myFeatures.featuresPresent(buildType)) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
         if (!locksToTake.isEmpty()) {
