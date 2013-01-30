@@ -21,7 +21,7 @@ import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -65,6 +65,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** Empty build feature parameters */
   private final Map<String, String> myEmptyParamMap = Collections.emptyMap();
 
+  /** Build feature extractor mock*/
+  private SharedResourceFeatures myFeatures;
+
   /** Class under test */
   private BuildFeatureParametersProvider myBuildFeatureParametersProvider;
 
@@ -79,6 +82,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myBuildType = myMockery.mock(SBuildType.class);
     myBuildFeatureDescriptor = myMockery.mock(SBuildFeatureDescriptor.class);
     myResolvedSettings = myMockery.mock(ResolvedSettings.class);
+    myFeatures = myMockery.mock(SharedResourceFeatures.class);
 
     myNonEmptyParamMapNoLocks = new HashMap<String, String>() {{
       put("param1_key", "param1_value");
@@ -92,7 +96,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     }};
 
 
-    myBuildFeatureParametersProvider = new BuildFeatureParametersProvider();
+    myBuildFeatureParametersProvider = new BuildFeatureParametersProvider(myFeatures);
   }
 
   /**
@@ -105,11 +109,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-//      oneOf(myBuildType).getResolvedSettings();
-//      will(returnValue(myResolvedSettings));
-
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(Collections.emptyList()));
+
     }});
 
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
@@ -133,26 +135,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
-
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
-
-      oneOf(descriptors.iterator().next()).getId();
-      will(returnValue("myBuildFeature"));
-
-      oneOf(myBuildType).isEnabled("myBuildFeature");
-      will(returnValue(true));
-
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
       oneOf(myBuildFeatureDescriptor).getParameters();
       will(returnValue(myEmptyParamMap));
@@ -181,26 +168,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
-
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
-
-      oneOf(descriptors.iterator().next()).getId();
-      will(returnValue("myBuildFeature"));
-
-      oneOf(myBuildType).isEnabled("myBuildFeature");
-      will(returnValue(true));
-
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
       oneOf(myBuildFeatureDescriptor).getParameters();
       will(returnValue(myNonEmptyParamMapNoLocks));
@@ -228,26 +200,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myBuildType).getBuildFeatures();
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
-
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
+      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
       will(returnValue(descriptors));
-
-      oneOf(descriptors.iterator().next()).getId();
-      will(returnValue("myBuildFeature"));
-
-      oneOf(myBuildType).isEnabled("myBuildFeature");
-      will(returnValue(true));
-
-      oneOf(myBuildFeatureDescriptor).getType();
-      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
 
       oneOf(myBuildFeatureDescriptor).getParameters();
       will(returnValue(myNonEmptyParamMapSomeLocks));

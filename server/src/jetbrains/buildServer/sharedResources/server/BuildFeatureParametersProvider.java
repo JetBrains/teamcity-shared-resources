@@ -21,12 +21,14 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.parameters.AbstractBuildParametersProvider;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.searchForFeature;
+import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
  * Class {@code BuildFeatureParametersProvider}
@@ -39,16 +41,24 @@ import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.
 public class BuildFeatureParametersProvider extends AbstractBuildParametersProvider implements BuildParametersProvider {
 
   @NotNull
+  private final SharedResourceFeatures myFeatures;
+
+  public BuildFeatureParametersProvider(@NotNull final SharedResourceFeatures features) {
+    myFeatures = features;
+  }
+
+  @NotNull
   @Override
   public Map<String, String> getParameters(@NotNull SBuild build, boolean emulationMode) {
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      SBuildFeatureDescriptor myFeatureDescriptor = searchForFeature(buildType, false);
-      if (myFeatureDescriptor != null) {
-        myFeatureDescriptor = searchForFeature(buildType, true); // resolving params here
-        if (myFeatureDescriptor != null) {
-          final String serializedBuildParams = myFeatureDescriptor.getParameters().get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
+      Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(buildType);
+      if (!descriptors.isEmpty()) {
+        // we have features. Now get resolved settings
+        descriptors = myFeatures.searchForResolvedFeatures(buildType);
+        for (SBuildFeatureDescriptor descriptor: descriptors) {
+          final String serializedBuildParams = descriptor.getParameters().get(LOCKS_FEATURE_PARAM_KEY);
           result.putAll(SharedResourcesUtils.featureParamToBuildParams(serializedBuildParams));
         }
       }

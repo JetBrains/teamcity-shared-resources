@@ -31,16 +31,16 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Class {@code SharedResourcesProjectSettingsTest}
+ * Class {@code ProjectSettingsTest}
  *
- * Contains tests for {@code SharedResourcesProjectSettings}
+ * Contains tests for {@code PluginProjectSettings}
  *
- * @see SharedResourcesProjectSettings
+ * @see PluginProjectSettings
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@TestFor (testForClass = SharedResourcesProjectSettings.class)
-public class SharedResourcesProjectSettingsTest extends BaseTestCase {
+@TestFor (testForClass = PluginProjectSettings.class)
+public class ProjectSettingsTest extends BaseTestCase {
 
   private static final String xmlQuota =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -88,13 +88,13 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
 
   /**
    *
-   * @see SharedResourcesProjectSettings#readFrom(org.jdom.Element)
+   * @see PluginProjectSettings#readFrom(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
   @Test
   public void testReadFrom_Empty() throws Exception {
     final Element e = readXml(xmlEmpty);
-    final SharedResourcesProjectSettings settings = new SharedResourcesProjectSettings();
+    final PluginProjectSettings settings = new PluginProjectSettings();
     settings.readFrom(e);
     assertEmpty(settings.getResources());
   }
@@ -102,7 +102,7 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
 
 
   /**
-   * @see SharedResourcesProjectSettings#writeTo(org.jdom.Element)
+   * @see PluginProjectSettings#writeTo(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
   @Test
@@ -111,13 +111,13 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
   }
 
   /**
-   * @see SharedResourcesProjectSettings#readFrom(org.jdom.Element)
+   * @see PluginProjectSettings#readFrom(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
   @Test
   public void testReadFrom_Quota() throws Exception {
     final Element e = readXml(xmlQuota);
-    final SharedResourcesProjectSettings settings = new SharedResourcesProjectSettings();
+    final PluginProjectSettings settings = new PluginProjectSettings();
     settings.readFrom(e);
     final Collection<Resource> resources = settings.getResources();
     assertNotEmpty(resources);
@@ -130,13 +130,13 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
   }
 
   /**
-   * @see SharedResourcesProjectSettings#readFrom(org.jdom.Element)
+   * @see PluginProjectSettings#readFrom(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
   @Test
   public void testReadFrom_Infinite() throws Exception {
     final Element e = readXml(xmlQuotaInfinite);
-    final SharedResourcesProjectSettings settings = new SharedResourcesProjectSettings();
+    final PluginProjectSettings settings = new PluginProjectSettings();
     settings.readFrom(e);
     final Collection<Resource> resources = settings.getResources();
     assertNotEmpty(resources);
@@ -148,7 +148,7 @@ public class SharedResourcesProjectSettingsTest extends BaseTestCase {
   }
 
   /**
-   * @see SharedResourcesProjectSettings#writeTo(org.jdom.Element)
+   * @see PluginProjectSettings#writeTo(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
   @Test

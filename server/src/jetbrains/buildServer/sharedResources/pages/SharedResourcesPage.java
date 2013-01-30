@@ -27,7 +27,8 @@ import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.FeatureParams;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
-import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -44,17 +45,27 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  */
 public class SharedResourcesPage extends EditProjectTab {
 
-  private ProjectSettingsManager myProjectSettingsManager;
+  @NotNull
+  private final ProjectSettingsManager myProjectSettingsManager;
 
-  public SharedResourcesPage(@NotNull PagePlaces pagePlaces, @NotNull ProjectManager projectManager, @NotNull PluginDescriptor descriptor, @NotNull ProjectSettingsManager projectSettingsManager) {
+  @NotNull
+  private final SharedResourceFeatures myFeatures;
+
+  public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
+                             @NotNull final ProjectManager projectManager,
+                             @NotNull final PluginDescriptor descriptor,
+                             @NotNull final ProjectSettingsManager projectSettingsManager,
+                             @NotNull final SharedResourceFeatures features) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), "Shared Resources", projectManager);
     myProjectSettingsManager = projectSettingsManager;
+    myFeatures = features;
     addCssFile("/css/admin/buildTypeForm.css");
   }
 
   @Override
-  public void fillModel(@NotNull Map<String, Object> model, @NotNull HttpServletRequest request) {
+  public void fillModel(@NotNull final Map<String, Object> model, @NotNull final  HttpServletRequest request) {
     super.fillModel(model, request);
+
     SharedResourcesBean bean;
     final SProject project = getProject(request);
     if (project != null) {
@@ -62,13 +73,13 @@ public class SharedResourcesPage extends EditProjectTab {
       // map<ResourceName => Set <buildTypeName>>
       Map<String, Set<SBuildType>> usageMap = new HashMap<String, Set<SBuildType>>();
       for (SBuildType type: buildTypes) {
-        final SBuildFeatureDescriptor descriptor = SharedResourcesUtils.searchForFeature(type, false);
-        if (descriptor != null) {
-          // we have feature. now:
+        final Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(type);
+        for (SBuildFeatureDescriptor descriptor : descriptors) {
           // 1) get locks
           final Map<String, String> parameters = descriptor.getParameters();
           final String locksString = parameters.get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
           final Map<String, Lock> lockMap = SharedResourcesUtils.getLocksMap(locksString); // todo: map or simple list? do we need actual locks here?
+          // 2) fill usage map
           for (String str: lockMap.keySet()) {
             if (usageMap.get(str) == null) {
               usageMap.put(str, new HashSet<SBuildType>());
@@ -78,16 +89,12 @@ public class SharedResourcesPage extends EditProjectTab {
         }
       }
       // todo: add associations separately for readLocks and writeLocks
-
       final String projectId = project.getProjectId();
-      final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
+      final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
       bean = new SharedResourcesBean(settings.getResources(), usageMap);
     } else {
       bean = new SharedResourcesBean(Collections.<Resource>emptyList(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: how to differentiate error vs no resources??!
     }
     model.put("bean", bean);
-
-
-
   }
 }

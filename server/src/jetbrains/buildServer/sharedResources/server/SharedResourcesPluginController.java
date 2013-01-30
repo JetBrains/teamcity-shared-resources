@@ -25,7 +25,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.pages.SharedResourcesBean;
-import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
+import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class SharedResourcesPluginController extends BaseController {
     final String myLocksString = buildFeaturesBean.getPropertiesBean().getProperties().get(LOCKS_FEATURE_PARAM_KEY);
     final SProject project = form.getProject();
 
-    final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
+    final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
     final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: add constructor without usage map
     final List<Lock> locks = SharedResourcesUtils.getLocks(myLocksString);
     result.getModel().put("locks", locks);

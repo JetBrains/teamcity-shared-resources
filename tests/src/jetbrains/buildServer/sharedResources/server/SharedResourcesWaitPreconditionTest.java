@@ -17,9 +17,19 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
+import jetbrains.buildServer.sharedResources.TestUtils;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
 import jetbrains.buildServer.util.TestFor;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Class {@code SharedResourcesWaitPreconditionTest}
@@ -34,11 +44,64 @@ import org.testng.annotations.Test;
 @TestFor(testForClass = SharedResourcesWaitPrecondition.class)
 public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
+  private Mockery m;
+
 
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    m = new Mockery();
+  }
+
+
+  /**
+   * @see SharedResourcesWaitPrecondition#filterPromotions(String, java.util.Collection
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testFilterBuildPromotions() throws Exception {
+    final String myProjectId = TestUtils.generateRandomName();
+    final Collection<BuildPromotionInfo> myPromotions = new ArrayList<BuildPromotionInfo>();
+    final Collection<BuildPromotionInfo> otherPromotions = new ArrayList<BuildPromotionInfo>();
+    int myPromotionsSize = TestUtils.generateBoundedRandomInt();
+    for (int i = 0; i < myPromotionsSize; i++) {
+      myPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
+    }
+    int otherPromotionsSize = TestUtils.generateBoundedRandomInt();
+    for (int i = 0; i < otherPromotionsSize; i++) {
+      otherPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
+    }
+    final Collection<BuildPromotionInfo> allPromotions = new ArrayList<BuildPromotionInfo>();
+    allPromotions.addAll(myPromotions);
+    allPromotions.addAll(otherPromotions);
+
+    m.checking(new Expectations() {{
+      for (BuildPromotionInfo info: myPromotions) {
+        oneOf((BuildPromotionEx)info).getProjectId();
+        will(returnValue(myProjectId));
+      }
+
+      for (BuildPromotionInfo info: otherPromotions) {
+        oneOf((BuildPromotionEx)info).getProjectId();
+        will(returnValue(TestUtils.generateRandomName()));
+      }
+    }});
+
+    // todo: proper test of filtering
+    final SharedResourcesWaitPrecondition p =
+            new SharedResourcesWaitPrecondition(m.mock(ProjectSettingsManager.class), m.mock(SharedResourceFeatures.class));
+    p.filterPromotions(myProjectId, allPromotions);
+
+    assertNotEmpty(allPromotions);
+    assertEquals(myPromotionsSize, allPromotions.size());
+    for (BuildPromotionInfo info: myPromotions) {
+      assertContains(allPromotions, info);
+    }
+    for (BuildPromotionInfo info: otherPromotions) {
+      assertNotContains(allPromotions, info);
+    }
+    m.assertIsSatisfied();
   }
 
   @Test

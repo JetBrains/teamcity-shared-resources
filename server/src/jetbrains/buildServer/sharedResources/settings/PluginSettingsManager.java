@@ -16,23 +16,21 @@
 
 package jetbrains.buildServer.sharedResources.settings;
 
-import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.serverSide.settings.ProjectSettings;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsFactory;
+import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
+
 /**
- * Class {@code SharedResourcesSettingsFactory}
+ * Created with IntelliJ IDEA.
+ * Date: 25.10.12
+ * Time: 19:04
  *
  * @author Oleg Rybak
  */
-public final class SharedResourcesSettingsFactory implements ProjectSettingsFactory {
+public final class PluginSettingsManager {
 
-  private static final Logger LOG = Logger.getInstance(SharedResourcesSettingsFactory.class.getName());
-
-  @NotNull
-  @Override
-  public ProjectSettings createProjectSettings(String projectId) {
-    return new SharedResourcesProjectSettings();
+  public PluginSettingsManager(@NotNull ProjectSettingsManager projectSettingsManager) {
+    projectSettingsManager.registerSettingsFactory(SERVICE_NAME, new PluginProjectSettingsFactory());
   }
 }

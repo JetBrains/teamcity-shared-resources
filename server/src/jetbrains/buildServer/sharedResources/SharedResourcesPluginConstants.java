@@ -21,8 +21,6 @@ package jetbrains.buildServer.sharedResources;
  */
 public class SharedResourcesPluginConstants {
 
-  public static final String FEATURE_TYPE = "JetBrains.SharedResources";
-
   /** Virtual path of the feature parameters page */
   public static final String EDIT_FEATURE_PATH_HTML = "editFeature.html";
 
@@ -42,6 +40,11 @@ public class SharedResourcesPluginConstants {
    * Contains constants for web page - controller interaction
    */
   public interface WEB {
+    public static final String ACTION_ADD = "/sharedResourcesAdd.html";
+    public static final String ACTION_EDIT = "/sharedResourcesEdit.html";
+    public static final String ACTION_DELETE = "/sharedResourcesDelete.html";
+
+
     public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_RESOURCE_NAME = "resource_name";
     public static final String PARAM_RESOURCE_QUOTA = "resource_quota";

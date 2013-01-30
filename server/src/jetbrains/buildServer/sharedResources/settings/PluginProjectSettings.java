@@ -26,15 +26,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Class {@code SharedResourcesProjectSettings}
+ * Class {@code PluginProjectSettings}
  *
  * @author Oleg Rybak
  */
-public final class SharedResourcesProjectSettings implements ProjectSettings {
+public final class PluginProjectSettings implements ProjectSettings {
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
-  private static final Logger LOG = Logger.getInstance(SharedResourcesProjectSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(PluginProjectSettings.class.getName());
 
   /**
    * XML storage structure
@@ -80,7 +80,7 @@ public final class SharedResourcesProjectSettings implements ProjectSettings {
 
   private Map<String, Resource> myResourceMap = new HashMap<String, Resource>();
 
-  public SharedResourcesProjectSettings() {
+  public PluginProjectSettings() {
   }
 
   @Override

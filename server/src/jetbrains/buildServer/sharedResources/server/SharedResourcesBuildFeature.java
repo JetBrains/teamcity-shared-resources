@@ -29,10 +29,12 @@ import java.util.Map;
  */
 public class SharedResourcesBuildFeature extends BuildFeature {
 
+  public static final String FEATURE_TYPE = "JetBrains.SharedResources";
   @NotNull
   private final PluginDescriptor myDescriptor;
 
-  @NotNull final FeatureParams myFeatureParams;
+  @NotNull
+  private final FeatureParams myFeatureParams;
 
   public SharedResourcesBuildFeature(@NotNull PluginDescriptor descriptor,
                                      @NotNull FeatureParams featureParams) {
@@ -43,7 +45,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String getType() {
-    return SharedResourcesPluginConstants.FEATURE_TYPE;
+    return FEATURE_TYPE;
   }
 
   @NotNull

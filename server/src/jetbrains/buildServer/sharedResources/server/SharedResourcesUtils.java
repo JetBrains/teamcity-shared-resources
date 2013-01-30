@@ -19,12 +19,9 @@ package jetbrains.buildServer.sharedResources.server;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
@@ -305,20 +302,6 @@ public final class SharedResourcesUtils {
     return result;
   }
 
-  // todo: nullable or collection? Collection if we could have multiple features per build
-  @Nullable
-  public static SBuildFeatureDescriptor searchForFeature(@NotNull SBuildType buildType, boolean useResolvedSettings) {
-    final Collection<SBuildFeatureDescriptor> features = useResolvedSettings ? buildType.getResolvedSettings().getBuildFeatures() : buildType.getBuildFeatures();
-    SBuildFeatureDescriptor result = null;
-    for (SBuildFeatureDescriptor descriptor: features) {
-      if (SharedResourcesPluginConstants.FEATURE_TYPE.equals(descriptor.getType()) && (useResolvedSettings || buildType.isEnabled(descriptor.getId()))) {
-        result = descriptor;
-        break;
-      }
-    }
-    return result;
-  }
-
   @NotNull
   public static String locksAsString(@NotNull Collection<Lock> values) {  // todo: write test
     final StringBuilder builder = new StringBuilder();
@@ -329,16 +312,6 @@ public final class SharedResourcesUtils {
     return builder.substring(0, builder.length() - 1);
   }
 
-
-  static void filterPromotions(String projectId, Collection<BuildPromotionInfo> buildPromotions) {
-    final Iterator<BuildPromotionInfo> promotionInfoIterator = buildPromotions.iterator();
-    while (promotionInfoIterator.hasNext()) {
-      final BuildPromotionEx bpEx = (BuildPromotionEx)promotionInfoIterator.next();
-      if (!projectId.equals(bpEx.getProjectId())) {
-        promotionInfoIterator.remove();
-      }
-    }
-  }
 
   /**
    * Class {@code TakenLockInfo}

@@ -11,11 +11,12 @@
       <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.FeatureParamsImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeaturesImplTest"/>
     </classes>
   </test>
   <test name="Settings tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettingsTest"/>
+      <class name="jetbrains.buildServer.sharedResources.settings.ProjectSettingsTest"/>
     </classes>
   </test>
 </suite>

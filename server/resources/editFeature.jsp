@@ -32,6 +32,8 @@
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 
+<c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
+
 
 <script type="text/javascript">
 //noinspection JSValidateTypes
@@ -287,7 +289,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   //todo:  refactor JS
   createResourceInPlace: function(resource_name, quota) {
-    var addUrl = window['base_uri'] + "/sharedResourcesAdd.html";
+    var addUrl = window['base_uri'] + "${ACTION_ADD}";
     if (quota) {
       BS.ajaxRequest(addUrl, {
         parameters: {

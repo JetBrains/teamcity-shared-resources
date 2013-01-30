@@ -23,12 +23,12 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
-import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +36,19 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
+import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code SharedResourcesActions}
+ *
+ * Contains controller definitions for resource management
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
@@ -52,31 +56,32 @@ public class SharedResourcesActions {
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesActions.class.getName());
 
-  public SharedResourcesActions(@NotNull WebControllerManager manager,
-                                @NotNull ProjectSettingsManager projectSettingsManager,
-                                @NotNull ProjectManager projectManager
-  ) {
-    manager.registerController("/sharedResourcesAdd.html", new AddController(projectSettingsManager, projectManager));
-    manager.registerController("/sharedResourcesEdit.html", new EditController(projectSettingsManager, projectManager));
-    manager.registerController("/sharedResourcesDelete.html", new DeleteController(projectSettingsManager, projectManager));
+  public SharedResourcesActions(@NotNull final WebControllerManager manager,
+                                @NotNull final ProjectSettingsManager projectSettingsManager,
+                                @NotNull final ProjectManager projectManager,
+                                @NotNull final SharedResourceFeatures features) {
+    manager.registerController(WEB.ACTION_ADD, new AddController(projectSettingsManager, projectManager));
+    manager.registerController(WEB.ACTION_EDIT, new EditController(projectSettingsManager, projectManager, features));
+    manager.registerController(WEB.ACTION_DELETE, new DeleteController(projectSettingsManager, projectManager));
   }
 
   static final class AddController extends BaseSimpleController {
 
-    public AddController(@NotNull ProjectSettingsManager projectSettingsManager,
-                         @NotNull ProjectManager projectManager) {
+    public AddController(@NotNull final ProjectSettingsManager projectSettingsManager,
+                         @NotNull final ProjectManager projectManager) {
       super(projectManager, projectSettingsManager);
     }
 
     @Nullable
     @Override
-    protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
+    protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
+                                    @NotNull final HttpServletResponse response) throws Exception {
       final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
         Resource resource = getResourceFromRequest(request);
         if (resource != null) {
-          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).addResource(resource);
+          ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).addResource(resource);
           project.persist();
         }
       } else {
@@ -88,27 +93,33 @@ public class SharedResourcesActions {
 
   static final class EditController extends BaseSimpleController {
 
-    public EditController(@NotNull ProjectSettingsManager projectSettingsManager,
-                          @NotNull ProjectManager projectManager) {
+    @NotNull
+    private final SharedResourceFeatures myFeatures;
+
+    public EditController(@NotNull final ProjectSettingsManager projectSettingsManager,
+                          @NotNull final ProjectManager projectManager,
+                          @NotNull final SharedResourceFeatures features) {
       super(projectManager, projectSettingsManager);
+      myFeatures = features;
     }
 
     @Nullable
     @Override
-    protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
+    protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
+                                    @NotNull final HttpServletResponse response) throws Exception {
       final String oldResourceName = request.getParameter(WEB.PARAM_OLD_RESOURCE_NAME);
       final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
         Resource resource = getResourceFromRequest(request);
         if (resource != null) {
-          ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).editResource(oldResourceName, resource);
+          ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).editResource(oldResourceName, resource);
           if (!resource.getName().equals(oldResourceName)) {
             // name was changed. update references
             final List<SBuildType> buildTypes = project.getBuildTypes();
             for (SBuildType type: buildTypes) {
-              final SBuildFeatureDescriptor descriptor = SharedResourcesUtils.searchForFeature(type, false);
-              if (descriptor != null) {
+              final Collection<SBuildFeatureDescriptor> descriptors = myFeatures.searchForFeatures(type);
+              for (SBuildFeatureDescriptor descriptor: descriptors) {
                 // we have feature. now:
                 // 1) get locks
                 final Map<String, String> parameters = descriptor.getParameters();
@@ -143,21 +154,22 @@ public class SharedResourcesActions {
 
   static final class DeleteController extends BaseSimpleController {
 
-
-    public DeleteController(@NotNull ProjectSettingsManager projectSettingsManager, @NotNull ProjectManager projectManager) {
+    public DeleteController(@NotNull final ProjectSettingsManager projectSettingsManager,
+                            @NotNull final ProjectManager projectManager) {
       super(projectManager, projectSettingsManager);
     }
 
     @Nullable
     @Override
-    protected ModelAndView doHandle(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response) throws Exception {
+    protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
+                                    @NotNull final HttpServletResponse response) throws Exception {
       final String resourceName = request.getParameter(WEB.PARAM_RESOURCE_NAME);
       final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
-        ((SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME)).deleteResource(resourceName);
+        ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).deleteResource(resourceName);
         project.persist();
-        // it should not be allowed to delete resource, that is in use
+        // todo: it should not be allowed to delete resource, that is in use
       } else {
         LOG.error("Project [" + projectId + "] no longer exists!" );
       }
@@ -166,18 +178,21 @@ public class SharedResourcesActions {
   }
 
   static abstract class BaseSimpleController extends BaseController {
+
     @NotNull
     protected final ProjectSettingsManager myProjectSettingsManager;
 
     @NotNull
     protected final ProjectManager myProjectManager;
 
-    public BaseSimpleController(@NotNull ProjectManager projectManager, @NotNull ProjectSettingsManager projectSettingsManager) {
+    public BaseSimpleController(@NotNull final ProjectManager projectManager,
+                                @NotNull final ProjectSettingsManager projectSettingsManager) {
       myProjectManager = projectManager;
       myProjectSettingsManager = projectSettingsManager;
     }
 
-    static Resource getResourceFromRequest(HttpServletRequest request) {
+    @Nullable
+    protected static Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
       final String resourceName = request.getParameter(WEB.PARAM_RESOURCE_NAME);
       final String resourceQuota = request.getParameter(WEB.PARAM_RESOURCE_QUOTA);
       Resource resource = null;

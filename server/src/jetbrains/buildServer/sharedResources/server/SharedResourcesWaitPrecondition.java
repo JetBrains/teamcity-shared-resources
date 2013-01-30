@@ -25,11 +25,13 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.settings.SharedResourcesProjectSettings;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourceFeatures;
+import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
@@ -47,19 +49,26 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   @NotNull
   private final ProjectSettingsManager myProjectSettingsManager;
 
-  public SharedResourcesWaitPrecondition(@NotNull ProjectSettingsManager projectSettingsManager) {
+  @NotNull
+  private final SharedResourceFeatures myFeatures;
+
+  public SharedResourcesWaitPrecondition(@NotNull final ProjectSettingsManager projectSettingsManager,
+                                         @NotNull final SharedResourceFeatures features) {
     myProjectSettingsManager = projectSettingsManager;
+    myFeatures = features;
   }
 
   @Nullable
   @Override
-  public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuild, @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted, @NotNull BuildDistributorInput buildDistributorInput, boolean emulationMode) {
+  public WaitReason canStart(@NotNull final QueuedBuildInfo queuedBuild,
+                             @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
+                             @NotNull final BuildDistributorInput buildDistributorInput, boolean emulationMode) {
     WaitReason result = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
     final String projectId = myPromotion.getProjectId();
     final SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null && projectId != null) {
-      if (searchForFeature(buildType, false) != null) {
+      if (!myFeatures.searchForFeatures(buildType).isEmpty()) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
         if (!locksToTake.isEmpty()) {
@@ -69,9 +78,10 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
           final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
           // filter promotions by project id of current build
           filterPromotions(projectId, buildPromotions);
-          final SharedResourcesProjectSettings settings = (SharedResourcesProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
+          final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
           final Map<String, Resource> resourceMap = settings.getResourceMap();
           final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions, resourceMap);
+
           if (!unavailableLocks.isEmpty()) {
             final StringBuilder builder = new StringBuilder("Build is waiting for ");
             builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
@@ -88,6 +98,17 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       }
     }
     return result;
+  }
+
+  // todo: make private, make tests for it
+  void filterPromotions(String projectId, Collection<BuildPromotionInfo> buildPromotions) {
+    final Iterator<BuildPromotionInfo> promotionInfoIterator = buildPromotions.iterator();
+    while (promotionInfoIterator.hasNext()) {
+      final BuildPromotionEx bpEx = (BuildPromotionEx)promotionInfoIterator.next();
+      if (!projectId.equals(bpEx.getProjectId())) {
+        promotionInfoIterator.remove();
+      }
+    }
   }
 
 }

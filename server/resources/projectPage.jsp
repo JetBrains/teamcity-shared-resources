@@ -25,6 +25,10 @@
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 <c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
 
+<c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
+<c:set var="ACTION_EDIT" value="<%=SharedResourcesPluginConstants.WEB.ACTION_EDIT%>"/>
+<c:set var="ACTION_DELETE" value="<%=SharedResourcesPluginConstants.WEB.ACTION_DELETE%>"/>
+
 
 
 <c:url var="url" value='editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources'/>
@@ -154,7 +158,7 @@
   });
 
   BS.SharedResourcesActions = {
-    addUrl: window['base_uri'] + "/sharedResourcesAdd.html",
+    addUrl: window['base_uri'] + "${ACTION_ADD}",
     addResource: function() {
       // if quota checkbox in unchecked, send no quota info
       if (BS.ResourceDialog.quoted) {
@@ -174,7 +178,7 @@
       }
     },
 
-    editUrl: window['base_uri'] + "/sharedResourcesEdit.html",
+    editUrl: window['base_uri'] + "${ACTION_EDIT}",
     editResource: function(old_resource_name) {
       if (BS.ResourceDialog.quoted) {
         BS.ajaxRequest(this.editUrl, {
@@ -200,7 +204,7 @@
       }
     },
 
-    deleteUrl: window['base_uri'] + "/sharedResourcesDelete.html",
+    deleteUrl: window['base_uri'] + "${ACTION_DELETE}",
     deleteResource: function(resource_name) {
       if (confirm('Are you sure you want to delete this resource?')) {
         BS.ajaxRequest(this.deleteUrl, {
