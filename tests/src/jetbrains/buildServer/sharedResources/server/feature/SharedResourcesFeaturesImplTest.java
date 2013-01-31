@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,6 +45,12 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
   /** Class under test */
   private SharedResourcesFeatures mySharedResourcesFeatures;
 
+  /** Factory for shared resources features */
+  private SharedResourcesFeatureFactory mySharedResourcesFeatureFactory;
+
+  /** Mock for feature */
+  private SharedResourcesFeature myFeature;
+
   /** Resolved setting of */
   private ResolvedSettings myResolvedSettings;
 
@@ -70,8 +75,10 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
     myAllFeatureDescriptors.addAll(myValidDescriptors);
 
     myResolvedSettings = m.mock(ResolvedSettings.class);
+    mySharedResourcesFeatureFactory = m.mock(SharedResourcesFeatureFactory.class);
 
-    mySharedResourcesFeatures = new SharedResourcesFeaturesImpl();
+    mySharedResourcesFeatures = new SharedResourcesFeaturesImpl(mySharedResourcesFeatureFactory);
+    myFeature = m.mock(SharedResourcesFeature.class);
   }
 
 
@@ -88,8 +95,8 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
         oneOf(myValidDescriptors.get(i)).getType();
         will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
 
-        oneOf(myValidDescriptors.get(i)).getParameters();
-        will(returnValue(Collections.emptyMap()));
+        oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
+        will(returnValue(myFeature));
       }
     }});
 
@@ -127,8 +134,8 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
         will(returnValue(i % 2 == 0));
 
         if (i % 2 == 0) {
-          oneOf(myValidDescriptors.get(i)).getParameters();
-          will(returnValue(Collections.emptyMap()));
+          oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
+          will(returnValue(myFeature));
         }
       }
     }});

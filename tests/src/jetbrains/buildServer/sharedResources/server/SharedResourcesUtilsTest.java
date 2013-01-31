@@ -16,7 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.server;
 
-import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
@@ -153,72 +152,6 @@ public class SharedResourcesUtilsTest extends BaseTestCase {
 //    }
   }
 
-  /**
-   * Tests {@code getLockNames} method on null and empty inputs
-   *
-   * @see SharedResourcesUtils#getLockNames(String)
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testGetLockNames_NullAndEmpty() throws Exception {
-    { // null case
-      final List<List<String>> result = SharedResourcesUtils.getLockNames(null);
-      assertNotNull(result);
-      assertNotEmpty(result);
-      assertEquals(2, result.size());
-      assertNotNull(result.get(0));
-      assertEmpty(result.get(0));
-      assertNotNull(result.get(1));
-      assertEmpty(result.get(1));
-    }
-
-    { // empty case
-      final List<List<String>> result = SharedResourcesUtils.getLockNames("");
-      assertNotNull(result);
-      assertNotEmpty(result);
-      assertEquals(2, result.size());
-      assertNotNull(result.get(0));
-      assertEmpty(result.get(0));
-      assertNotNull(result.get(1));
-      assertEmpty(result.get(1));
-    }
-  }
-
-
-  /**
-   * Tests {@code getLockNames} method on random valid inputs
-   *
-   * @see SharedResourcesUtils#getLockNames(String)
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testGetLockNames_Valid() throws Exception {
-    final int readLocksNum = generateBoundedRandomInt();
-    final int writeLocksNum = generateBoundedRandomInt();
-    final List<String> serializedReadLocks = new ArrayList<String>(readLocksNum);
-    final List<String> serializedWriteLocks = new ArrayList<String>(writeLocksNum);
-    for (int i = 0; i < readLocksNum; i++) {
-      serializedReadLocks.add(TestUtils.generateSerializedLock(LockType.READ));
-    }
-
-    for (int i = 0; i < writeLocksNum; i++) {
-      serializedWriteLocks.add(TestUtils.generateSerializedLock(LockType.WRITE));
-    }
-    final Collection<String> allLocks = new ArrayList<String>();
-    allLocks.addAll(serializedReadLocks);
-    allLocks.addAll(serializedWriteLocks);
-
-    final List<List<String>> result = SharedResourcesUtils.getLockNames(StringUtil.join(allLocks, "\n"));
-    assertNotNull(result);
-    assertNotEmpty(result);
-    assertEquals(2, result.size());
-    assertNotNull(result.get(0));
-    assertNotEmpty(result.get(0));
-    assertEquals(readLocksNum, result.get(0).size());
-    assertNotNull(result.get(1));
-    assertNotEmpty(result.get(1));
-    assertEquals(writeLocksNum, result.get(1).size());
-  }
 
   /**
    * Tests {@code getLockFromBuildParam} method on invalid inputs

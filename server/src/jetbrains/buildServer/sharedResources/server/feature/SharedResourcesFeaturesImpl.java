@@ -18,6 +18,14 @@ import static jetbrains.buildServer.sharedResources.server.SharedResourcesBuildF
 public final class SharedResourcesFeaturesImpl implements SharedResourcesFeatures {
 
   @NotNull
+  private final SharedResourcesFeatureFactory myFactory;
+
+  public SharedResourcesFeaturesImpl(@NotNull final SharedResourcesFeatureFactory factory) {
+    myFactory = factory;
+  }
+
+
+  @NotNull
   @Override
   public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType) {
     //todo:  why this method returns build features that belong to template???
@@ -27,9 +35,9 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   @NotNull
   private Collection<SharedResourcesFeature> searchForFeatureInternal(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
     final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
-    for (SBuildFeatureDescriptor d: descriptors) {
-      if (FEATURE_TYPE.equals(d.getType())) {
-        result.add(new SharedResourcesFeatureImpl(d));
+    for (SBuildFeatureDescriptor descriptor : descriptors) {
+      if (FEATURE_TYPE.equals(descriptor.getType())) {
+        result.add(myFactory.createFeature(descriptor));
       }
     }
     return result;
@@ -41,7 +49,7 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
     final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
     for (SBuildFeatureDescriptor descriptor: buildType.getResolvedSettings().getBuildFeatures()) {
       if (FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
-        result.add(new SharedResourcesFeatureImpl(descriptor));
+        result.add(myFactory.createFeature(descriptor));
       }
     }
     return result;

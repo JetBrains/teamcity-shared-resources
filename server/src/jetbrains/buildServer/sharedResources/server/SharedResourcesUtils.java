@@ -25,7 +25,6 @@ import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,60 +44,6 @@ public final class SharedResourcesUtils {
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
   private static final Logger LOG = Logger.getInstance(SharedResourcesUtils.class.getName());
-
-  /**
-   * Returns names of taken locks
-   * @param serializedFeatureParam feature parameter, that contains all locks
-   * @return List of lock names, {@code result[0]} - contains readLocks,
-   * {@code result[1]} contains writeLocks
-   */
-  @NotNull
-  public static List<List<String>> getLockNames(String serializedFeatureParam) {
-    final List<List<String>> result = new ArrayList<List<String>>();
-    final List<String> readLockNames = new ArrayList<String>();
-    final List<String> writeLockNames = new ArrayList<String>();
-    final List<Lock> locks = getLocks(serializedFeatureParam);
-    for (Lock lock: locks) {
-      switch (lock.getType()) {
-        case READ:
-          readLockNames.add(lock.getName());
-          break;
-        case WRITE:
-          writeLockNames.add(lock.getName());
-          break;
-      }
-    }
-    result.add(readLockNames);
-    result.add(writeLockNames);
-    return result;
-  }
-
-
-  @NotNull
-  public static List<Lock> getLocks(@Nullable String serializedFeatureParam) {
-    final List<Lock> result = new ArrayList<Lock>();
-    if (serializedFeatureParam != null && !"".equals(serializedFeatureParam)) {
-      final List<String> serializedLocks = StringUtil.split(serializedFeatureParam, true, '\n');
-      for (String str: serializedLocks) {
-        final Lock lock = getSingleLockFromString(str);
-        if (lock != null) {
-          result.add(lock);
-        }
-      }
-    }
-    return result;
-  }
-
-  private static Lock getSingleLockFromString(@NotNull String str) {
-    int n = str.lastIndexOf(' ');
-    final LockType type = LockType.byName(str.substring(n + 1));
-    Lock result = null;
-    if (type != null) {
-      result =  new Lock(str.substring(0, n), type);
-    }
-    return result;
-  }
-
 
   /**
    * Extracts lock from build parameter name

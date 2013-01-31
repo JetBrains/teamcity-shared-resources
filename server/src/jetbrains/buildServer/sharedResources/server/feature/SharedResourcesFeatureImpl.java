@@ -22,15 +22,12 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
-import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
 import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
@@ -38,7 +35,10 @@ import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_F
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-public class SharedResourcesFeatureImpl implements SharedResourcesFeature {
+public final class SharedResourcesFeatureImpl implements SharedResourcesFeature {
+
+  @NotNull
+  private final Locks myLocks;
 
   @NotNull
   private final SBuildFeatureDescriptor myDescriptor;
@@ -47,22 +47,11 @@ public class SharedResourcesFeatureImpl implements SharedResourcesFeature {
   private final Map<String, Lock> myLockedResources;
 
 
-  public SharedResourcesFeatureImpl(@NotNull final SBuildFeatureDescriptor descriptor) {
+  public SharedResourcesFeatureImpl(@NotNull final Locks locks,
+                                    @NotNull final SBuildFeatureDescriptor descriptor) {
+    myLocks = locks;
     myDescriptor = descriptor;
-
-    final Map<String, String> parameters = myDescriptor.getParameters();
-    final String locksString = parameters.get(LOCKS_FEATURE_PARAM_KEY);
-    // cache parsed locks inside
-    myLockedResources = new HashMap<String, Lock>();
-    if (locksString != null && !"".equals(locksString)) {
-      final List<String> serializedLocks = StringUtil.split(locksString, true, '\n');
-      for (String str: serializedLocks) {
-        final Lock lock = getSingleLockFromString(str);
-        if (lock != null) {
-          myLockedResources.put(lock.getName(), lock);
-        }
-      }
-    }
+    myLockedResources = myLocks.getLocksFromFeatureParameters(myDescriptor);
   }
 
   @NotNull
@@ -93,43 +82,14 @@ public class SharedResourcesFeatureImpl implements SharedResourcesFeature {
       if (template != null) {
        template.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
       }
+      // todo: need reload?
     }
   }
 
   @NotNull
   @Override
   public Map<String, String> getBuildParameters() {
-    final Map<String, String> buildParams = new HashMap<String, String>();
-    for (Lock lock: myLockedResources.values()) {
-      buildParams.put(lockAsBuildParam(lock), "");
-    }
-    return buildParams;
+    return myLocks.asBuildParameters(myLockedResources.values());
   }
 
-  private static Lock getSingleLockFromString(@NotNull String str) {
-    int n = str.lastIndexOf(' ');
-    final LockType type = LockType.byName(str.substring(n + 1));
-    Lock result = null;
-    if (type != null) {
-      result =  new Lock(str.substring(0, n), type);
-    }
-    return result;
-  }
-
-  /**
-   * Converts given locks to a {@code String} that is suitable to
-   * exposure as a build parameter name
-   *
-   * @see jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants#LOCK_PREFIX
-   * @param lock lock to convert
-   * @return lock as {@code String}
-   */
-  @NotNull
-  static String lockAsBuildParam(@NotNull Lock lock) {
-    final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
-    sb.append(lock.getType());
-    sb.append(".");
-    sb.append(lock.getName());
-    return sb.toString();
-  }
 }

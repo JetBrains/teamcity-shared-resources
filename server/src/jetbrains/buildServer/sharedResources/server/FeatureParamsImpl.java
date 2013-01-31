@@ -17,8 +17,11 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.util.text.StringUtil;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,20 +36,38 @@ import java.util.Map;
  */
 public final class FeatureParamsImpl implements FeatureParams {
 
+  @NotNull
+  private final Locks myLocks;
+
+
+
   // messages
   static final String NO_LOCKS_MESSAGE = "No locks are currently used by this build configuration";
   static final String READ_LOCKS_MESSAGE = "Read locks used: ";
   static final String WRITE_LOCKS_MESSAGE = "Write locks used: ";
 
+  public FeatureParamsImpl(@NotNull final Locks locks) {
+    myLocks = locks;
+  }
+
 
   @NotNull
   @Override
   public String describeParams(@NotNull Map<String, String> params) {
-    final String locksParam = params.get(FeatureParams.LOCKS_FEATURE_PARAM_KEY);
     final StringBuilder sb = new StringBuilder();
-    final List<List<String>> lockNames = SharedResourcesUtils.getLockNames(locksParam);
-    final List<String> readLockNames = lockNames.get(0);
-    final List<String> writeLockNames = lockNames.get(1);
+    final Map<String, Lock> locks = myLocks.getLocksFromFeatureParameters(params);
+    final List<String> readLockNames = new ArrayList<String>();
+    final List<String> writeLockNames = new ArrayList<String>();
+    for (Lock lock: locks.values()) {
+      switch (lock.getType()) {
+        case READ:
+          readLockNames.add(lock.getName());
+          break;
+        case WRITE:
+          writeLockNames.add(lock.getName());
+          break;
+      }
+    }
     if (!readLockNames.isEmpty()) {
       sb.append(READ_LOCKS_MESSAGE);
       sb.append(StringUtil.join(readLockNames, ", "));

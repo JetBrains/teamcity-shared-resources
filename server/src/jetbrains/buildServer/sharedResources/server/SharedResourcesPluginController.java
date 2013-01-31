@@ -26,7 +26,7 @@ import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.pages.SharedResourcesBean;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureImpl;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactory;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
@@ -56,15 +56,18 @@ public class SharedResourcesPluginController extends BaseController {
   @NotNull
   private ProjectSettingsManager myProjectSettingsManager;
 
-  public SharedResourcesPluginController(
-          @NotNull PluginDescriptor descriptor,
-          @NotNull WebControllerManager web,
-          @NotNull EditBuildTypeFormFactory formFactory,
-          @NotNull ProjectSettingsManager projectSettingsManager
-  ) {
+  @NotNull
+  private final SharedResourcesFeatureFactory myFactory;
+
+  public SharedResourcesPluginController(@NotNull final PluginDescriptor descriptor,
+                                         @NotNull final WebControllerManager web,
+                                         @NotNull final EditBuildTypeFormFactory formFactory,
+                                         @NotNull final ProjectSettingsManager projectSettingsManager,
+                                         @NotNull final SharedResourcesFeatureFactory factory) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myProjectSettingsManager = projectSettingsManager;
+    myFactory = factory;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
@@ -79,7 +82,7 @@ public class SharedResourcesPluginController extends BaseController {
     final SBuildFeatureDescriptor descriptor = form.getBuildFeaturesBean().getSelectedDescriptor();
     if (descriptor != null) {
       result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
-      final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(descriptor);
+      final SharedResourcesFeature feature = myFactory.createFeature(descriptor);
       final SProject project = form.getProject();
       final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
       final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: add constructor without usage map
