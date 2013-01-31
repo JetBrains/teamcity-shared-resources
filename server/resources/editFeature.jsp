@@ -23,7 +23,7 @@
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-<jsp:useBean id="locks" scope="request" type="java.util.List"/>
+<jsp:useBean id="locks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 
 <c:set var="locksFeatureParamKey" value="<%=FeatureParams.LOCKS_FEATURE_PARAM_KEY%>"/>
@@ -47,7 +47,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   fillData: function() {
     <c:forEach var="item" items="${locks}">
-    this.myData['${item.name}'] = '${item.type.name}';
+    this.myData['${item.key}'] = '${item.value.type.name}';
     </c:forEach>
     <c:forEach var="item" items="${bean.resources}">
     this.existingResources['${item.name}'] = true;
@@ -162,6 +162,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     var flag = $j('#lockSource option:selected').val();
     var lockType = $j('#newLockType option:selected').val();
 
+    if (this.editMode) {
+      delete this.myData[this.currentLockName];
+      this.currentLockName = "";
+    }
+
     var lockName;
     if (flag === 'choose') {
       lockName = $j('#lockFromResources option:selected').val();
@@ -182,10 +187,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       this.myData[lockName] = lockType;
     }
 
-    if (this.editMode) {
-      delete this.myData[this.currentLockName];
-      this.currentLockName = "";
-    }
+
 
     this.refreshUI();
     this.close();
