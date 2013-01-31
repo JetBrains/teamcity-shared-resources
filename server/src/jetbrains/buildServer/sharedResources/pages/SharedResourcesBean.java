@@ -18,6 +18,7 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -28,19 +29,27 @@ import java.util.*;
  */
 public class SharedResourcesBean {
 
+  @NotNull
   private Collection<Resource> myResources = new ArrayList<Resource>();
 
+  @NotNull
   private Map<String, Set<SBuildType>> myUsageMap = new HashMap<String, Set<SBuildType>>();
 
-  public SharedResourcesBean(Collection<Resource> resources, Map<String, Set<SBuildType>> usageMap) {
+  public SharedResourcesBean(@NotNull final Collection<Resource> resources) {
+    this(resources, Collections.<String, Set<SBuildType>>emptyMap());
+  }
+
+  public SharedResourcesBean(@NotNull final Collection<Resource> resources, @NotNull final Map<String, Set<SBuildType>> usageMap) {
     myResources = resources;
     myUsageMap = usageMap;
   }
 
+  @NotNull
   public Collection<Resource> getResources() {
     return Collections.unmodifiableCollection(myResources);
   }
 
+  @NotNull
   public Map<String, Set<SBuildType>> getUsageMap() {
     return Collections.unmodifiableMap(myUsageMap);
   }

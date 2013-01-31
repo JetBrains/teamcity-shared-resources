@@ -22,20 +22,18 @@ import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Map;
-
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
-import static jetbrains.buildServer.sharedResources.server.SharedResourcesUtils.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -47,15 +45,20 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   private static final Logger LOG = Logger.getInstance(SharedResourcesWaitPrecondition.class.getName());
 
   @NotNull
-  private final ProjectSettingsManager myProjectSettingsManager;
-
-  @NotNull
   private final SharedResourcesFeatures myFeatures;
 
-  public SharedResourcesWaitPrecondition(@NotNull final ProjectSettingsManager projectSettingsManager,
-                                         @NotNull final SharedResourcesFeatures features) {
-    myProjectSettingsManager = projectSettingsManager;
+  @NotNull
+  private final Locks myLocks;
+
+  @NotNull
+  private final Resources myResources;
+
+  public SharedResourcesWaitPrecondition(@NotNull final SharedResourcesFeatures features,
+                                         @NotNull final Locks locks,
+                                         @NotNull final Resources resources) {
     myFeatures = features;
+    myLocks = locks;
+    myResources = resources;
   }
 
   @Nullable
@@ -70,17 +73,16 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     if (buildType != null && projectId != null) {
       if (myFeatures.featuresPresent(buildType)) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
-        final Collection<Lock> locksToTake = extractLocksFromParams(pp.getAll());
+        final Collection<Lock> locksToTake  = myLocks.fromBuildParameters(pp.getAll());
+
         if (!locksToTake.isEmpty()) {
           // now deal only with builds that have same projectId as the current one
-          final Collection<RunningBuildInfo> runningBuilds = buildDistributorInput.getRunningBuilds();
-          final Collection<QueuedBuildInfo> distributedBuilds = canBeStarted.keySet();
-          final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(runningBuilds, distributedBuilds);
-          // filter promotions by project id of current build
-          filterPromotions(projectId, buildPromotions);
-          final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
-          final Map<String, Resource> resourceMap = settings.getResourceMap();
-          final Collection<Lock> unavailableLocks = SharedResourcesUtils.getUnavailableLocks(locksToTake, buildPromotions, resourceMap);
+          final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(
+                  buildDistributorInput.getRunningBuilds(), canBeStarted.keySet(), projectId);
+
+          final Map<String, Resource> resources = myResources.getAllResources(projectId);
+          final Map<String, TakenLock> takenLocks = collectTakenLocks(buildPromotions);
+          final Collection<Lock> unavailableLocks = getUnavailableLocks(locksToTake, takenLocks, resources);
 
           if (!unavailableLocks.isEmpty()) {
             final StringBuilder builder = new StringBuilder("Build is waiting for ");
@@ -100,15 +102,89 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     return result;
   }
 
-  // todo: make private, make tests for it
-  void filterPromotions(String projectId, Collection<BuildPromotionInfo> buildPromotions) {
-    final Iterator<BuildPromotionInfo> promotionInfoIterator = buildPromotions.iterator();
-    while (promotionInfoIterator.hasNext()) {
-      final BuildPromotionEx bpEx = (BuildPromotionEx)promotionInfoIterator.next();
-      if (!projectId.equals(bpEx.getProjectId())) {
-        promotionInfoIterator.remove();
+  // the idea is that precondition has to deal with decision itself. Now what will we do, when we introduce custom values?
+
+
+  /**
+   * Extracts build promotions from build server state, represented by running and queued builds. Only build promotions
+   * with the same id as provided are returned
+   *
+   * @param runningBuilds running builds
+   * @param queuedBuilds  queued builds
+   * @param projectId id of the current project
+   * @return collection of build promotions, that correspond to given builds
+   */
+  @NotNull
+  private Collection<BuildPromotionInfo> getBuildPromotions(@NotNull final Collection<RunningBuildInfo> runningBuilds,
+                                                            @NotNull final Collection<QueuedBuildInfo> queuedBuilds,
+                                                            @NotNull final String projectId) {
+    final ArrayList<BuildPromotionInfo> result = new ArrayList<BuildPromotionInfo>();
+    for (RunningBuildInfo runningBuildInfo : runningBuilds) {
+      BuildPromotionEx buildPromotionEx = ((BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo());
+      if (projectId.equals(buildPromotionEx.getProjectId())) {
+        result.add(runningBuildInfo.getBuildPromotionInfo());
       }
     }
+    for (QueuedBuildInfo queuedBuildInfo : queuedBuilds) {
+      BuildPromotionEx buildPromotionEx = (BuildPromotionEx)queuedBuildInfo.getBuildPromotionInfo();
+      if (projectId.equals(buildPromotionEx.getProjectId())) {
+        result.add(queuedBuildInfo.getBuildPromotionInfo());
+      }
+    }
+    return result;
   }
 
+  private Map<String, TakenLock> collectTakenLocks(@NotNull final Collection<BuildPromotionInfo> promotions) {
+    final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
+    for (BuildPromotionInfo promo: promotions) {
+      Collection<Lock> locks = myLocks.fromBuildParameters(((BuildPromotionEx)promo).getParametersProvider().getAll());
+      for (Lock lock: locks) {
+        TakenLock takenLock = result.get(lock.getName());
+        if (takenLock == null) {
+          takenLock = new TakenLock();
+          result.put(lock.getName(), takenLock);
+        }
+        takenLock.addLock(promo, lock);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
+                                               @NotNull Map<String, TakenLock> takenLocks,
+                                               @NotNull Map<String, Resource> resources) {
+    final Collection<Lock> result = new ArrayList<Lock>();
+    for (Lock lock : locksToTake) {
+      final TakenLock takenLock = takenLocks.get(lock.getName());
+      if (takenLock != null) {
+        switch (lock.getType())  {
+          case READ:
+            // 1) Check that no write lock exists
+            if (takenLock.hasWriteLocks()) {
+              result.add(lock);
+            }
+            // check against resource
+            final Resource resource = resources.get(lock.getName());
+            if (resource != null && !resource.isInfinite()) {
+              // limited capacity resource
+              if (takenLock.getReadLocks().size() >= resource.getQuota()) {
+                result.add(lock);
+              }
+            }
+            break;
+          case WRITE:
+            if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
+              result.add(lock);
+            }
+        }
+      }
+    }
+    return result;
+  }
+
+
+
+
 }
+

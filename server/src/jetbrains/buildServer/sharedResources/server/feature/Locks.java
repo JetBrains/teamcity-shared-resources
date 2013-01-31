@@ -31,13 +31,20 @@ import java.util.Map;
 public interface Locks {
 
   /**
-   * Parses build feature parameters for taken locks
+   * Parses build feature descriptor for parameters containing locks
    * @param descriptor build feature descriptor
    * @return map of locks, taken by the build
    */
   @NotNull
   public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor);
 
+
+  /**
+   * Parses given map for entries that contain locks
+   * @param parameters map of parameters
+   * @return map of locks
+   */
+  @NotNull
   public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final Map<String, String> parameters);
 
 
@@ -49,5 +56,16 @@ public interface Locks {
   @NotNull
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
 
+
+  /**
+   * Extracts locks from build parameters
+   * @param buildParams build parameters ot search in
+   * @return collection of locks that are passed as build parameters
+   */
+  @NotNull
+  public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams);
+
+  @NotNull
+  public String toFeatureParam(@NotNull final Collection<Lock> locks);
 
 }

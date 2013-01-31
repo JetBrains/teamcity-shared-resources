@@ -55,54 +55,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
   }
 
 
-  /**
-   * @see SharedResourcesWaitPrecondition#filterPromotions(String, java.util.Collection
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testFilterBuildPromotions() throws Exception {
-    final String myProjectId = TestUtils.generateRandomName();
-    final Collection<BuildPromotionInfo> myPromotions = new ArrayList<BuildPromotionInfo>();
-    final Collection<BuildPromotionInfo> otherPromotions = new ArrayList<BuildPromotionInfo>();
-    int myPromotionsSize = TestUtils.generateBoundedRandomInt();
-    for (int i = 0; i < myPromotionsSize; i++) {
-      myPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
-    }
-    int otherPromotionsSize = TestUtils.generateBoundedRandomInt();
-    for (int i = 0; i < otherPromotionsSize; i++) {
-      otherPromotions.add(m.mock(BuildPromotionEx.class, TestUtils.generateRandomName()));
-    }
-    final Collection<BuildPromotionInfo> allPromotions = new ArrayList<BuildPromotionInfo>();
-    allPromotions.addAll(myPromotions);
-    allPromotions.addAll(otherPromotions);
 
-    m.checking(new Expectations() {{
-      for (BuildPromotionInfo info: myPromotions) {
-        oneOf((BuildPromotionEx)info).getProjectId();
-        will(returnValue(myProjectId));
-      }
-
-      for (BuildPromotionInfo info: otherPromotions) {
-        oneOf((BuildPromotionEx)info).getProjectId();
-        will(returnValue(TestUtils.generateRandomName()));
-      }
-    }});
-
-    // todo: proper test of filtering
-    final SharedResourcesWaitPrecondition p =
-            new SharedResourcesWaitPrecondition(m.mock(ProjectSettingsManager.class), m.mock(SharedResourcesFeatures.class));
-    p.filterPromotions(myProjectId, allPromotions);
-
-    assertNotEmpty(allPromotions);
-    assertEquals(myPromotionsSize, allPromotions.size());
-    for (BuildPromotionInfo info: myPromotions) {
-      assertContains(allPromotions, info);
-    }
-    for (BuildPromotionInfo info: otherPromotions) {
-      assertNotContains(allPromotions, info);
-    }
-    m.assertIsSatisfied();
-  }
 
   @Test
   public void testInEmulationMode() throws Exception {

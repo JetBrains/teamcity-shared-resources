@@ -21,11 +21,10 @@ import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
 
 /**
@@ -50,19 +48,19 @@ public class SharedResourcesActions {
   private static final Logger LOG = Logger.getInstance(SharedResourcesActions.class.getName());
 
   public SharedResourcesActions(@NotNull final WebControllerManager manager,
-                                @NotNull final ProjectSettingsManager projectSettingsManager,
                                 @NotNull final ProjectManager projectManager,
-                                @NotNull final SharedResourcesFeatures features) {
-    manager.registerController(WEB.ACTION_ADD, new AddController(projectSettingsManager, projectManager));
-    manager.registerController(WEB.ACTION_EDIT, new EditController(projectSettingsManager, projectManager, features));
-    manager.registerController(WEB.ACTION_DELETE, new DeleteController(projectSettingsManager, projectManager));
+                                @NotNull final SharedResourcesFeatures features,
+                                @NotNull final Resources resources) {
+    manager.registerController(WEB.ACTION_ADD, new AddController(projectManager, resources));
+    manager.registerController(WEB.ACTION_EDIT, new EditController(projectManager, features, resources));
+    manager.registerController(WEB.ACTION_DELETE, new DeleteController(projectManager, resources));
   }
 
   static final class AddController extends BaseSimpleController {
 
-    public AddController(@NotNull final ProjectSettingsManager projectSettingsManager,
-                         @NotNull final ProjectManager projectManager) {
-      super(projectManager, projectSettingsManager);
+    public AddController(@NotNull final ProjectManager projectManager,
+                         @NotNull final Resources resources) {
+      super(projectManager, resources);
     }
 
     @Nullable
@@ -74,7 +72,7 @@ public class SharedResourcesActions {
       if (project != null) {
         Resource resource = getResourceFromRequest(request);
         if (resource != null) {
-          ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).addResource(resource);
+          myResources.addResource(projectId, resource);
           project.persist();
         }
       } else {
@@ -89,10 +87,10 @@ public class SharedResourcesActions {
     @NotNull
     private final SharedResourcesFeatures myFeatures;
 
-    public EditController(@NotNull final ProjectSettingsManager projectSettingsManager,
-                          @NotNull final ProjectManager projectManager,
-                          @NotNull final SharedResourcesFeatures features) {
-      super(projectManager, projectSettingsManager);
+    public EditController(@NotNull final ProjectManager projectManager,
+                          @NotNull final SharedResourcesFeatures features,
+                          @NotNull final Resources resources) {
+      super(projectManager, resources);
       myFeatures = features;
     }
 
@@ -106,7 +104,7 @@ public class SharedResourcesActions {
       if (project != null) {
         final Resource resource = getResourceFromRequest(request);
         if (resource != null) {
-          ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).editResource(oldResourceName, resource);
+          myResources.editResource(projectId, oldResourceName, resource);
           if (!resource.getName().equals(oldResourceName)) {
             // name was changed. update references
             final List<SBuildType> buildTypes = project.getBuildTypes();
@@ -126,9 +124,9 @@ public class SharedResourcesActions {
 
   static final class DeleteController extends BaseSimpleController {
 
-    public DeleteController(@NotNull final ProjectSettingsManager projectSettingsManager,
-                            @NotNull final ProjectManager projectManager) {
-      super(projectManager, projectSettingsManager);
+    public DeleteController(@NotNull final ProjectManager projectManager,
+                            @NotNull final Resources resources) {
+      super(projectManager, resources);
     }
 
     @Nullable
@@ -139,7 +137,7 @@ public class SharedResourcesActions {
       final String projectId = request.getParameter(WEB.PARAM_PROJECT_ID);
       final SProject project = myProjectManager.findProjectById(projectId);
       if (project != null) {
-        ((PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME)).deleteResource(resourceName);
+        myResources.deleteResource(projectId, resourceName); // todo: maybe change to project
         project.persist();
         // todo: it should not be allowed to delete resource, that is in use
       } else {
@@ -152,15 +150,15 @@ public class SharedResourcesActions {
   static abstract class BaseSimpleController extends BaseController {
 
     @NotNull
-    protected final ProjectSettingsManager myProjectSettingsManager;
-
-    @NotNull
     protected final ProjectManager myProjectManager;
 
+    @NotNull
+    protected final Resources myResources;
+
     public BaseSimpleController(@NotNull final ProjectManager projectManager,
-                                @NotNull final ProjectSettingsManager projectSettingsManager) {
+                                @NotNull final Resources resources) {
       myProjectManager = projectManager;
-      myProjectSettingsManager = projectSettingsManager;
+      myResources = resources;
     }
 
     @Nullable

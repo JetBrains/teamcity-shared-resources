@@ -17,17 +17,13 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.controllers.BaseController;
+import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.pages.SharedResourcesBean;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactory;
-import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +32,10 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.*;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
 
 /**
  * @author Oleg Rybak
@@ -54,45 +49,39 @@ public class SharedResourcesPluginController extends BaseController {
   private final EditBuildTypeFormFactory myFormFactory;
 
   @NotNull
-  private ProjectSettingsManager myProjectSettingsManager;
+  private final Resources myResources;
 
   @NotNull
-  private final SharedResourcesFeatureFactory myFactory;
+  private final Locks myLocks;
+
 
   public SharedResourcesPluginController(@NotNull final PluginDescriptor descriptor,
                                          @NotNull final WebControllerManager web,
                                          @NotNull final EditBuildTypeFormFactory formFactory,
-                                         @NotNull final ProjectSettingsManager projectSettingsManager,
-                                         @NotNull final SharedResourcesFeatureFactory factory) {
+                                         @NotNull final Resources resources,
+                                         @NotNull final Locks locks) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
-    myProjectSettingsManager = projectSettingsManager;
-    myFactory = factory;
+    myResources = resources;
+    myLocks = locks;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
 
   @Nullable
   @Override
-  protected ModelAndView doHandle(@NotNull HttpServletRequest request,
-                                  @NotNull HttpServletResponse response) throws Exception {
-    ModelAndView result = null;
+  protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
+                                  @NotNull final HttpServletResponse response) throws Exception {
+    final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
+    final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
+    final Map<String, Lock> locks = myLocks.getLocksFromFeatureParameters(buildFeaturesBean.getPropertiesBean().getProperties());
+    final SProject project = form.getProject();
+    final SharedResourcesBean bean = new SharedResourcesBean(myResources.getAllResources(project.getProjectId()).values());
+    result.getModel().put("locks", locks);
+    result.getModel().put("bean", bean);
+    result.getModel().put("project", project);
 
-    final SBuildFeatureDescriptor descriptor = form.getBuildFeaturesBean().getSelectedDescriptor();
-    if (descriptor != null) {
-      result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
-      final SharedResourcesFeature feature = myFactory.createFeature(descriptor);
-      final SProject project = form.getProject();
-      final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(project.getProjectId(), SERVICE_NAME);
-      final SharedResourcesBean bean = new SharedResourcesBean(settings.getResources(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: add constructor without usage map
-      final Map<String, Lock> locks = feature.getLockedResources();
-      result.getModel().put("locks", locks);
-      result.getModel().put("bean", bean);
-      result.getModel().put("project", project);
-    } else {
-      logger.warn("Cannot load selected build feature");
-    }
     return result;
   }
 

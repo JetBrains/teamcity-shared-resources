@@ -16,37 +16,25 @@
 
 package jetbrains.buildServer.sharedResources.server;
 
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 /**
- * Interface {@code FeatureParams}
- *
- * Contains methods for dealing with build feature parameters
+ * Created with IntelliJ IDEA.
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-public interface FeatureParams {
+public interface Resources {
 
-  /**
-   * Key in feature parameters collection, that contains all locks
-   */
-  @NotNull
-  public static final String LOCKS_FEATURE_PARAM_KEY = "locks-param";
+  public void addResource(@NotNull final String projectId, @NotNull final  Resource resource);
 
-  /**
-   * Provides description for build feature parameters to be shown in UI
-   * @param params build feature parameters
-   * @return parameters description
-   */
-  @NotNull
-  public String describeParams(@NotNull final Map<String, String> params);
+  public void deleteResource(@NotNull final String projectId, @NotNull final  String resourceName);
 
-  /**
-   * Provides default parameters for build feature
-   * @return default parameters
-   */
+  public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
+
   @NotNull
-  public Map<String, String> getDefault();
+  public Map<String, Resource> getAllResources(@NotNull final String projectId);
+
 }

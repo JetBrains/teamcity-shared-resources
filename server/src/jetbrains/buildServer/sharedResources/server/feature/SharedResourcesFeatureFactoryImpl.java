@@ -24,20 +24,20 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-public class SharedResourcesFeatureFactoryImpl implements SharedResourcesFeatureFactory {
+public final class SharedResourcesFeatureFactoryImpl implements SharedResourcesFeatureFactory {
 
 
   @NotNull
   private final Locks myLocks;
 
-  public SharedResourcesFeatureFactoryImpl(@NotNull Locks locks) {
+  public SharedResourcesFeatureFactoryImpl(@NotNull final Locks locks) {
     myLocks = locks;
   }
 
 
   @NotNull
   @Override
-  public SharedResourcesFeature createFeature(@NotNull SBuildFeatureDescriptor descriptor) {
+  public SharedResourcesFeature createFeature(@NotNull final SBuildFeatureDescriptor descriptor) {
     return new SharedResourcesFeatureImpl(myLocks, descriptor);
   }
 }

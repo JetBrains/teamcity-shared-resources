@@ -39,11 +39,14 @@ public final class FeatureParamsImpl implements FeatureParams {
   @NotNull
   private final Locks myLocks;
 
-
-
   // messages
+  @NotNull
   static final String NO_LOCKS_MESSAGE = "No locks are currently used by this build configuration";
+
+  @NotNull
   static final String READ_LOCKS_MESSAGE = "Read locks used: ";
+
+  @NotNull
   static final String WRITE_LOCKS_MESSAGE = "Write locks used: ";
 
   public FeatureParamsImpl(@NotNull final Locks locks) {
@@ -53,7 +56,7 @@ public final class FeatureParamsImpl implements FeatureParams {
 
   @NotNull
   @Override
-  public String describeParams(@NotNull Map<String, String> params) {
+  public String describeParams(@NotNull final Map<String, String> params) {
     final StringBuilder sb = new StringBuilder();
     final Map<String, Lock> locks = myLocks.getLocksFromFeatureParameters(params);
     final List<String> readLockNames = new ArrayList<String>();

@@ -21,7 +21,11 @@
 
   <!-- ===  INTERNALS  === -->
 
+
+
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
+
+  <bean class="jetbrains.buildServer.sharedResources.server.ResourcesImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactoryImpl"/>
 

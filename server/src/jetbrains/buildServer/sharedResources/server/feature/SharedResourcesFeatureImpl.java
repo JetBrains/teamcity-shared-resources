@@ -21,7 +21,6 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -57,32 +56,30 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   @NotNull
   @Override
   public Map<String, Lock> getLockedResources() {
-    // modification is supported only through this class
     return Collections.unmodifiableMap(myLockedResources);
   }
 
   // todo: add test
   @Override
-  public void updateLock(@NotNull SBuildType buildType, @NotNull String oldName, @NotNull String newName) {
+  public void updateLock(@NotNull final SBuildType buildType, @NotNull final String oldName, @NotNull final String newName) {
     final Lock lock = myLockedResources.remove(oldName);
     if (lock != null) {
-      // 3) save its type
+      // save its type
       final LockType lockType = lock.getType();
-      // 5) add lock with new resource name and saved type
+      // add lock with new resource name and saved type
       myLockedResources.put(newName, new Lock(newName, lockType));
-      // 6) serialize locks
-      final String locksAsString = SharedResourcesUtils.locksAsString(myLockedResources.values());
-      // 7) update build feature parameters
+      // serialize locks
+      final String locksAsString = myLocks.toFeatureParam(myLockedResources.values());
+      // update build feature parameters
       Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
-      // 8) update build feature
+      // update build feature
       buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
       // todo: remove workaround with templates
       final BuildTypeTemplate template = buildType.getTemplate();
       if (template != null) {
        template.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
       }
-      // todo: need reload?
     }
   }
 
@@ -91,5 +88,4 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   public Map<String, String> getBuildParameters() {
     return myLocks.asBuildParameters(myLockedResources.values());
   }
-
 }

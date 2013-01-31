@@ -39,7 +39,7 @@ import java.util.Map;
 public class BuildFeatureParametersProvider extends AbstractBuildParametersProvider implements BuildParametersProvider {
 
   @NotNull
-private final SharedResourcesFeatures myFeatures;
+  private final SharedResourcesFeatures myFeatures;
 
   public BuildFeatureParametersProvider(@NotNull final SharedResourcesFeatures features) {
     myFeatures = features;
@@ -47,12 +47,11 @@ private final SharedResourcesFeatures myFeatures;
 
   @NotNull
   @Override
-  public Map<String, String> getParameters(@NotNull SBuild build, boolean emulationMode) {
+  public Map<String, String> getParameters(@NotNull final SBuild build, boolean emulationMode) {
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      boolean featuresPresent = myFeatures.featuresPresent(buildType);
-      if (featuresPresent) {
+      if (myFeatures.featuresPresent(buildType)) {
         // we have features. Now get resolved settings
         for (SharedResourcesFeature feature: myFeatures.searchForResolvedFeatures(buildType)) {
           result.putAll(feature.getBuildParameters());
