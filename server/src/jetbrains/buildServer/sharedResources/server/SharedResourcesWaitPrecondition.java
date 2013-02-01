@@ -79,22 +79,24 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
           // now deal only with builds that have same projectId as the current one
           final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(
                   buildDistributorInput.getRunningBuilds(), canBeStarted.keySet(), projectId);
-
-          final Map<String, Resource> resources = myResources.getAllResources(projectId);
-          final Map<String, TakenLock> takenLocks = collectTakenLocks(buildPromotions);
-          final Collection<Lock> unavailableLocks = getUnavailableLocks(locksToTake, takenLocks, resources);
-
-          if (!unavailableLocks.isEmpty()) {
-            final StringBuilder builder = new StringBuilder("Build is waiting for ");
-            builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
-            for (Lock lock : unavailableLocks) {
-              builder.append(lock.getName()).append(", ");
+          if (!buildPromotions.isEmpty()) {
+            final Map<String, TakenLock> takenLocks = collectTakenLocks(buildPromotions);
+            if (!takenLocks.isEmpty()) {
+              final Map<String, Resource> resources = myResources.getAllResources(projectId);
+              final Collection<Lock> unavailableLocks = getUnavailableLocks(locksToTake, takenLocks, resources);
+              if (!unavailableLocks.isEmpty()) {
+                final StringBuilder builder = new StringBuilder("Build is waiting for ");
+                builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
+                for (Lock lock : unavailableLocks) {
+                  builder.append(lock.getName()).append(", ");
+                }
+                final String reasonDescription = builder.substring(0, builder.length() - 2);
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Got wait reason: [" + reasonDescription + "]");
+                }
+                result = new SimpleWaitReason(reasonDescription);
+              }
             }
-            final String reasonDescription = builder.substring(0, builder.length() - 2);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Got wait reason: [" + reasonDescription + "]");
-            }
-            result = new SimpleWaitReason(reasonDescription);
           }
         }
       }
