@@ -24,7 +24,6 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
     myFactory = factory;
   }
 
-
   @NotNull
   @Override
   public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType) {
@@ -55,10 +54,8 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
     return result;
   }
 
-
-
   @Override
-  public boolean featuresPresent(@NotNull SBuildType buildType) {
+  public boolean featuresPresent(@NotNull final SBuildType buildType) {
     boolean result = false;
     for (SBuildFeatureDescriptor descriptor: buildType.getBuildFeatures()) {
       if (FEATURE_TYPE.equals(descriptor.getType())) {

@@ -22,12 +22,14 @@ import java.util.List;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@TestFor (testForClass = SharedResourcesFeaturesImpl.class)
+@SuppressWarnings("UnusedShould")
+@TestFor (testForClass = {SharedResourcesFeatures.class, SharedResourcesFeaturesImpl.class})
 public class SharedResourcesFeaturesImplTest extends BaseTestCase {
 
   /** Number of test samples for collections */
   private final int NUM = 10;
 
+  /** Factory for mocks */
   private Mockery m;
 
   /** Mocked build type */
@@ -85,6 +87,7 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
   @Test
   public void testSearchForFeatures() {
     m.checking(new Expectations() {{
+
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(myAllFeatureDescriptors));
 
@@ -103,10 +106,7 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> myFeatures = mySharedResourcesFeatures.searchForFeatures(myBuildType);
     assertNotNull(myFeatures);
     assertNotEmpty(myFeatures);
-    // todo: fix test
-//    for (SBuildFeatureDescriptor d: myValidDescriptors) {
-//      assertContains(myFeatures, d);
-//    }
+    assertEquals(myValidDescriptors.size(), myFeatures.size());
     m.assertIsSatisfied();
   }
 
@@ -144,12 +144,26 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
     assertNotNull(myFeatures);
     assertNotEmpty(myFeatures);
     assertEquals(NUM / 2, myFeatures.size());
-    // todo: fix test
-//    for (int i = 0; i < NUM; i+= 2) {
-//      assertContains(myFeatures, myValidDescriptors.get(i));
-//    }
     m.assertIsSatisfied();
   }
 
+  @Test
+  public void testFeaturesPresent() {
+    m.checking(new Expectations() {{
 
+      oneOf(myBuildType).getBuildFeatures();
+      will(returnValue(myAllFeatureDescriptors));
+
+      for (int i = 0; i < NUM; i++) {
+        oneOf(myInvalidDescriptors.get(i)).getType();
+        will(returnValue("$$some_other_type$$"));
+      }
+
+      oneOf(myValidDescriptors.get(0)).getType();
+      will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
+
+    }});
+
+    assertTrue(mySharedResourcesFeatures.featuresPresent(myBuildType));
+  }
 }
