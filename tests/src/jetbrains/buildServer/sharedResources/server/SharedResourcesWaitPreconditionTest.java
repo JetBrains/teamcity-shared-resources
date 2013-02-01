@@ -25,6 +25,7 @@ import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
@@ -33,9 +34,7 @@ import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class {@code SharedResourcesWaitPreconditionTest}
@@ -70,8 +69,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   private ParametersProvider myParametersProvider;
 
-
-
   /** Class under test*/
   private SharedResourcesWaitPrecondition myWaitPrecondition;
 
@@ -89,11 +86,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     myBuildPromotion = m.mock(BuildPromotionEx.class);
     myParametersProvider = m.mock(ParametersProvider.class);
 
-
-
-
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
-
 
     myWaitPrecondition = new SharedResourcesWaitPrecondition(myFeatures, myLocks, myResources);
   }
@@ -184,6 +177,46 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   @Test
   public void testLocksPresentSingleBuild() throws Exception {
+    final Map<String, String> params = new HashMap<String, String>() {{
+       put("teamcity.locks.readLock.lock1", "");
+    }};
+    final Collection<Lock> locks = new ArrayList<Lock>() {{
+      add(new Lock("lock1", LockType.READ));
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(myQueuedBuild).getBuildPromotionInfo();
+      will(returnValue(myBuildPromotion));
+
+      oneOf(myBuildPromotion).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myBuildPromotion).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myFeatures).featuresPresent(myBuildType);
+      will(returnValue(true));
+
+      oneOf(myBuildPromotion).getParametersProvider();
+      will(returnValue(myParametersProvider));
+
+      oneOf(myParametersProvider).getAll();
+      will(returnValue(params));
+
+      oneOf(myLocks).fromBuildParameters(params);
+      will(returnValue(locks));
+
+      oneOf(myBuildDistributorInput).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
+    }});
+
+    WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
+    assertNull(result);
+  }
+
+  @Test
+  public void testNoLocksTaken() throws Exception {
 
   }
 
