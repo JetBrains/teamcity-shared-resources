@@ -2,6 +2,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
@@ -24,24 +25,23 @@ import static jetbrains.buildServer.sharedResources.server.FeatureParamsImpl.*;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 
-@TestFor(testForClass = FeatureParamsImpl.class)
+@SuppressWarnings("UnusedShould")
+@TestFor(testForClass = {FeatureParams.class, FeatureParamsImpl.class})
 public class FeatureParamsImplTest extends BaseTestCase {
 
-  /**
-   * Class under test
-   */
+  /** Factory for mocks*/
+  private Mockery m;
+
+  /** Class under test */
   private FeatureParams myFeatureParams;
 
   private Locks myLocks;
-
-  private Mockery m;
 
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     m = new Mockery();
     myLocks = m.mock(Locks.class);
-
     myFeatureParams = new FeatureParamsImpl(myLocks);
   }
 
@@ -72,16 +72,20 @@ public class FeatureParamsImplTest extends BaseTestCase {
    * @see FeatureParamsImpl#describeParams(java.util.Map)
    * @throws Exception if something goes wrong
    */
-  @Test // todo: fix test
+  @Test
   public void testNonEmpty() throws Exception {
-//    final Map<String, String> params = new HashMap<String, String>();
-//    params.put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 readLock");
-//    assertContains(myFeatureParams.describeParams(params), READ_LOCKS_MESSAGE);
-//    params.put(LOCKS_FEATURE_PARAM_KEY, "lock1 writeLock\nlock2 writeLock");
-//    assertContains(myFeatureParams.describeParams(params), WRITE_LOCKS_MESSAGE);
-//    params.put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock");
-//    final String str = myFeatureParams.describeParams(params);
-//    assertTrue(str.contains(READ_LOCKS_MESSAGE) && str.contains(WRITE_LOCKS_MESSAGE));
+    final Map<String, Lock> locks = new HashMap<String, Lock>();
+    locks.put("lock1", new Lock("lock1", LockType.READ));
+    locks.put("lock2", new Lock("lock2", LockType.WRITE));
+    final Map<String, String> params = new HashMap<String, String>();
+    params.put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock");
+    m.checking(new Expectations() {{
+      oneOf(myLocks).fromFeatureParameters(params);
+      will(returnValue(locks));
+    }});
+    final String str = myFeatureParams.describeParams(params);
+    assertTrue(str.contains(READ_LOCKS_MESSAGE) && str.contains(WRITE_LOCKS_MESSAGE));
+    m.assertIsSatisfied();
   }
 
   /**
@@ -94,5 +98,4 @@ public class FeatureParamsImplTest extends BaseTestCase {
   public void testGetDefault() throws Exception {
     assertEquals("", myFeatureParams.getDefault().get(LOCKS_FEATURE_PARAM_KEY));
   }
-
 }

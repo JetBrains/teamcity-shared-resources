@@ -53,7 +53,6 @@ public final class FeatureParamsImpl implements FeatureParams {
     myLocks = locks;
   }
 
-
   @NotNull
   @Override
   public String describeParams(@NotNull final Map<String, String> params) {
