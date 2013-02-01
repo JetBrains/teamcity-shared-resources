@@ -27,9 +27,6 @@ public class SharedResourcesPluginConstants {
   /** Page, responsible for feature parameters */
   public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
 
-  /** Lock prefix, used in build parameters */
-  public static final String LOCK_PREFIX = "teamcity.locks.";
-
   /** Name of the plugin */
   public static final String PLUGIN_NAME = "JetBrains.SharedResources";
 

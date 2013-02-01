@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.LOCK_PREFIX;
 import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
@@ -40,15 +39,17 @@ public final class LocksImpl implements Locks {
 
   private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
 
+  // BEGIN interface Locks
+
   @NotNull
   @Override
-  public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor) {
+  public Map<String, Lock> fromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor) {
     return getLocksInternal(descriptor.getParameters());
   }
 
   @NotNull
   @Override
-  public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final Map<String, String> parameters) {
+  public Map<String, Lock> fromFeatureParameters(@NotNull final Map<String, String> parameters) {
     return getLocksInternal(parameters);
   }
 
@@ -77,14 +78,22 @@ public final class LocksImpl implements Locks {
 
   @NotNull
   @Override
-  public String toFeatureParam(@NotNull final Collection<Lock> locks) {
-    final StringBuilder builder = new StringBuilder();
-    for (Lock lock: locks) {
-      builder.append(lock.getName()).append(" ");
-      builder.append(lock.getType()).append("\n");
+  public String asFeatureParameter(@NotNull final Collection<Lock> locks) {
+    String result;
+    if (locks.isEmpty()) {
+      result = StringUtil.EMPTY;
+    } else {
+      final StringBuilder builder = new StringBuilder();
+      for (Lock lock: locks) {
+        builder.append(lock.getName()).append(" ");
+        builder.append(lock.getType()).append("\n");
+      }
+      result = builder.substring(0, builder.length() - 1);
     }
-    return builder.substring(0, builder.length() - 1);
+    return result;
   }
+
+  // END interface Locks
 
   // utility methods
 
@@ -92,7 +101,7 @@ public final class LocksImpl implements Locks {
    * Converts given locks to a {@code String} that is suitable to
    * exposure as a build parameter name
    *
-   * @see jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants#LOCK_PREFIX
+   * @see Locks#LOCK_PREFIX
    * @param lock lock to convert
    * @return lock as {@code String}
    */

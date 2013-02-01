@@ -24,48 +24,65 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * Interface {@code Locks}
+ *
+ * Defines operations tha deal with locks
+ *
+ * @see jetbrains.buildServer.sharedResources.model.Lock
+ * @see jetbrains.buildServer.sharedResources.model.LockType
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public interface Locks {
 
+  /** Lock prefix, used in build parameters */
+  public static final String LOCK_PREFIX = "teamcity.locks.";
+
   /**
    * Parses build feature descriptor for parameters containing locks
+   *
    * @param descriptor build feature descriptor
    * @return map of locks, taken by the build
    */
   @NotNull
-  public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor);
+  public Map<String, Lock> fromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor);
 
 
   /**
-   * Parses given map for entries that contain locks
+   * Parses given map of parameters for entries that contain locks
+   *
    * @param parameters map of parameters
-   * @return map of locks
+   * @return map of locks, taken by the build
    */
   @NotNull
-  public Map<String, Lock> getLocksFromFeatureParameters(@NotNull final Map<String, String> parameters);
+  public Map<String, Lock> fromFeatureParameters(@NotNull final Map<String, String> parameters);
+
+
+  /**
+   * Serializes given locks to build feature param
+   *
+   * @param locks collection of locks to serialize
+   * @return {@code String} that represents given locks
+   */
+  @NotNull
+  public String asFeatureParameter(@NotNull final Collection<Lock> locks);
 
 
   /**
    * Converts given collection of locks to build parameters
+   *
    * @param locks locks to convert
    * @return {@code Collection} of build parameters that represent given locks
    */
   @NotNull
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
 
-
   /**
    * Extracts locks from build parameters
+   *
    * @param buildParams build parameters ot search in
    * @return collection of locks that are passed as build parameters
    */
   @NotNull
   public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams);
-
-  @NotNull
-  public String toFeatureParam(@NotNull final Collection<Lock> locks);
-
 }

@@ -75,7 +75,7 @@ public class SharedResourcesPluginController extends BaseController {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
-    final Map<String, Lock> locks = myLocks.getLocksFromFeatureParameters(buildFeaturesBean.getPropertiesBean().getProperties());
+    final Map<String, Lock> locks = myLocks.fromFeatureParameters(buildFeaturesBean.getPropertiesBean().getProperties());
     final SProject project = form.getProject();
     final SharedResourcesBean bean = new SharedResourcesBean(myResources.getAllResources(project.getProjectId()).values());
     result.getModel().put("locks", locks);

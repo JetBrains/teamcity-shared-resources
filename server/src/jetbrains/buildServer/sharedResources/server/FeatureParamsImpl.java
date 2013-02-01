@@ -58,7 +58,7 @@ public final class FeatureParamsImpl implements FeatureParams {
   @Override
   public String describeParams(@NotNull final Map<String, String> params) {
     final StringBuilder sb = new StringBuilder();
-    final Map<String, Lock> locks = myLocks.getLocksFromFeatureParameters(params);
+    final Map<String, Lock> locks = myLocks.fromFeatureParameters(params);
     final List<String> readLockNames = new ArrayList<String>();
     final List<String> writeLockNames = new ArrayList<String>();
     for (Lock lock: locks.values()) {

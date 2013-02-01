@@ -64,8 +64,8 @@ public class FeatureTest extends BaseTestCase {
   @Test
   public void testSingleBuild() throws Exception {
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
-      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock1", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock2", LockType.READ), "");
     }};
 
     final List<RunningBuildInfo> runningBuilds = new ArrayList<RunningBuildInfo>();
@@ -91,18 +91,18 @@ public class FeatureTest extends BaseTestCase {
   public void testMultipleBuildsLocksAvailable() throws Exception {
     final List<Map<String, String>> runningParams = new ArrayList<Map<String, String>>() {{
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
-        put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
+        put(TestUtils.generateLockAsBuildParam("lock1", LockType.READ), "");
+        put(TestUtils.generateLockAsBuildParam("lock2", LockType.READ), "");
       }});
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam("lock3", LockType.WRITE), "");
-        put(TestUtils.generateLockAsParam("lock4", LockType.WRITE), "");
+        put(TestUtils.generateLockAsBuildParam("lock3", LockType.WRITE), "");
+        put(TestUtils.generateLockAsBuildParam("lock4", LockType.WRITE), "");
       }});
     }};
 
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
-      put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock1", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock2", LockType.READ), "");
     }};
 
     final Set<QueuedBuildInfo> queuedBuilds = new HashSet<QueuedBuildInfo>();
@@ -131,18 +131,18 @@ public class FeatureTest extends BaseTestCase {
   public void testMultipleBuildsLocksUnavailable() {
     final List<Map<String, String>> runningParams = new ArrayList<Map<String, String>>() {{
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam("lock1", LockType.READ), "");
-        put(TestUtils.generateLockAsParam("lock2", LockType.READ), "");
+        put(TestUtils.generateLockAsBuildParam("lock1", LockType.READ), "");
+        put(TestUtils.generateLockAsBuildParam("lock2", LockType.READ), "");
       }});
       add(new HashMap<String, String>() {{
-        put(TestUtils.generateLockAsParam("lock3", LockType.WRITE), "");
-        put(TestUtils.generateLockAsParam("lock4", LockType.WRITE), "");
+        put(TestUtils.generateLockAsBuildParam("lock3", LockType.WRITE), "");
+        put(TestUtils.generateLockAsBuildParam("lock4", LockType.WRITE), "");
       }});
     }};
 
     final Map<String, String> myBuildParams = new HashMap<String, String>() {{
-      put(TestUtils.generateLockAsParam("lock3", LockType.READ), "");
-      put(TestUtils.generateLockAsParam("lock4", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock3", LockType.READ), "");
+      put(TestUtils.generateLockAsBuildParam("lock4", LockType.READ), "");
     }};
 
     final Set<QueuedBuildInfo> queuedBuilds = new HashSet<QueuedBuildInfo>();

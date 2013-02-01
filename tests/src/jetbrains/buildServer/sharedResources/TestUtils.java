@@ -16,7 +16,9 @@
 
 package jetbrains.buildServer.sharedResources;
 
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 
 import java.util.Random;
 import java.util.UUID;
@@ -50,8 +52,17 @@ public class TestUtils {
    * Generates lock representation as it is in build parameters
    * @return lock representation as a parameter
    */
-  public static String generateLockAsParam(String name, LockType type) {
-    return SharedResourcesPluginConstants.LOCK_PREFIX + type.getName() + "." + name;
+  public static String generateLockAsBuildParam(String name, LockType type) {
+    return Locks.LOCK_PREFIX + type.getName() + "." + name;
+  }
+
+  /**
+   * Generates lock with random name and random type
+   * @return randomly generated lock
+   */
+  public static Lock generateRandomLock() {
+    final LockType[] allTypes = LockType.values();
+    return new Lock(generateRandomName(), allTypes[generateBoundedRandomInt(1000) % allTypes.length]);
   }
 
   /**

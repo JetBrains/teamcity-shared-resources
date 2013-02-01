@@ -8,6 +8,7 @@
   <test name="Feature tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.feature.LocksImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.FeatureParamsImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImplTest"/>

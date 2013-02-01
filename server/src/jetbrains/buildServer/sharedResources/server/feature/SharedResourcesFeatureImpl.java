@@ -50,7 +50,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
                                     @NotNull final SBuildFeatureDescriptor descriptor) {
     myLocks = locks;
     myDescriptor = descriptor;
-    myLockedResources = myLocks.getLocksFromFeatureParameters(myDescriptor);
+    myLockedResources = myLocks.fromFeatureParameters(myDescriptor);
   }
 
   @NotNull
@@ -69,7 +69,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
       // add lock with new resource name and saved type
       myLockedResources.put(newName, new Lock(newName, lockType));
       // serialize locks
-      final String locksAsString = myLocks.toFeatureParam(myLockedResources.values());
+      final String locksAsString = myLocks.asFeatureParameter(myLockedResources.values());
       // update build feature parameters
       Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);

@@ -59,7 +59,7 @@ public class FeatureParamsImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myLocks).getLocksFromFeatureParameters(params);
+      oneOf(myLocks).fromFeatureParameters(params);
       will(returnValue(Collections.<String, Lock>emptyMap()));
     }});
     assertContains(myFeatureParams.describeParams(params), NO_LOCKS_MESSAGE);
