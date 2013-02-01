@@ -14,11 +14,11 @@
       <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactoryImplTest"/>
-
     </classes>
   </test>
   <test name="Settings tests">
     <classes>
+      <class name="jetbrains.buildServer.sharedResources.server.ResourcesImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.settings.ProjectSettingsTest"/>
     </classes>
   </test>

@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Oleg Rybak
  */
-public final class PluginProjectSettings implements ProjectSettings {
+public class PluginProjectSettings implements ProjectSettings {
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 

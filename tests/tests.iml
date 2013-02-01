@@ -12,8 +12,6 @@
     <orderEntry type="library" name="Test-Api" level="project" />
     <orderEntry type="library" name="testng" level="project" />
     <orderEntry type="library" name="jmock" level="project" />
-    <orderEntry type="library" name="testng" level="project" />
-    <orderEntry type="library" name="jmock" level="project" />
     <orderEntry type="library" name="Test-Api" level="project" />
     <orderEntry type="library" name="Common-Api" level="project" />
     <orderEntry type="library" name="Agent-Api" level="project" />
@@ -24,6 +22,7 @@
     <orderEntry type="library" name="Server-Api" level="project" />
     <orderEntry type="library" name="Idea-OpenApi" level="project" />
     <orderEntry type="library" name="Servlet Api" level="project" />
+    <orderEntry type="library" name="cglib" level="project" />
   </component>
 </module>
 

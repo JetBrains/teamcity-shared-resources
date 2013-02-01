@@ -17,19 +17,10 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.TestUtils;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
-import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * Class {@code SharedResourcesWaitPreconditionTest}
@@ -37,10 +28,10 @@ import java.util.Collection;
  * Contains tests for {@code SharedResourcesWaitPrecondition}
  *
  * @see SharedResourcesWaitPrecondition
- * @see SharedResourcesUtils
  * *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = SharedResourcesWaitPrecondition.class)
 public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
