@@ -59,7 +59,6 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
     return Collections.unmodifiableMap(myLockedResources);
   }
 
-  // todo: add test
   @Override
   public void updateLock(@NotNull final SBuildType buildType, @NotNull final String oldName, @NotNull final String newName) {
     final Lock lock = myLockedResources.remove(oldName);
@@ -74,11 +73,13 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
       Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
       // update build feature
-      buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
+      boolean updated = buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
       // todo: remove workaround with templates
-      final BuildTypeTemplate template = buildType.getTemplate();
-      if (template != null) {
-       template.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
+      if (!updated) {
+        final BuildTypeTemplate template = buildType.getTemplate();
+        if (template != null) {
+          template.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
+        }
       }
     }
   }
