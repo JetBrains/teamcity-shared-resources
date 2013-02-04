@@ -287,7 +287,7 @@
               <c:when test="${used}">
                 <td class="highlight" onclick="${onclick}">
                   <c:set var="usageSize" value="${fn:length(usage)}"/>
-                  <bs:simplePopup controlId="usage${resourceName}"
+                  <bs:simplePopup controlId="${fn:replace(resourceName,' ', '_')}"
                                   linkOpensPopup="false"
                                   popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
