@@ -24,7 +24,6 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,14 +49,14 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   private final Locks myLocks;
 
   @NotNull
-  private final Resources myResources;
+  private final TakenLocks myTakenLocks;
 
   public SharedResourcesWaitPrecondition(@NotNull final SharedResourcesFeatures features,
                                          @NotNull final Locks locks,
-                                         @NotNull final Resources resources) {
+                                         @NotNull final TakenLocks takenLocks) {
     myFeatures = features;
     myLocks = locks;
-    myResources = resources;
+    myTakenLocks = takenLocks;
   }
 
   @Nullable
@@ -74,27 +72,17 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       if (myFeatures.featuresPresent(buildType)) {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake  = myLocks.fromBuildParameters(pp.getAll());
-
         if (!locksToTake.isEmpty()) {
           // now deal only with builds that have same projectId as the current one
           final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(
                   buildDistributorInput.getRunningBuilds(), canBeStarted.keySet(), projectId);
           if (!buildPromotions.isEmpty()) {
-            final Map<String, TakenLock> takenLocks = collectTakenLocks(buildPromotions);
+            // todo: may be move to single method? although one method collects, other decides...
+            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(buildPromotions);
             if (!takenLocks.isEmpty()) {
-              final Map<String, Resource> resources = myResources.getAllResources(projectId);
-              final Collection<Lock> unavailableLocks = getUnavailableLocks(locksToTake, takenLocks, resources);
+              final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
               if (!unavailableLocks.isEmpty()) {
-                final StringBuilder builder = new StringBuilder("Build is waiting for ");
-                builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
-                for (Lock lock : unavailableLocks) {
-                  builder.append(lock.getName()).append(", ");
-                }
-                final String reasonDescription = builder.substring(0, builder.length() - 2);
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Got wait reason: [" + reasonDescription + "]");
-                }
-                result = new SimpleWaitReason(reasonDescription);
+                result = createWaitReason(unavailableLocks);
               }
             }
           }
@@ -104,8 +92,19 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     return result;
   }
 
-  // the idea is that precondition has to deal with decision itself. Now what will we do, when we introduce custom values?
-
+  @NotNull
+  private WaitReason createWaitReason(@NotNull final Collection<Lock> unavailableLocks) {
+    final StringBuilder builder = new StringBuilder("Build is waiting for ");
+    builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
+    for (Lock lock : unavailableLocks) {
+      builder.append(lock.getName()).append(", ");
+    }
+    final String reasonDescription = builder.substring(0, builder.length() - 2);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Got wait reason: [" + reasonDescription + "]");
+    }
+    return new SimpleWaitReason(reasonDescription);
+  }
 
   /**
    * Extracts build promotions from build server state, represented by running and queued builds. Only build promotions
@@ -135,58 +134,5 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     }
     return result;
   }
-
-  private Map<String, TakenLock> collectTakenLocks(@NotNull final Collection<BuildPromotionInfo> promotions) {
-    final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
-    for (BuildPromotionInfo promo: promotions) {
-      Collection<Lock> locks = myLocks.fromBuildParameters(((BuildPromotionEx)promo).getParametersProvider().getAll());
-      for (Lock lock: locks) {
-        TakenLock takenLock = result.get(lock.getName());
-        if (takenLock == null) {
-          takenLock = new TakenLock();
-          result.put(lock.getName(), takenLock);
-        }
-        takenLock.addLock(promo, lock);
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  private Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
-                                               @NotNull Map<String, TakenLock> takenLocks,
-                                               @NotNull Map<String, Resource> resources) {
-    final Collection<Lock> result = new ArrayList<Lock>();
-    for (Lock lock : locksToTake) {
-      final TakenLock takenLock = takenLocks.get(lock.getName());
-      if (takenLock != null) {
-        switch (lock.getType())  {
-          case READ:
-            // 1) Check that no write lock exists
-            if (takenLock.hasWriteLocks()) {
-              result.add(lock);
-            }
-            // check against resource
-            final Resource resource = resources.get(lock.getName());
-            if (resource != null && !resource.isInfinite()) {
-              // limited capacity resource
-              if (takenLock.getReadLocks().size() >= resource.getQuota()) {
-                result.add(lock);
-              }
-            }
-            break;
-          case WRITE:
-            if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
-              result.add(lock);
-            }
-        }
-      }
-    }
-    return result;
-  }
-
-
-
-
 }
 

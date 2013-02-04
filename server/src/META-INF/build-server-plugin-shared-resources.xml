@@ -20,9 +20,9 @@
 
 
   <!-- ===  INTERNALS  === -->
-
-
-
+  
+  <bean class="jetbrains.buildServer.sharedResources.server.TakenLocksImpl"/>
+  
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.ResourcesImpl"/>
