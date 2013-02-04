@@ -97,7 +97,7 @@ public class ResourcesImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testGetAllResources() {
+  public void testAsMap() {
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>();
     resourceMap.put("r1", ResourceFactory.newQuotedResource("r1", 1));
     resourceMap.put("r2", ResourceFactory.newInfiniteResource("r2"));
@@ -110,7 +110,7 @@ public class ResourcesImplTest extends BaseTestCase {
       will(returnValue(resourceMap));
     }});
 
-    final Map<String, Resource> result = resources.getAllResources(projectId);
+    final Map<String, Resource> result = resources.asMap(projectId);
     assertNotNull(result);
     assertEquals(resourceMap.size(), result.size());
   }

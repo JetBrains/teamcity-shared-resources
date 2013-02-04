@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.BaseController;
+import jetbrains.buildServer.controllers.admin.projects.BuildFeatureBean;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
@@ -32,6 +33,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
@@ -75,13 +77,21 @@ public class EditFeatureController extends BaseController {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
-    final Map<String, Lock> locks = myLocks.fromFeatureParameters(buildFeaturesBean.getPropertiesBean().getProperties());
+    final String buildFeatureId = request.getParameter("featureId");
+    final Map<String, Lock> locks = new HashMap<String, Lock>();
+    final Map<String, Object> model = result.getModel();
+    for (BuildFeatureBean bfb: buildFeaturesBean.getBuildFeatureDescriptors()) {
+      if (buildFeatureId.equals(bfb.getDescriptor().getId())) {
+        locks.putAll(myLocks.fromFeatureParameters(bfb.getDescriptor().getParameters()));
+        model.put("inherited", bfb.isInherited());
+        break;
+      }
+    }
     final SProject project = form.getProject();
-    final SharedResourcesBean bean = new SharedResourcesBean(myResources.getAllResources(project.getProjectId()).values());
-    result.getModel().put("locks", locks);
-    result.getModel().put("bean", bean);
-    result.getModel().put("project", project);
-
+    final SharedResourcesBean bean = new SharedResourcesBean(myResources.asCollection(project.getProjectId()));
+    model.put("locks", locks);
+    model.put("bean", bean);
+    model.put("project", project);
     return result;
   }
 

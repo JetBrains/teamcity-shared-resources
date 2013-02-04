@@ -70,7 +70,7 @@ public class TakenLocksImpl implements TakenLocks {
   public Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
                                               @NotNull Map<String, TakenLock> takenLocks,
                                               @NotNull String projectId) {
-    final Map<String, Resource> resources = myResources.getAllResources(projectId);
+    final Map<String, Resource> resources = myResources.asMap(projectId);
     final Collection<Lock> result = new ArrayList<Lock>();
     for (Lock lock : locksToTake) {
       final TakenLock takenLock = takenLocks.get(lock.getName());

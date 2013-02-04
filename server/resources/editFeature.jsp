@@ -25,15 +25,13 @@
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
 <jsp:useBean id="locks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
+<jsp:useBean id="inherited" scope="request" type="java.lang.Boolean"/>
 
 <c:set var="locksFeatureParamKey" value="<%=FeatureParams.LOCKS_FEATURE_PARAM_KEY%>"/>
-
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
-
 <c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
-
 
 <script type="text/javascript">
 //noinspection JSValidateTypes
@@ -70,14 +68,32 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       BS.Util.hide('noLocksTaken');
       for (var key in self) {
         if (self.hasOwnProperty(key)) {
-          var onclick = this.generateOnClickAction(key);
-          <%-- override default style, as we are in the table with disabled border-top --%>
-          var content = "<tr style=\"border-top: 1px solid #CCC\"><td class=\"highlight\" onclick=" + onclick + ">" + key + "</td><td class=\"highlight\" onclick=" + onclick + ">" + this.myLocksDisplay[self[key]] +"</td>";
-          content += "<td class=\"edit highlight\" onclick=" + onclick + "><a href=\"#\" onclick=\"BS.LocksDialog.showEdit(\'" + key + "\'); return false\">edit</a></td>";
-          content += "<td class=\"edit\"><a href=\"#\" onclick=\"BS.LocksDialog.deleteLockFromTakenLocks(\'" + key + "\'); return false\">delete</a></td>";
-          content += "</tr>";
+          var oc, od, hClass;
+          var editCell, deleteCell;
+          <c:choose>
+          <c:when test="${inherited}">
+          oc = '';
+          od = '';
+          hClass = '';
+          editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
+          deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+          </c:when>
+          <c:otherwise>
+          oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
+          od = 'BS.LocksDialog.deleteLockFromTakenLocks(\"' + key + '\"); return false;';
+          hClass = 'highlight';
+          editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
+          deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
+          </c:otherwise>
+          </c:choose>
+          //noinspection JSCheckFunctionSignatures
+          tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
+                  .append($j('<td>').attr('class', hClass).text(key).attr('onclick', oc))
+                  .append($j('<td>').attr('class', hClass).text('' + this.myLocksDisplay[self[key]]).attr('onclick', oc))
+                  .append(editCell)
+                  .append(deleteCell)
+          );
           textAreaContent += key + " " + self[key] + "\n";
-          tableBody.append(content);
         }
       }
     } else {
@@ -98,10 +114,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     });
 
     BS.MultilineProperties.updateVisible();
-  },
-
-  generateOnClickAction: function(key) {
-    return "BS.LocksDialog.showEdit(\'" + key + "\'); return false;";
   },
 
   getContainer: function() {
@@ -324,6 +336,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       <tbody>
       </tbody>
     </table>
+    <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
     <div id="noLocksTaken" style="display: none">
       No locks are currently defined
     </div>
@@ -333,6 +346,12 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 <script type="text/javascript">
   BS.LocksDialog.fillData();
   BS.LocksDialog.refreshUI();
+  <c:choose>
+  <c:when test="${inherited}">
+  BS.Util.hide("addNewLock");
+  BS.Util.show("inheritedNote");
+  </c:when>
+  </c:choose>
 </script>
 
 <tr style="display: none">

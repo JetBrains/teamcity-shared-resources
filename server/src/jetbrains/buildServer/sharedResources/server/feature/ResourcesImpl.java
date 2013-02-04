@@ -22,6 +22,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -56,8 +57,14 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
-  public Map<String, Resource> getAllResources(@NotNull final String projectId) {
+  public Map<String, Resource> asMap(@NotNull final String projectId) {
     return getSettings(projectId).getResourceMap();
+  }
+
+  @NotNull
+  @Override
+  public Collection<Resource> asCollection(@NotNull String projectId) {
+    return getSettings(projectId).getResources();
   }
 
   @NotNull

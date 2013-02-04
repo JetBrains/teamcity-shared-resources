@@ -19,6 +19,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -35,6 +36,9 @@ public interface Resources {
   public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
 
   @NotNull
-  public Map<String, Resource> getAllResources(@NotNull final String projectId);
+  public Map<String, Resource> asMap(@NotNull final String projectId);
+
+  @NotNull
+  public Collection<Resource> asCollection(@NotNull final String projectId);
 
 }
