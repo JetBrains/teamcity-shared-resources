@@ -14,27 +14,39 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.model.resources;
 
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-public interface Resources {
+public class QuotedResource extends AbstractResource {
 
-  public void addResource(@NotNull final String projectId, @NotNull final  Resource resource);
+  static final int QUOTA_INFINITE = -1;
 
-  public void deleteResource(@NotNull final String projectId, @NotNull final  String resourceName);
+  private final int myQuota;
 
-  public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
+  private QuotedResource(@NotNull String name, int quota) {
+    super(name, ResourceType.QUOTED);
+    myQuota = quota;
+  }
 
-  @NotNull
-  public Map<String, Resource> getAllResources(@NotNull final String projectId);
+  static QuotedResource newResource(@NotNull String name, int quota) {
+    return new QuotedResource(name, quota);
+  }
 
+  static QuotedResource newInfiniteResource(@NotNull String name) {
+    return new QuotedResource(name, QUOTA_INFINITE);
+  }
+
+  public boolean isInfinite() {
+    return myQuota < 0;
+  }
+
+  public int getQuota() {
+    return myQuota;
+  }
 }

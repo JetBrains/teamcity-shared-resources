@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
+import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
  * Class {@code BuildFeatureParametersProviderTest}

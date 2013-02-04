@@ -11,25 +11,26 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesPluginController"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 
-
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
 
   <!-- ===  INTERNALS  === -->
-  
-  <bean class="jetbrains.buildServer.sharedResources.server.TakenLocksImpl"/>
+
+  <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
+
+  <bean class="jetbrains.buildServer.sharedResources.server.feature.TakenLocksImpl"/>
   
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.ResourcesImpl"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.feature.ResourcesImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactoryImpl"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.FeatureParamsImpl"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImpl"/>
 

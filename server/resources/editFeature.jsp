@@ -16,7 +16,7 @@
 <%@ include file="/include-internal.jsp" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
-<%@ page import="jetbrains.buildServer.sharedResources.server.FeatureParams" %>
+<%@ page import="jetbrains.buildServer.sharedResources.server.feature.FeatureParams" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 

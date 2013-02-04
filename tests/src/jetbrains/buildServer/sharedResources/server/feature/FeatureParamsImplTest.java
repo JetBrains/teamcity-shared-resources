@@ -1,9 +1,8 @@
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
-import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -14,8 +13,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static jetbrains.buildServer.sharedResources.server.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
-import static jetbrains.buildServer.sharedResources.server.FeatureParamsImpl.*;
+import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
+import static jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImpl.*;
 
 /**
  * Class {@code FeatureParamsImplTest}

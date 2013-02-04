@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -82,10 +83,12 @@ public class TakenLocksImpl implements TakenLocks {
             }
             // check against resource
             final Resource resource = resources.get(lock.getName());
-            if (resource != null && !resource.isInfinite()) {
-              // limited capacity resource
-              if (takenLock.getReadLocks().size() >= resource.getQuota()) {
-                result.add(lock);
+            if (resource != null && resource.getType().equals(ResourceType.QUOTED)) { // supporting only quoted resources for now
+              QuotedResource qRes = (QuotedResource)resource;
+              if (!qRes.isInfinite()) {
+                if (takenLock.getReadLocks().size() >= qRes.getQuota()) {
+                  result.add(lock);
+                }
               }
             }
             break;

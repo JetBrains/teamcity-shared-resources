@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.server.feature;
 
 import org.jetbrains.annotations.NotNull;
 

@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.settings;
+package jetbrains.buildServer.sharedResources.server.feature;
 
-import jetbrains.buildServer.serverSide.settings.ProjectSettings;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsFactory;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
- * Class {@code PluginProjectSettingsFactory}
+ * Created with IntelliJ IDEA.
  *
- * @author Oleg Rybak
+ * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-public final class PluginProjectSettingsFactory implements ProjectSettingsFactory {
+public interface Resources {
+
+  public void addResource(@NotNull final String projectId, @NotNull final  Resource resource);
+
+  public void deleteResource(@NotNull final String projectId, @NotNull final  String resourceName);
+
+  public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
 
   @NotNull
-  @Override
-  public ProjectSettings createProjectSettings(@NotNull final String projectId) {
-    return new PluginProjectSettings();
-  }
+  public Map<String, Resource> getAllResources(@NotNull final String projectId);
+
 }

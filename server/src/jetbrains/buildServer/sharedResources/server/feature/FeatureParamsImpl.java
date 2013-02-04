@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.server.feature;
 
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -88,7 +87,7 @@ public final class FeatureParamsImpl implements FeatureParams {
   @Override
   public Map<String, String> getDefault() {
     final Map<String, String> result = new HashMap<String, String>();
-    result.put(FeatureParams.LOCKS_FEATURE_PARAM_KEY, "");
+    result.put(LOCKS_FEATURE_PARAM_KEY, "");
     return result;
   }
 }

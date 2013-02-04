@@ -30,7 +30,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  */
 public final class PluginSettingsManager {
 
-  public PluginSettingsManager(@NotNull ProjectSettingsManager projectSettingsManager) {
+  public PluginSettingsManager(@NotNull final ProjectSettingsManager projectSettingsManager) {
     projectSettingsManager.registerSettingsFactory(SERVICE_NAME, new PluginProjectSettingsFactory());
   }
 }

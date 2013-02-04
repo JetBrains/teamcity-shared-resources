@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
@@ -22,8 +22,8 @@ import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.pages.SharedResourcesBean;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 /**
  * @author Oleg Rybak
  */
-public class SharedResourcesPluginController extends BaseController {
+public class EditFeatureController extends BaseController {
 
   @NotNull
   private final PluginDescriptor myDescriptor;
@@ -55,11 +55,11 @@ public class SharedResourcesPluginController extends BaseController {
   private final Locks myLocks;
 
 
-  public SharedResourcesPluginController(@NotNull final PluginDescriptor descriptor,
-                                         @NotNull final WebControllerManager web,
-                                         @NotNull final EditBuildTypeFormFactory formFactory,
-                                         @NotNull final Resources resources,
-                                         @NotNull final Locks locks) {
+  public EditFeatureController(@NotNull final PluginDescriptor descriptor,
+                               @NotNull final WebControllerManager web,
+                               @NotNull final EditBuildTypeFormFactory formFactory,
+                               @NotNull final Resources resources,
+                               @NotNull final Locks locks) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;

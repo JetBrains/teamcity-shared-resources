@@ -18,8 +18,12 @@ package jetbrains.buildServer.sharedResources.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.settings.ProjectSettings;
+import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
+import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -30,6 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Oleg Rybak
  */
+@SuppressWarnings("UnusedShould")
 public class PluginProjectSettings implements ProjectSettings {
 
   private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
@@ -40,8 +45,6 @@ public class PluginProjectSettings implements ProjectSettings {
    * XML storage structure
    *
    * // todo: make proper javadoc
-   *
-   *
    *
    *   <JetBrains.SharedResources>
    *     <resource>
@@ -66,15 +69,16 @@ public class PluginProjectSettings implements ProjectSettings {
    *    </JetBrains.SharedResources>
    *
    */
+  @SuppressWarnings("UnusedShould")
   private interface XML {
     public static final String TAG_RESOURCE = "resource";
     public static final String TAG_RESOURCE_NAME = "name";
     public static final String ATTR_VALUES_TYPE = "type";
     public static final String TAG_VALUES = "values";
-    //    public static final String TAG_VALUE = "value";
+    public static final String TAG_VALUE = "value";
     public static final String TAG_QUOTA = "quota";
     public static final String VALUE_TYPE_QUOTA = "quota";
-    //    public static final String VALUE_TYPE_CUSTOM = "custom";
+    public static final String VALUE_TYPE_CUSTOM = "custom";
     public static final String VALUE_QUOTA_INFINITE = "infinite";
   }
 
@@ -94,23 +98,8 @@ public class PluginProjectSettings implements ProjectSettings {
       final List children = rootElement.getChildren(XML.TAG_RESOURCE);
       myResourceMap = new HashMap<String, Resource>();
       if (!children.isEmpty()) {
-        for (Object o : children) {
-          Element el = (Element) o;
-          final String resourceName = el.getChild(XML.TAG_RESOURCE_NAME).getTextTrim();
-          Element e = el.getChild(XML.TAG_VALUES);
-          final String valuesType = e.getAttributeValue(XML.ATTR_VALUES_TYPE);
-          if (XML.VALUE_TYPE_QUOTA.equals(valuesType)) {
-            final String resourceQuota = e.getChild(XML.TAG_QUOTA).getTextTrim();
-            Resource parsedResource; // todo: move parsing into Resource class
-            if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
-              parsedResource = Resource.newInfiniteResource(resourceName);
-            } else {
-              parsedResource = Resource.newResource(resourceName,  Integer.parseInt(resourceQuota));
-            }
-            myResourceMap.put(resourceName, parsedResource);
-          } else {
-            LOG.warn("Values type [" + valuesType + "] is not yet supported =((");
-          }
+        for (Object child : children) { // children = resources
+          parseResource((Element) child);
         }
       }
     } finally {
@@ -118,22 +107,74 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
+  private void parseResource(@NotNull final Element resourceElement) {
+    final String resourceName = resourceElement.getChild(XML.TAG_RESOURCE_NAME).getTextTrim();
+    Element e = resourceElement.getChild(XML.TAG_VALUES);
+    final String valuesType = e.getAttributeValue(XML.ATTR_VALUES_TYPE);
+    if (XML.VALUE_TYPE_QUOTA.equals(valuesType)) {
+      parseQuotedResource(resourceName, e);
+    } else if (XML.VALUE_TYPE_CUSTOM.equals(valuesType)) {
+      parseCustomResource(resourceName, e);
+    } else {
+      LOG.warn("Wrong resource values type [" + valuesType + "] for resource [" + resourceName + "]");
+    }
+  }
+
+  private void parseQuotedResource(@NotNull final String resourceName, @NotNull final Element valuesElement) {
+    final String resourceQuota = valuesElement.getChild(XML.TAG_QUOTA).getTextTrim();
+    Resource parsedResource;
+    if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
+      parsedResource = ResourceFactory.newInfiniteResource(resourceName);
+    } else {
+      parsedResource = ResourceFactory.newQuotedResource(resourceName,  Integer.parseInt(resourceQuota));
+    }
+    myResourceMap.put(resourceName, parsedResource);
+  }
+
+  private void parseCustomResource(@NotNull final String resourceName, @NotNull final Element valuesElement) {
+    final Collection<String> c = new HashSet<String>();
+    final List children = valuesElement.getChildren(XML.TAG_VALUE);
+    for(Object o: children) {
+      c.add(((Element)o).getTextTrim());
+    }
+    myResourceMap.put(resourceName, ResourceFactory.newCustomResource(resourceName, c));
+  }
+
+
   @Override
   public void writeTo(Element parentElement) {
     try {
       myLock.readLock().lock();
-      for (Resource r: myResourceMap.values()) {
+      for (Resource resource : myResourceMap.values()) {
         final Element el = new Element(XML.TAG_RESOURCE);
         final Element resourceName = new Element(XML.TAG_RESOURCE_NAME);
-        resourceName.setText(r.getName());
+        resourceName.setText(resource.getName());
         el.addContent(resourceName);
         final Element values = new Element(XML.TAG_VALUES);
-        // todo: resources by type.
-        values.setAttribute(XML.ATTR_VALUES_TYPE, XML.VALUE_TYPE_QUOTA); // todo: support custom (3rd stage)
-        Element quota = new Element(XML.TAG_QUOTA);
-        quota.setText(r.isInfinite() ? XML.VALUE_QUOTA_INFINITE : Integer.toString(r.getQuota()));
-        values.addContent(quota);
-        el.addContent(values);
+        // serializing here
+        switch (resource.getType()) {
+          case QUOTED:
+            values.setAttribute(XML.ATTR_VALUES_TYPE, XML.VALUE_TYPE_QUOTA);
+            final QuotedResource quotedResource = (QuotedResource)resource;
+            final Element quota = new Element(XML.TAG_QUOTA);
+            quota.setText(quotedResource.isInfinite() ? XML.VALUE_QUOTA_INFINITE : Integer.toString(quotedResource.getQuota()));
+            values.addContent(quota);
+            el.addContent(values);
+            break;
+          case CUSTOM:
+            values.setAttribute(XML.ATTR_VALUES_TYPE, XML.VALUE_TYPE_CUSTOM);
+            final CustomResource customResource = (CustomResource)resource;
+            for (String str: customResource.getValues()) {
+              Element value = new Element(XML.TAG_VALUE);
+              value.setText(str.trim());
+              values.addContent(value);
+            }
+            el.addContent(values);
+            break;
+          default:
+            LOG.warn("Serialization for resource [" + resource.getName() + "] of type [" + resource.getType() + "] is not implemented");
+            break;
+        }
         parentElement.addContent(el);
       }
     } finally {

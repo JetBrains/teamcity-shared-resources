@@ -18,6 +18,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.server.feature.FeatureParams;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

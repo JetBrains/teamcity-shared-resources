@@ -22,7 +22,8 @@ import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.Resources;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
@@ -169,12 +170,12 @@ public class SharedResourcesActions {
       if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
         try {
           int quota = Integer.parseInt(resourceQuota);
-          resource = Resource.newResource(resourceName, quota);
+          resource = ResourceFactory.newQuotedResource(resourceName, quota);
         } catch (IllegalArgumentException e) {
           LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
         }
       } else { // we have infinite resource
-        resource = Resource.newInfiniteResource(resourceName);
+        resource = ResourceFactory.newInfiniteResource(resourceName);
       }
       return resource;
     }

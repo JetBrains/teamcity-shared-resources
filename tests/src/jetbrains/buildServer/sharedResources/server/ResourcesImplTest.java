@@ -5,6 +5,9 @@ import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.ResourcesImpl;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
@@ -51,7 +54,7 @@ public class ResourcesImplTest extends BaseTestCase {
 
   @Test
   public void testAddResource() {
-    final Resource resource = Resource.newResource("resource1", 1);
+    final Resource resource = ResourceFactory.newQuotedResource("resource1", 1);
     m.checking(new Expectations() {{
       oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myPluginProjectSettings));
@@ -80,7 +83,7 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test
   public void testEditResource() {
     final String name = "myName1";
-    final Resource resource = Resource.newResource("resource1", 1);
+    final Resource resource = ResourceFactory.newQuotedResource("resource1", 1);
 
     m.checking(new Expectations() {{
       oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
@@ -96,8 +99,8 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test
   public void testGetAllResources() {
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>();
-    resourceMap.put("r1", Resource.newResource("r1", 1));
-    resourceMap.put("r2", Resource.newInfiniteResource("r2"));
+    resourceMap.put("r1", ResourceFactory.newQuotedResource("r1", 1));
+    resourceMap.put("r2", ResourceFactory.newInfiniteResource("r2"));
 
     m.checking(new Expectations() {{
       oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
