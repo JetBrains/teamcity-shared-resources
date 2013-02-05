@@ -1,5 +1,7 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -16,6 +18,20 @@ public enum ResourceType {
   /**
    * Resource that has custom value space
    */
-  CUSTOM
+  CUSTOM;
+
+  @Nullable
+  public static ResourceType fromString(@Nullable final String str) {
+    if (str == null) {
+      return null;
+    } else {
+      for (ResourceType type: values()) {
+        if (type.toString().equalsIgnoreCase(str)) {
+          return type;
+        }
+      }
+    }
+    return null;
+  }
 
 }

@@ -23,9 +23,11 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collection;
 import java.util.List;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.WEB;
@@ -165,17 +168,24 @@ public class SharedResourcesActions {
     @Nullable
     protected static Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
       final String resourceName = request.getParameter(WEB.PARAM_RESOURCE_NAME);
-      final String resourceQuota = request.getParameter(WEB.PARAM_RESOURCE_QUOTA);
+      final ResourceType resourceType = ResourceType.fromString(request.getParameter(WEB.PARAM_RESOURCE_TYPE));
       Resource resource = null;
-      if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
-        try {
-          int quota = Integer.parseInt(resourceQuota);
-          resource = ResourceFactory.newQuotedResource(resourceName, quota);
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
+      if (ResourceType.QUOTED.equals(resourceType)) {
+        final String resourceQuota = request.getParameter(WEB.PARAM_RESOURCE_QUOTA);
+        if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
+          try {
+            int quota = Integer.parseInt(resourceQuota);
+            resource = ResourceFactory.newQuotedResource(resourceName, quota);
+          } catch (IllegalArgumentException e) {
+            LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
+          }
+        } else { // we have infinite resource
+          resource = ResourceFactory.newInfiniteResource(resourceName);
         }
-      } else { // we have infinite resource
-        resource = ResourceFactory.newInfiniteResource(resourceName);
+      } else if (ResourceType.CUSTOM.equals(resourceType)) {
+        final String values = request.getParameter(WEB.PARAM_RESOURCE_VALUES);
+        final Collection<String> strings = StringUtil.split(values, true, '\n');
+        resource = ResourceFactory.newCustomResource(resourceName, strings);
       }
       return resource;
     }

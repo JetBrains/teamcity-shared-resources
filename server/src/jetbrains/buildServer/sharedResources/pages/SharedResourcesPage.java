@@ -23,6 +23,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -58,6 +59,7 @@ public class SharedResourcesPage extends EditProjectTab {
     myProjectSettingsManager = projectSettingsManager;
     myFeatures = features;
     addCssFile("/css/admin/buildTypeForm.css");
+    addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
 
   @Override
@@ -68,8 +70,7 @@ public class SharedResourcesPage extends EditProjectTab {
     final SProject project = getProject(request);
     if (project != null) {
       final List<SBuildType> buildTypes = project.getBuildTypes();
-      // map<ResourceName => Set <buildTypeName>>
-      Map<String, Set<SBuildType>> usageMap = new HashMap<String, Set<SBuildType>>();
+      final Map<String, Map<SBuildType, LockType>> usageMap = new HashMap<String, Map<SBuildType, LockType>>();
       for (SBuildType type: buildTypes) {
         // todo: investigate here, what happens if we use resolved settings on lock name with %%. Does it change to the value of the parameter?
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(type);
@@ -77,9 +78,9 @@ public class SharedResourcesPage extends EditProjectTab {
           final Map<String, Lock> locksMap = feature.getLockedResources();
           for (String str: locksMap.keySet()) {
             if (usageMap.get(str) == null) {
-              usageMap.put(str, new HashSet<SBuildType>());
+              usageMap.put(str, new HashMap<SBuildType, LockType>());
             }
-            usageMap.get(str).add(type);
+            usageMap.get(str).put(type, locksMap.get(str).getType());
           }
         }
       }
@@ -88,7 +89,7 @@ public class SharedResourcesPage extends EditProjectTab {
       final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
       bean = new SharedResourcesBean(settings.getResources(), usageMap);
     } else {
-      bean = new SharedResourcesBean(Collections.<Resource>emptyList(), Collections.<String, Set<SBuildType>>emptyMap()); // todo: how to differentiate error vs no resources??!
+      bean = new SharedResourcesBean(Collections.<Resource>emptyList()); // todo: how to differentiate error vs no resources??!
     }
     model.put("bean", bean);
   }

@@ -16,6 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Lock type
  *
@@ -33,17 +35,19 @@ public enum LockType {
    */
   WRITE("writeLock");
 
+  @NotNull
   private final String name;
 
-  private LockType(String name) {
+  private LockType(@NotNull final String name) {
     this.name = name;
   }
 
+  @NotNull
   public String getName() {
     return name;
   }
 
-  public static LockType byName(String name) {
+  public static LockType byName(@NotNull final String name) {
     if ("readLock".equals(name)) {
       return READ;
     } else if ("writeLock".equals(name)) {
@@ -53,8 +57,18 @@ public enum LockType {
     }
   }
 
+  @NotNull
   @Override
   public String toString() {
     return name;
+  }
+
+  @NotNull
+  public String getDescriptiveName() {
+    if (this == READ) {
+      return "Read lock";
+    } else {
+      return "Write lock";
+    }
   }
 }

@@ -16,6 +16,7 @@
 <%@ include file="/include-internal.jsp" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
+<%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
 
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
@@ -23,192 +24,82 @@
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
+<c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
+<c:set var="PARAM_RESOURCE_VALUES" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES%>"/>
 <c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
 
 <c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
 <c:set var="ACTION_EDIT" value="<%=SharedResourcesPluginConstants.WEB.ACTION_EDIT%>"/>
 <c:set var="ACTION_DELETE" value="<%=SharedResourcesPluginConstants.WEB.ACTION_DELETE%>"/>
 
+<c:set var="type_quota" value="<%=ResourceType.QUOTED%>"/>
+<c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
 
 
-<c:url var="url" value='editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources'/>
+<c:url var="url" value="editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources"/>
+
 
 <script type="text/javascript">
-  //noinspection JSValidateTypes
-  BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
-    attachedToRoot: false,
-    editMode: false,
-    currentResourceName: "",
-    existingResources: {},
-    getContainer: function() {
-      return $('resourceDialog');
-    },
-
-    fillData: function() {
-      <c:forEach var="item" items="${bean.resources}">
-      this.existingResources['${item.name}'] = true;
-      </c:forEach>
-    },
-
-    showDialog: function() {
-      this.editMode = false;
-      this.adjustDialogDisplay();
-      this.showCentered();
-      this.bindCtrlEnterHandler(this.submit.bind(this));
-    },
-
-    showEdit: function(resource_name, resource_quota) {
-      this.editMode = true;
-      this.currentResourceName = resource_name;
-      $j('#resource_name').val(resource_name);
-      if (resource_quota > 0) {
-        $j('#use_quota').prop('checked', true);
-        $j('#resource_quota').val(resource_quota);
-      } else {
-        $j('#use_quota').prop('checked', false);
-        $j('#resource_quota').val(1);
-      }
-
-      this.adjustDialogDisplay(this.editMode);
-      this.toggleQuotaSwitch();
-      this.showCentered();
-      this.bindCtrlEnterHandler(this.submit.bind(this));
-    },
-
-    adjustDialogDisplay: function(editMode) {
-      if (editMode) {
-        $j("#resourceDialogTitle").html('Edit Resource');
-        $j("#resourceDialogSubmit").prop('value', 'Save');
-      } else {
-        $j("#resourceDialogTitle").html('Add Resource');
-        $j("#resourceDialogSubmit").prop('value', 'Add Resource');
-
-      }
-    },
-
-    submit: function() {
-      if (!this.validate()) return false;
-      this.close();
-      if (this.editMode) {
-        BS.SharedResourcesActions.editResource(this.currentResourceName);
-      } else {
-        BS.SharedResourcesActions.addResource();
-      }
-      return false;
-    },
-
-    clearErrors: function () {
-      BS.Util.hide('error_Name');
-      $j('#error_Name').html("");
-      BS.Util.hide('error_Quota');
-      $j('#error_Quota').html("");
-    },
-
-    validate: function() {
-      var errorsPresent = false;
-      this.clearErrors();
-
-
-      // name changed
-      var element = $j('#resource_name');
-      var value = element.val().trim();
-      if (value !== this.currentResourceName) {
-        if (value.length === 0) { // check not empty
-          BS.Util.show('error_Name');
-          $j('#error_Name').html("Name must not be empty");
-          errorsPresent = true;
-        }
-
-        // check unique: add mode or (edit mode + value changed)
-        if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
-          if (this.existingResources[value]) { // check not used
-            BS.Util.show('error_Name');
-            $j('#error_Name').html("Name is already used");
-            errorsPresent = true;
-          }
-        }
-        element.val(value);
-      }
-
-      if (this.quoted) {
-        element = $j('#resource_quota');
-        value = element.val().trim();
-        if (!value.match(/^[0-9]+$/)) {
-          BS.Util.show('error_Quota');
-          $j('#error_Quota').html("Quota value is not valid");
-          errorsPresent = true;
-        }
-        element.val(value);
-      }
-      return !errorsPresent;
-    },
-
-    toggleQuotaSwitch: function() {
-      var show = $j('#use_quota').is(':checked');
-      if (show) {
-        this.quoted = true;
-        BS.Util.show("quota_row");
-      } else {
-        this.quoted = false;
-        BS.Util.hide("quota_row");
-      }
-    },
-
-    quoted: false
-  });
 
   BS.SharedResourcesActions = {
+    getCommonParams: function() {
+      // if quota checkbox in unchecked, send no quota info
+      var type = $j('#resource_type option:selected').val();
+      var params = {};
+      params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
+      params['${PARAM_RESOURCE_NAME}'] = $j('#resource_name').val();
+      // infinite
+      if (type === 'infinite') {
+        params['${PARAM_RESOURCE_TYPE}'] = 'quoted';
+      }
+      // quoted
+      if (type === 'quoted') {
+        params['${PARAM_RESOURCE_TYPE}'] = 'quoted';
+        params['${PARAM_RESOURCE_QUOTA}'] = $j('#resource_quota').val();
+      }
+      // custom
+      if (type === 'custom') {
+        params['${PARAM_RESOURCE_TYPE}'] = 'custom';
+        params['${PARAM_RESOURCE_VALUES}'] = $j('#customValues').val();
+      }
+      console.log(params);
+      return params;
+    },
+
     addUrl: window['base_uri'] + "${ACTION_ADD}",
     addResource: function() {
-      // if quota checkbox in unchecked, send no quota info
-      if (BS.ResourceDialog.quoted) {
-        BS.ajaxRequest(this.addUrl, {
-          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(), '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val()},
-          onSuccess: function() {
-            window.location.reload();
-          }
-        });
-      } else {
-        BS.ajaxRequest(this.addUrl, {
-          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}':$j('#resource_name').val()},
-          onSuccess: function() {
-            window.location.reload();
-          }
-        });
-      }
+      var params = this.getCommonParams();
+      BS.ajaxRequest(this.addUrl, {
+        parameters: params,
+        onSuccess: function() {
+          window.location.reload();
+        }
+      });
     },
 
     editUrl: window['base_uri'] + "${ACTION_EDIT}",
     editResource: function(old_resource_name) {
-      if (BS.ResourceDialog.quoted) {
-        BS.ajaxRequest(this.editUrl, {
-          parameters: {
-            '${PARAM_PROJECT_ID}':'${project.projectId}',
-            '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(),
-            '${PARAM_RESOURCE_QUOTA}':$j('#resource_quota').val(),
-            '${PARAM_OLD_RESOURCE_NAME}': old_resource_name},
-          onSuccess: function() {
-            window.location.reload();
-          }
-        });
-      } else {
-        BS.ajaxRequest(this.editUrl, {
-          parameters: {
-            '${PARAM_PROJECT_ID}':'${project.projectId}',
-            '${PARAM_RESOURCE_NAME}':$j('#resource_name').val(),
-            '${PARAM_OLD_RESOURCE_NAME}': old_resource_name},
-          onSuccess: function() {
-            window.location.reload();
-          }
-        });
-      }
+      console.log(old_resource_name);
+      var params = this.getCommonParams();
+      params['${PARAM_OLD_RESOURCE_NAME}'] = old_resource_name;
+      BS.ajaxRequest(this.editUrl, {
+        parameters: params,
+        onSuccess: function() {
+          window.location.reload();
+        }
+      });
     },
 
     deleteUrl: window['base_uri'] + "${ACTION_DELETE}",
     deleteResource: function(resource_name) {
+      var params = {
+        '${PARAM_PROJECT_ID}':'${project.projectId}',
+        '${PARAM_RESOURCE_NAME}': resource_name
+      };
+
       if (confirm('Are you sure you want to delete this resource?')) {
         BS.ajaxRequest(this.deleteUrl, {
-          parameters: {'${PARAM_PROJECT_ID}':'${project.projectId}', '${PARAM_RESOURCE_NAME}': resource_name},
+          parameters: params,
           onSuccess: function() {
             window.location.reload();
           }
@@ -221,15 +112,48 @@
 
   };
 
+
 </script>
 
+
 <script type="text/javascript">
-  BS.ResourceDialog.fillData();
+  <c:forEach var="item" items="${bean.resources}">
+  <c:set var="type" value="${item.type}"/>
+  var r = {
+    name: '${item.name}',
+    type: '${item.type}'
+  };
+  <c:choose>
+  <c:when test="${type == type_quota}">
+  <%-- quoted resource--%>
+  r['quota'] = '${item.quota}';
+  r['infinite'] = ${item.infinite};
+  BS.ResourceDialog.myData['${item.name}'] = r;
+  console.log(r);
+  </c:when>
+  <c:when test="${type == type_custom}">
+  <%-- custom resource--%>
+  var myValues = [];
+  <c:forEach items="${item.values}" var="val">
+  myValues.push('${val}');
+  </c:forEach>
+  r['customValues'] = myValues;
+  console.log(r);
+  BS.ResourceDialog.myData['${item.name}'] = r;
+  </c:when>
+  <c:otherwise>
+  console.log('Resource [${item.name}] was not recognized');
+  </c:otherwise>
+  </c:choose>
+
+  BS.ResourceDialog.existingResources['${item.name}'] = true;
+  </c:forEach>
 </script>
 
 <div>
   <forms:addButton id="addNewResource" onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
-  <bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle" title="Resource Management" closeCommand="BS.ResourceDialog.close()">
+  <bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle"
+             title="Resource Management" closeCommand="BS.ResourceDialog.close()">
     <table class="runnerFormTable">
       <tr>
         <th><label for="resource_name">Resource name:</label></th>
@@ -240,9 +164,13 @@
         </td>
       </tr>
       <tr>
-        <th>Use quota:</th>
+        <th>Resource type:</th>
         <td>
-          <forms:checkbox name="use_quota" id="use_quota" onclick="BS.ResourceDialog.toggleQuotaSwitch()" checked="false"/>
+          <forms:select name="resoruce_type" id="resource_type" style="width: 90%" onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;">
+            <forms:option value="infinite">Infinite resource</forms:option>
+            <forms:option value="quoted">Resource with quota</forms:option>
+            <forms:option value="custom">Resource with custom values</forms:option>
+          </forms:select>
         </td>
       </tr>
       <tr id="quota_row" style="display: none">
@@ -251,6 +179,14 @@
           <forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/>
           <span class="error" id="error_Quota"></span>
           <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on resource</span>
+        </td>
+      </tr>
+      <tr id="custom_row" style="display: none">
+        <th>Custom values: </th>
+        <td>
+          <props:textarea name="customValues" textAreaName="customValuesArea" value=""
+                          linkTitle="Define custom values" expanded="true" cols="20" rows="5"/>
+          <span class="smallNote">Custom values define number of resources available and values of the resource $$$ message needed $$$</span>
         </td>
       </tr>
     </table>
@@ -263,39 +199,56 @@
 
   <c:choose>
     <c:when test="${not empty bean.resources}">
-      <l:tableWithHighlighting style="width: 70%" className="parametersTable" mouseovertitle="Click to edit resource" highlightImmediately="true">
+      <l:tableWithHighlighting style="width: 70%"
+                               id="resourcesTable"
+                               className="parametersTable"
+                               mouseovertitle="Click to edit resource"
+                               highlightImmediately="true">
         <tr>
           <th>Resource name</th>
-          <th style="width:40%" colspan="4">Quota</th>
+          <th style="width:55%" colspan="4">Resource description</th>
         </tr>
         <c:forEach var="resource" items="${bean.resources}">
-          <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}', '${resource.quota}')"/>
+          <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}');"/>
           <c:set var="resourceName" value="${resource.name}"/>
-          <c:set var="usage" value="${bean.usageMap[resourceName]}"/>
+          <c:set var="usage" value="${bean.usageMap[resourceName]}"/> <%--Map<SBuildType -> LockType>--%>
           <c:set var="used" value="${not empty usage}"/>
           <tr>
             <td class="name highlight" onclick="${onclick}"><c:out value="${resourceName}"/></td>
             <c:choose>
-              <c:when test="${resource.infinite}">
-                <td class="highlight" onclick="${onclick}">Infinite</td>
+              <c:when test="${resource.type == type_quota}">
+                <c:choose>
+                  <c:when test="${resource.infinite}">
+                    <td class="highlight" onclick="${onclick}">Quota: Infinite</td>
+                  </c:when>
+                  <c:otherwise>
+                    <td class="highlight" onclick="${onclick}">Quota: <c:out value="${resource.quota}"/></td>
+                  </c:otherwise>
+                </c:choose>
               </c:when>
-              <c:otherwise>
-                <td class="highlight" onclick="${onclick}"><c:out value="${resource.quota}"/></td>
-              </c:otherwise>
+              <c:when test="${resource.type == type_custom}">
+                <td class="highlight" onclick="${onclick}">Custom values</td>
+              </c:when>
             </c:choose>
             <c:choose>
               <c:when test="${used}">
                 <td class="highlight" onclick="${onclick}">
                   <c:set var="usageSize" value="${fn:length(usage)}"/>
-                  <bs:simplePopup controlId="${fn:replace(resourceName,' ', '_')}"
+                  <bs:simplePopup controlId="${fn:replace(resourceName, ' ', '_')}"
                                   linkOpensPopup="false"
                                   popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
                       <div>
                         <ul class="menuList">
                           <c:forEach items="${usage}" var="usedInBuildType">
+                            <c:set var="buildType" value="${usedInBuildType.key}"/>
+                            <c:set var="lockType" value="${usedInBuildType.value}"/>
                             <l:li>
-                              <bs:buildTypeLink buildType="${usedInBuildType}" style="padding-left:0px;"/>
+                              <bs:buildTypeLink buildType="${buildType}" style="padding-left:0px;">
+                                <span style="white-space: nowrap">
+                                  ${buildType.name} (${lockType.descriptiveName})
+                                </span>
+                              </bs:buildTypeLink>
                             </l:li>
                           </c:forEach>
                         </ul>
@@ -306,7 +259,7 @@
                 </td>
               </c:when>
               <c:otherwise>
-                <td class="highlight" onclick="${onclick}"> Resource is not used</td>
+                <td class="highlight" onclick="${onclick}">Resource is not used</td>
               </c:otherwise>
             </c:choose>
             <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a></td>

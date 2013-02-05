@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,13 +34,13 @@ public class SharedResourcesBean {
   private Collection<Resource> myResources = new ArrayList<Resource>();
 
   @NotNull
-  private Map<String, Set<SBuildType>> myUsageMap = new HashMap<String, Set<SBuildType>>();
+  private Map<String, Map<SBuildType, LockType>> myUsageMap = new HashMap<String, Map<SBuildType, LockType>>();
 
   public SharedResourcesBean(@NotNull final Collection<Resource> resources) {
-    this(resources, Collections.<String, Set<SBuildType>>emptyMap());
+    this(resources, Collections.<String, Map<SBuildType, LockType>>emptyMap());
   }
 
-  public SharedResourcesBean(@NotNull final Collection<Resource> resources, @NotNull final Map<String, Set<SBuildType>> usageMap) {
+  public SharedResourcesBean(@NotNull final Collection<Resource> resources, @NotNull final Map<String, Map<SBuildType, LockType>> usageMap) {
     myResources = resources;
     myUsageMap = usageMap;
   }
@@ -50,7 +51,7 @@ public class SharedResourcesBean {
   }
 
   @NotNull
-  public Map<String, Set<SBuildType>> getUsageMap() {
+  public Map<String, Map<SBuildType, LockType>> getUsageMap() {
     return Collections.unmodifiableMap(myUsageMap);
   }
 }

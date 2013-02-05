@@ -16,7 +16,7 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
+  <!--<bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>-->
 
   <!-- ===  INTERNALS  === -->
 
