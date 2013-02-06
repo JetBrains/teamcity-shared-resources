@@ -184,7 +184,7 @@ public class SharedResourcesActions {
         }
       } else if (ResourceType.CUSTOM.equals(resourceType)) {
         final String values = request.getParameter(WEB.PARAM_RESOURCE_VALUES);
-        final Collection<String> strings = StringUtil.split(values, true, '\n');
+        final Collection<String> strings = StringUtil.split(values, true, '\r', '\n');
         resource = ResourceFactory.newCustomResource(resourceName, strings);
       }
       return resource;

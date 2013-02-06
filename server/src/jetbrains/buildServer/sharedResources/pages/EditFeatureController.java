@@ -80,6 +80,7 @@ public class EditFeatureController extends BaseController {
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<String, Lock>();
     final Map<String, Object> model = result.getModel();
+    model.put("inherited", false);
     for (BuildFeatureBean bfb: buildFeaturesBean.getBuildFeatureDescriptors()) {
       if (buildFeatureId.equals(bfb.getDescriptor().getId())) {
         locks.putAll(myLocks.fromFeatureParameters(bfb.getDescriptor().getParameters()));

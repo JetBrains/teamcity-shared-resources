@@ -62,7 +62,6 @@
         params['${PARAM_RESOURCE_TYPE}'] = 'custom';
         params['${PARAM_RESOURCE_VALUES}'] = $j('#customValues').val();
       }
-      console.log(params);
       return params;
     },
 
@@ -79,7 +78,6 @@
 
     editUrl: window['base_uri'] + "${ACTION_EDIT}",
     editResource: function(old_resource_name) {
-      console.log(old_resource_name);
       var params = this.getCommonParams();
       params['${PARAM_OLD_RESOURCE_NAME}'] = old_resource_name;
       BS.ajaxRequest(this.editUrl, {
@@ -117,35 +115,38 @@
 
 
 <script type="text/javascript">
+  var myValues;
+  var r;
+  var v;
   <c:forEach var="item" items="${bean.resources}">
   <c:set var="type" value="${item.type}"/>
-  var r = {
+  r = {
     name: '${item.name}',
     type: '${item.type}'
   };
   <c:choose>
-  <c:when test="${type == type_quota}">
+
   <%-- quoted resource--%>
+  <c:when test="${type == type_quota}">
   r['quota'] = '${item.quota}';
   r['infinite'] = ${item.infinite};
   BS.ResourceDialog.myData['${item.name}'] = r;
-  console.log(r);
   </c:when>
-  <c:when test="${type == type_custom}">
+
   <%-- custom resource--%>
-  var myValues = [];
+  <c:when test="${type == type_custom}">
+  myValues = [];
   <c:forEach items="${item.values}" var="val">
   myValues.push('${val}');
   </c:forEach>
   r['customValues'] = myValues;
-  console.log(r);
   BS.ResourceDialog.myData['${item.name}'] = r;
   </c:when>
+
   <c:otherwise>
   console.log('Resource [${item.name}] was not recognized');
   </c:otherwise>
   </c:choose>
-
   BS.ResourceDialog.existingResources['${item.name}'] = true;
   </c:forEach>
 </script>
@@ -185,7 +186,7 @@
         <th>Custom values: </th>
         <td>
           <props:textarea name="customValues" textAreaName="customValuesArea" value=""
-                          linkTitle="Define custom values" expanded="true" cols="20" rows="5"/>
+                          linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
           <span class="smallNote">Custom values define number of resources available and values of the resource $$$ message needed $$$</span>
         </td>
       </tr>

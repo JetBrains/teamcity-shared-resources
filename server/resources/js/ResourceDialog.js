@@ -60,6 +60,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.adjustDialogDisplay(this.editMode);
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
+    BS.MultilineProperties.updateVisible();
   },
 
   adjustDialogDisplay: function(editMode) {
