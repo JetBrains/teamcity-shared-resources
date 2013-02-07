@@ -15,6 +15,7 @@
       <class name="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPreconditionTest"/>
       <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.feature.LocksStorageImplTest"/>
     </classes>
   </test>
   <test name="Settings tests">
