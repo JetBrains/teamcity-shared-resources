@@ -50,4 +50,12 @@ public interface LocksStorage {
   @NotNull
   public Map<Lock, String> load(@NotNull final SBuild build);
 
+  /**
+   * Checks, whether locks has been already stored
+   * @param build build to check for
+   * @return {@code true} if locks has been stored inside build artifact
+   * {@code false} otherwise
+   */
+  public boolean locksStored(@NotNull final SBuild build);
+
 }

@@ -65,6 +65,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   public WaitReason canStart(@NotNull final QueuedBuildInfo queuedBuild,
                              @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
                              @NotNull final BuildDistributorInput buildDistributorInput, boolean emulationMode) {
+    if (emulationMode) return null; // not supporting snapshot running builds passed by estimator
     WaitReason result = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
     final String projectId = myPromotion.getProjectId();
@@ -74,17 +75,11 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
         final ParametersProvider pp = myPromotion.getParametersProvider();
         final Collection<Lock> locksToTake  = myLocks.fromBuildParameters(pp.getAll());
         if (!locksToTake.isEmpty()) {
-          // now deal only with builds that have same projectId as the current one
-          final Collection<BuildPromotionInfo> buildPromotions = getBuildPromotions(
-                  buildDistributorInput.getRunningBuilds(), canBeStarted.keySet(), projectId);
-          if (!buildPromotions.isEmpty()) {
-            // todo: may be move to single method? although one method collects, other decides...
-            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(buildPromotions);
-            if (!takenLocks.isEmpty()) {
-              final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
-              if (!unavailableLocks.isEmpty()) {
-                result = createWaitReason(unavailableLocks);
-              }
+          final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, buildDistributorInput.getRunningBuilds(), canBeStarted.keySet());
+          if (!takenLocks.isEmpty()) {
+            final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
+            if (!unavailableLocks.isEmpty()) {
+              result = createWaitReason(unavailableLocks);
             }
           }
         }

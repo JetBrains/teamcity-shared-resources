@@ -172,7 +172,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     assertNull(result);
   }
 
-  @Test
   public void testLocksPresentSingleBuild() throws Exception {
     final Map<String, String> params = new HashMap<String, String>() {{
       put("teamcity.locks.readLock.lock1", "");
@@ -212,7 +211,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     assertNull(result);
   }
 
-  @Test
   public void testNoLocksTaken() throws Exception {
     final Map<String, String> params = new HashMap<String, String>() {{
       put("teamcity.locks.readLock.lock1", "");
@@ -266,8 +264,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(info).getBuildPromotionInfo();
       will(returnValue(queuedPromotion));
 
-      oneOf(myTakenLocks).collectTakenLocks(buildPromotions);
-      will(returnValue(Collections.emptyMap()));
+
 
     }});
 

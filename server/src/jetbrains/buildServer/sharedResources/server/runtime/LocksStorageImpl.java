@@ -94,6 +94,12 @@ public class LocksStorageImpl implements LocksStorage {
   }
 
 
+  @Override
+  public boolean locksStored(@NotNull final SBuild build) {
+    final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+    return artifact.exists();
+  }
+
   private static String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
     return StringUtil.join("\t", lock.getName(), lock.getType(), value.equals("") ? " " : value);
   }

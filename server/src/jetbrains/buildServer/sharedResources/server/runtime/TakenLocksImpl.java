@@ -17,7 +17,10 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.RunningBuildEx;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
@@ -44,28 +47,62 @@ public class TakenLocksImpl implements TakenLocks {
   @NotNull
   private final Resources myResources;
 
+  @NotNull
+  private final LocksStorage myLocksStorage;
+
   public TakenLocksImpl(@NotNull final Locks locks,
-                        @NotNull final Resources resources) {
+                        @NotNull final Resources resources,
+                        @NotNull final LocksStorage locksStorage) {
     myLocks = locks;
     myResources = resources;
+    myLocksStorage = locksStorage;
   }
 
   @NotNull
   @Override
-  public Map<String, TakenLock> collectTakenLocks(@NotNull final Collection<BuildPromotionInfo> buildPromotions) {
+  public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
+                                                  @NotNull final Collection<RunningBuildInfo> runningBuilds,
+                                                  @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
-    for (BuildPromotionInfo promo: buildPromotions) {
-      Collection<Lock> locks = myLocks.fromBuildParameters(((BuildPromotionEx)promo).getParametersProvider().getAll());
-      for (Lock lock: locks) {
-        TakenLock takenLock = result.get(lock.getName());
-        if (takenLock == null) {
-          takenLock = new TakenLock();
-          result.put(lock.getName(), takenLock);
+    for (RunningBuildInfo runningBuildInfo: runningBuilds) {
+      BuildPromotionEx bpEx = (BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo();
+      if (projectId.equals(bpEx.getProjectId())) {
+        Collection<Lock> locks;
+        if (myLocksStorage.locksStored((RunningBuildEx)runningBuildInfo)) {
+          locks = myLocksStorage.load((RunningBuildEx)runningBuildInfo).keySet();
+        } else {
+          locks = getLocksFromPromotion(bpEx);
         }
-        takenLock.addLock(promo, lock);
+        for (Lock lock: locks) {
+          TakenLock takenLock = result.get(lock.getName());
+          if (takenLock == null) {
+            takenLock = new TakenLock();
+            result.put(lock.getName(), takenLock);
+          }
+          takenLock.addLock(bpEx, lock);
+        }
+      }
+    }
+    for (QueuedBuildInfo info: queuedBuilds) {
+      BuildPromotionEx bpEx = (BuildPromotionEx)info.getBuildPromotionInfo();
+      if (projectId.equals(bpEx.getProjectId())) {
+        Collection<Lock> locks = getLocksFromPromotion(bpEx);
+        for (Lock lock: locks) {
+          TakenLock takenLock = result.get(lock.getName());
+          if (takenLock == null) {
+            takenLock = new TakenLock();
+            result.put(lock.getName(), takenLock);
+          }
+          takenLock.addLock(bpEx, lock);
+        }
       }
     }
     return result;
+
+  }
+
+  private Collection<Lock> getLocksFromPromotion(@NotNull final BuildPromotionInfo buildPromotion) {
+    return myLocks.fromBuildParameters(((BuildPromotionEx)buildPromotion).getParametersProvider().getAll());
   }
 
   @NotNull

@@ -16,7 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,26 @@ import java.util.Map;
  */
 public interface TakenLocks {
 
+
   /**
-   * Collects locks that are already taken
-   * @param buildPromotions build promotions (either running builds or builds that are distributed)
+   * For given project collects taken locks using both artifacts and build promotions.
+   *
+   * For running builds :
+   *    looking first into artifact
+   *    secondly, if no artifact exists, looking into promotion
+   *
+   * For queued builds looking only in promotion
+   *
+   *
+   * @param projectId id of the project to filter by
+   * @param runningBuilds running builds
+   * @param queuedBuilds queued builds
    * @return map of taken locks in format {@code <lockName, TakenLock>}
    */
   @NotNull
-  public Map<String, TakenLock> collectTakenLocks(@NotNull final Collection<BuildPromotionInfo> buildPromotions);
+  public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
+                                                  @NotNull final Collection<RunningBuildInfo> runningBuilds,
+                                                  @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**
    * Decides, whether required locks can be acquired by the build

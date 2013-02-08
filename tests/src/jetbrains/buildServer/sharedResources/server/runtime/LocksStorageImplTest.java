@@ -224,4 +224,25 @@ public class LocksStorageImplTest extends BaseTestCase {
     assertEquals("", result.get(lock2));
     assertEquals(value, result.get(lock11));
   }
+
+  @Test
+  public void testArtifactExists_Yes() throws Exception {
+    final File artifactsDir = crateTempFileWithContent("");
+    m.checking(new Expectations() {{
+      oneOf(myBuild).getArtifactsDirectory();
+      will(returnValue(artifactsDir));
+    }});
+    assertTrue(myLocksStorage.locksStored(myBuild));
+  }
+
+
+  @Test
+  public void testArtifactExists_No() throws Exception {
+    final File artifactsDir = createTempDir();
+    m.checking(new Expectations() {{
+      oneOf(myBuild).getArtifactsDirectory();
+      will(returnValue(artifactsDir));
+    }});
+    assertFalse(myLocksStorage.locksStored(myBuild));
+  }
 }
