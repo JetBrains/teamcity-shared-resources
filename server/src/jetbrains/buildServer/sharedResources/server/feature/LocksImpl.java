@@ -44,13 +44,13 @@ public final class LocksImpl implements Locks {
   @NotNull
   @Override
   public Map<String, Lock> fromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor) {
-    return getLocksInternal(descriptor.getParameters());
+    return fromFeatureParametersInternal(descriptor.getParameters());
   }
 
   @NotNull
   @Override
   public Map<String, Lock> fromFeatureParameters(@NotNull final Map<String, String> parameters) {
-    return getLocksInternal(parameters);
+    return fromFeatureParametersInternal(parameters);
   }
 
   @NotNull
@@ -66,12 +66,15 @@ public final class LocksImpl implements Locks {
   @NotNull
   @Override
   public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams) {
-    final List<Lock> result = new ArrayList<Lock>();
-    for (String str: buildParams.keySet()) {
-      Lock lock = getLockFromBuildParam(str);
-      if (lock != null) {
-        result.add(lock);
-      }
+    return fromBuildParametersInternal(buildParams);
+  }
+
+  @NotNull
+  @Override
+  public Map<String, Lock> fromBuildParametersAsMap(@NotNull final Map<String, String> buildParams) {
+    final Map<String, Lock> result = new HashMap<String, Lock>();
+    for (Lock lock: fromBuildParametersInternal(buildParams)) {
+      result.put(lock.getName(), lock);
     }
     return result;
   }
@@ -115,8 +118,8 @@ public final class LocksImpl implements Locks {
   }
 
   @NotNull
-  private Map<String, Lock> getLocksInternal(@NotNull final Map<String, String> parameters) {
-    final String locksString = parameters.get(LOCKS_FEATURE_PARAM_KEY);
+  private Map<String, Lock> fromFeatureParametersInternal(@NotNull final Map<String, String> featureParameters) {
+    final String locksString = featureParameters.get(LOCKS_FEATURE_PARAM_KEY);
     final Map<String, Lock> result = new HashMap<String, Lock>();
     if (locksString != null && !"".equals(locksString)) {
       final List<String> serializedLocks = StringUtil.split(locksString, true, '\n');
@@ -125,6 +128,18 @@ public final class LocksImpl implements Locks {
         if (lock != null) {
           result.put(lock.getName(), lock);
         }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private List<Lock> fromBuildParametersInternal(@NotNull final Map<String, String> buildParams) {
+    final List<Lock> result = new ArrayList<Lock>();
+    for (String str: buildParams.keySet()) {
+      Lock lock = getLockFromBuildParam(str);
+      if (lock != null) {
+        result.add(lock);
       }
     }
     return result;

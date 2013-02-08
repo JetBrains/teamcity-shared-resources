@@ -85,4 +85,13 @@ public interface Locks {
    */
   @NotNull
   public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams);
+
+  /**
+   * Extracts locks from build parameters and represents them as map
+   *
+   * @param buildParams build parameters ot search in
+   * @return map of locks that are passed as build parameters
+   */
+  @NotNull
+  public Map<String, Lock> fromBuildParametersAsMap(@NotNull final Map<String, String> buildParams);
 }

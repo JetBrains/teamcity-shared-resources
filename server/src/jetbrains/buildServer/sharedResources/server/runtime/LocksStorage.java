@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server.feature;
+package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.sharedResources.model.Lock;

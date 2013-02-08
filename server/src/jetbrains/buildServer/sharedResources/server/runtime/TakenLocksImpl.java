@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server.feature;
+package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -83,10 +86,17 @@ public class TakenLocksImpl implements TakenLocks {
             }
             // check against resource
             final Resource resource = resources.get(lock.getName());
-            if (resource != null && resource.getType().equals(ResourceType.QUOTED)) { // supporting only quoted resources for now
-              QuotedResource qRes = (QuotedResource)resource;
-              if (!qRes.isInfinite()) {
-                if (takenLock.getReadLocks().size() >= qRes.getQuota()) {
+            if (resource != null) { // supporting only quoted resources for now
+              if (ResourceType.QUOTED.equals(resource.getType())) {
+                QuotedResource qRes = (QuotedResource)resource;
+                if (!qRes.isInfinite()) {
+                  if (takenLock.getReadLocks().size() >= qRes.getQuota()) {
+                    result.add(lock);
+                  }
+                }
+              } else if (ResourceType.CUSTOM.equals(resource.getType())) {
+                CustomResource cRes = (CustomResource)resource;
+                if (takenLock.getReadLocks().size() >= cRes.getValues().size()) {
                   result.add(lock);
                 }
               }

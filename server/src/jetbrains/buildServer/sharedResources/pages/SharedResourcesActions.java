@@ -118,8 +118,8 @@ public class SharedResourcesActions {
                 feature.updateLock(type, oldResourceName, resource.getName());
               }
             }
-            project.persist();
           }
+          project.persist();
         }
       }
       return null;

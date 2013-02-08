@@ -26,7 +26,7 @@ import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.server.feature.TakenLocks;
+import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

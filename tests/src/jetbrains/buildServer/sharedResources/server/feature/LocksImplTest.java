@@ -174,12 +174,24 @@ public class LocksImplTest extends BaseTestCase {
     buildParams.put("teamcity.locks.", "");
     buildParams.put("teamcity.locks.readLock.", "");
 
-    final Collection<Lock> locks = myLocks.fromBuildParameters(buildParams);
-    assertNotNull(locks);
-    assertNotEmpty(locks);
-    assertEquals(N * 2, locks.size());
-    for (Lock lock: expectedLocks) {
-      assertContains(locks, lock);
+    {
+      final Collection<Lock> locks = myLocks.fromBuildParameters(buildParams);
+      assertNotNull(locks);
+      assertNotEmpty(locks);
+      assertEquals(N * 2, locks.size());
+      for (Lock lock: expectedLocks) {
+        assertContains(locks, lock);
+      }
     }
+
+    {
+      final Map<String, Lock> locks = myLocks.fromBuildParametersAsMap(buildParams);
+      assertNotNull(locks);
+      assertEquals(N * 2, locks.size());
+      for (Lock lock: expectedLocks) {
+        assertContains(locks.values(), lock);
+      }
+    }
+
   }
 }

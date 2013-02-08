@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server.feature;
+package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.SBuild;
@@ -27,14 +27,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class {@code LocksStorageImpl}
  *
- *
+ * Implements storage for taken locks during build execution
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
@@ -42,7 +40,7 @@ public class LocksStorageImpl implements LocksStorage {
 
   static final String FILE_PARENT = ".teamcity/" + SharedResourcesPluginConstants.PLUGIN_NAME;
 
-  static final String FILE_NAME = "taken_locks.txt";
+  private static final String FILE_NAME = "taken_locks.txt";
 
   static final String FILE_PATH = FILE_PARENT + "/" + FILE_NAME; // package visibility for tests
 
@@ -50,7 +48,22 @@ public class LocksStorageImpl implements LocksStorage {
 
   @Override
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
-    // todo: implement
+    if (!takenLocks.isEmpty()) {
+      final Collection<String> serializedStrings = new ArrayList<String>();
+      for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
+        serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
+      }
+      try {
+        final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+        if (FileUtil.createParentDirs(artifact)) {
+          FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), "UTF-8");
+        } else {
+          log.warn("Failed to create parent dirs for file with taken locks");
+        }
+      } catch (IOException e) {
+        log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
+      }
+    }
   }
 
   @NotNull
@@ -66,13 +79,13 @@ public class LocksStorageImpl implements LocksStorage {
           List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
           if (strings.size() == 3) {
             Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)));
-            result.put(lock, strings.get(2));
+            result.put(lock, StringUtil.trim(strings.get(2)));
           } else {
             log.warn("Wrong locks storage format"); // todo: line? file?
           }
         }
       } catch(IOException e) {
-        log.warn("Failed to load taken locks for build [" + build + "]");
+        log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
       }
     } else {
       log.info("Skipping artifact for build [" + build +"]. No locks are taken");
@@ -81,9 +94,7 @@ public class LocksStorageImpl implements LocksStorage {
   }
 
 
-  private static String serialize(@NotNull final Lock lock, @NotNull final String value) {
-    return String.format("%s\t%s\t%s", lock.getName(), lock.getType(), value);
+  private static String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
+    return StringUtil.join("\t", lock.getName(), lock.getType(), value.equals("") ? " " : value);
   }
-
-
 }

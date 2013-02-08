@@ -16,13 +16,15 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
 
-  <!--<bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>-->
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
 
   <!-- ===  INTERNALS  === -->
 
+  <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
+
   <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.feature.TakenLocksImpl"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl"/>
   
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
 
