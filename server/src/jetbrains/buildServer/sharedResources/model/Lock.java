@@ -35,7 +35,7 @@ public class Lock {
    */
   private final LockType myType;
 
-  public Lock(@NotNull String name, @NotNull LockType type) {
+  public Lock(@NotNull final String name, @NotNull final LockType type) {
     myName = name;
     myType = type;
   }

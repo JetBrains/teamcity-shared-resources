@@ -68,37 +68,37 @@ public class TakenLocksImpl implements TakenLocks {
       BuildPromotionEx bpEx = (BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo();
       if (projectId.equals(bpEx.getProjectId())) {
         Collection<Lock> locks;
-        if (myLocksStorage.locksStored((RunningBuildEx)runningBuildInfo)) {
-          locks = myLocksStorage.load((RunningBuildEx)runningBuildInfo).keySet();
+        RunningBuildEx rbEx = (RunningBuildEx)runningBuildInfo;
+        if (myLocksStorage.locksStored(rbEx)) {
+          locks = myLocksStorage.load(rbEx).keySet();
         } else {
           locks = getLocksFromPromotion(bpEx);
         }
-        for (Lock lock: locks) {
-          TakenLock takenLock = result.get(lock.getName());
-          if (takenLock == null) {
-            takenLock = new TakenLock();
-            result.put(lock.getName(), takenLock);
-          }
-          takenLock.addLock(bpEx, lock);
-        }
+        addToTakenLocks(result, bpEx, locks);
       }
     }
     for (QueuedBuildInfo info: queuedBuilds) {
       BuildPromotionEx bpEx = (BuildPromotionEx)info.getBuildPromotionInfo();
       if (projectId.equals(bpEx.getProjectId())) {
         Collection<Lock> locks = getLocksFromPromotion(bpEx);
-        for (Lock lock: locks) {
-          TakenLock takenLock = result.get(lock.getName());
-          if (takenLock == null) {
-            takenLock = new TakenLock();
-            result.put(lock.getName(), takenLock);
-          }
-          takenLock.addLock(bpEx, lock);
-        }
+        addToTakenLocks(result, bpEx, locks);
       }
     }
     return result;
 
+  }
+
+  private void addToTakenLocks(@NotNull final Map<String, TakenLock> takenLocks,
+                               @NotNull final BuildPromotionInfo bpInfo,
+                               @NotNull final Collection<Lock> locks) {
+    for (Lock lock: locks) {
+      TakenLock takenLock = takenLocks.get(lock.getName());
+      if (takenLock == null) {
+        takenLock = new TakenLock();
+        takenLocks.put(lock.getName(), takenLock);
+      }
+      takenLock.addLock(bpInfo, lock);
+    }
   }
 
   private Collection<Lock> getLocksFromPromotion(@NotNull final BuildPromotionInfo buildPromotion) {

@@ -17,6 +17,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.server.feature.FeatureParams" %>
+<%@ page import="jetbrains.buildServer.sharedResources.model.LockType" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 
@@ -42,17 +43,47 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   editMode: false,
   currentLockName: "",
   existingResources: {}, // here are existing resources + resources created in place
+  availableResources: {},
 
   fillData: function() {
+    /* taken locks */
     <c:forEach var="item" items="${locks}">
     this.myData['${item.key}'] = '${item.value.type.name}';
     </c:forEach>
+
+    /* all existing resources for the project*/
     <c:forEach var="item" items="${bean.resources}">
     this.existingResources['${item.name}'] = true;
     </c:forEach>
 
-    this.myLocksDisplay['readLock'] = "Read lock";
-    this.myLocksDisplay['writeLock'] = "Write lock";
+    this.filterAvailableResources();
+
+    this.myLocksDisplay['readLock'] = "<%=LockType.READ.getDescriptiveName()%>";
+    this.myLocksDisplay['writeLock'] = "<%=LockType.WRITE.getDescriptiveName()%>";
+  },
+
+  /* existingResources - myResources - myTemplateResources */
+  filterAvailableResources: function() {
+    this.availableResources = {};
+    var m = this.myData;
+    var e = this.existingResources;
+    for (var key in e) {
+      if (e.hasOwnProperty(key) && !m[key]) { // resource exists but is not used
+        this.availableResources[key] = true;
+      }
+    }
+    var resourceDropdown = $j('#lockFromResources');
+    resourceDropdown.children().remove();
+    for (var resource in this.availableResources) {
+      resourceDropdown.append("<option value='" + resource + "'>" + resource + "</option>");
+    }
+  },
+
+  rehighlight: function () {
+    var hElements = $j("#locksTaken td.highlight");
+    hElements.each(function (i, element) {
+      BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
+    });
   },
 
   refreshUI: function() {
@@ -62,7 +93,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     var self = this.myData;
     var textAreaContent = "";
     var size = _.size(self);
-
     if (size > 0) {
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
@@ -101,18 +131,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       BS.Util.show('noLocksTaken');
     }
     textArea.value = textAreaContent.trim();
-    var resourceDropdown = $j('#lockFromResources');
-    resourceDropdown.children().remove();
-    for (var resource in this.existingResources) {
-      resourceDropdown.append("<option value='" + resource + "'>" + resource + "</option>");
-    }
-
-    // here rebuild highlighted rows
-    var highlightableElements = $j("#locksTaken td.highlight");
-    highlightableElements.each(function(i, element) {
-      BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
-    });
-
+    this.rehighlight(); // rebuild highlighted rows
     BS.MultilineProperties.updateVisible();
   },
 
@@ -122,18 +141,24 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   showDialog: function() {
     this.editMode = false;
+    this.filterAvailableResources();
+
     $j("#locksDialogSubmit").prop('value', 'Add');
     $j('#newLockName').val("");
     $j('#resource_quota').value = "1";
 
     // Set dialog mode to choose
+
+    var size = _.size(this.existingResources);
+
+    var modeName = size > 0 ? 'choose' : 'create';
     $j('#lockSource option').each(function() {
       var self = $j(this);
-      self.prop("selected", self.val() == 'choose');
+      self.prop("selected", self.val() == modeName);
     });
     this.syncResourceSelectionState();
 
-    this.refreshUI();
+    //this.refreshUI();
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
@@ -144,14 +169,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
    */
   showEdit: function(lockName) {
     this.editMode = true;
+    this.filterAvailableResources();
     this.currentLockName = lockName;
     $j("#locksDialogSubmit").prop('value', 'Save');
     $j('newLockName').val("");
     var lockType = this.myData[lockName];
+
+
+    this.availableResources[lockName] = true;
+    $j('#lockFromResources').append("<option value='" + lockName + "'>" + lockName + "</option>");
     $j('#lockSource option').each(function() {
       var self = $j(this);
       self.prop("selected", self.val() == 'choose');
-    }); // restore 'resource is chosen' state
+    });
+    // restore 'resource is chosen' state
     this.syncResourceSelectionState();
 
     $j('#lockFromResources option').each(function() {
@@ -198,9 +229,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       // choose newly created resource
       this.myData[lockName] = lockType;
     }
-
-
-
     this.refreshUI();
     this.close();
     return false;
@@ -226,9 +254,15 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       if (value.length === 0) {
         BS.Util.show('error_Name');
         $j('#error_Name').html("Name must not be empty");
-        // check for existence
         errorsPresent = true;
       }
+
+      if (this.existingResources[value]) {
+        BS.Util.show('error_Name');
+        $j('#error_Name').html("Resource with this name already exists");
+        errorsPresent = true;
+      }
+
       element.val(value);
 
       // check quota
@@ -266,8 +300,19 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     } else if (flag === 'create') {
       this.toggleModeCreate();
     }
+    this.adjustExistingResource();
     this.clearErrors();
     BS.MultilineProperties.updateVisible();
+  },
+
+  adjustExistingResource: function () {
+    if (_.size(this.availableResources) > 0) {
+      BS.Util.hide('lockFromResources_No');
+      BS.Util.show('lockFromResources_Yes');
+    } else {
+      BS.Util.hide('lockFromResources_Yes');
+      BS.Util.show('lockFromResources_No');
+    }
   },
 
   toggleModeChoose: function() {
@@ -290,18 +335,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     BS.Util.hide('row_useQuotaInput');
   },
 
-  toggleUseQuota: function() {
-    if ($j('#use_quota').is(':checked')) {
-      BS.Util.show('row_useQuotaInput');
-    } else {
-      BS.Util.hide('row_useQuotaInput');
-    }
-
-    BS.MultilineProperties.updateVisible();
-  },
-
-
-  //todo:  refactor JS
   createResourceInPlace: function(resource_name, quota) {
     var addUrl = window['base_uri'] + "${ACTION_ADD}";
     if (quota) {
@@ -372,8 +405,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockSource">Resource selection: </label></th>
           <td>
             <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
-              <forms:option value="create">Create new resource</forms:option>
               <forms:option value="choose">Choose an existing resource</forms:option>
+              <forms:option value="create">Create new resource</forms:option>
             </forms:select>
             <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
           </td>
@@ -381,15 +414,13 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <tr id="row_resourceChoose">
           <th><label for="lockFromResources">Resource name:</label></th>
           <td>
-            <c:choose>
-              <c:when test="${not empty bean.resources}">
+            <div id="lockFromResources_Yes">
                 <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
                 <span class="smallNote">Choose the resource you want to lock</span>
-              </c:when>
-              <c:otherwise>
+            </div>
+            <div id="lockFromResources_No">
                 <c:out value="No resources available. Please add the resource you want to lock."/>
-              </c:otherwise>
-            </c:choose>
+            </div>
           </td>
         </tr>
         <tr id="row_resourceCreate">
