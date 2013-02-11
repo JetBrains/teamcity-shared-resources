@@ -58,9 +58,15 @@ public final class LocksImpl implements Locks {
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks) {
     final Map<String, String> buildParams = new HashMap<String, String>();
     for (Lock lock: locks) {
-      buildParams.put(lockAsBuildParam(lock), "");
+      buildParams.put(asBuildParameterInternal(lock), "");
     }
     return buildParams;
+  }
+
+  @NotNull
+  @Override
+  public String asBuildParameter(@NotNull final Lock lock) {
+    return asBuildParameterInternal(lock);
   }
 
   @NotNull
@@ -109,7 +115,7 @@ public final class LocksImpl implements Locks {
    * @return lock as {@code String}
    */
   @NotNull
-  private String lockAsBuildParam(@NotNull final Lock lock) {
+  private String asBuildParameterInternal(@NotNull final Lock lock) {
     final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
     sb.append(lock.getType());
     sb.append(".");

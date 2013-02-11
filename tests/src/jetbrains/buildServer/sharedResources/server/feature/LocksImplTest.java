@@ -4,6 +4,7 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -192,6 +193,15 @@ public class LocksImplTest extends BaseTestCase {
         assertContains(locks.values(), lock);
       }
     }
+  }
 
+  @Test
+  public void testAsBuildParam() throws Exception {
+    final Lock lock1 = new Lock("lock1", LockType.READ);
+    final Lock lock2 = new Lock("lock2", LockType.WRITE);
+    final String param1 = myLocks.asBuildParameter(lock1);
+    final String param2 = myLocks.asBuildParameter(lock2);
+    assertEquals("teamcity.locks.readLock.lock1", param1);
+    assertEquals("teamcity.locks.writeLock.lock2", param2);
   }
 }

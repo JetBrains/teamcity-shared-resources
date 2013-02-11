@@ -25,7 +25,6 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   private static final Logger log = Logger.getInstance(BuildStartContextProcessor.class.getName());
 
-  // where is it called?
   @NotNull
   private final SharedResourcesFeatures myFeatures;
 
@@ -56,64 +55,34 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   @Override
   public void updateParameters(@NotNull final BuildStartContext context) {
-
     final SRunningBuild build = context.getBuild();
     final SBuildType myType = build.getBuildType();
     final String projectId = build.getProjectId();
     if (myType != null && projectId != null) {
       if (myFeatures.featuresPresent(myType)) {
-        log.info("SRCP :>> features present");
         final Map<String, Lock> locks = myLocks.fromBuildParametersAsMap(
                 ((BuildPromotionEx)build.getBuildPromotion()).getParametersProvider().getAll());
-
         if (!locks.isEmpty()) {
-          log.info("SRCP :>> found some locks");
-
-          // decide whether we need to resolve values
-          final Map<String, Resource> myCustomResources = new HashMap<String, Resource>();
-          final Map<String, Resource> resourceMap = myResources.asMap(projectId);
-          final Map<Lock, String> myTakenValues = new HashMap<Lock, String>();
-          for (Map.Entry<String, Lock> entry: locks.entrySet()) {
-            myTakenValues.put(entry.getValue(), ""); // empty values for unresolved locks and locks without values
-            final Resource r = resourceMap.get(entry.getKey());
-            if (ResourceType.CUSTOM.equals(r.getType())) {
-              log.info("SRCP :>> custom resource found! [" + r.getName() + "]");
-              myCustomResources.put(r.getName(), r);
-            }
-          }
-
+          final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
+          // get custom resources from our locks
+          final Map<String, Resource> myCustomResources = getCustomResources(projectId, locks);
           synchronized (lock) {
-
-            if (!myCustomResources.isEmpty()) { // need to resolve values
-              log.info("SRCP :>> my build contains custom resources. must provide value for param");
-              // get all builds from runtime.
-              final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
-              final Map<String, Set<String>> usedValues = new HashMap<String, Set<String>>();
-              for (String name: locks.keySet()) {
-                usedValues.put(name, new HashSet<String>());
-              }
-              // form Map<String, Set<String>>
-              for (SRunningBuild runningBuild: runningBuilds) {
-                Map<Lock, String> locksInRunningBuild = myLocksStorage.load(runningBuild);
-                for (Lock l: locks.values()) {
-                  String value = locksInRunningBuild.get(l);
-                  if (value != null && !"".equals(value)) { // todo string comparison ?? length?
-                    usedValues.get(l.getName()).add(value);
-                  }
-                }
-              }
-              // for each custom lock taken
+            // decide whether we need to resolve values
+            if (!myCustomResources.isEmpty()) {
+              final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
               for (Map.Entry<String, Resource> entry: myCustomResources.entrySet()) {
                 // get value space for current resources
                 final Set<String> values = new HashSet<String>(((CustomResource) entry.getValue()).getValues());
-                values.removeAll(usedValues.get(entry.getKey()));
-                if (!values.isEmpty()) { // we have values that we can assign
-                  final String paramName = "teamcity.locks.readLock." + entry.getKey(); // todo: lock as param name
+                final String key = entry.getKey();
+                // remove used values
+                values.removeAll(usedValues.get(key));
+                if (!values.isEmpty()) {
+                  final String paramName = myLocks.asBuildParameter(locks.get(key));
                   String valueToTake = values.iterator().next();
                   context.addSharedParameter(paramName, valueToTake);
-                  myTakenValues.put(locks.get(entry.getKey()), valueToTake);
+                  myTakenValues.put(locks.get(key), valueToTake);
                 } else {
-                  log.warn("Unable to assign value lo lock [" + entry.getKey() + "]");
+                  log.warn("Unable to assign value lo lock [" + key + "]");
                 }
               }
             }
@@ -126,7 +95,59 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
         log.info("SRCP :>> no features present");
       }
     }
-    // collect locks that are taken
-    // determine value of lock to pass
+  }
+
+  /**
+   * Collects acquired values for all locks from runtime
+   * @param locks locks required by current build
+   * @return map of locks and taken values
+   */
+  @NotNull
+  private Map<String, Set<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks) {
+    final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
+    final Map<String, Set<String>> usedValues = new HashMap<String, Set<String>>();
+    for (String name: locks.keySet()) {
+      usedValues.put(name, new HashSet<String>());
+    }
+    // collect taken values from runtime
+    for (SRunningBuild runningBuild: runningBuilds) {
+      Map<Lock, String> locksInRunningBuild = myLocksStorage.load(runningBuild);
+      for (Lock l: locks.values()) {
+        String value = locksInRunningBuild.get(l);
+        if (value != null && !"".equals(value)) {
+          usedValues.get(l.getName()).add(value);
+        }
+      }
+    }
+    return usedValues;
+  }
+
+  /**
+   * Determines, what locks are acquired on custom resources
+   * @param projectId id of current project
+   * @param locks locks required
+   * @return collection of resources among required locks that are custom
+   */
+  @NotNull
+  private Map<String, Resource> getCustomResources(@NotNull final String projectId, @NotNull final Map<String, Lock> locks) {
+    final Map<String, Resource> myCustomResources = new HashMap<String, Resource>();
+    final Map<String, Resource> resourceMap = myResources.asMap(projectId);
+    for (Map.Entry<String, Lock> entry: locks.entrySet()) {
+      final Resource r = resourceMap.get(entry.getKey());
+      if (ResourceType.CUSTOM.equals(r.getType())) {
+        log.info("SRCP :>> custom resource found! [" + r.getName() + "]");
+        myCustomResources.put(r.getName(), r);
+      }
+    }
+    return myCustomResources;
+  }
+
+  @NotNull
+  private Map<Lock, String> initTakenValues(@NotNull final Collection<Lock> myLocks) {
+    final Map<Lock, String> result = new HashMap<Lock, String>();
+    for (Lock lock: myLocks) {
+      result.put(lock, "");
+    }
+    return result;
   }
 }

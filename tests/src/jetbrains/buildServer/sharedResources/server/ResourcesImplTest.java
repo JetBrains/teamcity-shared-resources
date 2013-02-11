@@ -16,6 +16,8 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,5 +115,24 @@ public class ResourcesImplTest extends BaseTestCase {
     final Map<String, Resource> result = resources.asMap(projectId);
     assertNotNull(result);
     assertEquals(resourceMap.size(), result.size());
+  }
+
+  @Test
+  public void testAsCollection() {
+    final Collection<Resource> resourceCollection = new ArrayList<Resource>();
+    resourceCollection.add(ResourceFactory.newQuotedResource("r1", 1));
+    resourceCollection.add(ResourceFactory.newInfiniteResource("r2"));
+
+    m.checking(new Expectations() {{
+      oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      will(returnValue(myPluginProjectSettings));
+
+      oneOf(myPluginProjectSettings).getResources();
+      will(returnValue(resourceCollection));
+    }});
+
+    final Collection<Resource> result = resources.asCollection(projectId);
+    assertNotNull(result);
+    assertEquals(resourceCollection.size(), result.size());
   }
 }

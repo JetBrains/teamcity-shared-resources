@@ -30,7 +30,6 @@ import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -100,35 +99,6 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       LOG.debug("Got wait reason: [" + reasonDescription + "]");
     }
     return new SimpleWaitReason(reasonDescription);
-  }
-
-  /**
-   * Extracts build promotions from build server state, represented by running and queued builds. Only build promotions
-   * with the same id as provided are returned
-   *
-   * @param runningBuilds running builds
-   * @param queuedBuilds  queued builds
-   * @param projectId id of the current project
-   * @return collection of build promotions, that correspond to given builds
-   */
-  @NotNull
-  private Collection<BuildPromotionInfo> getBuildPromotions(@NotNull final Collection<RunningBuildInfo> runningBuilds,
-                                                            @NotNull final Collection<QueuedBuildInfo> queuedBuilds,
-                                                            @NotNull final String projectId) {
-    final ArrayList<BuildPromotionInfo> result = new ArrayList<BuildPromotionInfo>();
-    for (RunningBuildInfo runningBuildInfo : runningBuilds) {
-      BuildPromotionEx buildPromotionEx = ((BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo());
-      if (projectId.equals(buildPromotionEx.getProjectId())) {
-        result.add(runningBuildInfo.getBuildPromotionInfo());
-      }
-    }
-    for (QueuedBuildInfo queuedBuildInfo : queuedBuilds) {
-      BuildPromotionEx buildPromotionEx = (BuildPromotionEx)queuedBuildInfo.getBuildPromotionInfo();
-      if (projectId.equals(buildPromotionEx.getProjectId())) {
-        result.add(queuedBuildInfo.getBuildPromotionInfo());
-      }
-    }
-    return result;
   }
 }
 

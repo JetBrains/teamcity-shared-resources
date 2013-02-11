@@ -67,6 +67,13 @@ public interface Locks {
   @NotNull
   public String asFeatureParameter(@NotNull final Collection<Lock> locks);
 
+  /**
+   * Converts given lock into build parameter
+   * @param lock lock to convert
+   * @return name of the build parameter, corresponding to given lock
+   */
+  @NotNull
+  public String asBuildParameter(@NotNull final Lock lock);
 
   /**
    * Converts given collection of locks to build parameters
