@@ -26,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SharedResourcesFeatureFactoryImpl implements SharedResourcesFeatureFactory {
 
-
   @NotNull
   private final Locks myLocks;
 
   public SharedResourcesFeatureFactoryImpl(@NotNull final Locks locks) {
     myLocks = locks;
   }
-
 
   @NotNull
   @Override

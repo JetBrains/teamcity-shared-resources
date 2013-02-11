@@ -21,10 +21,14 @@ import jetbrains.buildServer.controllers.admin.projects.BuildFeatureBean;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactory;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
@@ -54,18 +58,18 @@ public class EditFeatureController extends BaseController {
   private final Resources myResources;
 
   @NotNull
-  private final Locks myLocks;
+  private final SharedResourcesFeatureFactory myFactory;
 
 
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
-                               @NotNull final Locks locks) {
+                               @NotNull final SharedResourcesFeatureFactory factory) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
-    myLocks = locks;
+    myFactory = factory;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
@@ -76,20 +80,33 @@ public class EditFeatureController extends BaseController {
                                   @NotNull final HttpServletResponse response) throws Exception {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
+    final SProject project = form.getProject();
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<String, Lock>();
+    final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(project.getProjectId()));
     final Map<String, Object> model = result.getModel();
+
     model.put("inherited", false);
     for (BuildFeatureBean bfb: buildFeaturesBean.getBuildFeatureDescriptors()) {
-      if (buildFeatureId.equals(bfb.getDescriptor().getId())) {
-        locks.putAll(myLocks.fromFeatureParameters(bfb.getDescriptor().getParameters()));
-        model.put("inherited", bfb.isInherited());
-        break;
+      SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
+      if (SharedResourcesBuildFeature.FEATURE_TYPE.equals(descriptor.getType())) {
+        // we have build feature of needed type
+        SharedResourcesFeature f = myFactory.createFeature(descriptor);
+        if (buildFeatureId.equals(descriptor.getId())) {
+          // we have feature that we need to edit
+          locks.putAll(f.getLockedResources());
+          model.put("inherited", bfb.isInherited());
+        } else {
+          // we have feature, that is not current feature under edit. must remove used resources from our resource collection
+          for (String name: f.getLockedResources().keySet()) {
+            resources.remove(name);
+          }
+        }
       }
     }
-    final SProject project = form.getProject();
-    final SharedResourcesBean bean = new SharedResourcesBean(myResources.asCollection(project.getProjectId()));
+
+    final SharedResourcesBean bean = new SharedResourcesBean(resources.values());
     model.put("locks", locks);
     model.put("bean", bean);
     model.put("project", project);
