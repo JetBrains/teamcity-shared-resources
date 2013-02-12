@@ -187,7 +187,7 @@
         <td>
           <props:textarea name="customValues" textAreaName="customValuesArea" value=""
                           linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
-          <span class="smallNote">Custom values define number of resources available and values of the resource $$$ message needed $$$</span>
+          <span class="smallNote">Custom values are values passed to build configuration when lock on custom resource is acquired</span>
         </td>
       </tr>
     </table>

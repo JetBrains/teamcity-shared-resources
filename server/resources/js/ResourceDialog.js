@@ -5,7 +5,6 @@
  * Time: 15:19
  * To change this template use File | Settings | File Templates.
  */
-
 BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   attachedToRoot: false,
   editMode: false,
@@ -75,7 +74,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   },
 
   submit: function() {
-    //if (!this.validate()) return false; // todo: enable validation
+    if (!this.validate()) return false;
     this.close();
     if (this.editMode) {
       BS.SharedResourcesActions.editResource(this.currentResourceName);
@@ -113,8 +112,6 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       }
       element.val(value);
     }
-
-    // todo: change quoted to type
     return !errorsPresent;
   },
 

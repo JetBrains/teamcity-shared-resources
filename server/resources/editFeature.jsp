@@ -31,36 +31,20 @@
 <c:set var="locksFeatureParamKey" value="<%=FeatureParams.LOCKS_FEATURE_PARAM_KEY%>"/>
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
+<c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 <c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
 
 <script type="text/javascript">
-//noinspection JSValidateTypes
 BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   attachedToRoot: false,
   myData: {}, // here we have locks
   myLocksDisplay: {},
   editMode: false,
+  inherited: false,
   currentLockName: "",
   existingResources: {}, // here are existing resources + resources created in place
   availableResources: {},
-
-  fillData: function() {
-    /* taken locks */
-    <c:forEach var="item" items="${locks}">
-    this.myData['${item.key}'] = '${item.value.type.name}';
-    </c:forEach>
-
-    /* all existing resources for the project*/
-    <c:forEach var="item" items="${bean.resources}">
-    this.existingResources['${item.name}'] = true;
-    </c:forEach>
-
-    this.filterAvailableResources();
-
-    this.myLocksDisplay['readLock'] = "<%=LockType.READ.getDescriptiveName()%>";
-    this.myLocksDisplay['writeLock'] = "<%=LockType.WRITE.getDescriptiveName()%>";
-  },
 
   /* existingResources - myResources - myTemplateResources */
   filterAvailableResources: function() {
@@ -100,22 +84,19 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         if (self.hasOwnProperty(key)) {
           var oc, od, hClass;
           var editCell, deleteCell;
-          <c:choose>
-          <c:when test="${inherited}">
-          oc = '';
-          od = '';
-          hClass = '';
-          editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
-          deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
-          </c:when>
-          <c:otherwise>
-          oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
-          od = 'BS.LocksDialog.deleteLockFromTakenLocks(\"' + key + '\"); return false;';
-          hClass = 'highlight';
-          editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
-          deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
-          </c:otherwise>
-          </c:choose>
+          if (this.inherited) {
+            oc = '';
+            od = '';
+            hClass = '';
+            editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
+            deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+          } else {
+            oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
+            od = 'BS.LocksDialog.deleteLockFromTakenLocks(\"' + key + '\"); return false;';
+            hClass = 'highlight';
+            editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
+            deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
+          }
           //noinspection JSCheckFunctionSignatures
           tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
                   .append($j('<td>').attr('class', hClass).text(key).attr('onclick', oc))
@@ -293,6 +274,16 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.refreshUI();
   },
 
+  toggleUseQuota: function() {
+    if ($j('#use_quota').is(':checked')) {
+      BS.Util.show('row_useQuotaInput');
+    } else {
+      BS.Util.hide('row_useQuotaInput');
+    }
+
+    BS.MultilineProperties.updateVisible();
+  },
+
   syncResourceSelectionState: function() {
     var flag = $j('#lockSource option:selected').val();
     if (flag === 'choose')  {
@@ -337,24 +328,44 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   createResourceInPlace: function(resource_name, quota) {
     var addUrl = window['base_uri'] + "${ACTION_ADD}";
+
+    var params = {};
+    params[ '${PARAM_PROJECT_ID}'] = '${project.projectId}';
+    params[ '${PARAM_RESOURCE_NAME}'] =resource_name;
+    params[ '${PARAM_RESOURCE_TYPE}'] = 'quoted';
+
     if (quota) {
-      BS.ajaxRequest(addUrl, {
-        parameters: {
-          '${PARAM_PROJECT_ID}':'${project.projectId}',
-          '${PARAM_RESOURCE_NAME}': resource_name,
-          '${PARAM_RESOURCE_QUOTA}': quota
-        }
-      });
-    } else {
-      BS.ajaxRequest(addUrl, {
-        parameters: {
-          '${PARAM_PROJECT_ID}':'${project.projectId}',
-          '${PARAM_RESOURCE_NAME}':resource_name
-        }
-      });
+      params['${PARAM_RESOURCE_QUOTA}'] = quota;
     }
+    BS.ajaxRequest(addUrl, {parameters: params});
   }
 });
+</script>
+
+<script type="text/javascript">
+  var self = BS.LocksDialog;
+  /* taken locks */
+  <c:forEach var="item" items="${locks}">
+  self.myData['${item.key}'] = '${item.value.type.name}';
+  </c:forEach>
+
+  /* all existing resources for the project*/
+  <c:forEach var="item" items="${bean.resources}">
+  self.existingResources['${item.name}'] = true;
+  </c:forEach>
+
+  self.filterAvailableResources();
+  self.myLocksDisplay['readLock'] = "<%=LockType.READ.getDescriptiveName()%>";
+  self.myLocksDisplay['writeLock'] = "<%=LockType.WRITE.getDescriptiveName()%>";
+  self.inherited = <c:out value="${inherited}"/>;
+  BS.LocksDialog.refreshUI();
+
+  <c:choose>
+  <c:when test="${inherited}">
+  BS.Util.hide("addNewLock");
+  BS.Util.show("inheritedNote");
+  </c:when>
+  </c:choose>
 </script>
 
 <tr>
@@ -375,17 +386,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     </div>
   </td>
 </tr>
-
-<script type="text/javascript">
-  BS.LocksDialog.fillData();
-  BS.LocksDialog.refreshUI();
-  <c:choose>
-  <c:when test="${inherited}">
-  BS.Util.hide("addNewLock");
-  BS.Util.show("inheritedNote");
-  </c:when>
-  </c:choose>
-</script>
 
 <tr style="display: none">
   <th><label for="${locksFeatureParamKey}">Resource name:</label></th>
@@ -415,11 +415,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockFromResources">Resource name:</label></th>
           <td>
             <div id="lockFromResources_Yes">
-                <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
-                <span class="smallNote">Choose the resource you want to lock</span>
+              <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
+              <span class="smallNote">Choose the resource you want to lock</span>
             </div>
             <div id="lockFromResources_No">
-                <c:out value="No resources available. Please add the resource you want to lock."/>
+              <c:out value="No resources available. Please add the resource you want to lock."/>
             </div>
           </td>
         </tr>
