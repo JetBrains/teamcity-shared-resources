@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
@@ -71,8 +70,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     final SBuildType buildType = myPromotion.getBuildType();
     if (buildType != null && projectId != null) {
       if (myFeatures.featuresPresent(buildType)) {
-        final ParametersProvider pp = myPromotion.getParametersProvider();
-        final Collection<Lock> locksToTake  = myLocks.fromBuildParameters(pp.getAll());
+        final Collection<Lock> locksToTake  = myLocks.fromBuildPromotion(myPromotion);
         if (!locksToTake.isEmpty()) {
           final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, buildDistributorInput.getRunningBuilds(), canBeStarted.keySet());
           if (!takenLocks.isEmpty()) {

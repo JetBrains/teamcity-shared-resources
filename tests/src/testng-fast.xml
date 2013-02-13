@@ -1,10 +1,5 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="PLUGIN tests">
-  <test name="Common tests">
-    <classes>
-      <class name="SimpleTest"/>
-    </classes>
-  </test>
   <test name="Feature tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.feature.LocksImplTest"/>
@@ -14,8 +9,12 @@
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPreconditionTest"/>
-      <class name="jetbrains.buildServer.sharedResources.FeatureTest"/>
+    </classes>
+  </test>
+  <test name="Feature runtime tests">
+    <classes>
       <class name="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImplTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImplTest"/>
     </classes>
   </test>
   <test name="Settings tests">

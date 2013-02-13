@@ -72,7 +72,7 @@ public class TakenLocksImpl implements TakenLocks {
         if (myLocksStorage.locksStored(rbEx)) {
           locks = myLocksStorage.load(rbEx).keySet();
         } else {
-          locks = getLocksFromPromotion(bpEx);
+          locks = myLocks.fromBuildPromotion(bpEx);
         }
         addToTakenLocks(result, bpEx, locks);
       }
@@ -80,12 +80,11 @@ public class TakenLocksImpl implements TakenLocks {
     for (QueuedBuildInfo info: queuedBuilds) {
       BuildPromotionEx bpEx = (BuildPromotionEx)info.getBuildPromotionInfo();
       if (projectId.equals(bpEx.getProjectId())) {
-        Collection<Lock> locks = getLocksFromPromotion(bpEx);
+        Collection<Lock> locks = myLocks.fromBuildPromotion(bpEx);
         addToTakenLocks(result, bpEx, locks);
       }
     }
     return result;
-
   }
 
   private void addToTakenLocks(@NotNull final Map<String, TakenLock> takenLocks,
@@ -99,10 +98,6 @@ public class TakenLocksImpl implements TakenLocks {
       }
       takenLock.addLock(bpInfo, lock);
     }
-  }
-
-  private Collection<Lock> getLocksFromPromotion(@NotNull final BuildPromotionInfo buildPromotion) {
-    return myLocks.fromBuildParameters(((BuildPromotionEx)buildPromotion).getParametersProvider().getAll());
   }
 
   @NotNull

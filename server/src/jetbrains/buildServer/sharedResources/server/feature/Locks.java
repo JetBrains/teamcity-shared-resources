@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 public interface Locks {
 
   /** Lock prefix, used in build parameters */
@@ -85,20 +87,20 @@ public interface Locks {
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
 
   /**
-   * Extracts locks from build parameters
+   * Extracts locks from build promotion
    *
-   * @param buildParams build parameters ot search in
-   * @return collection of locks that are passed as build parameters
+   * @param buildPromotion build promotion to extract from
+   * @return collection of locks extracted from build promotion
    */
   @NotNull
-  public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams);
+  public Collection<Lock> fromBuildPromotion(@NotNull final BuildPromotionEx buildPromotion);
 
   /**
-   * Extracts locks from build parameters and represents them as map
+   * Extracts locks from build promotion and represents them as map
    *
-   * @param buildParams build parameters ot search in
-   * @return map of locks that are passed as build parameters
+   * @param buildPromotion build promotion to extract from
+   * @return map of locks extracted from build promotion
    */
   @NotNull
-  public Map<String, Lock> fromBuildParametersAsMap(@NotNull final Map<String, String> buildParams);
+  public Map<String, Lock> fromBuildPromotionAsMap(@NotNull final BuildPromotionEx buildPromotion);
 }

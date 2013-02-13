@@ -19,6 +19,7 @@ import java.util.*;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 public class SharedResourcesContextProcessor implements BuildStartContextProcessor {
 
   private final Object lock = new Object();
@@ -60,8 +61,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final String projectId = build.getProjectId();
     if (myType != null && projectId != null) {
       if (myFeatures.featuresPresent(myType)) {
-        final Map<String, Lock> locks = myLocks.fromBuildParametersAsMap(
-                ((BuildPromotionEx)build.getBuildPromotion()).getParametersProvider().getAll());
+        final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(((BuildPromotionEx)build.getBuildPromotion()));
         if (!locks.isEmpty()) {
           final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
           // get custom resources from our locks

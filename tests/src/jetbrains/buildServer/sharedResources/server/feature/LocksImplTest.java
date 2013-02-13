@@ -1,6 +1,8 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.parameters.ParametersProvider;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -22,7 +24,7 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould") // todo: what's this?
+@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {Locks.class, LocksImpl.class})
 public class LocksImplTest extends BaseTestCase {
 
@@ -154,29 +156,31 @@ public class LocksImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testFromBuildParameters() throws Exception {
+  public void testFromBuildPromotion() throws Exception {
+    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
+    final ParametersProvider pp = m.mock(ParametersProvider.class);
+
     final Map<String, String> buildParams = new HashMap<String, String>();
     final Collection<Lock> expectedLocks = new ArrayList<Lock>();
+
     int N = TestUtils.RANDOM_UPPER_BOUNDARY;
     for (int i = 0; i < N * 2; i++) {
       expectedLocks.add(TestUtils.generateRandomLock());
-
     }
     for (Lock lock: expectedLocks) {
       buildParams.put(TestUtils.generateLockAsBuildParam(lock.getName(), lock.getType()), "");
     }
-    for (int i = 0; i < N; i++) {
-      buildParams.put(TestUtils.generateRandomConfigurationParam(), "");
-    }
-    // some incorrect values
-    buildParams.put("teamcity.locks.unknownType.lock123", "");
-    // wrong format
-    buildParams.put("teamcity.locks..hello", "");
-    buildParams.put("teamcity.locks.", "");
-    buildParams.put("teamcity.locks.readLock.", "");
+
+    m.checking(new Expectations() {{
+      atMost(2).of(promo).getParametersProvider();
+      will(returnValue(pp));
+
+      atMost(2).of(pp).getAll();
+      will(returnValue(buildParams));
+    }});
 
     {
-      final Collection<Lock> locks = myLocks.fromBuildParameters(buildParams);
+      final Collection<Lock> locks = myLocks.fromBuildPromotion(promo);
       assertNotNull(locks);
       assertNotEmpty(locks);
       assertEquals(N * 2, locks.size());
@@ -186,13 +190,16 @@ public class LocksImplTest extends BaseTestCase {
     }
 
     {
-      final Map<String, Lock> locks = myLocks.fromBuildParametersAsMap(buildParams);
+      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(promo);
       assertNotNull(locks);
       assertEquals(N * 2, locks.size());
       for (Lock lock: expectedLocks) {
         assertContains(locks.values(), lock);
       }
     }
+
+
+    m.assertIsSatisfied();
   }
 
   @Test

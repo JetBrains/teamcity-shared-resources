@@ -30,6 +30,7 @@ import java.util.Set;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 public class TakenLock {
 
   // current implementation does not support values for locks
@@ -51,7 +52,6 @@ public class TakenLock {
   @NotNull
   private final Set<BuildPromotionInfo> writeLocks = new HashSet<BuildPromotionInfo>(); // do we need a set here? write lock is exclusive
 
-
   public void addLock(@NotNull final BuildPromotionInfo info, @NotNull final Lock lock) {
     switch (lock.getType()) {
       case READ:
@@ -62,7 +62,6 @@ public class TakenLock {
         break;
     }
   }
-
 
   @NotNull
   public Set<BuildPromotionInfo> getReadLocks() {

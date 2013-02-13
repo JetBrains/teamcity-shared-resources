@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.parameters.ParametersProvider;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.BuildTypeEx;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
@@ -65,8 +64,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   private final String myProjectId = "PROJECT_ID";
 
-  private ParametersProvider myParametersProvider;
-
   private TakenLocks myTakenLocks;
 
   /** Class under test*/
@@ -83,7 +80,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     myBuildType = m.mock(BuildTypeEx.class);
     myQueuedBuild = m.mock(QueuedBuildInfo.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class);
-    myParametersProvider = m.mock(ParametersProvider.class);
     myTakenLocks = m.mock(TakenLocks.class);
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
     myWaitPrecondition = new SharedResourcesWaitPrecondition(myFeatures, myLocks, myTakenLocks);
@@ -145,7 +141,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
   @Test
   public void testNoLocksInFeatures() throws Exception {
     final Collection<Lock> emptyLocks = Collections.emptyList();
-    final Map<String, String> emptyParams = Collections.emptyMap();
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -160,13 +155,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
 
-      oneOf(myBuildPromotion).getParametersProvider();
-      will(returnValue(myParametersProvider));
-
-      oneOf(myParametersProvider).getAll();
-      will(returnValue(emptyParams));
-
-      oneOf(myLocks).fromBuildParameters(emptyParams);
+      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(emptyLocks));
     }});
     final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
@@ -175,9 +164,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   @Test
   public void testLocksPresentSingleBuild() throws Exception {
-    final Map<String, String> params = new HashMap<String, String>() {{
-      put("teamcity.locks.readLock.lock1", "");
-    }};
     final Collection<Lock> locks = new ArrayList<Lock>() {{
       add(new Lock("lock1", LockType.READ));
     }};
@@ -197,13 +183,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
 
-      oneOf(myBuildPromotion).getParametersProvider();
-      will(returnValue(myParametersProvider));
-
-      oneOf(myParametersProvider).getAll();
-      will(returnValue(params));
-
-      oneOf(myLocks).fromBuildParameters(params);
+      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();
@@ -221,9 +201,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   @Test
   public void testMultipleBuildsLocksNotCrossing() throws Exception {
-    final Map<String, String> params = new HashMap<String, String>() {{
-      put("teamcity.locks.readLock.lock1", "");
-    }};
     final Collection<Lock> locks = new ArrayList<Lock>() {{
       add(new Lock("lock1", LockType.READ));
     }};
@@ -250,13 +227,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
 
-      oneOf(myBuildPromotion).getParametersProvider();
-      will(returnValue(myParametersProvider));
-
-      oneOf(myParametersProvider).getAll();
-      will(returnValue(params));
-
-      oneOf(myLocks).fromBuildParameters(params);
+      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();
@@ -277,10 +248,6 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   @Test
   public void testMultipleBuildsLocksCrossing() throws Exception {
-
-    final Map<String, String> params = new HashMap<String, String>() {{
-      put("teamcity.locks.readLock.lock1", "");
-    }};
     final Collection<Lock> locks = new ArrayList<Lock>() {{
       add(new Lock("lock1", LockType.READ));
     }};
@@ -306,13 +273,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
 
-      oneOf(myBuildPromotion).getParametersProvider();
-      will(returnValue(myParametersProvider));
-
-      oneOf(myParametersProvider).getAll();
-      will(returnValue(params));
-
-      oneOf(myLocks).fromBuildParameters(params);
+      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();

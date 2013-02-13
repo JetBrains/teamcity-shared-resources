@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -71,18 +72,14 @@ public final class LocksImpl implements Locks {
 
   @NotNull
   @Override
-  public Collection<Lock> fromBuildParameters(@NotNull final Map<String, String> buildParams) {
-    return fromBuildParametersInternal(buildParams);
+  public Collection<Lock> fromBuildPromotion(@NotNull BuildPromotionEx buildPromotion) {
+    return fromBuildParametersInternal(buildPromotion.getParametersProvider().getAll());
   }
 
   @NotNull
   @Override
-  public Map<String, Lock> fromBuildParametersAsMap(@NotNull final Map<String, String> buildParams) {
-    final Map<String, Lock> result = new HashMap<String, Lock>();
-    for (Lock lock: fromBuildParametersInternal(buildParams)) {
-      result.put(lock.getName(), lock);
-    }
-    return result;
+  public Map<String, Lock> fromBuildPromotionAsMap(@NotNull BuildPromotionEx buildPromotion) {
+    return fromBuildParametersAsMapInternal(buildPromotion.getParametersProvider().getAll());
   }
 
   @NotNull
@@ -135,6 +132,15 @@ public final class LocksImpl implements Locks {
           result.put(lock.getName(), lock);
         }
       }
+    }
+    return result;
+  }
+
+  @NotNull
+  private Map<String, Lock> fromBuildParametersAsMapInternal(Map<String, String> buildParams) {
+    final Map<String, Lock> result = new HashMap<String, Lock>();
+    for (Lock lock: fromBuildParametersInternal(buildParams)) {
+      result.put(lock.getName(), lock);
     }
     return result;
   }
