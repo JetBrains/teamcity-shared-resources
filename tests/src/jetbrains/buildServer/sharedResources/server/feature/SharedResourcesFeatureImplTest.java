@@ -35,16 +35,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private BuildTypeTemplate myBuildTypeTemplate;
 
-  private final Map<String, Lock> myLockedResources = new HashMap<String, Lock>() {{
-    put("lock1", new Lock("lock1", LockType.READ));
-    put("lock2", new Lock("lock2", LockType.WRITE));
-  }};
+  private Map<String, String> params;
 
-  private Map<String, String> expectedBuildParameters = new HashMap<String, String>() {{
-    for(String str: myLockedResources.keySet()) {
-      put(TestUtils.generateLockAsBuildParam(str, myLockedResources.get(str).getType()), "");
-    }
-  }};
+  private Map<String, Lock> myLockedResources;
+
+  private Map<String, String> expectedBuildParameters;
 
   @BeforeMethod
   @Override
@@ -55,6 +50,17 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
     myBuildType = m.mock(SBuildType.class);
     myBuildTypeTemplate = m.mock(BuildTypeTemplate.class);
+    params = new HashMap<String, String>();
+    myLockedResources = new HashMap<String, Lock>() {{
+      put("lock1", new Lock("lock1", LockType.READ));
+      put("lock2", new Lock("lock2", LockType.WRITE));
+    }};
+    expectedBuildParameters = new HashMap<String, String>() {{
+      for(String str: myLockedResources.keySet()) {
+        put(TestUtils.generateLockAsBuildParam(str, myLockedResources.get(str).getType()), "");
+      }
+    }};
+
   }
 
   @Test
@@ -93,9 +99,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private final String oldName = "lock2";
   private final String newName = "lock3";
-  private final Map<String, String> params = new HashMap<String, String>();
 
   private void setupCommonExpectations() {
+
     final String newLocksAsString = "lock1 readLock\nlock3 writeLock";
     params.put(FeatureParams.LOCKS_FEATURE_PARAM_KEY, newLocksAsString);
 
@@ -138,6 +144,12 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
       oneOf(myBuildType).getTemplate();
       will(returnValue(myBuildTypeTemplate));
+
+      oneOf(myBuildFeatureDescriptor).getId();
+      will(returnValue(""));
+
+      oneOf(myBuildFeatureDescriptor).getType();
+      will(returnValue(""));
 
       oneOf(myBuildTypeTemplate).updateBuildFeature("", "", params);
       will(returnValue(true));
