@@ -49,6 +49,4 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
     final SharedResourcesFeature feature = myFactory.createFeature(myBuildFeatureDescriptor);
     assertNotNull(feature);
   }
-
-
 }

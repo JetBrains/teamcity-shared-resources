@@ -59,7 +59,7 @@ public final class LocksImpl implements Locks {
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks) {
     final Map<String, String> buildParams = new HashMap<String, String>();
     for (Lock lock: locks) {
-      buildParams.put(asBuildParameterInternal(lock), "");
+      buildParams.put(asBuildParameterInternal(lock), lock.getValue());
     }
     return buildParams;
   }
@@ -92,7 +92,8 @@ public final class LocksImpl implements Locks {
       final StringBuilder builder = new StringBuilder();
       for (Lock lock: locks) {
         builder.append(lock.getName()).append(" ");
-        builder.append(lock.getType()).append("\n");
+        builder.append(lock.getType()).append(" ");
+        builder.append(lock.getValue()).append("\n");
       }
       result = builder.substring(0, builder.length() - 1);
     }
@@ -148,8 +149,8 @@ public final class LocksImpl implements Locks {
   @NotNull
   private List<Lock> fromBuildParametersInternal(@NotNull final Map<String, String> buildParams) {
     final List<Lock> result = new ArrayList<Lock>();
-    for (String str: buildParams.keySet()) {
-      Lock lock = getLockFromBuildParam(str);
+    for (Map.Entry<String, String> entry: buildParams.entrySet()) {
+      Lock lock = fromBuildParameterInternal(entry.getKey(), entry.getValue());
       if (lock != null) {
         result.add(lock);
       }
@@ -159,23 +160,39 @@ public final class LocksImpl implements Locks {
 
   @Nullable
   private Lock getSingleLockFromString(@NotNull final String str) {
-    int n = str.lastIndexOf(' ');
-    final LockType type = LockType.byName(str.substring(n + 1));
     Lock result = null;
+    int n = str.indexOf(' ');
+    String name = str.substring(0, n);
+    int m = str.indexOf(' ', n + 1);
+    LockType type;
+    if (m == -1) {
+      // no values
+      type = LockType.byName(str.substring(n + 1).trim());
+    } else {
+      type = LockType.byName(str.substring(n + 1, m).trim());
+    }
     if (type != null) {
-      result =  new Lock(str.substring(0, n), type);
+      // lock is valid
+      if (m > 0) {
+        // values
+        result = new Lock(name, type, str.substring(m + 1));
+      } else {
+        // no values
+        result = new Lock(str.substring(0, n), type);
+      }
     }
     return result;
   }
 
   /**
-   * Extracts lock from build parameter name
+   * Extracts lock from build parameter
    *
    * @param paramName name of the build parameter
+   * @param paramValue value of the build parameter
    * @return {@code Lock} of appropriate type, if parsing was successful, {@code null} otherwise
    */
   @Nullable
-  public static Lock getLockFromBuildParam(@NotNull final String paramName) {
+  private Lock fromBuildParameterInternal(@NotNull final String paramName, @NotNull final String paramValue) {
     Lock result = null;
     if (paramName.startsWith(LOCK_PREFIX)) {
       String lockString = paramName.substring(PREFIX_OFFSET);
@@ -198,7 +215,7 @@ public final class LocksImpl implements Locks {
           LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
           return null;
         }
-        result = new Lock(lockName, lockType);
+        result = new Lock(lockName, lockType, paramValue);
       } catch (IndexOutOfBoundsException e) {
         LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
         return null;

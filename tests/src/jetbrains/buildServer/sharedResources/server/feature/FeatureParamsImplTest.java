@@ -39,6 +39,7 @@ public class FeatureParamsImplTest extends BaseTestCase {
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
+    super.setUp();
     m = new Mockery();
     myLocks = m.mock(Locks.class);
     myFeatureParams = new FeatureParamsImpl(myLocks);

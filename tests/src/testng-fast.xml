@@ -8,7 +8,12 @@
       <class name="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImplTest"/>
+    </classes>
+  </test>
+  <test name="Decision making tests">
+    <classes>
       <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPreconditionTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.ContextProcessorTest"/>
     </classes>
   </test>
   <test name="Feature runtime tests">

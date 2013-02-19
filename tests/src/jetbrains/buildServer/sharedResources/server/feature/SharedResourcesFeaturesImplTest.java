@@ -163,7 +163,6 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
       will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
 
     }});
-
     assertTrue(mySharedResourcesFeatures.featuresPresent(myBuildType));
   }
 }

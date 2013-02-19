@@ -39,16 +39,15 @@ public interface LocksStorage {
    */
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks);
 
-
   /**
    * Loads taken locks
    *
    *
    * @param build build to load locks for
-   * @return map in format {@code LockName -> LockValue}
+   * @return collection of taken locks. Values are restored inside locks
    */
   @NotNull
-  public Map<Lock, String> load(@NotNull final SBuild build);
+  public Map<String, Lock> load(@NotNull final SBuild build);
 
   /**
    * Checks, whether locks has been already stored

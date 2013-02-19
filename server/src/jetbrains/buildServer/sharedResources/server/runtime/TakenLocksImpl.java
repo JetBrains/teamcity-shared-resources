@@ -31,10 +31,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -70,7 +67,7 @@ public class TakenLocksImpl implements TakenLocks {
         Collection<Lock> locks;
         RunningBuildEx rbEx = (RunningBuildEx)runningBuildInfo;
         if (myLocksStorage.locksStored(rbEx)) {
-          locks = myLocksStorage.load(rbEx).keySet();
+          locks = myLocksStorage.load(rbEx).values();
         } else {
           locks = myLocks.fromBuildPromotion(bpEx);
         }
@@ -110,36 +107,103 @@ public class TakenLocksImpl implements TakenLocks {
     for (Lock lock : locksToTake) {
       final TakenLock takenLock = takenLocks.get(lock.getName());
       if (takenLock != null) {
-        switch (lock.getType())  {
-          case READ:
-            // 1) Check that no write lock exists
-            if (takenLock.hasWriteLocks()) {
-              result.add(lock);
-            }
-            // check against resource
-            final Resource resource = resources.get(lock.getName());
-            if (resource != null) { // supporting only quoted resources for now
-              if (ResourceType.QUOTED.equals(resource.getType())) {
-                QuotedResource qRes = (QuotedResource)resource;
-                if (!qRes.isInfinite()) {
-                  if (takenLock.getReadLocks().size() >= qRes.getQuota()) {
-                    result.add(lock);
-                  }
-                }
-              } else if (ResourceType.CUSTOM.equals(resource.getType())) {
-                CustomResource cRes = (CustomResource)resource;
-                if (takenLock.getReadLocks().size() >= cRes.getValues().size()) {
-                  result.add(lock);
-                }
-              }
-            }
-            break;
-          case WRITE:
-            if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
-              result.add(lock);
-            }
+        final Resource resource = resources.get(lock.getName());
+        if (resource != null && !checkAgainstResource(lock, takenLocks, resource))  {
+          result.add(lock);
         }
       }
+    }
+    return result;
+  }
+
+  private boolean checkAgainstResource(@NotNull final Lock lock,
+                                       @NotNull final Map<String, TakenLock> takenLocks,
+                                       @NotNull final Resource resource) {
+    boolean result = true;
+    if (ResourceType.QUOTED.equals(resource.getType())) {
+      result = checkAgainstQuotedResource(lock, takenLocks, (QuotedResource) resource);
+    } else if (ResourceType.CUSTOM.equals(resource.getType())) {
+      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource);
+    }
+    return result;
+  }
+
+  private boolean checkAgainstCustomResource(@NotNull final Lock lock,
+                                             @NotNull final Map<String, TakenLock> takenLocks,
+                                             @NotNull final CustomResource resource) {
+    boolean result = true;
+    // what type of lock do we have
+    // write with value -> specific
+    // write            -> all
+    // read             -> any
+    final TakenLock takenLock = takenLocks.get(lock.getName());
+    switch (lock.getType()) {
+      case READ:   // check at least one value is available
+        // check for unique writeLocks
+        Map<BuildPromotionInfo, String> writeLocks = takenLock.getWriteLocks();
+        for (String str: writeLocks.values()) {
+          if ("".equals(str)) {
+            // we have 'ALL' write lock
+            result = false;
+            break;
+          }
+        }
+        if (result) {
+          // check for any available values
+          if (resource.getValues().size() <= takenLock.getReadLocks().size() + takenLock.getWriteLocks().size()) {
+            // quota exceeded
+            result = false;
+            break;
+          }
+        }
+        break;
+      case WRITE:
+        if ("".equals(lock.getValue())) {
+          // 'ALL' case
+          if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) {
+            result = false;
+            break;
+          }
+        } else {
+          // 'SPECIFIC' case
+          final String requiredValue = lock.getValue();
+          final Set<String> takenValues = new HashSet<String>();
+          takenValues.addAll(takenLock.getReadLocks().values());
+          takenValues.addAll(takenLock.getWriteLocks().values());
+          if (takenValues.contains(requiredValue)) {
+            // value was already taken
+            result = false;
+            break;
+          }
+        }
+        break;
+    }
+    return result;
+  }
+
+  private boolean checkAgainstQuotedResource(@NotNull final Lock lock,
+                                             @NotNull final Map<String, TakenLock> takenLocks,
+                                             @NotNull final QuotedResource resource) {
+    boolean result = true;
+    final TakenLock takenLock = takenLocks.get(lock.getName());
+    switch (lock.getType())  {
+      case READ:
+        // 1) Check that no write lock exists
+        if (takenLock.hasWriteLocks()) {
+          result = false;
+          break;
+        }
+        if (!resource.isInfinite()) {
+          if (takenLock.getReadLocks().size() >= resource.getQuota()) {
+            result = false;
+            break;
+          }
+        }
+        break;
+      case WRITE:
+        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
+          result = false;
+        }
     }
     return result;
   }

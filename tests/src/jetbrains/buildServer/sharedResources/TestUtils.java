@@ -21,7 +21,6 @@ import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +29,7 @@ import java.util.UUID;
  *
  * @author Oleg Rybak
  */
+@SuppressWarnings("UnusedShould")
 public class TestUtils {
 
   /** For random size of collections */
@@ -37,11 +37,6 @@ public class TestUtils {
 
   /** Maximum size of collection */
   public static final int RANDOM_UPPER_BOUNDARY = 20;
-
-  /** Random provider for other tests */
-  public static int generateBoundedRandomInt() {
-    return generateBoundedRandomInt(RANDOM_UPPER_BOUNDARY);
-  }
 
   /** Random provider for other tests */
   public static int generateBoundedRandomInt(int max) {
@@ -66,32 +61,13 @@ public class TestUtils {
   }
 
   /**
-   * Generates random configuration parameter
-   * @return random configuration parameter as String
+   * Generates lock with random name, random type and random value
+   * @return randomly generated lock with value
    */
-  public static String generateRandomConfigurationParam() {
-    return "teamcity." + UUID.randomUUID().toString();
-  }
-
-  /**
-   * Generates serialized version of a lock that has random type as it is stored in feature parameter
-   * @return serialized lock
-   */
-  public static String generateSerializedLock() {
+  public static Lock generateRandomLockWithValue() {
     final LockType[] allTypes = LockType.values();
-    return generateSerializedLock(allTypes[generateBoundedRandomInt(1000) % allTypes.length]);
+    return new Lock(generateRandomName(), allTypes[generateBoundedRandomInt(1000) % allTypes.length], generateRandomName());
   }
-
-  /**
-   * Generates serialized version of a lock with specified type as it is stored in feature parameter
-   * @param type type of generated lock
-   * @return serialized lock
-   */
-  public static String generateSerializedLock(LockType type) {
-    return generateBoundedRandomInt(100000) + " " + type;
-  }
-
-
 
   /**
    * Generates random name that consists of letters, numbers and underscores

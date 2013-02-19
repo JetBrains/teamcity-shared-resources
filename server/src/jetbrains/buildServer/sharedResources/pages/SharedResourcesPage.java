@@ -42,6 +42,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 public class SharedResourcesPage extends EditProjectTab {
 
   @NotNull
@@ -84,12 +85,11 @@ public class SharedResourcesPage extends EditProjectTab {
           }
         }
       }
-      // todo: add associations separately for readLocks and writeLocks
       final String projectId = project.getProjectId();
       final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
       bean = new SharedResourcesBean(settings.getResources(), usageMap);
     } else {
-      bean = new SharedResourcesBean(Collections.<Resource>emptyList()); // todo: how to differentiate error vs no resources??!
+      bean = new SharedResourcesBean(Collections.<Resource>emptyList());
     }
     model.put("bean", bean);
   }

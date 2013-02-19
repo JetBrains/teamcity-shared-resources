@@ -68,8 +68,8 @@ public class LocksStorageImpl implements LocksStorage {
 
   @NotNull
   @Override
-  public Map<Lock, String> load(@NotNull final SBuild build) {
-    final Map<Lock, String> result = new HashMap<Lock, String>();
+  public Map<String, Lock> load(@NotNull final SBuild build) {
+    final Map<String, Lock> result = new HashMap<String, Lock>();
     final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
     if (artifact.exists()) {
       try {
@@ -78,8 +78,8 @@ public class LocksStorageImpl implements LocksStorage {
         for (String line: lines) {
           List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
           if (strings.size() == 3) {
-            Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)));
-            result.put(lock, StringUtil.trim(strings.get(2)));
+            Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)), StringUtil.trim(strings.get(2)));
+            result.put(lock.getName(), lock);
           } else {
             log.warn("Wrong locks storage format"); // todo: line? file?
           }

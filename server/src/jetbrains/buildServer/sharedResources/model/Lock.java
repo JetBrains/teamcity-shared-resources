@@ -25,19 +25,35 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Lock {
 
+  @NotNull
+  private static final String NO_VALUE = "";
+
   /**
    * Name of the lock
    */
+  @NotNull
   private final String myName;
 
   /**
    * Type of the lock
    */
+  @NotNull
   private final LockType myType;
 
-  public Lock(@NotNull final String name, @NotNull final LockType type) {
+  /**
+   * Value of the lock. Represents instance of shared resource locked
+   */
+  @NotNull
+  private final String myValue;
+
+  public Lock(@NotNull final String name, @NotNull final LockType type, @NotNull final String value) {
     myName = name;
     myType = type;
+    myValue = value;
+  }
+
+  public Lock(@NotNull final String name, @NotNull final LockType type) {
+    this(name, type, NO_VALUE);
   }
 
   @NotNull
@@ -50,26 +66,35 @@ public class Lock {
     return myType;
   }
 
+  public String getValue() {
+    return myValue;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Lock)) return false;
     Lock lock = (Lock) o;
-    return myName.equals(lock.myName) && myType == lock.myType;
+    return myName.equals(lock.myName)
+            && myType == lock.myType
+            && myValue.equals(lock.myValue);
+
   }
 
   @Override
   public int hashCode() {
     int result = myName.hashCode();
     result = 31 * result + myType.hashCode();
+    result = 31 * result + myValue.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    return "Lock {" +
-            "name ='" + myName + '\'' +
-            ", type ='" + myType.getName() + '\'' +
+    return "Lock{" +
+            "myName='" + myName + '\'' +
+            ", myType=" + myType +
+            ", myValue='" + myValue + '\'' +
             '}';
   }
 }

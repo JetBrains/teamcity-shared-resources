@@ -20,8 +20,8 @@ import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class {@code TakenLock}.
@@ -33,39 +33,31 @@ import java.util.Set;
 @SuppressWarnings("UnusedShould")
 public class TakenLock {
 
-  // current implementation does not support values for locks
-
-  //private final Map<BuildPromotionInfo, String> readLocks = new HashMap<BuildPromotionInfo, String>();
-
-  //private final Map<BuildPromotionInfo, String> writeLocks = new HashMap<BuildPromotionInfo, String>();
-
-
-  /**
-   * Contains build promotions that have acquired read lock
-   */
   @NotNull
-  private final Set<BuildPromotionInfo> readLocks = new HashSet<BuildPromotionInfo>();
+  private final Map<BuildPromotionInfo, String> readLocks = new HashMap<BuildPromotionInfo, String>();
 
-  /**
-   * Contains build promotions that have acquired write lock
-   */
   @NotNull
-  private final Set<BuildPromotionInfo> writeLocks = new HashSet<BuildPromotionInfo>(); // do we need a set here? write lock is exclusive
+  private final Map<BuildPromotionInfo, String> writeLocks = new HashMap<BuildPromotionInfo, String>();
 
   public void addLock(@NotNull final BuildPromotionInfo info, @NotNull final Lock lock) {
     switch (lock.getType()) {
       case READ:
-        readLocks.add(info);
+        readLocks.put(info, lock.getValue());
         break;
       case WRITE:
-        writeLocks.add(info);
+        writeLocks.put(info, lock.getValue());
         break;
     }
   }
 
   @NotNull
-  public Set<BuildPromotionInfo> getReadLocks() {
-    return Collections.unmodifiableSet(readLocks);
+  public Map<BuildPromotionInfo, String> getReadLocks() {
+    return Collections.unmodifiableMap(readLocks);
+  }
+
+  @NotNull
+  public Map<BuildPromotionInfo, String> getWriteLocks() {
+    return Collections.unmodifiableMap(writeLocks);
   }
 
   public boolean hasReadLocks() {

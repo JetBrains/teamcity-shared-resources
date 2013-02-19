@@ -85,7 +85,7 @@ public class LocksStorageImplTest extends BaseTestCase {
       will(returnValue(artifactsDir));
     }});
 
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(2, result.size());
   }
@@ -98,7 +98,7 @@ public class LocksStorageImplTest extends BaseTestCase {
       will(returnValue(artifactsDir));
     }});
 
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(2, result.size());
   }
@@ -111,7 +111,7 @@ public class LocksStorageImplTest extends BaseTestCase {
       will(returnValue(artifactsDir));
     }});
 
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(3, result.size());
   }
@@ -124,7 +124,7 @@ public class LocksStorageImplTest extends BaseTestCase {
       will(returnValue(artifactsDir));
     }});
 
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -141,7 +141,7 @@ public class LocksStorageImplTest extends BaseTestCase {
 
     final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
     myLocksStorage.store(myBuild, takenLocks);
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -161,13 +161,13 @@ public class LocksStorageImplTest extends BaseTestCase {
     takenLocks.put(lock1, "");
     takenLocks.put(lock2, "");
     myLocksStorage.store(myBuild, takenLocks);
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(2, result.size());
-    assertContains(result.keySet(), lock1);
-    assertContains(result.keySet(), lock2);
-    assertEquals("", result.get(lock1));
-    assertEquals("", result.get(lock2));
+    assertContains(result.values(), lock1);
+    assertContains(result.values(), lock2);
+    assertEquals("", result.get(lock1.getName()).getValue());
+    assertEquals("", result.get(lock2.getName()).getValue());
   }
 
   @Test
@@ -179,21 +179,19 @@ public class LocksStorageImplTest extends BaseTestCase {
     }});
 
     final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
-    final Lock lock1 = new Lock("lock1", LockType.READ);
-    final Lock lock2 = new Lock("lock2", LockType.WRITE);
-
     final String value1 = "_value_1_";
     final String value2 = "_value_2_";
+    final Lock lock1 = new Lock("lock1", LockType.READ);
+    final Lock lock2 = new Lock("lock2", LockType.WRITE);
     takenLocks.put(lock1, value1);
     takenLocks.put(lock2, value2);
+
     myLocksStorage.store(myBuild, takenLocks);
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(2, result.size());
-    assertContains(result.keySet(), lock1);
-    assertContains(result.keySet(), lock2);
-    assertEquals(value1, result.get(lock1));
-    assertEquals(value2, result.get(lock2));
+    assertEquals(value1, result.get(lock1.getName()).getValue());
+    assertEquals(value2, result.get(lock2.getName()).getValue());
   }
 
   @Test
@@ -214,15 +212,12 @@ public class LocksStorageImplTest extends BaseTestCase {
     takenLocks.put(lock11, value);
     takenLocks.put(lock2, "");
     myLocksStorage.store(myBuild, takenLocks);
-    final Map<Lock, String> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
     assertEquals(3, result.size());
-    assertContains(result.keySet(), lock1);
-    assertContains(result.keySet(), lock2);
-    assertContains(result.keySet(), lock11);
-    assertEquals("", result.get(lock1));
-    assertEquals("", result.get(lock2));
-    assertEquals(value, result.get(lock11));
+    assertEquals("", result.get(lock1.getName()).getValue());
+    assertEquals("", result.get(lock2.getName()).getValue());
+    assertEquals(value, result.get(lock11.getName()).getValue());
   }
 
   @Test

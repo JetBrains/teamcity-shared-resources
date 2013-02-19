@@ -65,14 +65,14 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
         if (!locks.isEmpty()) {
           final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
           // get custom resources from our locks
-          final Map<String, Resource> myCustomResources = getCustomResources(projectId, locks);
+          final Map<String, CustomResource> myCustomResources = getCustomResources(projectId, locks);
           synchronized (lock) {
             // decide whether we need to resolve values
             if (!myCustomResources.isEmpty()) {
               final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
-              for (Map.Entry<String, Resource> entry: myCustomResources.entrySet()) {
+              for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
                 // get value space for current resources
-                final Set<String> values = new HashSet<String>(((CustomResource) entry.getValue()).getValues());
+                final Set<String> values = new HashSet<String>(entry.getValue().getValues());
                 final String key = entry.getKey();
                 // remove used values
                 values.removeAll(usedValues.get(key));
@@ -88,11 +88,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
             }
             myLocksStorage.store(build, myTakenValues);
           }
-        } else {
-          log.info("SRCP :>> no locks found");
         }
-      } else {
-        log.info("SRCP :>> no features present");
       }
     }
   }
@@ -111,11 +107,14 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     }
     // collect taken values from runtime
     for (SRunningBuild runningBuild: runningBuilds) {
-      Map<Lock, String> locksInRunningBuild = myLocksStorage.load(runningBuild);
+      Map<String, Lock> locksInRunningBuild = myLocksStorage.load(runningBuild);
       for (Lock l: locks.values()) {
-        String value = locksInRunningBuild.get(l);
-        if (value != null && !"".equals(value)) {
-          usedValues.get(l.getName()).add(value);
+        Lock runningLock = locksInRunningBuild.get(l.getName());
+        if (runningLock != null) {
+          String value = runningLock.getValue();
+          if (!"".equals(value)) {
+            usedValues.get(l.getName()).add(value);
+          }
         }
       }
     }
@@ -129,14 +128,13 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
    * @return collection of resources among required locks that are custom
    */
   @NotNull
-  private Map<String, Resource> getCustomResources(@NotNull final String projectId, @NotNull final Map<String, Lock> locks) {
-    final Map<String, Resource> myCustomResources = new HashMap<String, Resource>();
+  private Map<String, CustomResource> getCustomResources(@NotNull final String projectId, @NotNull final Map<String, Lock> locks) {
+    final Map<String, CustomResource> myCustomResources = new HashMap<String, CustomResource>();
     final Map<String, Resource> resourceMap = myResources.asMap(projectId);
     for (Map.Entry<String, Lock> entry: locks.entrySet()) {
       final Resource r = resourceMap.get(entry.getKey());
       if (ResourceType.CUSTOM.equals(r.getType())) {
-        log.info("SRCP :>> custom resource found! [" + r.getName() + "]");
-        myCustomResources.put(r.getName(), r);
+        myCustomResources.put(r.getName(), (CustomResource)r);
       }
     }
     return myCustomResources;

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Oleg Rybak
  */
+@SuppressWarnings("UnusedShould")
 public enum LockType {
 
   /**
@@ -33,7 +34,12 @@ public enum LockType {
   /**
    * Exclusive lock
    */
-  WRITE("writeLock");
+  WRITE("writeLock"),
+
+  /**
+   * Custom lock
+   */
+  CUSTOM("customLock");
 
   @NotNull
   private final String name;
