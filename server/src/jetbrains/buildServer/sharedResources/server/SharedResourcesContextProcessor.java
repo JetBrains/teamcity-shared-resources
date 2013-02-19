@@ -22,7 +22,7 @@ import java.util.*;
 @SuppressWarnings("UnusedShould")
 public class SharedResourcesContextProcessor implements BuildStartContextProcessor {
 
-  private final Object lock = new Object();
+  private final Object o = new Object();
 
   private static final Logger log = Logger.getInstance(BuildStartContextProcessor.class.getName());
 
@@ -66,7 +66,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
           final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
           // get custom resources from our locks
           final Map<String, CustomResource> myCustomResources = getCustomResources(projectId, locks);
-          synchronized (lock) {
+          synchronized (o) {
             // decide whether we need to resolve values
             if (!myCustomResources.isEmpty()) {
               final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
@@ -77,10 +77,11 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
                 // remove used values
                 values.removeAll(usedValues.get(key));
                 if (!values.isEmpty()) {
-                  final String paramName = myLocks.asBuildParameter(locks.get(key));
-                  String valueToTake = values.iterator().next();
-                  context.addSharedParameter(paramName, valueToTake);
-                  myTakenValues.put(locks.get(key), valueToTake);
+                  final Lock currentLock = locks.get(key);
+                  final String paramName = myLocks.asBuildParameter(currentLock);
+                  final String currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                  context.addSharedParameter(paramName, currentValue);
+                  myTakenValues.put(currentLock, currentValue);
                 } else {
                   log.warn("Unable to assign value lo lock [" + key + "]");
                 }
