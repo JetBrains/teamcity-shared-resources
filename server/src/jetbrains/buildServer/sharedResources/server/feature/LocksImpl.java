@@ -175,7 +175,7 @@ public final class LocksImpl implements Locks {
       // lock is valid
       if (m > 0) {
         // values
-        result = new Lock(name, type, str.substring(m + 1));
+        result = new Lock(name, type, str.substring(m + 1).trim());
       } else {
         // no values
         result = new Lock(str.substring(0, n), type);

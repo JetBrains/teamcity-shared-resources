@@ -36,236 +36,310 @@
 
 <script type="text/javascript">
 
-  BS.LocksUtil = {
+BS.LocksUtil = {
 
-    locksDisplay: {
-      readLock: "Read Lock",
-      writeLock: "Write Lock"
-    },
+  locksDisplay: {
+    readLock: "Read Lock",
+    writeLock: "Write Lock"
+  },
 
-    lockToString: function(lock) {
-      return lock.name + " " + lock.type + " " + (lock.value ? lock.value : "") + "\n";
-    },
+  lockToString: function(lock) {
+    return lock.name + " " + lock.type + " " + (lock.value ? lock.value : "") + "\n";
+  },
 
-    lockToTableRow: function(lock) {
-      var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
-      var result = {};
-      result.name = lock.name;
-      if (resource.type == 'CUSTOM') {
-        if (lock.type == 'readLock') {
-          result.description = "Any Value";
+  lockToTableRow: function(lock) {
+    var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
+    var result = {};
+    result.name = lock.name;
+    if (resource.type == 'CUSTOM') {
+      if (lock.type == 'readLock') {
+        result.description = "Any Value";
+      } else {
+        if (lock.value) {
+          result.description = "Specific Value: " + lock.value;
         } else {
-          if (lock.value) {
-            result.description = "Specific Value: " + lock.value;
-          } else {
-            result.description = "ALL Values";
-          }
+          result.description = "ALL Values";
         }
-      } else {
-        result.description = this.locksDisplay[lock.type];
       }
-      return result;
+    } else {
+      result.description = this.locksDisplay[lock.type];
     }
-  };
-
-  /**
-   * Data container for resources and locks
-   *
-   * Deals with table of locks, calls dialog for add/edit
-   *
-   * @type {{resources: {}, locks: {}}}
-   */
-  BS.SharedResourcesFeatureDialog = {
-    resources: {}, // map of resources: <resource_name, Resource>
-    locks: {}, // map of locks: <lock_name, Lock>
-    inherited: false,
-
-    refreshUI: function() {
-      var tableBody = $j('#locksTaken tbody:last');
-      var textArea = $j('#${locksFeatureParamKey}');
-      tableBody.children().remove();
-      var locks = this.locks;
-      var textAreaContent = "";
-      //noinspection JSUnresolvedVariable
-      var size = _.size(locks);
-      if (size > 0) { // we have some locks
-        for (var key in locks) {
-          if (locks.hasOwnProperty(key)) {
-            var od, deleteCell;
-            if (this.inherited) {
-              deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
-            } else {
-              od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
-              deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
-            }
-            textAreaContent += BS.LocksUtil.lockToString(locks[key]);
-            var tableRow = BS.LocksUtil.lockToTableRow(locks[key]);
-            //noinspection JSCheckFunctionSignatures
-            tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
-                    .append($j('<td>').text(tableRow.name))
-                    .append($j('<td>').text(tableRow.description))
-                    .append(deleteCell)
-            );
-          }
-        }
-        //noinspection JSUnresolvedFunction
-        textArea.val(textAreaContent.trim());
-        BS.MultilineProperties.updateVisible();
-        BS.Util.show('locksTaken');
-        BS.Util.hide('noLocksTaken');
-      } else { // no locks are taken
-        BS.Util.hide('locksTaken');
-        BS.Util.show('noLocksTaken');
-      }
-    },
-
-    deleteLock: function(lockName) {
-      delete this.locks[lockName];
-      this.refreshUI();
-    }
+    return result;
   }
+};
 
-  //noinspection JSUnusedGlobalSymbols
-  /**
-   * Dialog for adding/editing locks
-   * @type {*}
-   */
-  BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
-    attachedToRoot: false,
-    availableResources: {},
+/**
+ * Data container for resources and locks
+ *
+ * Deals with table of locks, calls dialog for add/edit
+ *
+ * @type {{resources: {}, locks: {}}}
+ */
+BS.SharedResourcesFeatureDialog = {
+  resources: {}, // map of resources: <resource_name, Resource>
+  locks: {}, // map of locks: <lock_name, Lock>
+  inherited: false,
 
-    getContainer: function() {
-      return $('locksDialog');
-    },
-
-    showDialog: function() {
-      this.editMode = false;
-      // filter available resources
-      this.fillAvailableResources();
-      // sync state (resources / no resources)
-      this.displayResourceChooser();
-
-
-
-      // sync state (resource type => locks type (quoted => read/write; custom=>ALL/ANY/SPECIFIC))
-      this.showCentered();
-      this.bindCtrlEnterHandler(this.submit.bind(this));
-    },
-
-    /**
-     * Filters resources that will be available for resource chooser
-     */
-    fillAvailableResources: function() {
-      this.availableResources = {};
-      var resources =  BS.SharedResourcesFeatureDialog.resources;
-      var locks = BS.SharedResourcesFeatureDialog.locks;
-      for (var key in resources) {
-        if (resources.hasOwnProperty(key) && !locks[key]) { // resource exists but is not used
-          this.availableResources[key] = resources[key];
-        }
-      }
-
-      var resourceDropdown = $j('#lockFromResources');
-      resourceDropdown.children().remove();
-      for (var key in this.availableResources) {
-        if (this.availableResources.hasOwnProperty(key)) {
-          //noinspection JSCheckFunctionSignatures
-          resourceDropdown.append("<option value='" + this.availableResources[key].name + "'>" + this.availableResources[key].name + "</option>");
-        }
-      }
-
-    },
-
-    displayResourceChooser: function() {
-      //noinspection JSUnresolvedVariable
-      if (_.size(this.availableResources) > 0) {
-        BS.Util.show('lockFromResources_Yes');
-        BS.Util.hide('lockFromResources_No');
-        this.chooseResource();
-      } else {
-        BS.Util.show('lockFromResources_No');
-        BS.Util.hide('lockFromResources_Yes');
-      }
-    },
-
-    chooseResource: function() {
-      // get value of chooser
-      var resourceName = $j('#lockFromResources option:selected').val();
-      // get resource for value
-      var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
-      // get resource type
-      if (resource.type == 'QUOTED') {
-        BS.Util.show('row_QuotedResource_Type');
-        BS.Util.hide('row_CustomResource_Type');
-        BS.Util.hide('row_CustomResource_Value');
-      } else {
-        BS.Util.show('row_CustomResource_Type');
-        BS.Util.hide('row_QuotedResource_Type');
-        this.chooseCustomLockType();
-      }
-    },
-
-    chooseCustomLockType: function() {
-      var customType = $j('#newCustomLockType option:selected').val();
-      if ('SPECIFIC' === customType) {
-        BS.Util.show('row_CustomResource_Value');
-        this.fillResourceValues();
-      } else {
-        BS.Util.hide('row_CustomResource_Value');
-      }
-    },
-
-    fillResourceValues: function() {
-      // get value of chooser
-      var resourceName = $j('#lockFromResources option:selected').val();
-      // get resource for value
-      var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
-      var valuesDropdown = $j('#newCustomLockType_Values');
-      valuesDropdown.children().remove();
-      for (var key in resource.values) {
-        if (resource.values.hasOwnProperty(key)) {
-          //noinspection JSCheckFunctionSignatures
-          valuesDropdown.append("<option value='" + resource.values[key] + "'>" + resource.values[key] + "</option>");
-        }
-      }
-    },
-
-    submit: function() {
-      if (this.editMode) {
-        console.log('Edit mode is not implemented yet!');
-      } else {
-        // construct lock
-        var lock = {};
-        /// get selected resource name
-        /// get selected resource
-        // get value of chooser
-        var resourceName = $j('#lockFromResources option:selected').val();
-        // get resource for value
-        var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
-        lock.name = resourceName;
-        ///
-        if (resource.type === 'QUOTED') {
-          lock.type = $j('#newLockType option:selected').val();
-        } else { // CUSTOM
-          var typeName = $j('#newCustomLockType option:selected').val();
-          if (typeName === 'ANY') {
-            lock.type = "readLock";
-          } else if (typeName === 'SPECIFIC') {
-            lock.type = "writeLock";
-            lock.value = $j('#newCustomLockType_Values option:selected').val();
+  refreshUI: function() {
+    var tableBody = $j('#locksTaken tbody:last');
+    var textArea = $j('#${locksFeatureParamKey}');
+    tableBody.children().remove();
+    var locks = this.locks;
+    var textAreaContent = "";
+    //noinspection JSUnresolvedVariable
+    var size = _.size(locks);
+    if (size > 0) { // we have some locks
+      for (var key in locks) {
+        if (locks.hasOwnProperty(key)) {
+          var od, deleteCell;
+          var oc, editCell;
+          var hClass;
+          if (this.inherited) {
+            oc = '';
+            od = '';
+            hClass = '';
+            editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
+            deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
           } else {
-            lock.type = "writeLock";
+            oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
+            od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
+            hClass = 'highlight';
+            editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('style', 'width: 10%').attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
+            deleteCell = $j('<td>').attr('class', 'edit').attr('style', 'width: 10%').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
           }
+          textAreaContent += BS.LocksUtil.lockToString(locks[key]);
+          var tableRow = BS.LocksUtil.lockToTableRow(locks[key]);
+          //noinspection JSCheckFunctionSignatures
+          tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
+                  .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
+                  .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc))
+                  .append(editCell)
+                  .append(deleteCell)
+          );
         }
-        // add to locks
-        BS.SharedResourcesFeatureDialog.locks[lock.name] = lock;
-        // refresh ui
-        BS.SharedResourcesFeatureDialog.refreshUI();
       }
-      this.close();
-      return false;
+      //noinspection JSUnresolvedFunction
+      textArea.val(textAreaContent.trim());
+      this.rehighlight();
+      BS.MultilineProperties.updateVisible();
+      BS.Util.show('locksTaken');
+      BS.Util.hide('noLocksTaken');
+    } else { // no locks are taken
+      BS.Util.hide('locksTaken');
+      BS.Util.show('noLocksTaken');
     }
-  });
+  },
+
+  rehighlight: function () {
+    var hElements = $j("#locksTaken td.highlight");
+    hElements.each(function (i, element) {
+      BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
+    });
+  },
+
+  deleteLock: function(lockName) {
+    delete this.locks[lockName];
+    this.refreshUI();
+  }
+}
+
+//noinspection JSUnusedGlobalSymbols
+/**
+ * Dialog for adding/editing locks
+ * @type {*}
+ */
+BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
+  attachedToRoot: false,
+  availableResources: {},
+  currentLockName: "",
+
+  getContainer: function() {
+    return $('locksDialog');
+  },
+
+  showDialog: function() {
+    this.editMode = false;
+    // filter available resources
+    this.fillAvailableResources();
+    this.fillAvailableResourcesDropdown();
+    // sync state (resources / no resources)
+    this.displayResourceChooser();
+    // sync state (resource type => locks type (quoted => read/write; custom=>ALL/ANY/SPECIFIC))
+    this.showCentered();
+    this.bindCtrlEnterHandler(this.submit.bind(this));
+  },
+
+  showEdit: function(lockName) {
+    this.editMode = true;
+    this.currentLockName = lockName;
+    // select resource
+    var currentResource = BS.SharedResourcesFeatureDialog.resources[this.currentLockName];
+    // select lock
+    var currentLock = BS.SharedResourcesFeatureDialog.locks[this.currentLockName];
+    // filter available resources
+    this.fillAvailableResources();
+    // add current resource to available
+    this.availableResources[this.currentLockName] = currentResource;
+    // fill dropdown
+    this.fillAvailableResourcesDropdown();
+    // restore selection
+    $j('#lockFromResources option').each(function() {
+      var self = $j(this);
+      self.prop("selected", self.val() == lockName);
+    });
+    this.displayResourceChooser();
+    this.chooseResource();
+    // set values
+    if (currentResource.type === 'CUSTOM') {
+      var customLockType;
+      if (currentLock.type === 'writeLock') {
+        if (currentLock.value) {
+          customLockType = 'SPECIFIC';
+        } else {
+          customLockType = 'ALL';
+        }
+      } else {
+        customLockType = 'ANY';
+      }
+      $j('#newCustomLockType option').each(function() {
+        var self = $j(this);
+        self.prop("selected", self.val() == customLockType);
+      }); // restore lock type
+      this.chooseCustomLockType();
+      if (customLockType === 'SPECIFIC') {
+        // restore selection
+        $j('#newCustomLockType_Values option').each(function() {
+          var self = $j(this);
+          self.prop("selected", self.val() == currentLock.value);
+        });
+      }
+    } else { // quoted resource. simply select lock type
+      $j('#newLockType option').each(function() {
+        var self = $j(this);
+        self.prop("selected", self.val() == currentLock.type);
+      }); // restore lock type
+    }
+    this.showCentered();
+    this.bindCtrlEnterHandler(this.submit.bind(this));
+  },
+
+  fillAvailableResourcesDropdown: function () {
+    var resourceDropdown = $j('#lockFromResources');
+    resourceDropdown.children().remove();
+    for (var key in this.availableResources) {
+      if (this.availableResources.hasOwnProperty(key)) {
+        //noinspection JSCheckFunctionSignatures
+        resourceDropdown.append("<option value='" + this.availableResources[key].name + "'>" + this.availableResources[key].name + "</option>");
+      }
+    }
+  }, /**
+   * Filters resources that will be available for resource chooser
+   */
+  fillAvailableResources: function() {
+    this.availableResources = {};
+    var resources =  BS.SharedResourcesFeatureDialog.resources;
+    var locks = BS.SharedResourcesFeatureDialog.locks;
+    for (var key in resources) {
+      if (resources.hasOwnProperty(key) && !locks[key]) { // resource exists but is not used
+        this.availableResources[key] = resources[key];
+      }
+    }
+  },
+
+  displayResourceChooser: function() {
+    //noinspection JSUnresolvedVariable
+    if (_.size(this.availableResources) > 0) {
+      BS.Util.show('lockFromResources_Yes');
+      BS.Util.hide('lockFromResources_No');
+      this.chooseResource();
+    } else {
+      BS.Util.show('lockFromResources_No');
+      BS.Util.hide('lockFromResources_Yes');
+
+      BS.Util.hide('row_CustomResource_Type');
+      BS.Util.hide('row_QuotedResource_Type');
+      BS.Util.hide('row_CustomResource_Value');
+    }
+  },
+
+  chooseResource: function() {
+    // get value of chooser
+    var resourceName = $j('#lockFromResources option:selected').val();
+    // get resource for value
+    var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+    // get resource type
+    if (resource.type == 'QUOTED') {
+      BS.Util.show('row_QuotedResource_Type');
+      BS.Util.hide('row_CustomResource_Type');
+      BS.Util.hide('row_CustomResource_Value');
+    } else {
+      BS.Util.show('row_CustomResource_Type');
+      BS.Util.hide('row_QuotedResource_Type');
+      this.chooseCustomLockType();
+    }
+  },
+
+  chooseCustomLockType: function() {
+    var customType = $j('#newCustomLockType option:selected').val();
+    if ('SPECIFIC' === customType) {
+      BS.Util.show('row_CustomResource_Value');
+      this.fillResourceValues();
+    } else {
+      BS.Util.hide('row_CustomResource_Value');
+    }
+  },
+
+  fillResourceValues: function() {
+    // get value of chooser
+    var resourceName = $j('#lockFromResources option:selected').val();
+    // get resource for value
+    var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+    var valuesDropdown = $j('#newCustomLockType_Values');
+    valuesDropdown.children().remove();
+    for (var key in resource.values) {
+      if (resource.values.hasOwnProperty(key)) {
+        //noinspection JSCheckFunctionSignatures
+        valuesDropdown.append("<option value='" + resource.values[key] + "'>" + resource.values[key] + "</option>");
+      }
+    }
+  },
+
+  submit: function() {
+
+    // construct lock
+    var lock = {};
+    /// get selected resource name
+    /// get selected resource
+    // get value of chooser
+    var resourceName = $j('#lockFromResources option:selected').val();
+    // get resource for value
+    var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+    lock.name = resourceName;
+    ///
+    if (resource.type === 'QUOTED') {
+      lock.type = $j('#newLockType option:selected').val();
+    } else { // CUSTOM
+      var typeName = $j('#newCustomLockType option:selected').val();
+      if (typeName === 'ANY') {
+        lock.type = "readLock";
+      } else if (typeName === 'SPECIFIC') {
+        lock.type = "writeLock";
+        lock.value = $j('#newCustomLockType_Values option:selected').val();
+      } else {
+        lock.type = "writeLock";
+      }
+    }
+    if (this.editMode) {
+      delete BS.SharedResourcesFeatureDialog.locks[this.currentLockName];
+    }
+    // add to locks
+    BS.SharedResourcesFeatureDialog.locks[lock.name] = lock;
+    // refresh ui
+    BS.SharedResourcesFeatureDialog.refreshUI();
+    this.close();
+    return false;
+  }
+});
 </script>
 
 <script type="text/javascript">
@@ -312,7 +386,7 @@
       <thead>
       <tr>
         <th style="width: 25%">Resource Name</th>
-        <th colspan="2" style="width: 75%">Lock Details</th>
+        <th colspan="3" style="width: 75%">Lock Details</th>
       </tr>
       </thead>
       <tbody>
@@ -326,7 +400,7 @@
 </tr>
 
 <tr style="display: none">
-  <th>To String:</th>
+  <th>Locks</th>
   <td>
     <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
     <span class="error" id="error_${locksFeatureParamKey}"></span>

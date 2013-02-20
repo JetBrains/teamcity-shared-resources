@@ -40,7 +40,7 @@ public final class FeatureParamsImpl implements FeatureParams {
 
   // messages
   @NotNull
-  static final String NO_LOCKS_MESSAGE = "No locks are currently used by this build configuration";
+  static final String NO_LOCKS_MESSAGE = "No locks are currently used by this build feature.";
 
   @NotNull
   static final String READ_LOCKS_MESSAGE = "Read locks used: ";
@@ -72,10 +72,12 @@ public final class FeatureParamsImpl implements FeatureParams {
     if (!readLockNames.isEmpty()) {
       sb.append(READ_LOCKS_MESSAGE);
       sb.append(StringUtil.join(readLockNames, ", "));
+      sb.append(". ");
     }
     if (!writeLockNames.isEmpty()) {
       sb.append(WRITE_LOCKS_MESSAGE);
       sb.append(StringUtil.join(writeLockNames, ", "));
+      sb.append(". ");
     }
     if (sb.length() == 0) {
       sb.append(NO_LOCKS_MESSAGE);
