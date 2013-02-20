@@ -34,12 +34,7 @@ public enum LockType {
   /**
    * Exclusive lock
    */
-  WRITE("writeLock"),
-
-  /**
-   * Custom lock
-   */
-  CUSTOM("customLock");
+  WRITE("writeLock");
 
   @NotNull
   private final String name;

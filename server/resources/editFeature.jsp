@@ -17,7 +17,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.server.feature.FeatureParams" %>
-<%@ page import="jetbrains.buildServer.sharedResources.model.LockType" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 
@@ -36,336 +35,275 @@
 <c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
 
 <script type="text/javascript">
-BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
-  attachedToRoot: false,
-  myData: {}, // here we have locks
-  myLocksDisplay: {},
-  editMode: false,
-  inherited: false,
-  currentLockName: "",
-  existingResources: {}, // here are existing resources + resources created in place
-  availableResources: {},
 
-  /* existingResources - myResources - myTemplateResources */
-  filterAvailableResources: function() {
-    this.availableResources = {};
-    var m = this.myData;
-    var e = this.existingResources;
-    for (var key in e) {
-      if (e.hasOwnProperty(key) && !m[key]) { // resource exists but is not used
-        this.availableResources[key] = true;
-      }
-    }
-    var resourceDropdown = $j('#lockFromResources');
-    resourceDropdown.children().remove();
-    for (var resource in this.availableResources) {
-      resourceDropdown.append("<option value='" + resource + "'>" + resource + "</option>");
-    }
-  },
+  BS.LocksUtil = {
 
-  rehighlight: function () {
-    var hElements = $j("#locksTaken td.highlight");
-    hElements.each(function (i, element) {
-      BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
-    });
-  },
+    locksDisplay: {
+      readLock: "Read Lock",
+      writeLock: "Write Lock"
+    },
 
-  refreshUI: function() {
-    var tableBody = $j('#locksTaken tbody:last');
-    var textArea = $('${locksFeatureParamKey}');
-    tableBody.children().remove();
-    var self = this.myData;
-    var textAreaContent = "";
-    var size = _.size(self);
-    if (size > 0) {
-      BS.Util.show('locksTaken');
-      BS.Util.hide('noLocksTaken');
-      for (var key in self) {
-        if (self.hasOwnProperty(key)) {
-          var oc, od, hClass;
-          var editCell, deleteCell;
-          if (this.inherited) {
-            oc = '';
-            od = '';
-            hClass = '';
-            editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
-            deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+    lockToString: function(lock) {
+      return lock.name + " " + lock.type + " " + (lock.value ? lock.value : "") + "\n";
+    },
+
+    lockToTableRow: function(lock) {
+      var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
+      var result = {};
+      result.name = lock.name;
+      if (resource.type == 'CUSTOM') {
+        if (lock.type == 'readLock') {
+          result.description = "Any Value";
+        } else {
+          if (lock.value) {
+            result.description = "Specific Value: " + lock.value;
           } else {
-            oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
-            od = 'BS.LocksDialog.deleteLockFromTakenLocks(\"' + key + '\"); return false;';
-            hClass = 'highlight';
-            editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
-            deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
+            result.description = "ALL Values";
           }
-          //noinspection JSCheckFunctionSignatures
-          tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
-                  .append($j('<td>').attr('class', hClass).text(key).attr('onclick', oc))
-                  .append($j('<td>').attr('class', hClass).text('' + this.myLocksDisplay[self[key]]).attr('onclick', oc))
-                  .append(editCell)
-                  .append(deleteCell)
-          );
-          textAreaContent += key + " " + self[key] + "\n";
         }
+      } else {
+        result.description = this.locksDisplay[lock.type];
       }
-    } else {
-      BS.Util.hide('locksTaken');
-      BS.Util.show('noLocksTaken');
+      return result;
     }
-    textArea.value = textAreaContent.trim();
-    this.rehighlight(); // rebuild highlighted rows
-    BS.MultilineProperties.updateVisible();
-  },
-
-  getContainer: function() {
-    return $('locksDialog');
-  },
-
-  showDialog: function() {
-    this.editMode = false;
-    this.filterAvailableResources();
-
-    $j("#locksDialogSubmit").prop('value', 'Add');
-    $j('#newLockName').val("");
-    $j('#resource_quota').value = "1";
-
-    // Set dialog mode to choose
-
-    var size = _.size(this.existingResources);
-
-    var modeName = size > 0 ? 'choose' : 'create';
-    $j('#lockSource option').each(function() {
-      var self = $j(this);
-      self.prop("selected", self.val() == modeName);
-    });
-    this.syncResourceSelectionState();
-
-    //this.refreshUI();
-    this.showCentered();
-    this.bindCtrlEnterHandler(this.submit.bind(this));
-  },
+  };
 
   /**
-   * Shows dialog used to edit lock
-   * @param lockName name of the lock
+   * Data container for resources and locks
+   *
+   * Deals with table of locks, calls dialog for add/edit
+   *
+   * @type {{resources: {}, locks: {}}}
    */
-  showEdit: function(lockName) {
-    this.editMode = true;
-    this.filterAvailableResources();
-    this.currentLockName = lockName;
-    $j("#locksDialogSubmit").prop('value', 'Save');
-    $j('newLockName').val("");
-    var lockType = this.myData[lockName];
+  BS.SharedResourcesFeatureDialog = {
+    resources: {}, // map of resources: <resource_name, Resource>
+    locks: {}, // map of locks: <lock_name, Lock>
+    inherited: false,
 
-
-    this.availableResources[lockName] = true;
-    $j('#lockFromResources').append("<option value='" + lockName + "'>" + lockName + "</option>");
-    $j('#lockSource option').each(function() {
-      var self = $j(this);
-      self.prop("selected", self.val() == 'choose');
-    });
-    // restore 'resource is chosen' state
-    this.syncResourceSelectionState();
-
-    $j('#lockFromResources option').each(function() {
-      var self = $j(this);
-      self.prop("selected", self.val() == lockName);
-    }); // restore lock name in selection
-
-    $j('#newLockType option').each(function() {
-      var self = $j(this);
-      self.prop("selected", self.val() == lockType);
-    }); // restore lock type
-
-    this.showCentered();
-    this.bindCtrlEnterHandler(this.submit.bind(this));
-  },
-
-  submit: function() {
-    if (!this.validate()) return false;
-
-    var flag = $j('#lockSource option:selected').val();
-    var lockType = $j('#newLockType option:selected').val();
-
-    if (this.editMode) {
-      delete this.myData[this.currentLockName];
-      this.currentLockName = "";
-    }
-
-    var lockName;
-    if (flag === 'choose') {
-      lockName = $j('#lockFromResources option:selected').val();
-      this.myData[lockName] = lockType;
-    } else if (flag === 'create') {
-      lockName = $j('#newLockName').val();
-      if (!this.existingResources[lockName]) { // if resource does not exist
-        // ajax to add resource
-        var quota;
-        if ($j('#use_quota').is(':checked')) {
-          quota = $j('#resource_quota').val();
+    refreshUI: function() {
+      var tableBody = $j('#locksTaken tbody:last');
+      var textArea = $j('#${locksFeatureParamKey}');
+      tableBody.children().remove();
+      var locks = this.locks;
+      var textAreaContent = "";
+      //noinspection JSUnresolvedVariable
+      var size = _.size(locks);
+      if (size > 0) { // we have some locks
+        for (var key in locks) {
+          if (locks.hasOwnProperty(key)) {
+            var od, deleteCell;
+            if (this.inherited) {
+              deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+            } else {
+              od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
+              deleteCell = $j('<td>').attr('class', 'edit').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
+            }
+            textAreaContent += BS.LocksUtil.lockToString(locks[key]);
+            var tableRow = BS.LocksUtil.lockToTableRow(locks[key]);
+            //noinspection JSCheckFunctionSignatures
+            tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
+                    .append($j('<td>').text(tableRow.name))
+                    .append($j('<td>').text(tableRow.description))
+                    .append(deleteCell)
+            );
+          }
         }
-        this.createResourceInPlace(lockName, quota);
-        // add to existing resources if success (perhaps re-read all model)
-        this.existingResources[lockName] = true;
+        //noinspection JSUnresolvedFunction
+        textArea.val(textAreaContent.trim());
+        BS.MultilineProperties.updateVisible();
+        BS.Util.show('locksTaken');
+        BS.Util.hide('noLocksTaken');
+      } else { // no locks are taken
+        BS.Util.hide('locksTaken');
+        BS.Util.show('noLocksTaken');
       }
-      // choose newly created resource
-      this.myData[lockName] = lockType;
+    },
+
+    deleteLock: function(lockName) {
+      delete this.locks[lockName];
+      this.refreshUI();
     }
-    this.refreshUI();
-    this.close();
-    return false;
-  },
-
-  clearErrors: function () {
-    BS.Util.hide('error_Name');
-    $j('#error_Name').html("");
-    BS.Util.hide('error_Quota');
-    $j('#error_Quota').html("");
-  },
-
-  validate: function() { // todo: add validation to choose
-    // clean and hide errors here
-    this.clearErrors();
-    var errorsPresent = false;
-    var flag = $j('#lockSource option:selected').val();
-    if (flag === 'create') {
-      // check name
-      var element = $j('#newLockName');
-      var value =  element.val().trim();
-
-      if (value.length === 0) {
-        BS.Util.show('error_Name');
-        $j('#error_Name').html("Name must not be empty");
-        errorsPresent = true;
-      }
-
-      if (this.existingResources[value]) {
-        BS.Util.show('error_Name');
-        $j('#error_Name').html("Resource with this name already exists");
-        errorsPresent = true;
-      }
-
-      element.val(value);
-
-      // check quota
-      if ($j('#use_quota').is(':checked')) {
-        element = $j('#resource_quota');
-        value = element.val().trim();
-        if (!value.match(/^[0-9]+$/)) {
-          BS.Util.show('error_Quota');
-          $j('#error_Quota').html("Quota value is not valid");
-          errorsPresent = true;
-        }
-        element.val(value);
-      }
-    } else if (flag === 'choose') {
-      var lockName = $j('#lockFromResources option:selected').val();
-      if (!lockName) {
-        errorsPresent = true;
-        alert('Please create a resource to lock');
-      }
-    } else {
-      errorsPresent = true;
-    }
-    return !errorsPresent;
-  },
-
-  deleteLockFromTakenLocks: function(lockName) {
-    delete this.myData[lockName];
-    this.refreshUI();
-  },
-
-  toggleUseQuota: function() {
-    if ($j('#use_quota').is(':checked')) {
-      BS.Util.show('row_useQuotaInput');
-    } else {
-      BS.Util.hide('row_useQuotaInput');
-    }
-
-    BS.MultilineProperties.updateVisible();
-  },
-
-  syncResourceSelectionState: function() {
-    var flag = $j('#lockSource option:selected').val();
-    if (flag === 'choose')  {
-      this.toggleModeChoose();
-    } else if (flag === 'create') {
-      this.toggleModeCreate();
-    }
-    this.adjustExistingResource();
-    this.clearErrors();
-    BS.MultilineProperties.updateVisible();
-  },
-
-  adjustExistingResource: function () {
-    if (_.size(this.availableResources) > 0) {
-      BS.Util.hide('lockFromResources_No');
-      BS.Util.show('lockFromResources_Yes');
-    } else {
-      BS.Util.hide('lockFromResources_Yes');
-      BS.Util.show('lockFromResources_No');
-    }
-  },
-
-  toggleModeChoose: function() {
-    // choose: show
-    BS.Util.show('row_resourceChoose');
-    // create: hide
-    BS.Util.hide('row_resourceCreate');
-    BS.Util.hide('row_useQuotaSwitch');
-    BS.Util.hide('row_useQuotaInput');
-  },
-
-  toggleModeCreate: function() {
-    // choose: hide
-    BS.Util.hide('row_resourceChoose');
-    // create: show
-    BS.Util.show('row_resourceCreate');
-    BS.Util.show('row_useQuotaSwitch');
-    // quota: hide
-    $j('#use_quota').removeAttr('checked');
-    BS.Util.hide('row_useQuotaInput');
-  },
-
-  createResourceInPlace: function(resource_name, quota) {
-    var addUrl = window['base_uri'] + "${ACTION_ADD}";
-
-    var params = {};
-    params[ '${PARAM_PROJECT_ID}'] = '${project.projectId}';
-    params[ '${PARAM_RESOURCE_NAME}'] =resource_name;
-    params[ '${PARAM_RESOURCE_TYPE}'] = 'quoted';
-
-    if (quota) {
-      params['${PARAM_RESOURCE_QUOTA}'] = quota;
-    }
-    BS.ajaxRequest(addUrl, {parameters: params});
   }
-});
+
+  //noinspection JSUnusedGlobalSymbols
+  /**
+   * Dialog for adding/editing locks
+   * @type {*}
+   */
+  BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
+    attachedToRoot: false,
+    availableResources: {},
+
+    getContainer: function() {
+      return $('locksDialog');
+    },
+
+    showDialog: function() {
+      this.editMode = false;
+      // filter available resources
+      this.fillAvailableResources();
+      // sync state (resources / no resources)
+      this.displayResourceChooser();
+
+
+
+      // sync state (resource type => locks type (quoted => read/write; custom=>ALL/ANY/SPECIFIC))
+      this.showCentered();
+      this.bindCtrlEnterHandler(this.submit.bind(this));
+    },
+
+    /**
+     * Filters resources that will be available for resource chooser
+     */
+    fillAvailableResources: function() {
+      this.availableResources = {};
+      var resources =  BS.SharedResourcesFeatureDialog.resources;
+      var locks = BS.SharedResourcesFeatureDialog.locks;
+      for (var key in resources) {
+        if (resources.hasOwnProperty(key) && !locks[key]) { // resource exists but is not used
+          this.availableResources[key] = resources[key];
+        }
+      }
+
+      var resourceDropdown = $j('#lockFromResources');
+      resourceDropdown.children().remove();
+      for (var key in this.availableResources) {
+        if (this.availableResources.hasOwnProperty(key)) {
+          //noinspection JSCheckFunctionSignatures
+          resourceDropdown.append("<option value='" + this.availableResources[key].name + "'>" + this.availableResources[key].name + "</option>");
+        }
+      }
+
+    },
+
+    displayResourceChooser: function() {
+      //noinspection JSUnresolvedVariable
+      if (_.size(this.availableResources) > 0) {
+        BS.Util.show('lockFromResources_Yes');
+        BS.Util.hide('lockFromResources_No');
+        this.chooseResource();
+      } else {
+        BS.Util.show('lockFromResources_No');
+        BS.Util.hide('lockFromResources_Yes');
+      }
+    },
+
+    chooseResource: function() {
+      // get value of chooser
+      var resourceName = $j('#lockFromResources option:selected').val();
+      // get resource for value
+      var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+      // get resource type
+      if (resource.type == 'QUOTED') {
+        BS.Util.show('row_QuotedResource_Type');
+        BS.Util.hide('row_CustomResource_Type');
+        BS.Util.hide('row_CustomResource_Value');
+      } else {
+        BS.Util.show('row_CustomResource_Type');
+        BS.Util.hide('row_QuotedResource_Type');
+        this.chooseCustomLockType();
+      }
+    },
+
+    chooseCustomLockType: function() {
+      var customType = $j('#newCustomLockType option:selected').val();
+      if ('SPECIFIC' === customType) {
+        BS.Util.show('row_CustomResource_Value');
+        this.fillResourceValues();
+      } else {
+        BS.Util.hide('row_CustomResource_Value');
+      }
+    },
+
+    fillResourceValues: function() {
+      // get value of chooser
+      var resourceName = $j('#lockFromResources option:selected').val();
+      // get resource for value
+      var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+      var valuesDropdown = $j('#newCustomLockType_Values');
+      valuesDropdown.children().remove();
+      for (var key in resource.values) {
+        if (resource.values.hasOwnProperty(key)) {
+          //noinspection JSCheckFunctionSignatures
+          valuesDropdown.append("<option value='" + resource.values[key] + "'>" + resource.values[key] + "</option>");
+        }
+      }
+    },
+
+    submit: function() {
+      if (this.editMode) {
+        console.log('Edit mode is not implemented yet!');
+      } else {
+        // construct lock
+        var lock = {};
+        /// get selected resource name
+        /// get selected resource
+        // get value of chooser
+        var resourceName = $j('#lockFromResources option:selected').val();
+        // get resource for value
+        var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
+        lock.name = resourceName;
+        ///
+        if (resource.type === 'QUOTED') {
+          lock.type = $j('#newLockType option:selected').val();
+        } else { // CUSTOM
+          var typeName = $j('#newCustomLockType option:selected').val();
+          if (typeName === 'ANY') {
+            lock.type = "readLock";
+          } else if (typeName === 'SPECIFIC') {
+            lock.type = "writeLock";
+            lock.value = $j('#newCustomLockType_Values option:selected').val();
+          } else {
+            lock.type = "writeLock";
+          }
+        }
+        // add to locks
+        BS.SharedResourcesFeatureDialog.locks[lock.name] = lock;
+        // refresh ui
+        BS.SharedResourcesFeatureDialog.refreshUI();
+      }
+      this.close();
+      return false;
+    }
+  });
 </script>
 
 <script type="text/javascript">
-  var self = BS.LocksDialog;
-  /* taken locks */
-  <c:forEach var="item" items="${locks}">
-  self.myData['${item.key}'] = '${item.value.type.name}';
-  </c:forEach>
-
-  /* all existing resources for the project*/
+  var self = BS.SharedResourcesFeatureDialog;
+  /* load resources into javaScript */
+  var rs = self.resources;
+  var rc;
   <c:forEach var="item" items="${bean.resources}">
-  self.existingResources['${item.name}'] = true;
-  </c:forEach>
-
-  self.filterAvailableResources();
-  self.myLocksDisplay['readLock'] = "<%=LockType.READ.getDescriptiveName()%>";
-  self.myLocksDisplay['writeLock'] = "<%=LockType.WRITE.getDescriptiveName()%>";
-  self.inherited = <c:out value="${inherited}"/>;
-  BS.LocksDialog.refreshUI();
-
+  rc = {};
+  rc.name = '${item.name}';
+  rc.type = '${item.type}';
   <c:choose>
-  <c:when test="${inherited}">
-  BS.Util.hide("addNewLock");
-  BS.Util.show("inheritedNote");
+  <c:when test="${item.type == 'CUSTOM'}">
+  rc.values = [];
+  <c:forEach var="cr" items="${item.values}">
+  rc.values.push('${cr}');
+  </c:forEach>
+  </c:when>
+  <c:when test="${item.type == 'QUOTED'}">
+  rc.quota = ${item.quota};
   </c:when>
   </c:choose>
+  rs['${item.name}'] = rc; // push resource to map
+  </c:forEach>
+  /* load locks into javascript */
+  var locks = self.locks;
+  var lc;
+  <c:forEach var="item" items="${locks}">
+  lc = {};
+  lc.name = '${item.value.name}';
+  lc.type = '${item.value.type.name}';
+  lc.value = '${item.value.value}';
+  locks['${item.value.name}'] = lc;
+  </c:forEach>
+  self.inherited = ${inherited};
+
+  BS.SharedResourcesFeatureDialog.refreshUI();
+
 </script>
 
 <tr>
@@ -373,8 +311,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     <table id="locksTaken" class="parametersTable">
       <thead>
       <tr>
-        <th class="70%">Lock Name</th>
-        <th colspan="3" style="width: 30%">Lock Type</th>
+        <th style="width: 25%">Resource Name</th>
+        <th colspan="2" style="width: 75%">Lock Details</th>
       </tr>
       </thead>
       <tbody>
@@ -388,11 +326,10 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 </tr>
 
 <tr style="display: none">
-  <th><label for="${locksFeatureParamKey}">Resource name:</label></th>
+  <th>To String:</th>
   <td>
-    <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="Enter shared resource name(s)" cols="49" rows="5" expanded="${false}"/>
+    <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
     <span class="error" id="error_${locksFeatureParamKey}"></span>
-    <span class="smallNote">Please specify shared resources that must be locked during build</span>
   </td>
 </tr>
 
@@ -401,21 +338,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
     <bs:dialog dialogId="locksDialog" title="Lock Management" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
-        <tr>
-          <th><label for="lockSource">Resource selection: </label></th>
-          <td>
-            <forms:select name="lockSource" id="lockSource" style="width: 90%" onchange="BS.LocksDialog.syncResourceSelectionState(); return true;">
-              <forms:option value="choose">Choose an existing resource</forms:option>
-              <forms:option value="create">Create new resource</forms:option>
-            </forms:select>
-            <span class="smallNote">Choose whether you want to create a new shared resource or use an existing one</span>
-          </td>
-        </tr>
         <tr id="row_resourceChoose">
           <th><label for="lockFromResources">Resource name:</label></th>
           <td>
             <div id="lockFromResources_Yes">
-              <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"/>
+              <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%" onchange="BS.LocksDialog.chooseResource();"/>
               <span class="smallNote">Choose the resource you want to lock</span>
             </div>
             <div id="lockFromResources_No">
@@ -423,29 +350,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
             </div>
           </td>
         </tr>
-        <tr id="row_resourceCreate">
-          <th><label for="newLockName">Resource name:</label></th>
-          <td>
-            <forms:textField id="newLockName" name="newLockName" style="width: 90%" maxlength="40" className="longField buildTypeParams" defaultText=""/>
-            <span class="error" id="error_Name"></span>
-            <span class="smallNote">Specify the name of resource</span>
-          </td>
-        </tr>
-        <tr id="row_useQuotaSwitch">
-          <th>Use quota:</th>
-          <td>
-            <forms:checkbox name="use_quota" id="use_quota" onclick="BS.LocksDialog.toggleUseQuota()" checked="false"/>
-            <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on resource</span>
-          </td>
-        </tr>
-        <tr id="row_useQuotaInput" style="display: none">
-          <th><label for="resource_quota">Resource quota:</label> </th>
-          <td>
-            <forms:textField name="resource_quota" style="width: 25%" id="resource_quota" className="longField buildTypeParams" maxlength="3"/>
-            <span class="error" id="error_Quota"></span>
-          </td>
-        </tr>
-        <tr>
+
+        <tr id="row_QuotedResource_Type">
           <th><label for="newLockType">Lock type:</label></th>
           <td>
             <forms:select name="newLockType" id="newLockType" style="width: 90%">
@@ -455,13 +361,32 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
             <span class="smallNote">Select type of lock: read lock (shared), or write lock (exclusive)</span>
           </td>
         </tr>
+
+        <tr id="row_CustomResource_Type">
+          <th>Lock type:</th>
+          <td>
+            <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%" onchange="BS.LocksDialog.chooseCustomLockType(); ">
+              <forms:option value="ANY">Lock any instance</forms:option>
+              <forms:option value="ALL">Lock all instances</forms:option>
+              <forms:option value="SPECIFIC">Lock specific instance</forms:option>
+            </forms:select>
+            <span class="smallNote">Select type of lock on custom resource: any instance, all instances or specify instance you want to lock</span>
+          </td>
+        </tr>
+
+        <tr id="row_CustomResource_Value">
+          <th>Instance to lock:</th>
+          <td>
+            <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
+            <span class="smallNote">Choose instance of custom resource to lock</span>
+          </td>
+        </tr>
+
       </table>
       <div class="popupSaveButtonsBlock">
         <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
-        <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.LocksDialog.submit()"/>
+        <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.LocksDialog.submit();"/>
       </div>
     </bs:dialog>
   </td>
 </tr>
-
-
