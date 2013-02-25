@@ -23,7 +23,8 @@
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-<jsp:useBean id="locks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
+<jsp:useBean id="locks" scope="request"
+             type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <jsp:useBean id="inherited" scope="request" type="java.lang.Boolean"/>
 
@@ -32,7 +33,6 @@
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
-<c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
 
 <script type="text/javascript">
 
@@ -43,11 +43,11 @@ BS.LocksUtil = {
     writeLock: "Write Lock"
   },
 
-  lockToString: function(lock) {
+  lockToString: function (lock) {
     return lock.name + " " + lock.type + " " + (lock.value ? lock.value : "") + "\n";
   },
 
-  lockToTableRow: function(lock) {
+  lockToTableRow: function (lock) {
     var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
     var result = {};
     result.name = lock.name;
@@ -80,7 +80,7 @@ BS.SharedResourcesFeatureDialog = {
   locks: {}, // map of locks: <lock_name, Lock>
   inherited: false,
 
-  refreshUI: function() {
+  refreshUI: function () {
     var tableBody = $j('#locksTaken tbody:last');
     var textArea = $j('#${locksFeatureParamKey}');
     tableBody.children().remove();
@@ -137,7 +137,7 @@ BS.SharedResourcesFeatureDialog = {
     });
   },
 
-  deleteLock: function(lockName) {
+  deleteLock: function (lockName) {
     delete this.locks[lockName];
     this.refreshUI();
   }
@@ -153,11 +153,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   availableResources: {},
   currentLockName: "",
 
-  getContainer: function() {
+  getContainer: function () {
     return $('locksDialog');
   },
 
-  showDialog: function() {
+  showDialog: function () {
     this.editMode = false;
     // filter available resources
     this.fillAvailableResources();
@@ -169,7 +169,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
 
-  showEdit: function(lockName) {
+  showEdit: function (lockName) {
     this.editMode = true;
     this.currentLockName = lockName;
     // select resource
@@ -183,7 +183,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     // fill dropdown
     this.fillAvailableResourcesDropdown();
     // restore selection
-    $j('#lockFromResources option').each(function() {
+    $j('#lockFromResources option').each(function () {
       var self = $j(this);
       self.prop("selected", self.val() == lockName);
     });
@@ -201,20 +201,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       } else {
         customLockType = 'ANY';
       }
-      $j('#newCustomLockType option').each(function() {
+      $j('#newCustomLockType option').each(function () {
         var self = $j(this);
         self.prop("selected", self.val() == customLockType);
       }); // restore lock type
       this.chooseCustomLockType();
       if (customLockType === 'SPECIFIC') {
         // restore selection
-        $j('#newCustomLockType_Values option').each(function() {
+        $j('#newCustomLockType_Values option').each(function () {
           var self = $j(this);
           self.prop("selected", self.val() == currentLock.value);
         });
       }
     } else { // quoted resource. simply select lock type
-      $j('#newLockType option').each(function() {
+      $j('#newLockType option').each(function () {
         var self = $j(this);
         self.prop("selected", self.val() == currentLock.type);
       }); // restore lock type
@@ -235,9 +235,9 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   }, /**
    * Filters resources that will be available for resource chooser
    */
-  fillAvailableResources: function() {
+  fillAvailableResources: function () {
     this.availableResources = {};
-    var resources =  BS.SharedResourcesFeatureDialog.resources;
+    var resources = BS.SharedResourcesFeatureDialog.resources;
     var locks = BS.SharedResourcesFeatureDialog.locks;
     for (var key in resources) {
       if (resources.hasOwnProperty(key) && !locks[key]) { // resource exists but is not used
@@ -246,7 +246,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  displayResourceChooser: function() {
+  displayResourceChooser: function () {
     //noinspection JSUnresolvedVariable
     if (_.size(this.availableResources) > 0) {
       BS.Util.show('lockFromResources_Yes');
@@ -262,7 +262,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  chooseResource: function() {
+  chooseResource: function () {
     // get value of chooser
     var resourceName = $j('#lockFromResources option:selected').val();
     // get resource for value
@@ -279,7 +279,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  chooseCustomLockType: function() {
+  chooseCustomLockType: function () {
     var customType = $j('#newCustomLockType option:selected').val();
     if ('SPECIFIC' === customType) {
       BS.Util.show('row_CustomResource_Value');
@@ -289,7 +289,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  fillResourceValues: function() {
+  fillResourceValues: function () {
     // get value of chooser
     var resourceName = $j('#lockFromResources option:selected').val();
     // get resource for value
@@ -304,7 +304,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  submit: function() {
+  submit: function () {
 
     // construct lock
     var lock = {};
@@ -347,7 +347,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   /* load resources into javaScript */
   var rs = self.resources;
   var rc;
-  <c:forEach var="item" items="${bean.resources}">
+
+  // todo: fix map issue. all resources needed here
+  <c:set var="resourcesMap" value="${bean.allResources}"/>
+
+  <c:forEach var="item" items="${resourcesMap}">
   rc = {};
   rc.name = '${item.name}';
   rc.type = '${item.type}';
@@ -393,6 +397,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </tbody>
     </table>
     <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
+
     <div id="noLocksTaken" style="display: none">
       No locks are currently defined
     </div>
@@ -416,7 +421,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th><label for="lockFromResources">Resource name:</label></th>
           <td>
             <div id="lockFromResources_Yes">
-              <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%" onchange="BS.LocksDialog.chooseResource();"/>
+              <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"
+                            onchange="BS.LocksDialog.chooseResource();"/>
               <span class="smallNote">Choose the resource you want to lock</span>
             </div>
             <div id="lockFromResources_No">
@@ -439,7 +445,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <tr id="row_CustomResource_Type">
           <th>Lock type:</th>
           <td>
-            <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%" onchange="BS.LocksDialog.chooseCustomLockType(); ">
+            <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%"
+                          onchange="BS.LocksDialog.chooseCustomLockType(); ">
               <forms:option value="ANY">Lock any instance</forms:option>
               <forms:option value="ALL">Lock all instances</forms:option>
               <forms:option value="SPECIFIC">Lock specific instance</forms:option>

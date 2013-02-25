@@ -88,7 +88,7 @@ public class EditFeatureController extends BaseController {
     final Map<String, Object> model = result.getModel();
 
     model.put("inherited", false);
-    for (BuildFeatureBean bfb: buildFeaturesBean.getBuildFeatureDescriptors()) {
+    for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
       if (SharedResourcesBuildFeature.FEATURE_TYPE.equals(descriptor.getType())) {
         // we have build feature of needed type
@@ -99,14 +99,18 @@ public class EditFeatureController extends BaseController {
           model.put("inherited", bfb.isInherited());
         } else {
           // we have feature, that is not current feature under edit. must remove used resources from our resource collection
-          for (String name: f.getLockedResources().keySet()) {
+          for (String name : f.getLockedResources().keySet()) {
             resources.remove(name);
           }
         }
       }
     }
 
-    final SharedResourcesBean bean = new SharedResourcesBean(resources.values());
+    // todo: fix bean interface
+    Map<SProject, Map<String, Resource>> rcs = new HashMap<SProject, Map<String, Resource>>();
+    rcs.put(project, resources);
+    final SharedResourcesBean bean = new SharedResourcesBean(project, rcs);
+
     model.put("locks", locks);
     model.put("bean", bean);
     model.put("project", project);

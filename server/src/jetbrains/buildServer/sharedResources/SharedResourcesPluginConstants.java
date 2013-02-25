@@ -21,26 +21,32 @@ package jetbrains.buildServer.sharedResources;
  */
 public class SharedResourcesPluginConstants {
 
-  /** Virtual path of the feature parameters page */
+  /**
+   * Virtual path of the feature parameters page
+   */
   public static final String EDIT_FEATURE_PATH_HTML = "editFeature.html";
 
-  /** Page, responsible for feature parameters */
+  /**
+   * Page, responsible for feature parameters
+   */
   public static final String EDIT_FEATURE_PATH_JSP = "editFeature.jsp";
 
-  /** Name of the plugin */
+  /**
+   * Name of the plugin
+   */
   public static final String PLUGIN_NAME = "JetBrains.SharedResources";
 
-  /** Name of the service. Used in project settings factory */
+  /**
+   * Name of the service. Used in project settings factory
+   */
   public static final String SERVICE_NAME = "JetBrains.SharedResources";
 
   /**
    * Contains constants for web page - controller interaction
    */
   public interface WEB {
-    public static final String ACTION_ADD = "/sharedResourcesAdd.html";
-    public static final String ACTION_EDIT = "/sharedResourcesEdit.html";
-    public static final String ACTION_DELETE = "/sharedResourcesDelete.html";
 
+    public static final String ACTIONS = "/sharedResourcesActions.html";
 
     public static final String PARAM_PROJECT_ID = "project_id";
     public static final String PARAM_OLD_RESOURCE_NAME = "old_resource_name";

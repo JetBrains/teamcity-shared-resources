@@ -4,14 +4,14 @@
     <facet type="Spring" name="Spring">
       <configuration>
         <fileset id="fileset1" name="idea resolve helper" removed="false">
-          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-agents-statistics-web.xml</file>
-          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-buildFailures.xml</file>
           <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-dotnet-pdb.xml</file>
-          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-freespace.xml</file>
           <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/buildServerConfigurator.xml</file>
           <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/buildServerPluginsSupportWeb.xml</file>
-          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/buildServerSpringStatistics.xml</file>
+          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-agents-statistics-web.xml</file>
           <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/buildServerSpringWeb.xml</file>
+          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-freespace.xml</file>
+          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/build-server-plugin-buildFailures.xml</file>
+          <file>file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/buildServerSpringStatistics.xml</file>
         </fileset>
       </configuration>
     </facet>

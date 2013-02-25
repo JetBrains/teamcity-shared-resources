@@ -10,15 +10,16 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   editMode: false,
   currentResourceName: "",
   existingResources: {},
-  myData:{},
-  getContainer: function() {
+  myData: {},
+  getContainer: function () {
     return $('resourceDialog');
   },
 
-  showDialog: function() {
+  showDialog: function () {
     this.editMode = false;
+    this.clearErrors();
 
-    $j('#resource_type option').each(function() {
+    $j('#resource_type option').each(function () {
       var self = $j(this);
       self.prop("selected", self.val() == 'infinite');
     });
@@ -31,8 +32,9 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
 
-  showEdit: function(resource_name) {
+  showEdit: function (resource_name) {
     this.editMode = true;
+    this.clearErrors();
     this.currentResourceName = resource_name;
     $j('#resource_name').val(resource_name);
     var r = this.myData[resource_name]; // current resource contents
@@ -42,7 +44,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     } else {
       type = type.toLowerCase();
     }
-    $j('#resource_type option').each(function() {
+    $j('#resource_type option').each(function () {
       var self = $j(this);
       self.prop("selected", self.val() == type);
     });
@@ -62,7 +64,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     BS.MultilineProperties.updateVisible();
   },
 
-  adjustDialogDisplay: function(editMode) {
+  adjustDialogDisplay: function (editMode) {
     if (editMode) {
       $j("#resourceDialogTitle").html('Edit Resource');
       $j("#resourceDialogSubmit").prop('value', 'Save');
@@ -73,13 +75,16 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.syncResourceSelectionState();
   },
 
-  submit: function() {
+  submit: function () {
     if (!this.validate()) return false;
-    this.close();
+    var result = true;
     if (this.editMode) {
-      BS.SharedResourcesActions.editResource(this.currentResourceName);
+      result = BS.SharedResourcesActions.editResource(this.currentResourceName);
     } else {
-      BS.SharedResourcesActions.addResource();
+      result = BS.SharedResourcesActions.addResource();
+    }
+    if (result) {
+      this.close();
     }
     return false;
   },
@@ -91,7 +96,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     $j('#error_Quota').html("");
   },
 
-  validate: function() {
+  validate: function () {
     var errorsPresent = false;
     this.clearErrors();
     // name changed
@@ -115,7 +120,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     return !errorsPresent;
   },
 
-  syncResourceSelectionState: function() {
+  syncResourceSelectionState: function () {
     var flag = $j('#resource_type option:selected').val();
     if (flag === 'infinite') {
       this.toggleModeInfinite();
@@ -127,17 +132,17 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     BS.MultilineProperties.updateVisible();
   },
 
-  toggleModeInfinite: function() {
+  toggleModeInfinite: function () {
     BS.Util.hide('quota_row');
     BS.Util.hide('custom_row');
   },
 
-  toggleModeQuota: function() {
+  toggleModeQuota: function () {
     BS.Util.show('quota_row');
     BS.Util.hide('custom_row');
   },
 
-  toggleModeCustom: function() {
+  toggleModeCustom: function () {
     BS.Util.hide('quota_row');
     BS.Util.show('custom_row');
   }

@@ -16,14 +16,16 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,10 +37,14 @@ public final class ResourcesImpl implements Resources {
   @NotNull
   private final ProjectSettingsManager myProjectSettingsManager;
 
-  public ResourcesImpl(@NotNull final ProjectSettingsManager projectSettingsManager) {
-    myProjectSettingsManager = projectSettingsManager;
-  }
+  @NotNull
+  private final ProjectManager myProjectManager;
 
+  public ResourcesImpl(@NotNull final ProjectSettingsManager projectSettingsManager,
+                       @NotNull final ProjectManager projectManager) {
+    myProjectSettingsManager = projectSettingsManager;
+    myProjectManager = projectManager;
+  }
 
   @Override
   public void addResource(@NotNull final String projectId, @NotNull final Resource resource) {
@@ -58,17 +64,59 @@ public final class ResourcesImpl implements Resources {
   @NotNull
   @Override
   public Map<String, Resource> asMap(@NotNull final String projectId) {
-    return getSettings(projectId).getResourceMap();
+    final Collection<Resource> resCol = getResources(projectId);
+    final Map<String, Resource> result = new HashMap<String, Resource>();
+    for (Resource res : resCol) {
+      result.put(res.getName(), res);
+    }
+    return result;
   }
 
   @NotNull
   @Override
-  public Collection<Resource> asCollection(@NotNull String projectId) {
-    return getSettings(projectId).getResources();
+  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull String projectId) {
+    final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>();
+    SProject project = myProjectManager.
+            findProjectById(projectId);
+    if (project != null) {
+      String parentId = project.getParentProjectId();
+      if (parentId != null) {
+        result.putAll(asProjectResourceMap(parentId));
+      }
+      result.put(project, getSettings(projectId).getResourceMap());
+    }
+    return result;
+  }
+
+
+  @NotNull
+  @Override
+  public Map<String, Resource> getAllResources() {
+    final Map<String, Resource> result = new HashMap<String, Resource>();
+    SProject root = myProjectManager.getRootProject();
+    List<SProject> children = root.getAllSubProjects();
+    children.add(root);
+    for (SProject p : children) {
+      result.putAll(getSettings(p.getProjectId()).getResourceMap());
+    }
+    return result;
+  }
+
+  private Collection<Resource> getResources(@NotNull final String projectId) {
+    final Collection<Resource> result = new ArrayList<Resource>();
+    SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      String parentId = project.getParentProjectId();
+      if (parentId != null) {
+        result.addAll(getResources(parentId));
+      }
+      result.addAll(getSettings(projectId).getResources());
+    }
+    return result;
   }
 
   @NotNull
   private PluginProjectSettings getSettings(@NotNull final String projectId) {
-    return (PluginProjectSettings)myProjectSettingsManager.getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
+    return (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
   }
 }

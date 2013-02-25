@@ -61,25 +61,21 @@ public class TakenLocksImpl implements TakenLocks {
                                                   @NotNull final Collection<RunningBuildInfo> runningBuilds,
                                                   @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
-    for (RunningBuildInfo runningBuildInfo: runningBuilds) {
-      BuildPromotionEx bpEx = (BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo();
-      if (projectId.equals(bpEx.getProjectId())) {
-        Collection<Lock> locks;
-        RunningBuildEx rbEx = (RunningBuildEx)runningBuildInfo;
-        if (myLocksStorage.locksStored(rbEx)) {
-          locks = myLocksStorage.load(rbEx).values();
-        } else {
-          locks = myLocks.fromBuildPromotion(bpEx);
-        }
-        addToTakenLocks(result, bpEx, locks);
+    for (RunningBuildInfo runningBuildInfo : runningBuilds) {
+      BuildPromotionEx bpEx = (BuildPromotionEx) runningBuildInfo.getBuildPromotionInfo();
+      Collection<Lock> locks;
+      RunningBuildEx rbEx = (RunningBuildEx) runningBuildInfo;
+      if (myLocksStorage.locksStored(rbEx)) {
+        locks = myLocksStorage.load(rbEx).values();
+      } else {
+        locks = myLocks.fromBuildPromotion(bpEx);
       }
+      addToTakenLocks(result, bpEx, locks);
     }
-    for (QueuedBuildInfo info: queuedBuilds) {
-      BuildPromotionEx bpEx = (BuildPromotionEx)info.getBuildPromotionInfo();
-      if (projectId.equals(bpEx.getProjectId())) {
-        Collection<Lock> locks = myLocks.fromBuildPromotion(bpEx);
-        addToTakenLocks(result, bpEx, locks);
-      }
+    for (QueuedBuildInfo info : queuedBuilds) {
+      BuildPromotionEx bpEx = (BuildPromotionEx) info.getBuildPromotionInfo();
+      Collection<Lock> locks = myLocks.fromBuildPromotion(bpEx);
+      addToTakenLocks(result, bpEx, locks);
     }
     return result;
   }
@@ -87,7 +83,7 @@ public class TakenLocksImpl implements TakenLocks {
   private void addToTakenLocks(@NotNull final Map<String, TakenLock> takenLocks,
                                @NotNull final BuildPromotionInfo bpInfo,
                                @NotNull final Collection<Lock> locks) {
-    for (Lock lock: locks) {
+    for (Lock lock : locks) {
       TakenLock takenLock = takenLocks.get(lock.getName());
       if (takenLock == null) {
         takenLock = new TakenLock();
@@ -108,7 +104,7 @@ public class TakenLocksImpl implements TakenLocks {
       final TakenLock takenLock = takenLocks.get(lock.getName());
       if (takenLock != null) {
         final Resource resource = resources.get(lock.getName());
-        if (resource != null && !checkAgainstResource(lock, takenLocks, resource))  {
+        if (resource != null && !checkAgainstResource(lock, takenLocks, resource)) {
           result.add(lock);
         }
       }
@@ -141,7 +137,7 @@ public class TakenLocksImpl implements TakenLocks {
       case READ:   // check at least one value is available
         // check for unique writeLocks
         Map<BuildPromotionInfo, String> writeLocks = takenLock.getWriteLocks();
-        for (String str: writeLocks.values()) {
+        for (String str : writeLocks.values()) {
           if ("".equals(str)) {
             // we have 'ALL' write lock
             result = false;
@@ -186,7 +182,7 @@ public class TakenLocksImpl implements TakenLocks {
                                              @NotNull final QuotedResource resource) {
     boolean result = true;
     final TakenLock takenLock = takenLocks.get(lock.getName());
-    switch (lock.getType())  {
+    switch (lock.getType()) {
       case READ:
         // 1) Check that no write lock exists
         if (takenLock.hasWriteLocks()) {

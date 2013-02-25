@@ -20,12 +20,14 @@
 
   <!-- ===  INTERNALS  === -->
 
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
+
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl"/>
-  
+
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.feature.ResourcesImpl"/>
@@ -39,7 +41,5 @@
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
 
   <bean class="jetbrains.buildServer.sharedResources.settings.PluginSettingsManager"/>
-
-  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActions"/>
 
 </beans>

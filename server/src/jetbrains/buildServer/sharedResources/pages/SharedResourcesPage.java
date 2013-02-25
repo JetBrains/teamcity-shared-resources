@@ -20,22 +20,21 @@ import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
-
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,7 +45,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 public class SharedResourcesPage extends EditProjectTab {
 
   @NotNull
-  private final ProjectSettingsManager myProjectSettingsManager;
+  private final Resources myResources;
 
   @NotNull
   private final SharedResourcesFeatures myFeatures;
@@ -54,42 +53,45 @@ public class SharedResourcesPage extends EditProjectTab {
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final ProjectManager projectManager,
                              @NotNull final PluginDescriptor descriptor,
-                             @NotNull final ProjectSettingsManager projectSettingsManager,
+                             @NotNull final Resources resources,
                              @NotNull final SharedResourcesFeatures features) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), "Shared Resources", projectManager);
-    myProjectSettingsManager = projectSettingsManager;
+    myResources = resources;
     myFeatures = features;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
 
   @Override
-  public void fillModel(@NotNull final Map<String, Object> model, @NotNull final  HttpServletRequest request) {
+  public void fillModel(@NotNull final Map<String, Object> model, @NotNull final HttpServletRequest request) {
     super.fillModel(model, request);
-
     SharedResourcesBean bean;
     final SProject project = getProject(request);
     if (project != null) {
-      final List<SBuildType> buildTypes = project.getBuildTypes();
+      final List<SProject> meAndSubtree = project.getAllSubProjects();
+      meAndSubtree.add(project);
+      // <resource_name> -> <>
       final Map<String, Map<SBuildType, LockType>> usageMap = new HashMap<String, Map<SBuildType, LockType>>();
-      for (SBuildType type: buildTypes) {
-        // todo: investigate here, what happens if we use resolved settings on lock name with %%. Does it change to the value of the parameter?
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(type);
-        for (SharedResourcesFeature feature: features) {
-          final Map<String, Lock> locksMap = feature.getLockedResources();
-          for (String str: locksMap.keySet()) {
-            if (usageMap.get(str) == null) {
-              usageMap.put(str, new HashMap<SBuildType, LockType>());
+      for (SProject p : meAndSubtree) {
+        final List<SBuildType> buildTypes = p.getBuildTypes();
+        for (SBuildType type : buildTypes) {
+          // todo: investigate here, what happens if we use resolved settings on lock name with %%. Does it change to the value of the parameter?
+          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(type);
+          for (SharedResourcesFeature feature : features) {
+            final Map<String, Lock> locksMap = feature.getLockedResources();
+            for (String str : locksMap.keySet()) {
+              if (usageMap.get(str) == null) {
+                usageMap.put(str, new HashMap<SBuildType, LockType>());
+              }
+              usageMap.get(str).put(type, locksMap.get(str).getType());
             }
-            usageMap.get(str).put(type, locksMap.get(str).getType());
           }
         }
       }
       final String projectId = project.getProjectId();
-      final PluginProjectSettings settings = (PluginProjectSettings) myProjectSettingsManager.getSettings(projectId, SERVICE_NAME);
-      bean = new SharedResourcesBean(settings.getResources(), usageMap);
+      bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), usageMap);
     } else {
-      bean = new SharedResourcesBean(Collections.<Resource>emptyList());
+      bean = new SharedResourcesBean(project);
     }
     model.put("bean", bean);
   }

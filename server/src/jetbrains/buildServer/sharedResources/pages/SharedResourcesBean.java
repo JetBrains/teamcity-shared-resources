@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
@@ -30,28 +31,57 @@ import java.util.*;
  */
 public class SharedResourcesBean {
 
+  private SProject myProject;
+
   @NotNull
-  private Collection<Resource> myResources = new ArrayList<Resource>();
+  private Map<SProject, Map<String, Resource>> myProjectResources = new HashMap<SProject, Map<String, Resource>>();
 
   @NotNull
   private Map<String, Map<SBuildType, LockType>> myUsageMap = new HashMap<String, Map<SBuildType, LockType>>();
 
-  public SharedResourcesBean(@NotNull final Collection<Resource> resources) {
-    this(resources, Collections.<String, Map<SBuildType, LockType>>emptyMap());
-  }
 
-  public SharedResourcesBean(@NotNull final Collection<Resource> resources, @NotNull final Map<String, Map<SBuildType, LockType>> usageMap) {
-    myResources = resources;
+  public SharedResourcesBean(@NotNull final SProject project,
+                             @NotNull final Map<SProject, Map<String, Resource>> projectResources,
+                             @NotNull final Map<String, Map<SBuildType, LockType>> usageMap) {
+    myProject = project;
+    myProjectResources = projectResources;
     myUsageMap = usageMap;
   }
 
-  @NotNull
-  public Collection<Resource> getResources() {
-    return Collections.unmodifiableCollection(myResources);
+  public SharedResourcesBean(@NotNull final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
+    this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap());
+  }
+
+  public SharedResourcesBean(@NotNull final SProject project) {
+    this(project, Collections.<SProject, Map<String, Resource>>emptyMap(), Collections.<String, Map<SBuildType, LockType>>emptyMap());
   }
 
   @NotNull
   public Map<String, Map<SBuildType, LockType>> getUsageMap() {
     return Collections.unmodifiableMap(myUsageMap);
+  }
+
+  @NotNull
+  public Map<String, Resource> getMyResources() {
+    Map<String, Resource> result = myProjectResources.get(myProject);
+    if (result == null) {
+      result = Collections.emptyMap();
+    }
+    return result;
+  }
+
+  public Map<SProject, Map<String, Resource>> getInheritedResources() {
+    final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>(myProjectResources);
+    result.remove(myProject);
+    return result;
+  }
+
+  public Collection<Resource> getAllResources() {
+    final Collection<Resource> result = new HashSet<Resource>();
+    for (Map<String, Resource> map : myProjectResources.values()) {
+      result.addAll(map.values());
+    }
+    return result;
+
   }
 }

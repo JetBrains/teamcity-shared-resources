@@ -16,10 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -29,16 +29,38 @@ import java.util.Map;
  */
 public interface Resources {
 
-  public void addResource(@NotNull final String projectId, @NotNull final  Resource resource);
+  public void addResource(@NotNull final String projectId, @NotNull final Resource resource);
 
-  public void deleteResource(@NotNull final String projectId, @NotNull final  String resourceName);
+  public void deleteResource(@NotNull final String projectId, @NotNull final String resourceName);
 
   public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
 
+
+  /**
+   * Gets all resources for project with given {@code projectId} and all its ancestors
+   *
+   * @param projectId id oof the current project
+   * @return map of resources in format {@code resource_name -> resource}
+   */
   @NotNull
   public Map<String, Resource> asMap(@NotNull final String projectId);
 
+  /**
+   * Gets all resources for project with given {@code projectId} and
+   * all its ancestors
+   *
+   * @param projectId id of the current project
+   * @return map of projects and resorurces in format {@code project -> {resource_name -> resource}}
+   */
   @NotNull
-  public Collection<Resource> asCollection(@NotNull final String projectId);
+  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
+
+  /**
+   * Gets all shared resources
+   *
+   * @return
+   */
+  @NotNull
+  public Map<String, Resource> getAllResources();
 
 }
