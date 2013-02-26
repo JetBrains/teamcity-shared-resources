@@ -118,16 +118,16 @@ BS.SharedResourcesFeatureDialog = {
           );
         }
       }
-      //noinspection JSUnresolvedFunction
-      textArea.val(textAreaContent.trim());
       this.rehighlight();
-      BS.MultilineProperties.updateVisible();
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
     } else { // no locks are taken
       BS.Util.hide('locksTaken');
       BS.Util.show('noLocksTaken');
     }
+    //noinspection JSUnresolvedFunction
+    textArea.val(textAreaContent.trim());
+    BS.MultilineProperties.updateVisible();
   },
 
   rehighlight: function () {
@@ -141,7 +141,7 @@ BS.SharedResourcesFeatureDialog = {
     delete this.locks[lockName];
     this.refreshUI();
   }
-}
+};
 
 //noinspection JSUnusedGlobalSymbols
 /**
