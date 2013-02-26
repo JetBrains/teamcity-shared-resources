@@ -17,6 +17,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
 
   showDialog: function() {
     this.editMode = false;
+    this.clearErrors();
 
     $j('#resource_type option').each(function() {
       var self = $j(this);
@@ -33,6 +34,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
 
   showEdit: function(resource_name) {
     this.editMode = true;
+    this.clearErrors();
     this.currentResourceName = resource_name;
     $j('#resource_name').val(resource_name);
     var r = this.myData[resource_name]; // current resource contents
@@ -89,12 +91,23 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     $j('#error_Name').html("");
     BS.Util.hide('error_Quota');
     $j('#error_Quota').html("");
+    BS.Util.hide('error_Values');
+    $j('#error_Values').html("");
   },
 
   validate: function() {
     var errorsPresent = false;
     this.clearErrors();
-    // name changed
+    var flag = $j('#resource_type option:selected').val();
+    if (flag === 'custom') {
+      var val = $j('#customValues').val().trim();
+      if (val === '') {
+        BS.Util.show('error_Values');
+        $j('#error_Values').html("Please define custom values for resource");
+        errorsPresent = true;
+      }
+    }
+
     var element = $j('#resource_name');
     var value = element.val().trim();
     if (value !== this.currentResourceName) {
@@ -104,7 +117,9 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
         errorsPresent = true;
       }
       if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
-        if (this.existingResources[value]) { // check not used
+      // name changed
+      if (this.existingResources[value]) {
+        // quick check for current subtree
           BS.Util.show('error_Name');
           $j('#error_Name').html("Name is already used");
           errorsPresent = true;

@@ -42,11 +42,11 @@ BS.LocksUtil = {
     writeLock: "Write Lock"
   },
 
-  lockToString: function(lock) {
+  lockToString: function (lock) {
     return lock.name + " " + lock.type + " " + (lock.value ? lock.value : "") + "\n";
   },
 
-  lockToTableRow: function(lock) {
+  lockToTableRow: function (lock) {
     var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
     var result = {};
     result.name = lock.name;
@@ -79,7 +79,7 @@ BS.SharedResourcesFeatureDialog = {
   locks: {}, // map of locks: <lock_name, Lock>
   inherited: false,
 
-  refreshUI: function() {
+  refreshUI: function () {
     var tableBody = $j('#locksTaken tbody:last');
     var textArea = $j('#${locksFeatureParamKey}');
     tableBody.children().remove();
@@ -136,11 +136,11 @@ BS.SharedResourcesFeatureDialog = {
     });
   },
 
-  deleteLock: function(lockName) {
+  deleteLock: function (lockName) {
     delete this.locks[lockName];
     this.refreshUI();
   }
-}
+};
 
 //noinspection JSUnusedGlobalSymbols
 /**
@@ -152,11 +152,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   availableResources: {},
   currentLockName: "",
 
-  getContainer: function() {
+  getContainer: function () {
     return $('locksDialog');
   },
 
-  showDialog: function() {
+  showDialog: function () {
     this.editMode = false;
     // filter available resources
     this.fillAvailableResources();
@@ -168,7 +168,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
 
-  showEdit: function(lockName) {
+  showEdit: function (lockName) {
     this.editMode = true;
     this.currentLockName = lockName;
     // select resource
@@ -182,7 +182,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     // fill dropdown
     this.fillAvailableResourcesDropdown();
     // restore selection
-    $j('#lockFromResources option').each(function() {
+    $j('#lockFromResources option').each(function () {
       var self = $j(this);
       self.prop("selected", self.val() == lockName);
     });
@@ -200,20 +200,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       } else {
         customLockType = 'ANY';
       }
-      $j('#newCustomLockType option').each(function() {
+      $j('#newCustomLockType option').each(function () {
         var self = $j(this);
         self.prop("selected", self.val() == customLockType);
       }); // restore lock type
       this.chooseCustomLockType();
       if (customLockType === 'SPECIFIC') {
         // restore selection
-        $j('#newCustomLockType_Values option').each(function() {
+        $j('#newCustomLockType_Values option').each(function () {
           var self = $j(this);
           self.prop("selected", self.val() == currentLock.value);
         });
       }
     } else { // quoted resource. simply select lock type
-      $j('#newLockType option').each(function() {
+      $j('#newLockType option').each(function () {
         var self = $j(this);
         self.prop("selected", self.val() == currentLock.type);
       }); // restore lock type
@@ -234,7 +234,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   }, /**
    * Filters resources that will be available for resource chooser
    */
-  fillAvailableResources: function() {
+  fillAvailableResources: function () {
     this.availableResources = {};
     var resources = BS.SharedResourcesFeatureDialog.resources;
     var locks = BS.SharedResourcesFeatureDialog.locks;
@@ -245,7 +245,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  displayResourceChooser: function() {
+  displayResourceChooser: function () {
     //noinspection JSUnresolvedVariable
     if (_.size(this.availableResources) > 0) {
       BS.Util.show('lockFromResources_Yes');
@@ -261,7 +261,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  chooseResource: function() {
+  chooseResource: function () {
     // get value of chooser
     var resourceName = $j('#lockFromResources option:selected').val();
     // get resource for value
@@ -278,7 +278,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  chooseCustomLockType: function() {
+  chooseCustomLockType: function () {
     var customType = $j('#newCustomLockType option:selected').val();
     if ('SPECIFIC' === customType) {
       BS.Util.show('row_CustomResource_Value');
@@ -288,7 +288,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  fillResourceValues: function() {
+  fillResourceValues: function () {
     // get value of chooser
     var resourceName = $j('#lockFromResources option:selected').val();
     // get resource for value
@@ -303,7 +303,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     }
   },
 
-  submit: function() {
+  submit: function () {
 
     // construct lock
     var lock = {};
@@ -440,11 +440,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th>Lock type:</th>
           <td>
             <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%" onchange="BS.LocksDialog.chooseCustomLockType(); ">
-              <forms:option value="ANY">Lock any instance</forms:option>
-              <forms:option value="ALL">Lock all instances</forms:option>
-              <forms:option value="SPECIFIC">Lock specific instance</forms:option>
+              <forms:option value="ANY">Lock any value</forms:option>
+              <forms:option value="ALL">Lock all values</forms:option>
+              <forms:option value="SPECIFIC">Lock specific value</forms:option>
             </forms:select>
-            <span class="smallNote">Select type of lock on custom resource: any instance, all instances or specify instance you want to lock</span>
+            <span class="smallNote">Select type of lock on custom resource: any available value, all values or specify value you want to lock</span>
           </td>
         </tr>
 
@@ -452,7 +452,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th>Instance to lock:</th>
           <td>
             <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
-            <span class="smallNote">Choose instance of custom resource to lock</span>
+            <span class="smallNote">Choose value of custom resource to lock</span>
           </td>
         </tr>
 
