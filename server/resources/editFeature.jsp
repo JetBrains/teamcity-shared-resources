@@ -32,7 +32,6 @@
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
-<c:set var="ACTION_ADD" value="<%=SharedResourcesPluginConstants.WEB.ACTION_ADD%>"/>
 
 <script type="text/javascript">
 
@@ -118,16 +117,16 @@ BS.SharedResourcesFeatureDialog = {
           );
         }
       }
-      //noinspection JSUnresolvedFunction
-      textArea.val(textAreaContent.trim());
       this.rehighlight();
-      BS.MultilineProperties.updateVisible();
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
     } else { // no locks are taken
       BS.Util.hide('locksTaken');
       BS.Util.show('noLocksTaken');
     }
+    //noinspection JSUnresolvedFunction
+    textArea.val(textAreaContent.trim());
+    BS.MultilineProperties.updateVisible();
   },
 
   rehighlight: function () {
@@ -237,7 +236,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
    */
   fillAvailableResources: function() {
     this.availableResources = {};
-    var resources =  BS.SharedResourcesFeatureDialog.resources;
+    var resources = BS.SharedResourcesFeatureDialog.resources;
     var locks = BS.SharedResourcesFeatureDialog.locks;
     for (var key in resources) {
       if (resources.hasOwnProperty(key) && !locks[key]) { // resource exists but is not used
@@ -393,6 +392,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </tbody>
     </table>
     <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
+
     <div id="noLocksTaken" style="display: none">
       No locks are currently defined
     </div>
