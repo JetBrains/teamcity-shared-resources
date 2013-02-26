@@ -94,29 +94,40 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     $j('#error_Name').html("");
     BS.Util.hide('error_Quota');
     $j('#error_Quota').html("");
+    BS.Util.hide('error_Values');
+    $j('#error_Values').html("");
   },
 
   validate: function () {
     var errorsPresent = false;
     this.clearErrors();
-    // name changed
-    var element = $j('#resource_name');
-    var value = element.val().trim();
-    if (value !== this.currentResourceName) {
-      if (value.length === 0) { // check not empty
-        BS.Util.show('error_Name');
-        $j('#error_Name').html("Name must not be empty");
+    var flag = $j('#resource_type option:selected').val();
+    if (flag === 'custom') {
+      var val = $j('#customValues').val().trim();
+      if (val === '') {
+        BS.Util.show('error_Values');
+        $j('#error_Values').html("Please define custom values for resource");
         errorsPresent = true;
       }
-      if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
-        if (this.existingResources[value]) { // check not used
-          BS.Util.show('error_Name');
-          $j('#error_Name').html("Name is already used");
-          errorsPresent = true;
-        }
-      }
-      element.val(value);
     }
+
+    var element = $j('#resource_name');
+    var value = element.val().trim();
+    if (value.length === 0) { // check not empty
+      BS.Util.show('error_Name');
+      $j('#error_Name').html("Name must not be empty");
+      errorsPresent = true;
+    }
+    if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
+      // name changed
+      if (this.existingResources[value]) {
+        // quick check for current subtree
+        BS.Util.show('error_Name');
+        $j('#error_Name').html("Name is already used");
+        errorsPresent = true;
+      }
+    }
+    element.val(value);
     return !errorsPresent;
   },
 

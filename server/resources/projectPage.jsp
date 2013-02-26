@@ -109,11 +109,10 @@
 
 
     deleteResource: function (resource_name) {
-      var params = {
-        '${PARAM_PROJECT_ID}': '${project.projectId}',
-        '${PARAM_RESOURCE_NAME}': resource_name,
-        'action': 'deleteResource'
-      };
+      var params = {};
+      params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
+      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['action'] = 'deleteResource';
 
       if (confirm('Are you sure you want to delete this resource?')) {
         BS.ajaxRequest(this.actionsUrl, {
@@ -127,7 +126,6 @@
     alertCantDelete: function (resource_name) {
       alert('Resource ' + resource_name + " can't be deleted because it is in use");
     }
-
   };
 
 
@@ -211,7 +209,8 @@
       <td>
         <props:textarea name="customValues" textAreaName="customValuesArea" value=""
                         linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
-        <span class="smallNote">Custom values are values passed to build configuration when lock on custom resource is acquired</span>
+        <span class="error" id="error_Values"></span>
+        <span class="smallNote">Define one custom value for resource per line</span>
       </td>
     </tr>
   </table>
@@ -225,7 +224,7 @@
 <c:choose>
   <c:when test="${not empty bean.myResources}">
 
-    <h3>Resoruces defined in current project</h3>
+    <h3>Resources defined in current project</h3>
     <l:tableWithHighlighting style="width: 70%"
                              id="resourcesTable"
                              className="parametersTable"

@@ -446,11 +446,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <td>
             <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%"
                           onchange="BS.LocksDialog.chooseCustomLockType(); ">
-              <forms:option value="ANY">Lock any instance</forms:option>
-              <forms:option value="ALL">Lock all instances</forms:option>
-              <forms:option value="SPECIFIC">Lock specific instance</forms:option>
+              <forms:option value="ANY">Lock any value</forms:option>
+              <forms:option value="ALL">Lock all values</forms:option>
+              <forms:option value="SPECIFIC">Lock specific value</forms:option>
             </forms:select>
-            <span class="smallNote">Select type of lock on custom resource: any instance, all instances or specify instance you want to lock</span>
+            <span class="smallNote">Select type of lock on custom resource: any available value, all values or specify value you want to lock</span>
           </td>
         </tr>
 
@@ -458,7 +458,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
           <th>Instance to lock:</th>
           <td>
             <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
-            <span class="smallNote">Choose instance of custom resource to lock</span>
+            <span class="smallNote">Choose value of custom resource to lock</span>
           </td>
         </tr>
 
