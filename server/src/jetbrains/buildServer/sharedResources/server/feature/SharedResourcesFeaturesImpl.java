@@ -27,26 +27,14 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   @NotNull
   @Override
   public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType) {
-    //todo:  why this method returns build features that belong to template???
     return searchForFeatureInternal(buildType.getBuildFeatures());
-  }
-
-  @NotNull
-  private Collection<SharedResourcesFeature> searchForFeatureInternal(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
-    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
-    for (SBuildFeatureDescriptor descriptor : descriptors) {
-      if (FEATURE_TYPE.equals(descriptor.getType())) {
-        result.add(myFactory.createFeature(descriptor));
-      }
-    }
-    return result;
   }
 
   @Override
   @NotNull
   public Collection<SharedResourcesFeature> searchForResolvedFeatures(@NotNull final SBuildType buildType) {
     final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
-    for (SBuildFeatureDescriptor descriptor: buildType.getResolvedSettings().getBuildFeatures()) {
+    for (SBuildFeatureDescriptor descriptor : buildType.getResolvedSettings().getBuildFeatures()) {
       if (FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
         result.add(myFactory.createFeature(descriptor));
       }
@@ -57,10 +45,21 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   @Override
   public boolean featuresPresent(@NotNull final SBuildType buildType) {
     boolean result = false;
-    for (SBuildFeatureDescriptor descriptor: buildType.getBuildFeatures()) {
+    for (SBuildFeatureDescriptor descriptor : buildType.getBuildFeatures()) {
       if (FEATURE_TYPE.equals(descriptor.getType())) {
         result = true;
         break;
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private Collection<SharedResourcesFeature> searchForFeatureInternal(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
+    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
+    for (SBuildFeatureDescriptor descriptor : descriptors) {
+      if (FEATURE_TYPE.equals(descriptor.getType())) {
+        result.add(myFactory.createFeature(descriptor));
       }
     }
     return result;

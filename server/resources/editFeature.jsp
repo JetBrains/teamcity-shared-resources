@@ -348,7 +348,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   var rs = self.resources;
   var rc;
 
-  // todo: fix map issue. all resources needed here
   <c:set var="resourcesMap" value="${bean.allResources}"/>
 
   <c:forEach var="item" items="${resourcesMap}">

@@ -27,18 +27,17 @@ import java.util.Map;
 
 /**
  * Class {@code FeatureParamsImpl}
- *
+ * <p/>
  * Default implementation of build feature parameters
  *
- * @see FeatureParams
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
+ * @see FeatureParams
  */
 public final class FeatureParamsImpl implements FeatureParams {
 
   @NotNull
   private final Locks myLocks;
 
-  // messages
   @NotNull
   static final String NO_LOCKS_MESSAGE = "No locks are currently used by this build feature.";
 
@@ -59,7 +58,7 @@ public final class FeatureParamsImpl implements FeatureParams {
     final Map<String, Lock> locks = myLocks.fromFeatureParameters(params);
     final List<String> readLockNames = new ArrayList<String>();
     final List<String> writeLockNames = new ArrayList<String>();
-    for (Lock lock: locks.values()) {
+    for (Lock lock : locks.values()) {
       switch (lock.getType()) {
         case READ:
           readLockNames.add(lock.getName());

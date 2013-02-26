@@ -50,15 +50,15 @@ public interface Resources {
    * all its ancestors
    *
    * @param projectId id of the current project
-   * @return map of projects and resorurces in format {@code project -> {resource_name -> resource}}
+   * @return map of projects and resources in format {@code project -> {resource_name -> resource}}
    */
   @NotNull
   public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
 
   /**
-   * Gets all shared resources
+   * Gets all shared resources for all projects
    *
-   * @return
+   * @return map of resources in format {@code resource_name -> resource}
    */
   @NotNull
   public Map<String, Resource> getAllResources();

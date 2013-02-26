@@ -23,7 +23,9 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
@@ -64,10 +66,14 @@ public final class ResourcesImpl implements Resources {
   @NotNull
   @Override
   public Map<String, Resource> asMap(@NotNull final String projectId) {
-    final Collection<Resource> resCol = getResources(projectId);
     final Map<String, Resource> result = new HashMap<String, Resource>();
-    for (Resource res : resCol) {
-      result.put(res.getName(), res);
+    SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      String parentId = project.getParentProjectId();
+      if (parentId != null) {
+        result.putAll(asMap(parentId));
+      }
+      result.putAll(getSettings(projectId).getResourceMap());
     }
     return result;
   }
@@ -76,8 +82,7 @@ public final class ResourcesImpl implements Resources {
   @Override
   public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull String projectId) {
     final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>();
-    SProject project = myProjectManager.
-            findProjectById(projectId);
+    SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
       String parentId = project.getParentProjectId();
       if (parentId != null) {
@@ -98,19 +103,6 @@ public final class ResourcesImpl implements Resources {
     children.add(root);
     for (SProject p : children) {
       result.putAll(getSettings(p.getProjectId()).getResourceMap());
-    }
-    return result;
-  }
-
-  private Collection<Resource> getResources(@NotNull final String projectId) {
-    final Collection<Resource> result = new ArrayList<Resource>();
-    SProject project = myProjectManager.findProjectById(projectId);
-    if (project != null) {
-      String parentId = project.getParentProjectId();
-      if (parentId != null) {
-        result.addAll(getResources(parentId));
-      }
-      result.addAll(getSettings(projectId).getResources());
     }
     return result;
   }

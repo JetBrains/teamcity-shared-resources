@@ -17,12 +17,14 @@ import java.util.HashMap;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 @SuppressWarnings("UnusedShould")
-@TestFor (testForClass = {SharedResourcesFeatureFactory.class, SharedResourcesFeatureFactoryImpl.class})
+@TestFor(testForClass = {SharedResourcesFeatureFactory.class, SharedResourcesFeatureFactoryImpl.class})
 public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
 
   private Mockery m;
 
   private Locks myLocks;
+
+  private Resources myResources;
 
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
@@ -36,7 +38,8 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
     m = new Mockery();
     myLocks = m.mock(Locks.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
-    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks);
+    myResources = m.mock(Resources.class);
+    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks, myResources);
   }
 
   @Test

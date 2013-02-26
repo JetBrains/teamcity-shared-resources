@@ -20,6 +20,7 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -27,11 +28,13 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("UnusedShould")
 public interface SharedResourcesFeature {
 
 
   /**
    * Gets locked resources from current build feature
+   *
    * @return map of locked resources. Map format is {@code <LockName, Lock>}
    */
   @NotNull
@@ -39,9 +42,10 @@ public interface SharedResourcesFeature {
 
   /**
    * Updates lock inside build feature
+   *
    * @param buildType build
-   * @param oldName name of the existing lock
-   * @param newName new lock name
+   * @param oldName   name of the existing lock
+   * @param newName   new lock name
    */
   public void updateLock(@NotNull final SBuildType buildType,
                          @NotNull final String oldName,
@@ -49,9 +53,22 @@ public interface SharedResourcesFeature {
 
   /**
    * Exposes locks as parameters
+   *
    * @return map of locks, exposed as parameters
    */
   @NotNull
   public Map<String, String> getBuildParameters();
+
+
+  /**
+   * Checks that build feature is in valid state, i.e. can acquire all of its locks.
+   * Main concern here are resources inherited from ancestor projects
+   *
+   * @param projectId project id to check feature in
+   * @return Collection of invalid locks, i.e. locks that have either no resource or
+   *         wrong type of resource (in case of custom valued lock backed by quoted resource)
+   */
+  @NotNull
+  public Collection<Lock> getInvalidLocks(@NotNull final String projectId);
 
 }

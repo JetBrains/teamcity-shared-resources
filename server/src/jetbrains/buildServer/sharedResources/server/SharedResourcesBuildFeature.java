@@ -31,14 +31,15 @@ import java.util.Map;
 public class SharedResourcesBuildFeature extends BuildFeature {
 
   public static final String FEATURE_TYPE = "JetBrains.SharedResources";
+
   @NotNull
   private final PluginDescriptor myDescriptor;
 
   @NotNull
   private final FeatureParams myFeatureParams;
 
-  public SharedResourcesBuildFeature(@NotNull PluginDescriptor descriptor,
-                                     @NotNull FeatureParams featureParams) {
+  public SharedResourcesBuildFeature(@NotNull final PluginDescriptor descriptor,
+                                     @NotNull final FeatureParams featureParams) {
     myDescriptor = descriptor;
     myFeatureParams = featureParams;
   }
@@ -68,7 +69,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
 
   @NotNull
   @Override
-  public String describeParameters(@NotNull Map<String, String> params) {
+  public String describeParameters(@NotNull final Map<String, String> params) {
     return myFeatureParams.describeParams(params);
   }
 

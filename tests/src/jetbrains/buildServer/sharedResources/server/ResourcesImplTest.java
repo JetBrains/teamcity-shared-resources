@@ -2,6 +2,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
@@ -37,6 +38,8 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private ProjectManager myProjectManager;
 
+  private SProject myProject;
+
   /**
    * Class under test
    */
@@ -55,6 +58,7 @@ public class ResourcesImplTest extends BaseTestCase {
     myProjectSettingsManager = m.mock(ProjectSettingsManager.class);
     myPluginProjectSettings = m.mock(PluginProjectSettings.class);
     myProjectManager = m.mock(ProjectManager.class);
+    myProject = m.mock(SProject.class);
 
     resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager);
   }
@@ -103,8 +107,7 @@ public class ResourcesImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  //@Test
-  // todo: fix test
+  @Test
   public void testAsMap() {
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>();
     resourceMap.put("r1", ResourceFactory.newQuotedResource("r1", 1));
@@ -116,6 +119,12 @@ public class ResourcesImplTest extends BaseTestCase {
 
       oneOf(myPluginProjectSettings).getResourceMap();
       will(returnValue(resourceMap));
+
+      oneOf(myProjectManager).findProjectById(projectId);
+      will(returnValue(myProject));
+
+      oneOf(myProject).getParentProjectId();
+      will(returnValue(null));
     }});
 
     final Map<String, Resource> result = resources.asMap(projectId);
