@@ -114,6 +114,37 @@ public class LocksImplTest extends BaseTestCase {
       assertNotNull(result);
       assertEquals(2, result.size());
     }
+  }
+
+  @Test
+  public void testFromFeatureParameters_LocksTricky() throws Exception {
+    final Map<String, String> params = new HashMap<String, String>() {{
+      for (int i = 0; i < TestUtils.RANDOM_UPPER_BOUNDARY; i++) {
+        put(TestUtils.generateRandomName(), TestUtils.generateRandomName());
+      }
+    }};
+    params.put(LOCKS_FEATURE_PARAM_KEY, "lock 1 readLock\nlock 2 writeLock\nlock 3 readLock value 1 2 3\nlock 4 wrongType qwerty");
+
+    {
+      final Map<String, Lock> result = myLocks.fromFeatureParameters(params);
+      assertNotNull(result);
+      assertEquals(3, result.size());
+      final Lock lock = result.get("lock 3");
+      assertNotNull(lock);
+      assertEquals(LockType.READ, lock.getType());
+      assertEquals("value 1 2 3", lock.getValue());
+    }
+
+    {
+      final SBuildFeatureDescriptor descriptor = m.mock(SBuildFeatureDescriptor.class);
+      m.checking(new Expectations() {{
+        oneOf(descriptor).getParameters();
+        will(returnValue(params));
+      }});
+      final Map<String, Lock> result = myLocks.fromFeatureParameters(descriptor);
+      assertNotNull(result);
+      assertEquals(3, result.size());
+    }
 
   }
 

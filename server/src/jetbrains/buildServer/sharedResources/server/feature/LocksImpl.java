@@ -160,25 +160,27 @@ public final class LocksImpl implements Locks {
 
   @Nullable
   private Lock getSingleLockFromString(@NotNull final String str) {
-    Lock result = null;
-    int n = str.indexOf(' ');
-    String name = str.substring(0, n);
-    int m = str.indexOf(' ', n + 1);
-    LockType type;
-    if (m == -1) {
-      // no values
-      type = LockType.byName(str.substring(n + 1).trim());
-    } else {
-      type = LockType.byName(str.substring(n + 1, m).trim());
+    // get location of Type
+    int t = -1; // position of type
+    LockType type = null;
+    for (LockType lockType: LockType.values()) {
+      t = str.lastIndexOf(lockType.getName());
+      if (t > 0) {
+        type = lockType;
+        break;
+      }
     }
+    Lock result = null;
     if (type != null) {
+      final String name = str.substring(0, t).trim();
+      int m = str.indexOf(' ', t + 1);
       // lock is valid
       if (m > 0) {
         // values
         result = new Lock(name, type, str.substring(m + 1).trim());
       } else {
         // no values
-        result = new Lock(str.substring(0, n), type);
+        result = new Lock(name, type);
       }
     }
     return result;
