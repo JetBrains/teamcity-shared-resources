@@ -71,8 +71,9 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
     if (lock != null) {
       // save its type
       final LockType lockType = lock.getType();
+      final String lockValue = lock.getValue();
       // add lock with new resource name and saved type
-      myLockedResources.put(newName, new Lock(newName, lockType));
+      myLockedResources.put(newName, new Lock(newName, lockType, lockValue));
       // serialize locks
       final String locksAsString = myLocks.asFeatureParameter(myLockedResources.values());
       // update build feature parameters
