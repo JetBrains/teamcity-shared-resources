@@ -22,7 +22,7 @@ import java.util.Map;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 @SuppressWarnings("UnusedShould")
-@TestFor (testForClass = {SharedResourcesFeature.class , SharedResourcesFeatureImpl.class})
+@TestFor(testForClass = {SharedResourcesFeature.class, SharedResourcesFeatureImpl.class})
 public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private Mockery m;
@@ -54,17 +54,17 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     myLockedResources = new HashMap<String, Lock>() {{
       put("lock1", new Lock("lock1", LockType.READ));
       put("lock2", new Lock("lock2", LockType.WRITE));
+      put("lock_with_value1", new Lock("lock_with_value1", LockType.WRITE, "lock_value"));
     }};
     expectedBuildParameters = new HashMap<String, String>() {{
-      for(String str: myLockedResources.keySet()) {
+      for (String str : myLockedResources.keySet()) {
         put(TestUtils.generateLockAsBuildParam(str, myLockedResources.get(str).getType()), "");
       }
     }};
-
   }
 
   @Test
-  public void testGetLockedResources() {
+  public void testGetLockedResources() throws Exception {
     m.checking(new Expectations() {{
       oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
       will(returnValue(myLockedResources));
@@ -74,14 +74,14 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     Map<String, Lock> lockedResources = feature.getLockedResources();
     assertNotNull(lockedResources);
     assertEquals(myLockedResources.size(), lockedResources.size());
-    for (Lock lock: myLockedResources.values()) {
+    for (Lock lock : myLockedResources.values()) {
       assertEquals(lock, lockedResources.get(lock.getName()));
     }
     m.assertIsSatisfied();
   }
 
   @Test
-  public void testGetBuildParameters() {
+  public void testGetBuildParameters() throws Exception {
     m.checking(new Expectations() {{
       oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
       will(returnValue(myLockedResources));
@@ -96,12 +96,10 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-
   private final String oldName = "lock2";
   private final String newName = "lock3";
 
-  private void setupCommonExpectations() {
-
+  private void setupCommonExpectations() throws Exception {
     final String newLocksAsString = "lock1 readLock\nlock3 writeLock";
     params.put(FeatureParams.LOCKS_FEATURE_PARAM_KEY, newLocksAsString);
 
@@ -125,20 +123,43 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testUpdateLock_BuildType() {
+  public void testUpdateLock_BuildType() throws Exception {
     setupCommonExpectations();
-    m.checking(new Expectations(){{
+    m.checking(new Expectations() {{
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(true));
     }});
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     feature.updateLock(myBuildType, oldName, newName);
+    final Map<String, Lock> locks = feature.getLockedResources();
+    Lock lock = locks.get(oldName);
+    assertNull(lock);
+    lock = locks.get(newName);
+    assertNotNull(lock);
   }
 
   @Test
-  public void testUpdateLock_BuildTypeTemplate() {
+  @TestFor (issues = "TW-26249")
+  public void testUpdateLock_Value() throws Exception {
     setupCommonExpectations();
-    m.checking(new Expectations(){{
+    m.checking(new Expectations() {{
+      oneOf(myBuildType).updateBuildFeature("", "", params);
+      will(returnValue(true));
+    }});
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    feature.updateLock(myBuildType, "lock_with_value1", "lock_with_value2");
+    final Map<String, Lock> locks = feature.getLockedResources();
+    Lock lock = locks.get("lock_with_value1");
+    assertNull(lock);
+    lock = locks.get("lock_with_value2");
+    assertNotNull(lock);
+    assertEquals("lock_value", lock.getValue());
+  }
+
+  @Test
+  public void testUpdateLock_BuildTypeTemplate() throws Exception {
+    setupCommonExpectations();
+    m.checking(new Expectations() {{
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(false));
 
@@ -157,8 +178,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     feature.updateLock(myBuildType, oldName, newName);
+    final Map<String, Lock> locks = feature.getLockedResources();
+    Lock lock = locks.get(oldName);
+    assertNull(lock);
+    lock = locks.get(newName);
+    assertNotNull(lock);
   }
-
-
-
 }
+

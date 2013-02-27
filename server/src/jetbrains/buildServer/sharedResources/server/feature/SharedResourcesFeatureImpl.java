@@ -65,16 +65,17 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
     if (lock != null) {
       // save its type
       final LockType lockType = lock.getType();
+      final String lockValue = lock.getValue();
       // add lock with new resource name and saved type
-      myLockedResources.put(newName, new Lock(newName, lockType));
+      myLockedResources.put(newName, new Lock(newName, lockType, lockValue));
       // serialize locks
       final String locksAsString = myLocks.asFeatureParameter(myLockedResources.values());
       // update build feature parameters
-      Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
+      final Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
       // update build feature
       boolean updated = buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
-      // todo: remove workaround with templates
+      // feature belongs to template. That is why it was not updated
       if (!updated) {
         final BuildTypeTemplate template = buildType.getTemplate();
         if (template != null) {
