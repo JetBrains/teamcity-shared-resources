@@ -77,7 +77,8 @@ public class LocksStorageImpl implements LocksStorage {
     if (artifact.exists()) {
       try {
         log.info("Got artifact with locks for build [" + build +"]");
-        final List<String> lines = FileUtil.readFile(artifact, MY_ENCODING);
+        final String content = FileUtil.readText(artifact, MY_ENCODING);
+        final String[] lines = content.split("\\r?\\n");
         for (String line: lines) {
           List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
           if (strings.size() == 3) {
