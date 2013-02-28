@@ -46,6 +46,9 @@ public class LocksStorageImpl implements LocksStorage {
 
   private static final Logger log = Logger.getInstance(LocksStorageImpl.class.getName());
 
+  @NotNull
+  private static final String MY_ENCODING = "UTF-8";
+
   @Override
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
     if (!takenLocks.isEmpty()) {
@@ -56,7 +59,7 @@ public class LocksStorageImpl implements LocksStorage {
       try {
         final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
         if (FileUtil.createParentDirs(artifact)) {
-          FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), "UTF-8");
+          FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
         } else {
           log.warn("Failed to create parent dirs for file with taken locks");
         }
@@ -74,11 +77,15 @@ public class LocksStorageImpl implements LocksStorage {
     if (artifact.exists()) {
       try {
         log.info("Got artifact with locks for build [" + build +"]");
-        final List<String> lines = FileUtil.readFile(artifact);
+        final List<String> lines = FileUtil.readFile(artifact, MY_ENCODING);
         for (String line: lines) {
           List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
           if (strings.size() == 3) {
-            Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)), StringUtil.trim(strings.get(2)));
+            String value =  StringUtil.trim(strings.get(2));
+            if (value == null) {
+              value = "";
+            }
+            Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
             result.put(lock.getName(), lock);
           } else {
             log.warn("Wrong locks storage format"); // todo: line? file?
