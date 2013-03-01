@@ -3,9 +3,9 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -59,13 +59,12 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   public void testCollectTakenLocks_EmptyInput() throws Exception {
     final Map<String, TakenLock> result = myTakenLocks.collectTakenLocks(
-            myProjectId, Collections.<RunningBuildInfo>emptyList(), Collections.<QueuedBuildInfo>emptyList());
+            myProjectId, Collections.<SRunningBuild>emptyList(), Collections.<QueuedBuildInfo>emptyList());
     assertNotNull(result);
     assertEquals(0, result.size());
   }
 
-  //@Test
-  // todo: fix test
+  @Test
   public void testCollectRunningBuilds_Stored() throws Exception {
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
       put("lock1", new Lock("lock1", LockType.READ, ""));
@@ -83,7 +82,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
 
-    final Collection<RunningBuildInfo> runningBuilds = new ArrayList<RunningBuildInfo>() {{
+    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
       add(rb1);
       add(rb2);
     }};
@@ -91,9 +90,6 @@ public class TakenLocksImplTest extends BaseTestCase {
     m.checking(new Expectations() {{
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
-
-      oneOf(bp1).getProjectId();
-      will(returnValue(myProjectId));
 
       oneOf(myLocksStorage).locksStored(rb1);
       will(returnValue(true));
@@ -103,9 +99,6 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       oneOf(rb2).getBuildPromotionInfo();
       will(returnValue(bp2));
-
-      oneOf(bp2).getProjectId();
-      will(returnValue(myProjectId));
 
       oneOf(myLocksStorage).locksStored(rb2);
       will(returnValue(true));
@@ -129,8 +122,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  //  @Test
-  // todo: fix test
+  @Test
   public void testCollectRunningQueued_Promotions() throws Exception {
     final Map<Lock, String> takenLocks1 = new HashMap<Lock, String>() {{
       put(new Lock("lock1", LockType.READ), "");
@@ -145,7 +137,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final QueuedBuildInfo qb1 = m.mock(QueuedBuildInfo.class, "qb-1");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
-    final Collection<RunningBuildInfo> runningBuilds = new ArrayList<RunningBuildInfo>() {{
+    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
       add(rb1);
     }};
 
@@ -158,9 +150,6 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 
-      oneOf(bp1).getProjectId();
-      will(returnValue(myProjectId));
-
       oneOf(myLocksStorage).locksStored(rb1);
       will(returnValue(false));
 
@@ -169,9 +158,6 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       oneOf(qb1).getBuildPromotionInfo();
       will(returnValue(bp2));
-
-      oneOf(bp2).getProjectId();
-      will(returnValue(myProjectId));
 
       oneOf(myLocks).fromBuildPromotion(bp2);
       will(returnValue(takenLocks2.keySet()));

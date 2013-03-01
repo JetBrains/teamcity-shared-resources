@@ -302,6 +302,7 @@ public class LocksImplTest extends BaseTestCase {
       assertEquals(lock.getValue(), val);
     }
   }
+
   @Test
   public void testFromBuildParams_Values() throws Exception {
     final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);

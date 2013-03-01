@@ -18,8 +18,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.BuildTypeEx;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -67,6 +66,8 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   private TakenLocks myTakenLocks;
 
+  private RunningBuildsManager myRunningBuildsManager;
+
   /**
    * Class under test
    */
@@ -85,7 +86,8 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     myBuildPromotion = m.mock(BuildPromotionEx.class);
     myTakenLocks = m.mock(TakenLocks.class);
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
-    myWaitPrecondition = new SharedResourcesWaitPrecondition(myFeatures, myLocks, myTakenLocks);
+    myRunningBuildsManager = m.mock(RunningBuildsManager.class);
+    myWaitPrecondition = new SharedResourcesWaitPrecondition(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager);
   }
 
   @Test
@@ -212,7 +214,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     features.add(m.mock(SharedResourcesFeature.class));
 
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
-    final Collection<RunningBuildInfo> runningBuilds = Collections.emptyList();
+    final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -236,6 +238,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myBuildDistributorInput).getRunningBuilds();
       will(returnValue(runningBuilds));
 
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(runningBuilds));
+
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
       will(returnValue(Collections.emptyMap()));
 
@@ -255,7 +260,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       add(new Lock("lock1", LockType.READ));
     }};
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
-    final Collection<RunningBuildInfo> runningBuilds = Collections.emptyList();
+    final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
     final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
       final TakenLock tl = new TakenLock();
@@ -283,6 +288,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
 
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(runningBuilds));
+
       oneOf(myBuildDistributorInput).getRunningBuilds();
       will(returnValue(runningBuilds));
 
@@ -307,7 +315,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       add(new Lock("lock1", LockType.READ));
     }};
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
-    final Collection<RunningBuildInfo> runningBuilds = Collections.emptyList();
+    final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
     final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
       final TakenLock tl = new TakenLock();
@@ -335,6 +343,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue(locks));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();
+      will(returnValue(runningBuilds));
+
+      oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(runningBuilds));
 
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
