@@ -207,19 +207,25 @@ public final class LocksImpl implements Locks {
       }
 
       if (lockType == null) {
-        LOG.warn("Error parsing lock type of '" + paramName + "'. Supported values are " + Arrays.toString(LockType.values()));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Error parsing lock type of '" + paramName + "'. Supported values are " + Arrays.toString(LockType.values()));
+        }
         return null;
       }
 
       try {
         String lockName = lockString.substring(lockType.getName().length() + 1);
         if (lockName.length() == 0) {
-          LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
+          }
           return null;
         }
         result = new Lock(lockName, lockType, paramValue);
       } catch (IndexOutOfBoundsException e) {
-        LOG.warn("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
+        }
         return null;
       }
     }
