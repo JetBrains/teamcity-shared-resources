@@ -250,6 +250,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     if (_.size(this.availableResources) > 0) {
       BS.Util.show('lockFromResources_Yes');
       BS.Util.hide('lockFromResources_No');
+      BS.Util.show('locksDialogSubmit');
       this.chooseResource();
     } else {
       BS.Util.show('lockFromResources_No');
@@ -258,6 +259,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       BS.Util.hide('row_CustomResource_Type');
       BS.Util.hide('row_QuotedResource_Type');
       BS.Util.hide('row_CustomResource_Value');
+      BS.Util.hide('locksDialogSubmit');
     }
   },
 
