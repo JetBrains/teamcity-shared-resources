@@ -38,12 +38,16 @@ import java.util.*;
  */
 public class LocksStorageImpl implements LocksStorage {
 
+  @NotNull
   static final String FILE_PARENT = ".teamcity/" + SharedResourcesPluginConstants.PLUGIN_NAME;
 
+  @NotNull
   private static final String FILE_NAME = "taken_locks.txt";
 
+  @NotNull
   static final String FILE_PATH = FILE_PARENT + "/" + FILE_NAME; // package visibility for tests
 
+  @NotNull
   private static final Logger log = Logger.getInstance(LocksStorageImpl.class.getName());
 
   @NotNull
@@ -76,11 +80,13 @@ public class LocksStorageImpl implements LocksStorage {
     final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
     if (artifact.exists()) {
       try {
-        log.info("Got artifact with locks for build [" + build +"]");
+        if (log.isDebugEnabled()) {
+          log.debug("Got artifact with locks for build [" + build +"]");
+        }
         final String content = FileUtil.readText(artifact, MY_ENCODING);
         final String[] lines = content.split("\\r?\\n");
         for (String line: lines) {
-          List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
+          final List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
           if (strings.size() == 3) {
             String value =  StringUtil.trim(strings.get(2));
             if (value == null) {
@@ -89,14 +95,18 @@ public class LocksStorageImpl implements LocksStorage {
             Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
             result.put(lock.getName(), lock);
           } else {
-            log.warn("Wrong locks storage format"); // todo: line? file?
+            if (log.isDebugEnabled()) {
+              log.debug("Wrong locks storage format in line: {" + line + "}");
+            }
           }
         }
       } catch(IOException e) {
         log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
       }
     } else {
-      log.info("Skipping artifact for build [" + build +"]. No locks are taken");
+      if (log.isDebugEnabled()) {
+        log.debug("Skipping artifact for build [" + build +"]. No locks are taken.");
+      }
     }
     return result;
   }
