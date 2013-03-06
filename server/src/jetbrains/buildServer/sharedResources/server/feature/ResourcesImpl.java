@@ -99,7 +99,7 @@ public final class ResourcesImpl implements Resources {
   public Map<String, Resource> getAllResources() {
     final Map<String, Resource> result = new HashMap<String, Resource>();
     SProject root = myProjectManager.getRootProject();
-    List<SProject> children = root.getAllSubProjects();
+    List<SProject> children = root.getProjects();
     children.add(root);
     for (SProject p : children) {
       result.putAll(getSettings(p.getProjectId()).getResourceMap());

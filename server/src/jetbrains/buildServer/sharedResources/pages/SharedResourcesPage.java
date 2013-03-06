@@ -68,7 +68,7 @@ public class SharedResourcesPage extends EditProjectTab {
     SharedResourcesBean bean;
     final SProject project = getProject(request);
     if (project != null) {
-      final List<SProject> meAndSubtree = project.getAllSubProjects();
+      final List<SProject> meAndSubtree = project.getProjects();
       meAndSubtree.add(project);
       // <resource_name> -> <>
       final Map<String, Map<SBuildType, LockType>> usageMap = new HashMap<String, Map<SBuildType, LockType>>();

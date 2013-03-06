@@ -60,7 +60,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
             return;
           } else {
             // my resource can be used only in my build configurations or in build configurations in my subtree
-            final List<SProject> myAllSubprojects = project.getAllSubProjects();
+            final List<SProject> myAllSubprojects = project.getProjects();
             myAllSubprojects.add(project);
             for (SProject p : myAllSubprojects) {
               final List<SBuildType> buildTypes = p.getBuildTypes();
