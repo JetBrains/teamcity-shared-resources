@@ -18,8 +18,14 @@ package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.BuildTypeEx;
+import jetbrains.buildServer.serverSide.RunningBuildsManager;
+import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
+import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -317,11 +323,15 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
+    final BuildPromotionEx bpex = m.mock(BuildPromotionEx.class, "bpex-lock1");
     final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
       final TakenLock tl = new TakenLock();
-      tl.addLock(m.mock(BuildPromotionInfo.class), new Lock("lock1", LockType.WRITE));
+      tl.addLock(bpex, new Lock("lock1", LockType.WRITE));
       put("lock1", tl);
     }};
+
+    final BuildTypeEx buildTypeEx = m.mock(BuildTypeEx.class, "bpex-btex");
+    final String name = "UNAVAILABLE";
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -354,6 +364,11 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId);
       will(returnValue(locks));
 
+      oneOf(bpex).getBuildType();
+      will(returnValue(buildTypeEx));
+
+      oneOf(buildTypeEx).getName();
+      will(returnValue(name));
     }});
 
     final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, canBeStarted, myBuildDistributorInput, false);

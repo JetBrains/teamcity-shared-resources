@@ -17,8 +17,10 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.BuildTypeEx;
 import jetbrains.buildServer.serverSide.RunningBuildsManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
@@ -31,9 +33,7 @@ import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -86,7 +86,10 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
             if (!takenLocks.isEmpty()) {
               final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
               if (!unavailableLocks.isEmpty()) {
-                result = createWaitReason(unavailableLocks);
+                result = createWaitReason(takenLocks, unavailableLocks);
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + result.getDescription() + "]");
+                }
               }
             }
           }
@@ -97,16 +100,32 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   }
 
   @NotNull
-  private WaitReason createWaitReason(@NotNull final Collection<Lock> unavailableLocks) {
-    final StringBuilder builder = new StringBuilder("Build is waiting for ");
-    builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
+  private WaitReason createWaitReason(@NotNull final Map<String, TakenLock> takenLocks, @NotNull final Collection<Lock> unavailableLocks) {
+    final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
+    builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
+    builder.append("to become available: ");
     for (Lock lock : unavailableLocks) {
-      builder.append(lock.getName()).append(", ");
+      final Set<String> buildTypeNames = new HashSet<String>();
+      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getReadLocks().keySet()) {
+        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        if (bt != null) {
+          buildTypeNames.add(bt.getName());
+        }
+      }
+      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getWriteLocks().keySet()) {
+        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        if (bt != null) {
+          buildTypeNames.add(bt.getName());
+        }
+      }
+      if (!buildTypeNames.isEmpty()) {
+        builder.append(lock.getName()).append(" (locked by ");
+        builder.append(StringUtil.join(buildTypeNames, ","));
+        builder.append(")");
+      }
+      builder.append(", ");
     }
     final String reasonDescription = builder.substring(0, builder.length() - 2);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Got wait reason: [" + reasonDescription + "]");
-    }
     return new SimpleWaitReason(reasonDescription);
   }
 
@@ -120,8 +139,8 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       invalidLocks.addAll(feature.getInvalidLocks(projectId));
     }
     if (!invalidLocks.isEmpty()) {
-      StringBuilder builder = new StringBuilder("Build type {");
-      builder.append(buildType).append("} has invalid locks: ");
+      StringBuilder builder = new StringBuilder("Build type [");
+      builder.append(buildType).append("] has invalid locks: ");
       for (Lock lock : invalidLocks) {
         builder.append(lock.getName()).append(", ");
       }
