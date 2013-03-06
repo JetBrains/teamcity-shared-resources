@@ -17,8 +17,10 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.BuildTypeEx;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -30,7 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -63,7 +67,6 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   public WaitReason canStart(@NotNull final QueuedBuildInfo queuedBuild,
                              @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
                              @NotNull final BuildDistributorInput buildDistributorInput, boolean emulationMode) {
-    if (emulationMode) return null; // not supporting snapshot running builds passed by estimator
     WaitReason result = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
     final String projectId = myPromotion.getProjectId();
@@ -76,7 +79,10 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
           if (!takenLocks.isEmpty()) {
             final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
             if (!unavailableLocks.isEmpty()) {
-              result = createWaitReason(unavailableLocks);
+              result = createWaitReason(takenLocks, unavailableLocks);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + result.getDescription() + "]");
+              }
             }
           }
         }
@@ -86,16 +92,32 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   }
 
   @NotNull
-  private WaitReason createWaitReason(@NotNull final Collection<Lock> unavailableLocks) {
-    final StringBuilder builder = new StringBuilder("Build is waiting for ");
-    builder.append(unavailableLocks.size() > 1 ? "locks: " : "lock: ");
+  private WaitReason createWaitReason(@NotNull final Map<String, TakenLock> takenLocks, @NotNull final Collection<Lock> unavailableLocks) {
+    final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
+    builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
+    builder.append("to become available: ");
     for (Lock lock : unavailableLocks) {
-      builder.append(lock.getName()).append(", ");
+      final Set<String> buildTypeNames = new HashSet<String>();
+      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getReadLocks().keySet()) {
+        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        if (bt != null) {
+          buildTypeNames.add(bt.getName());
+        }
+      }
+      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getWriteLocks().keySet()) {
+        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        if (bt != null) {
+          buildTypeNames.add(bt.getName());
+        }
+      }
+      if (!buildTypeNames.isEmpty()) {
+        builder.append(lock.getName()).append(" (locked by ");
+        builder.append(StringUtil.join(buildTypeNames, ","));
+        builder.append(")");
+      }
+      builder.append(", ");
     }
     final String reasonDescription = builder.substring(0, builder.length() - 2);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Got wait reason: [" + reasonDescription + "]");
-    }
     return new SimpleWaitReason(reasonDescription);
   }
 }

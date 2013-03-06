@@ -254,11 +254,15 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<RunningBuildInfo> runningBuilds = Collections.emptyList();
 
+    final BuildPromotionEx bpex = m.mock(BuildPromotionEx.class, "bpex");
     final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
       final TakenLock tl = new TakenLock();
-      tl.addLock(m.mock(BuildPromotionInfo.class), new Lock("lock1", LockType.WRITE));
+      tl.addLock(bpex, new Lock("lock1", LockType.WRITE));
       put("lock1", tl);
     }};
+
+    final BuildTypeEx btex = m.mock(BuildTypeEx.class, "bpex-btex");
+    final String name = "UNAVAILABLE";
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -285,6 +289,11 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId);
       will(returnValue(locks));
 
+      oneOf(bpex).getBuildType();
+      will(returnValue(btex));
+
+      oneOf(btex).getName();
+      will(returnValue(name));
     }});
 
     final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, canBeStarted, myBuildDistributorInput, false);
