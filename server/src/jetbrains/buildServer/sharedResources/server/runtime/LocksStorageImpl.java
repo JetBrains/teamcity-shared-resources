@@ -65,7 +65,7 @@ public class LocksStorageImpl implements LocksStorage {
         if (FileUtil.createParentDirs(artifact)) {
           FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
         } else {
-          log.warn("Failed to create parent dirs for file with taken locks");
+          log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
         }
       } catch (IOException e) {
         log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
@@ -80,9 +80,6 @@ public class LocksStorageImpl implements LocksStorage {
     final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
     if (artifact.exists()) {
       try {
-        if (log.isDebugEnabled()) {
-          log.debug("Got artifact with locks for build [" + build +"]");
-        }
         final String content = FileUtil.readText(artifact, MY_ENCODING);
         final String[] lines = content.split("\\r?\\n");
         for (String line: lines) {
@@ -96,21 +93,16 @@ public class LocksStorageImpl implements LocksStorage {
             result.put(lock.getName(), lock);
           } else {
             if (log.isDebugEnabled()) {
-              log.debug("Wrong locks storage format in line: {" + line + "}");
+              log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
             }
           }
         }
       } catch(IOException e) {
         log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
       }
-    } else {
-      if (log.isDebugEnabled()) {
-        log.debug("Skipping artifact for build [" + build +"]. No locks are taken.");
-      }
     }
     return result;
   }
-
 
   @Override
   public boolean locksStored(@NotNull final SBuild build) {
