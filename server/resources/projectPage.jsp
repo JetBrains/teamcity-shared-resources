@@ -269,12 +269,14 @@
                           <c:forEach items="${usage}" var="usedInBuildType">
                             <c:set var="buildType" value="${usedInBuildType.key}"/>
                             <c:set var="lockType" value="${usedInBuildType.value}"/>
+                            <admin:editBuildTypeNavSteps settings="${buildType}"/>
+                            <jsp:useBean id="buildConfigSteps" scope="request" type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
                             <l:li>
-                              <bs:buildTypeLink buildType="${buildType}" style="padding-left:0px;">
+                              <admin:editBuildTypeLink buildTypeId="${buildType.buildTypeId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
                                 <span style="white-space: nowrap">
                                   ${buildType.name} (${lockType.descriptiveName})
                                 </span>
-                              </bs:buildTypeLink>
+                              </admin:editBuildTypeLink>
                             </l:li>
                           </c:forEach>
                         </ul>
