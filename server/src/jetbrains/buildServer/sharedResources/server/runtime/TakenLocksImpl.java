@@ -129,39 +129,26 @@ public class TakenLocksImpl implements TakenLocks {
                                              @NotNull final CustomResource resource) {
     boolean result = true;
     // what type of lock do we have
-    // write with value -> specific
     // write            -> all
+    // read with value  -> specific
     // read             -> any
     final TakenLock takenLock = takenLocks.get(lock.getName());
     switch (lock.getType()) {
       case READ:   // check at least one value is available
         // check for unique writeLocks
-        Map<BuildPromotionInfo, String> writeLocks = takenLock.getWriteLocks();
-        for (String str : writeLocks.values()) {
-          if ("".equals(str)) {
-            // we have 'ALL' write lock
-            result = false;
-            break;
-          }
+        // 1) check for write locks
+        if (takenLock.hasWriteLocks()) {
+          result = false; //
+          break;
         }
-        if (result) {
-          // check for any available values
-          if (resource.getValues().size() <= takenLock.getReadLocks().size() + takenLock.getWriteLocks().size()) {
-            // quota exceeded
-            result = false;
-            break;
-          }
+        // 2) check for quota (read + write)
+        if (resource.getValues().size() <= takenLock.getReadLocks().size() + takenLock.getWriteLocks().size()) {
+          // quota exceeded
+          result = false;
+          break;
         }
-        break;
-      case WRITE:
-        if ("".equals(lock.getValue())) {
-          // 'ALL' case
-          if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) {
-            result = false;
-            break;
-          }
-        } else {
-          // 'SPECIFIC' case
+        // 3) SPECIFIC case
+        if (!"".equals(lock.getValue())) { // we have custom lock
           final String requiredValue = lock.getValue();
           final Set<String> takenValues = new HashSet<String>();
           takenValues.addAll(takenLock.getReadLocks().values());
@@ -171,6 +158,13 @@ public class TakenLocksImpl implements TakenLocks {
             result = false;
             break;
           }
+        }
+        break;
+      case WRITE:
+        // 'ALL' case
+        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) {
+          result = false;
+          break;
         }
         break;
     }
