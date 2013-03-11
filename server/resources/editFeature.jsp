@@ -191,14 +191,14 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     // set values
     if (currentResource.type === 'CUSTOM') {
       var customLockType;
-      if (currentLock.type === 'writeLock') {
+      if (currentLock.type === 'readLock') {
         if (currentLock.value) {
           customLockType = 'SPECIFIC';
         } else {
-          customLockType = 'ALL';
+          customLockType = 'ANY';
         }
       } else {
-        customLockType = 'ANY';
+        customLockType = 'ALL';
       }
       $j('#newCustomLockType option').each(function () {
         var self = $j(this);
@@ -324,7 +324,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       if (typeName === 'ANY') {
         lock.type = "readLock";
       } else if (typeName === 'SPECIFIC') {
-        lock.type = "writeLock";
+        lock.type = "readLock";
         lock.value = $j('#newCustomLockType_Values option:selected').val();
       } else {
         lock.type = "writeLock";
@@ -451,7 +451,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         </tr>
 
         <tr id="row_CustomResource_Value">
-          <th>Instance to lock:</th>
+          <th>Value to lock:</th>
           <td>
             <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
             <span class="smallNote">Choose value of custom resource to lock</span>
