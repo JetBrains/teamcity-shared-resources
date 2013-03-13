@@ -52,13 +52,13 @@ BS.LocksUtil = {
     var result = {};
     result.name = lock.name;
     if (resource.type == 'CUSTOM') {
-      if (lock.type == 'readLock') {
-        result.description = "Any Value";
+      if (lock.type == 'writeLock') {
+        result.description = "All Value";
       } else {
         if (lock.value) {
           result.description = "Specific Value: " + lock.value;
         } else {
-          result.description = "ALL Values";
+          result.description = "Any Value";
         }
       }
     } else {
