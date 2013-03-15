@@ -14,6 +14,7 @@
   ~ limitations under the License.
   --%>
 <%@ include file="/include-internal.jsp" %>
+<%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
