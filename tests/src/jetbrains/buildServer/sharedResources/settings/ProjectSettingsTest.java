@@ -273,7 +273,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     assertNotEmpty(values);
     assertEquals(4, values.size());
     for (int i = 0; i < 4; i++) {
-      assertContains(values, "value" + i);
+      assertTrue(values.contains("value" + i));
     }
   }
 
