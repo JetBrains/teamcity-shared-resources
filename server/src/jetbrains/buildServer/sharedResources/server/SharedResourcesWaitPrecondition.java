@@ -22,7 +22,6 @@ import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.BuildTypeEx;
 import jetbrains.buildServer.serverSide.RunningBuildsManager;
-import jetbrains.buildServer.serverSide.RunningBuildsManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
