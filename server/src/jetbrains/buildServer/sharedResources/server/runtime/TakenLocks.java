@@ -16,8 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public interface TakenLocks {
    */
   @NotNull
   public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                                  @NotNull final Collection<RunningBuildInfo> runningBuilds,
+                                                  @NotNull final Collection<SRunningBuild> runningBuilds,
                                                   @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**

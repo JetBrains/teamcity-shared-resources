@@ -21,6 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.BuildTypeEx;
+import jetbrains.buildServer.serverSide.RunningBuildsManager;
+import jetbrains.buildServer.serverSide.RunningBuildsManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -52,12 +54,17 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
   @NotNull
   private final TakenLocks myTakenLocks;
 
+  @NotNull
+  private final RunningBuildsManager myRunningBuildsManager;
+
   public SharedResourcesWaitPrecondition(@NotNull final SharedResourcesFeatures features,
                                          @NotNull final Locks locks,
-                                         @NotNull final TakenLocks takenLocks) {
+                                         @NotNull final TakenLocks takenLocks,
+                                         @NotNull final RunningBuildsManager runningBuildsManager) {
     myFeatures = features;
     myLocks = locks;
     myTakenLocks = takenLocks;
+    myRunningBuildsManager = runningBuildsManager;
   }
 
   @Nullable
@@ -75,7 +82,7 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
         if (!locksToTake.isEmpty()) {
           result = checkForInvalidLocks(projectId, buildType);
           if (result == null) {
-            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, buildDistributorInput.getRunningBuilds(), canBeStarted.keySet());
+            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
             if (!takenLocks.isEmpty()) {
               final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
               if (!unavailableLocks.isEmpty()) {

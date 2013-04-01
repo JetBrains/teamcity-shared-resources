@@ -18,9 +18,9 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.serverSide.buildDistribution.RunningBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
@@ -58,14 +58,14 @@ public class TakenLocksImpl implements TakenLocks {
   @NotNull
   @Override
   public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                                  @NotNull final Collection<RunningBuildInfo> runningBuilds,
+                                                  @NotNull final Collection<SRunningBuild> runningBuilds,
                                                   @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
-    for (RunningBuildInfo runningBuildInfo: runningBuilds) {
-      BuildPromotionEx bpEx = (BuildPromotionEx)runningBuildInfo.getBuildPromotionInfo();
+    for (SRunningBuild build: runningBuilds) {
+      BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
       if (projectId.equals(bpEx.getProjectId())) {
         Collection<Lock> locks;
-        RunningBuildEx rbEx = (RunningBuildEx)runningBuildInfo;
+        RunningBuildEx rbEx = (RunningBuildEx)build;
         if (myLocksStorage.locksStored(rbEx)) {
           locks = myLocksStorage.load(rbEx).values();
         } else {
