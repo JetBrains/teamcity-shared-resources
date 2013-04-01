@@ -183,6 +183,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
 
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
 
@@ -226,6 +229,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(Collections.emptyList()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
@@ -276,6 +282,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
       oneOf(myFeatures).featuresPresent(myBuildType);
       will(returnValue(true));
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(Collections.emptyList()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));

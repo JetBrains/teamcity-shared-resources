@@ -26,15 +26,13 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -75,13 +73,16 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       if (myFeatures.featuresPresent(buildType)) {
         final Collection<Lock> locksToTake  = myLocks.fromBuildPromotion(myPromotion);
         if (!locksToTake.isEmpty()) {
-          final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, buildDistributorInput.getRunningBuilds(), canBeStarted.keySet());
-          if (!takenLocks.isEmpty()) {
-            final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
-            if (!unavailableLocks.isEmpty()) {
-              result = createWaitReason(takenLocks, unavailableLocks);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + result.getDescription() + "]");
+          result = checkForInvalidLocks(projectId, buildType);
+          if (result == null) {
+            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, buildDistributorInput.getRunningBuilds(), canBeStarted.keySet());
+            if (!takenLocks.isEmpty()) {
+              final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId);
+              if (!unavailableLocks.isEmpty()) {
+                result = createWaitReason(takenLocks, unavailableLocks);
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + result.getDescription() + "]");
+                }
               }
             }
           }
@@ -120,5 +121,26 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
     final String reasonDescription = builder.substring(0, builder.length() - 2);
     return new SimpleWaitReason(reasonDescription);
   }
+
+  @Nullable
+  private WaitReason checkForInvalidLocks(@NotNull final String projectId,
+                                          @NotNull final SBuildType buildType) {
+    WaitReason result = null;
+    final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+    final Collection<Lock> invalidLocks = new ArrayList<Lock>();
+    for (SharedResourcesFeature feature : features) {
+      invalidLocks.addAll(feature.getInvalidLocks(projectId));
+    }
+    if (!invalidLocks.isEmpty()) {
+      StringBuilder builder = new StringBuilder("Build type [");
+      builder.append(buildType).append("] has invalid locks: ");
+      for (Lock lock : invalidLocks) {
+        builder.append(lock.getName()).append(", ");
+      }
+      result = new SimpleWaitReason(builder.substring(0, builder.length() - 2));
+    }
+    return result;
+  }
+
 }
 

@@ -29,13 +29,15 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private Locks myLocks;
 
+  private Resources myResources;
+
+  private Map<String, String> params;
+
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
   private SBuildType myBuildType;
 
   private BuildTypeTemplate myBuildTypeTemplate;
-
-  private Map<String, String> params;
 
   private Map<String, Lock> myLockedResources;
 
@@ -47,6 +49,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     super.setUp();
     m = new Mockery();
     myLocks = m.mock(Locks.class);
+    myResources = m.mock(Resources.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
     myBuildType = m.mock(SBuildType.class);
     myBuildTypeTemplate = m.mock(BuildTypeTemplate.class);
@@ -70,7 +73,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(myLockedResources));
     }});
 
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor, myResources);
     Map<String, Lock> lockedResources = feature.getLockedResources();
     assertNotNull(lockedResources);
     assertEquals(myLockedResources.size(), lockedResources.size());
@@ -89,7 +92,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myLocks).asBuildParameters(myLockedResources.values());
       will(returnValue(expectedBuildParameters));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor, myResources);
     final Map<String, String> params = feature.getBuildParameters();
     assertNotNull(params);
     assertEquals(expectedBuildParameters.size(), params.size());
@@ -129,7 +132,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(true));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor, myResources);
     feature.updateLock(myBuildType, oldName, newName);
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);
@@ -146,7 +149,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(true));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor, myResources);
     feature.updateLock(myBuildType, "lock_with_value1", "lock_with_value2");
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get("lock_with_value1");
@@ -176,7 +179,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(true));
 
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor, myResources);
     feature.updateLock(myBuildType, oldName, newName);
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);

@@ -20,6 +20,7 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -54,4 +55,7 @@ public interface SharedResourcesFeature {
   @NotNull
   public Map<String, String> getBuildParameters();
 
+
+  @NotNull
+  public Collection<Lock> getInvalidLocks(@NotNull String projectId);
 }

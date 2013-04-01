@@ -21,11 +21,12 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
@@ -45,11 +46,16 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   @NotNull
   private final Map<String, Lock> myLockedResources;
 
+  @NotNull
+  private final Resources myResources;
+
 
   public SharedResourcesFeatureImpl(@NotNull final Locks locks,
-                                    @NotNull final SBuildFeatureDescriptor descriptor) {
+                                    @NotNull final SBuildFeatureDescriptor descriptor,
+                                    @NotNull Resources resources) {
     myLocks = locks;
     myDescriptor = descriptor;
+    myResources = resources;
     myLockedResources = myLocks.fromFeatureParameters(myDescriptor);
   }
 
@@ -89,5 +95,35 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   @Override
   public Map<String, String> getBuildParameters() {
     return myLocks.asBuildParameters(myLockedResources.values());
+  }
+
+  @NotNull
+  @Override
+  public Collection<Lock> getInvalidLocks(@NotNull final String projectId) {
+    final Collection<Lock> result = new ArrayList<Lock>();
+    // get visible resources
+    if (!myLockedResources.isEmpty()) {
+      final Map<String, Resource> resources = myResources.asMap(projectId);
+      for (Map.Entry<String, Lock> entry : myLockedResources.entrySet()) {
+        // check that resource exists
+        Resource r = resources.get(entry.getKey());
+        Lock lock = entry.getValue();
+        if (r != null) {
+          // if lock has value (SPECIFIC case), check that resource is custom and has the value in values collection
+          if (!"".equals(lock.getValue())) {
+            if (ResourceType.CUSTOM == r.getType()) {
+              if (!((CustomResource) r).getValues().contains(lock.getValue())) {
+                result.add(lock);
+              }
+            } else {
+              result.add(lock);
+            }
+          }
+        } else {
+          result.add(lock);
+        }
+      }
+    }
+    return result;
   }
 }
