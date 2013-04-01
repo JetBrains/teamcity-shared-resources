@@ -170,8 +170,10 @@
 </script>
 
 <div>
-<forms:addButton id="addNewResource"
-                 onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+<p>
+  <forms:addButton id="addNewResource"
+                   onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+</p>
 <bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle"
            title="Resource Management" closeCommand="BS.ResourceDialog.close()">
   <table class="runnerFormTable">
