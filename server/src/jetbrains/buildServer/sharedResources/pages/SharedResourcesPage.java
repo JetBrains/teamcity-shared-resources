@@ -20,12 +20,15 @@ import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.auth.Permission;
+import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -50,14 +53,19 @@ public class SharedResourcesPage extends EditProjectTab {
   @NotNull
   private final SharedResourcesFeatures myFeatures;
 
+  @NotNull
+  private final SecurityContext mySecurityContext;
+
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final ProjectManager projectManager,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
-                             @NotNull final SharedResourcesFeatures features) {
+                             @NotNull final SharedResourcesFeatures features,
+                             @NotNull SecurityContext securityContext) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), "Shared Resources", projectManager);
     myResources = resources;
     myFeatures = features;
+    mySecurityContext = securityContext;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -94,5 +102,15 @@ public class SharedResourcesPage extends EditProjectTab {
       bean = new SharedResourcesBean(project);
     }
     model.put("bean", bean);
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull final HttpServletRequest request) {
+    final SProject project = getProject(request);
+    final SUser user = (SUser) mySecurityContext.getAuthorityHolder().getAssociatedUser();
+    return  user != null
+            && project != null && (
+            user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT)
+                    || user.isPermissionGrantedGlobally(Permission.EDIT_PROJECT));
   }
 }

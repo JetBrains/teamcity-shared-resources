@@ -320,7 +320,17 @@
   <c:set var="p" value="${item.key}"/> <%-- project --%>
   <c:set var="pr" value="${item.value}"/> <%--Map<String, Resource>--%>
   <c:if test="${not empty pr}">
-    <h3>Resources inherited from <bs:projectLink project="${p}"/></h3>
+    <h3>Resources inherited from
+    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
+      <jsp:attribute name="ifAccessGranted">
+        <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
+        <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
+      </jsp:attribute>
+      <jsp:attribute name="ifAccessDenied">
+        <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
+      </jsp:attribute>
+    </authz:authorize>
+    </h3>
     <table class="parametersTable" style="width: 70%">
       <tr>
         <th>Resource name</th>
