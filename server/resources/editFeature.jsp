@@ -127,6 +127,11 @@ BS.SharedResourcesFeatureDialog = {
     }
     //noinspection JSUnresolvedFunction
     textArea.val(textAreaContent.trim());
+    if (this.inherited) {
+      BS.Util.hide('addNewLock');
+    } else {
+      BS.Util.show('addNewLock');
+    }
     BS.MultilineProperties.updateVisible();
   },
 
@@ -159,6 +164,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   showDialog: function () {
     this.editMode = false;
+    $j('#locksDialogTitle').html('Add Lock');
+    $j('#locksDialogSubmit').val('Add Lock');
     // filter available resources
     this.fillAvailableResources();
     this.fillAvailableResourcesDropdown();
@@ -172,6 +179,9 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   showEdit: function (lockName) {
     this.editMode = true;
     this.currentLockName = lockName;
+    // set proper title
+    $j('#locksDialogTitle').html('Edit Lock');
+    $j('#locksDialogSubmit').val('Save');
     // select resource
     var currentResource = BS.SharedResourcesFeatureDialog.resources[this.currentLockName];
     // select lock
@@ -232,7 +242,9 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         resourceDropdown.append("<option value='" + this.availableResources[key].name + "'>" + this.availableResources[key].name + "</option>");
       }
     }
-  }, /**
+  },
+
+  /**
    * Filters resources that will be available for resource chooser
    */
   fillAvailableResources: function () {
@@ -416,7 +428,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 <tr>
   <td class="noBorder" colspan="2">
     <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
-    <bs:dialog dialogId="locksDialog" title="Lock Management" closeCommand="BS.LocksDialog.close()">
+    <bs:dialog dialogId="locksDialog" title="Add Lock" titleId="locksDialogTitle" closeCommand="BS.LocksDialog.close()">
       <table class="runnerFormTable">
         <tr id="row_resourceChoose">
           <th><label for="lockFromResources">Resource name:</label></th>
