@@ -429,54 +429,53 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   <td class="noBorder" colspan="2">
     <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
     <bs:dialog dialogId="locksDialog" title="Add Lock" titleId="locksDialogTitle" closeCommand="BS.LocksDialog.close()">
-      <table class="runnerFormTable">
-        <tr id="row_resourceChoose">
-          <th><label for="lockFromResources">Resource name:</label></th>
-          <td>
-            <div id="lockFromResources_Yes">
+      <div id="lockFromResources_Yes">
+        <table class="runnerFormTable">
+          <tr id="row_resourceChoose">
+            <th style="white-space: nowrap"><label for="lockFromResources">Resource name:</label></th>
+            <td>
               <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"
                             onchange="BS.LocksDialog.chooseResource();"/>
               <span class="smallNote">Choose the resource you want to lock</span>
-            </div>
-            <div id="lockFromResources_No">
-              <c:out value="No resources available. Please add the resource you want to lock."/>
-            </div>
-          </td>
-        </tr>
+            </td>
+          </tr>
 
-        <tr id="row_QuotedResource_Type">
-          <th><label for="newLockType">Lock type:</label></th>
-          <td>
-            <forms:select name="newLockType" id="newLockType" style="width: 90%">
-              <forms:option value="readLock">Read Lock</forms:option>
-              <forms:option value="writeLock">Write Lock</forms:option>
-            </forms:select>
-            <span class="smallNote">Select type of lock: read lock (shared), or write lock (exclusive)</span>
-          </td>
-        </tr>
+          <tr id="row_QuotedResource_Type">
+            <th><label for="newLockType">Lock type:</label></th>
+            <td>
+              <forms:select name="newLockType" id="newLockType" style="width: 90%">
+                <forms:option value="readLock">Read Lock</forms:option>
+                <forms:option value="writeLock">Write Lock</forms:option>
+              </forms:select>
+              <span class="smallNote">Select type of lock: read lock (shared), or write lock (exclusive)</span>
+            </td>
+          </tr>
 
-        <tr id="row_CustomResource_Type">
-          <th>Lock type:</th>
-          <td>
-            <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%"
-                          onchange="BS.LocksDialog.chooseCustomLockType(); ">
-              <forms:option value="ANY">Lock any value</forms:option>
-              <forms:option value="ALL">Lock all values</forms:option>
-              <forms:option value="SPECIFIC">Lock specific value</forms:option>
-            </forms:select>
-            <span class="smallNote">Select type of lock on custom resource: any available value, all values or specify value you want to lock</span>
-          </td>
-        </tr>
+          <tr id="row_CustomResource_Type">
+            <th>Lock type:</th>
+            <td>
+              <forms:select name="newCustomLockType" id="newCustomLockType" style="width: 90%"
+                            onchange="BS.LocksDialog.chooseCustomLockType(); ">
+                <forms:option value="ANY">Lock any value</forms:option>
+                <forms:option value="ALL">Lock all values</forms:option>
+                <forms:option value="SPECIFIC">Lock specific value</forms:option>
+              </forms:select>
+              <span class="smallNote">Select type of lock on custom resource: any available value, all values or specify value you want to lock</span>
+            </td>
+          </tr>
 
-        <tr id="row_CustomResource_Value">
-          <th>Value to lock:</th>
-          <td>
-            <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
-            <span class="smallNote">Choose value of custom resource to lock</span>
-          </td>
-        </tr>
-
-      </table>
+          <tr id="row_CustomResource_Value">
+            <th>Value to lock:</th>
+            <td>
+              <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
+              <span class="smallNote">Choose value of custom resource to lock</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div id="lockFromResources_No">
+        <bs:out value="No resources available. Please add resource in the project settings."/>
+      </div>
       <div class="popupSaveButtonsBlock">
         <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
         <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.LocksDialog.submit();"/>
