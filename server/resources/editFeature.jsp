@@ -75,6 +75,7 @@ BS.LocksUtil = {
  *
  * @type {{resources: {}, locks: {}}}
  */
+
 BS.SharedResourcesFeatureDialog = {
   resources: {}, // map of resources: <resource_name, Resource>
   locks: {}, // map of locks: <lock_name, Lock>
@@ -84,7 +85,7 @@ BS.SharedResourcesFeatureDialog = {
     var tableBody = $j('#locksTaken tbody:last');
     var textArea = $j('#${locksFeatureParamKey}');
     tableBody.children().remove();
-    var locks = this.locks;
+    var locks = this.sortObject(this.locks);
     var textAreaContent = "";
     //noinspection JSUnresolvedVariable
     var size = _.size(locks);
@@ -140,6 +141,18 @@ BS.SharedResourcesFeatureDialog = {
     hElements.each(function (i, element) {
       BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
     });
+  },
+
+  /**
+   * Keeps collection of lock objects sorted by name
+   */
+  sortObject: function(map) {
+    var keys = _.sortBy(_.keys(map), function(a) { return a; });
+    var newmap = {};
+    _.each(keys, function(k) {
+      newmap[k] = map[k];
+    });
+    return newmap;
   },
 
   deleteLock: function (lockName) {
@@ -392,7 +405,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   locks['${item.value.name}'] = lc;
   </c:forEach>
   self.inherited = ${inherited};
-
   BS.SharedResourcesFeatureDialog.refreshUI();
 
 </script>

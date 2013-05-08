@@ -139,8 +139,9 @@ public class SharedResourcesWaitPrecondition implements StartBuildPrecondition {
       invalidLocks.addAll(feature.getInvalidLocks(projectId));
     }
     if (!invalidLocks.isEmpty()) {
-      StringBuilder builder = new StringBuilder("Build type [");
-      builder.append(buildType).append("] has invalid locks: ");
+      StringBuilder builder = new StringBuilder("Build configuration ");
+      builder.append(buildType.getFullName()).append(" has invalid ");
+      builder.append(invalidLocks.size() > 1 ? "locks: " : "lock: ");
       for (Lock lock : invalidLocks) {
         builder.append(lock.getName()).append(", ");
       }

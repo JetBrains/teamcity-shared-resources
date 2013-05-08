@@ -80,13 +80,13 @@ public class EditFeatureController extends BaseController {
                                   @NotNull final HttpServletResponse response) throws Exception {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
+    assert form != null;
     final SProject project = form.getProject();
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<String, Lock>();
     final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(project.getProjectId()));
     final Map<String, Object> model = result.getModel();
-
     model.put("inherited", false);
     for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
@@ -105,9 +105,7 @@ public class EditFeatureController extends BaseController {
         }
       }
     }
-
-    // todo: fix bean interface
-    Map<SProject, Map<String, Resource>> rcs = new HashMap<SProject, Map<String, Resource>>();
+    final Map<SProject, Map<String, Resource>> rcs = new HashMap<SProject, Map<String, Resource>>();
     rcs.put(project, resources);
     final SharedResourcesBean bean = new SharedResourcesBean(project, rcs);
 
