@@ -175,6 +175,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
       will(returnValue(invalidLocks));
 
+      oneOf(myBuildType).getFullName();
+      will(returnValue("My Build Type"));
+
     }});
     final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
     assertNotNull(result);
