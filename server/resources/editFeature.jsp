@@ -79,6 +79,8 @@ BS.LocksUtil = {
 BS.SharedResourcesFeatureDialog = {
   resources: {}, // map of resources: <resource_name, Resource>
   locks: {}, // map of locks: <lock_name, Lock>
+  invalid: {}, // map of invalid locks <lock_name, Lock>
+
   inherited: false,
 
   refreshUI: function () {
@@ -92,33 +94,14 @@ BS.SharedResourcesFeatureDialog = {
     if (size > 0) { // we have some locks
       for (var key in locks) {
         if (locks.hasOwnProperty(key)) {
-          var od, deleteCell;
-          var oc, editCell;
-          var hClass;
-          if (this.inherited) {
-            oc = '';
-            od = '';
-            hClass = '';
-            editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
-            deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
-          } else {
-            oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
-            od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
-            hClass = 'highlight';
-            editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('style', 'width: 10%').attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
-            deleteCell = $j('<td>').attr('class', 'edit').attr('style', 'width: 10%').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
-          }
           textAreaContent += BS.LocksUtil.lockToString(locks[key]);
-          var tableRow = BS.LocksUtil.lockToTableRow(locks[key]);
-          //noinspection JSCheckFunctionSignatures
-          tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
-                  .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
-                  .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc))
-                  .append(editCell)
-                  .append(deleteCell)
-          );
+          // if we have invalid lock - do not render it in the table
+          if (!this.invalid[key]) {
+            this.renderSingleValidRow(tableBody, key);
+          }
         }
       }
+
       this.rehighlight();
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
@@ -126,7 +109,8 @@ BS.SharedResourcesFeatureDialog = {
       BS.Util.hide('locksTaken');
       BS.Util.show('noLocksTaken');
     }
-    //noinspection JSUnresolvedFunction
+
+    this.renderInvalidLocks();
     textArea.val(textAreaContent.trim());
     if (this.inherited) {
       BS.Util.hide('addNewLock');
@@ -134,6 +118,74 @@ BS.SharedResourcesFeatureDialog = {
       BS.Util.show('addNewLock');
     }
     BS.MultilineProperties.updateVisible();
+  },
+
+  renderInvalidLocks: function() {
+    // render invalid locks
+    var invalidLocks = this.sortObject(this.invalid);
+    //noinspection JSUnresolvedVariable
+    var size = _.size(invalidLocks);
+    if (size > 0) {
+      var arr = [];
+      for (var key in invalidLocks) {
+        if (invalidLocks.hasOwnProperty(key)) {
+          arr.push('<strong>' + key + '</strong>');
+        }
+      }
+      var text = "Build feature contains invalid lock" + (size > 1 ? "s" : "") + ": " + arr.join(', ') + ". ";
+      var messageElement = $j('#invalidLocksMessage');
+      if (this.inherited) {
+        text += (size > 1 ? "They" : "It") + " can be removed in corresponding template."
+      }
+      messageElement.html(text);
+      if (!this.inherited) {
+        messageElement.append($j('<a>').attr('href', '#').attr('style', 'float: right').attr('onclick', 'BS.SharedResourcesFeatureDialog.removeInvalid(); return false;').text('Remove'));
+      }
+
+      BS.Util.show('invalidLocksRow');
+    } else {
+      BS.Util.hide('invalidLocksRow');
+    }
+  },
+
+  renderSingleValidRow: function(tableBody, key) {
+    var od, deleteCell;
+    var oc, editCell;
+    var hClass;
+    if (this.inherited) {
+      oc = '';
+      od = '';
+      hClass = '';
+      editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
+      deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+    } else {
+      oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
+      od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
+      hClass = 'highlight';
+      editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('style', 'width: 10%').attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
+      deleteCell = $j('<td>').attr('class', 'edit').attr('style', 'width: 10%').append($j('<a>').attr('href', '#').attr('onclick', od).text('delete'));
+    }
+
+    var tableRow = BS.LocksUtil.lockToTableRow(this.locks[key]);
+    //noinspection JSCheckFunctionSignatures
+    tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
+            .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
+            .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc))
+            .append(editCell)
+            .append(deleteCell)
+    );
+  },
+
+  removeInvalid: function() {
+    var invalidLocks = this.invalid;
+    var locks = this.locks;
+    for (var key in invalidLocks) {
+      if (invalidLocks.hasOwnProperty(key) && locks.hasOwnProperty(key)) {
+        delete invalidLocks[key];
+        delete locks[key];
+      }
+    }
+    this.refreshUI();
   },
 
   rehighlight: function () {
@@ -332,7 +384,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   },
 
   submit: function () {
-
     // construct lock
     var lock = {};
     /// get selected resource name
@@ -405,6 +456,18 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   locks['${item.value.name}'] = lc;
   </c:forEach>
   self.inherited = ${inherited};
+
+
+  var invalid = self.invalid;
+  <jsp:useBean id="invalidLocks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
+  <c:forEach var="item" items="${invalidLocks}">
+  lc = {};
+  lc.name = '${item.value.name}';
+  lc.type = '${item.value.type.name}';
+  lc.value = '${item.value.value}';
+  invalid['${item.value.name}'] = lc;
+  </c:forEach>
+
   BS.SharedResourcesFeatureDialog.refreshUI();
 
 </script>
@@ -434,6 +497,13 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   <td>
     <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
     <span class="error" id="error_${locksFeatureParamKey}"></span>
+  </td>
+</tr>
+
+<tr style="display: none" id="invalidLocksRow">
+  <td colspan="2">
+    <div class="attentionComment" id="invalidLocksMessage" style="width: 97%">
+    </div>
   </td>
 </tr>
 

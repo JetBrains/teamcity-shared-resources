@@ -37,6 +37,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,6 +89,7 @@ public class EditFeatureController extends BaseController {
     final Map<String, Lock> locks = new HashMap<String, Lock>();
     final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(project.getProjectId()));
     final Map<String, Object> model = result.getModel();
+    final Collection<Lock> invalidLocks = new ArrayList<Lock>();
     model.put("inherited", false);
     for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
@@ -96,6 +99,7 @@ public class EditFeatureController extends BaseController {
         if (buildFeatureId.equals(descriptor.getId())) {
           // we have feature that we need to edit
           locks.putAll(f.getLockedResources());
+          invalidLocks.addAll(f.getInvalidLocks(project.getProjectId()));
           model.put("inherited", bfb.isInherited());
         } else {
           // we have feature, that is not current feature under edit. must remove used resources from our resource collection
@@ -108,7 +112,11 @@ public class EditFeatureController extends BaseController {
     final Map<SProject, Map<String, Resource>> rcs = new HashMap<SProject, Map<String, Resource>>();
     rcs.put(project, resources);
     final SharedResourcesBean bean = new SharedResourcesBean(project, rcs);
-
+    final Map<String, Lock> invalidLocksMap = new HashMap<String, Lock>();
+    for (Lock lock: invalidLocks) {
+      invalidLocksMap.put(lock.getName(), lock);
+    }
+    model.put("invalidLocks", invalidLocksMap);
     model.put("locks", locks);
     model.put("bean", bean);
     model.put("project", project);

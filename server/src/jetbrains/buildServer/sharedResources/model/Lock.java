@@ -66,6 +66,7 @@ public class Lock {
     return myType;
   }
 
+  @NotNull
   public String getValue() {
     return myValue;
   }
