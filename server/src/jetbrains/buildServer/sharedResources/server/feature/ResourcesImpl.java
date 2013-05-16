@@ -16,13 +16,16 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SecurityContextEx;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +40,22 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 public final class ResourcesImpl implements Resources {
 
   @NotNull
+  private static final Logger LOG = Logger.getInstance(ResourcesImpl.class.getName());
+
+  @NotNull
   private final ProjectSettingsManager myProjectSettingsManager;
 
   @NotNull
   private final ProjectManager myProjectManager;
 
+  @NotNull
+  private final SecurityContextEx mySecurityContextEx;
+
   public ResourcesImpl(@NotNull final ProjectSettingsManager projectSettingsManager,
-                       @NotNull final ProjectManager projectManager) {
+                       @NotNull final ProjectManager projectManager, @NotNull SecurityContextEx securityContextEx) {
     myProjectSettingsManager = projectSettingsManager;
     myProjectManager = projectManager;
+    mySecurityContextEx = securityContextEx;
   }
 
   @Override
@@ -98,8 +108,18 @@ public final class ResourcesImpl implements Resources {
   @Override
   public Map<String, Resource> getAllResources() {
     final Map<String, Resource> result = new HashMap<String, Resource>();
-    SProject root = myProjectManager.getRootProject();
-    List<SProject> children = root.getProjects();
+    final SProject root = myProjectManager.getRootProject();
+    final List<SProject> children = new ArrayList<SProject>();
+    try {
+      children.addAll(mySecurityContextEx.runAsSystem(new SecurityContextEx.RunAsActionWithResult<List<SProject>>() {
+        @Override
+        public List<SProject> run() throws Throwable {
+          return root.getProjects();
+        }
+      }));
+    } catch (Throwable t) {
+      LOG.error(t);
+    }
     children.add(root);
     for (SProject p : children) {
       result.putAll(getSettings(p.getProjectId()).getResourceMap());
