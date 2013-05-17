@@ -4,6 +4,7 @@ import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
@@ -39,12 +40,12 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
     if (project != null) {
       Resource resource = getResourceFromRequest(request);
       if (resource != null) {
-        if (resourceExists(resource.getName())) {
-          createNameError(ajaxResponse);
-          return;
+        try {
+          myResources.addResource(projectId, resource);
+          project.persist();
+        } catch (DuplicateResourceException e) {
+          createNameError(ajaxResponse, resource.getName());
         }
-        myResources.addResource(projectId, resource);
-        project.persist();
       }
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");

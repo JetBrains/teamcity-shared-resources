@@ -22,6 +22,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SecurityContextEx;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,9 @@ public final class ResourcesImpl implements Resources {
   }
 
   @Override
-  public void addResource(@NotNull final String projectId, @NotNull final Resource resource) {
+  public void addResource(@NotNull final String projectId, @NotNull final Resource resource) throws DuplicateResourceException {
+    final String name = resource.getName();
+    checkNameDuplication(name);
     getSettings(projectId).addResource(resource);
   }
 
@@ -69,8 +72,14 @@ public final class ResourcesImpl implements Resources {
   }
 
   @Override
-  public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource) {
-    getSettings(projectId).editResource(name, newResource);
+  public void editResource(@NotNull final String projectId,
+                           @NotNull final String currentName,
+                           @NotNull final Resource newResource) throws DuplicateResourceException {
+    final String newName = newResource.getName();
+    if (!currentName.equals(newName)) {
+      checkNameDuplication(newName);
+    }
+    getSettings(projectId).editResource(currentName, newResource);
   }
 
   @NotNull
@@ -103,10 +112,8 @@ public final class ResourcesImpl implements Resources {
     return result;
   }
 
-
   @NotNull
-  @Override
-  public Map<String, Resource> getAllResources() {
+  private Map<String, Resource> getAllResources() {
     final Map<String, Resource> result = new HashMap<String, Resource>();
     final SProject root = myProjectManager.getRootProject();
     final List<SProject> children = new ArrayList<SProject>();
@@ -125,6 +132,13 @@ public final class ResourcesImpl implements Resources {
       result.putAll(getSettings(p.getProjectId()).getResourceMap());
     }
     return result;
+  }
+
+  private void checkNameDuplication(@NotNull final String name) throws DuplicateResourceException {
+    final Map<String, Resource> resources = getAllResources();
+    if (resources.containsKey(name)) {
+      throw new DuplicateResourceException(name);
+    }
   }
 
   @NotNull

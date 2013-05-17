@@ -18,6 +18,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -29,11 +30,30 @@ import java.util.Map;
  */
 public interface Resources {
 
-  public void addResource(@NotNull final String projectId, @NotNull final Resource resource);
+  /**
+   * Adds given resource to project resources
+   *
+   * @param projectId id of the project
+   * @param resource resource to add
+   * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
+   */
+  void addResource(@NotNull final String projectId,
+                   @NotNull final Resource resource) throws DuplicateResourceException;
 
-  public void deleteResource(@NotNull final String projectId, @NotNull final String resourceName);
+  void deleteResource(@NotNull final String projectId,
+                      @NotNull final String resourceName);
 
-  public void editResource(@NotNull final String projectId, @NotNull final String name, @NotNull final Resource newResource);
+  /**
+   * Edits given resource
+   *
+   * @param projectId id of the project
+   * @param currentName currentName of the resource
+   * @param newResource resource to replace existing one
+   * @throws DuplicateResourceException if resource with given name exists
+   */
+  void editResource(@NotNull final String projectId,
+                    @NotNull final String currentName,
+                    @NotNull final Resource newResource) throws DuplicateResourceException;
 
 
   /**
@@ -43,7 +63,7 @@ public interface Resources {
    * @return map of resources in format {@code resource_name -> resource}
    */
   @NotNull
-  public Map<String, Resource> asMap(@NotNull final String projectId);
+  Map<String, Resource> asMap(@NotNull final String projectId);
 
   /**
    * Gets all resources for project with given {@code projectId} and
@@ -53,14 +73,5 @@ public interface Resources {
    * @return map of projects and resources in format {@code project -> {resource_name -> resource}}
    */
   @NotNull
-  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
-
-  /**
-   * Gets all shared resources for all projects
-   *
-   * @return map of resources in format {@code resource_name -> resource}
-   */
-  @NotNull
-  public Map<String, Resource> getAllResources();
-
+  Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
 }

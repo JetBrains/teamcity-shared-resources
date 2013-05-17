@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -89,14 +88,9 @@ public abstract class BaseResourceAction implements ControllerAction {
     return resource;
   }
 
-  protected boolean resourceExists(@NotNull final String resourceName) {
-    final Map<String, Resource> allResources = myResources.getAllResources();
-    return allResources.keySet().contains(resourceName);
-  }
-
-  protected void createNameError(@NotNull final Element ajaxResponse) {
+  protected void createNameError(@NotNull final Element ajaxResponse, @NotNull final String name) {
     final ActionErrors errors = new ActionErrors();
-    errors.addError("name", "Name is already used");
+    errors.addError("name", "Name " + name + " is already used");
     errors.serialize(ajaxResponse);
   }
 }
