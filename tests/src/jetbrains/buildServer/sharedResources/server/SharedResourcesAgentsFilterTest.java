@@ -1,31 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.BuildTypeEx;
-import jetbrains.buildServer.serverSide.RunningBuildsManager;
-import jetbrains.buildServer.serverSide.SRunningBuild;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
-import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
+import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -34,6 +12,7 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.util.TestFor;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
@@ -42,17 +21,12 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 /**
- * Class {@code SharedResourcesWaitPreconditionTest}
- * <p/>
- * Contains tests for {@code SharedResourcesWaitPrecondition}
+ * Created with IntelliJ IDEA.
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
- * @see SharedResourcesWaitPrecondition
- *      *
  */
-@SuppressWarnings("UnusedShould")
-@TestFor(testForClass = SharedResourcesWaitPrecondition.class)
-public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
+@TestFor(testForClass = SharedResourcesAgentsFilter.class)
+public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Mockery m;
 
@@ -74,10 +48,15 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
   private RunningBuildsManager myRunningBuildsManager;
 
+  private Map<String, Object> myCustomData;
+
+  private Set<String> fairSet = new HashSet<String>();
+
+
   /**
    * Class under test
    */
-  private SharedResourcesWaitPrecondition myWaitPrecondition;
+  private SharedResourcesAgentsFilter myAgentsFilter;
 
 
   @BeforeMethod
@@ -93,7 +72,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
     myTakenLocks = m.mock(TakenLocks.class);
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
-    myWaitPrecondition = new SharedResourcesWaitPrecondition(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager);
+    myCustomData = new HashMap<String, Object>();
+    myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
+    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager);
   }
 
   @Test
@@ -108,8 +89,11 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
     }});
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
-    assertNull(result);
+
+
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
   }
 
   @Test
@@ -125,8 +109,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue(null));
 
     }});
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
-    assertNull(result);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
   }
 
   @Test
@@ -147,8 +132,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue(features));
 
     }});
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
-    assertNull(result);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
   }
 
   @Test
@@ -179,8 +165,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue("My Build Type"));
 
     }});
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
+    assertNotNull(result.getWaitReason());
 
   }
 
@@ -209,8 +196,9 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue(Collections.emptyList()));
 
     }});
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, Collections.<QueuedBuildInfo, BuildAgent>emptyMap(), myBuildDistributorInput, false);
-    assertNull(result);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
   }
 
   @Test
@@ -255,12 +243,14 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
 
     }});
 
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, canBeStarted, myBuildDistributorInput, false);
-    assertNull(result);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
   }
 
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testMultipleBuildsLocksNotCrossing() throws Exception {
     final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
     features.add(m.mock(SharedResourcesFeature.class));
@@ -306,13 +296,14 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
-      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId);
+      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId, fairSet);
       will(returnValue(Collections.emptyList()));
 
     }});
 
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, canBeStarted, myBuildDistributorInput, false);
-    assertNull(result);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNull(result.getWaitReason());
 
   }
 
@@ -364,7 +355,7 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
-      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId);
+      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId, fairSet);
       will(returnValue(locks));
 
       oneOf(bpex).getBuildType();
@@ -374,8 +365,43 @@ public class SharedResourcesWaitPreconditionTest extends BaseTestCase {
       will(returnValue(name));
     }});
 
-    final WaitReason result = myWaitPrecondition.canStart(myQueuedBuild, canBeStarted, myBuildDistributorInput, false);
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
-    assertNotNull(result.getDescription());
+    assertNotNull(result.getWaitReason());
+  }
+
+
+  private AgentsFilterContext createContext() {
+    return new DefaultAgentsFilterContext(myCustomData) {
+
+      @NotNull
+      @Override
+      public QueuedBuildInfo getStartingBuild() {
+        return myQueuedBuild;
+      }
+
+      @NotNull
+      @Override
+      public Collection<SBuildAgent> getAgentsForStartingBuild() {
+        return Collections.emptyList();
+      }
+
+      @NotNull
+      @Override
+      public Map<QueuedBuildInfo, SBuildAgent> getDistributedBuilds() {
+        return Collections.emptyMap();
+      }
+
+      @NotNull
+      @Override
+      public BuildDistributorInput getDistributorInput() {
+        return myBuildDistributorInput;
+      }
+
+      @Override
+      public boolean isEmulationMode() {
+        return false;
+      }
+    };
   }
 }

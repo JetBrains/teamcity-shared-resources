@@ -97,14 +97,15 @@ public class TakenLocksImpl implements TakenLocks {
   @Override
   public Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
                                               @NotNull Map<String, TakenLock> takenLocks,
-                                              @NotNull String projectId) {
+                                              @NotNull String projectId,
+                                              @NotNull final Set<String> fairSet) {
     final Map<String, Resource> resources = myResources.asMap(projectId);
     final Collection<Lock> result = new ArrayList<Lock>();
     for (Lock lock : locksToTake) {
       final TakenLock takenLock = takenLocks.get(lock.getName());
       if (takenLock != null) {
         final Resource resource = resources.get(lock.getName());
-        if (resource != null && !checkAgainstResource(lock, takenLocks, resource)) {
+        if (resource != null && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
           result.add(lock);
         }
       }
@@ -114,19 +115,21 @@ public class TakenLocksImpl implements TakenLocks {
 
   private boolean checkAgainstResource(@NotNull final Lock lock,
                                        @NotNull final Map<String, TakenLock> takenLocks,
-                                       @NotNull final Resource resource) {
+                                       @NotNull final Resource resource,
+                                       @NotNull final Set<String> fairSet) {
     boolean result = true;
     if (ResourceType.QUOTED.equals(resource.getType())) {
-      result = checkAgainstQuotedResource(lock, takenLocks, (QuotedResource) resource);
+      result = checkAgainstQuotedResource(lock, takenLocks, (QuotedResource) resource, fairSet);
     } else if (ResourceType.CUSTOM.equals(resource.getType())) {
-      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource);
+      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource, fairSet);
     }
     return result;
   }
 
   private boolean checkAgainstCustomResource(@NotNull final Lock lock,
                                              @NotNull final Map<String, TakenLock> takenLocks,
-                                             @NotNull final CustomResource resource) {
+                                             @NotNull final CustomResource resource,
+                                             @NotNull final Set<String> fairSet) {
     boolean result = true;
     // what type of lock do we have
     // write            -> all
@@ -136,7 +139,12 @@ public class TakenLocksImpl implements TakenLocks {
     switch (lock.getType()) {
       case READ:   // check at least one value is available
         // check for unique writeLocks
-        // 1) check for write locks
+        if (fairSet.contains(lock.getName())) {
+          result = false;
+          break;
+        }
+
+        // check for write locks
         if (takenLock.hasWriteLocks()) {
           result = false; //
           break;
@@ -163,6 +171,7 @@ public class TakenLocksImpl implements TakenLocks {
       case WRITE:
         // 'ALL' case
         if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) {
+          fairSet.add(lock.getName());
           result = false;
           break;
         }
@@ -173,12 +182,17 @@ public class TakenLocksImpl implements TakenLocks {
 
   private boolean checkAgainstQuotedResource(@NotNull final Lock lock,
                                              @NotNull final Map<String, TakenLock> takenLocks,
-                                             @NotNull final QuotedResource resource) {
+                                             @NotNull final QuotedResource resource,
+                                             @NotNull final Set<String> fairSet) {
     boolean result = true;
     final TakenLock takenLock = takenLocks.get(lock.getName());
     switch (lock.getType()) {
       case READ:
-        // 1) Check that no write lock exists
+        if (fairSet.contains(lock.getName())) { // some build requested write lock before us
+          result = false;
+          break;
+        }
+        // Check that no write lock exists
         if (takenLock.hasWriteLocks()) {
           result = false;
           break;
@@ -192,6 +206,7 @@ public class TakenLocksImpl implements TakenLocks {
         break;
       case WRITE:
         if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
+          fairSet.add(lock.getName()); // remember write access request
           result = false;
         }
     }

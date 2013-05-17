@@ -12,7 +12,7 @@
   </test>
   <test name="Decision making tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPreconditionTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilterTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.ContextProcessorTest"/>
     </classes>
   </test>
@@ -24,7 +24,7 @@
   </test>
   <test name="Settings tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.ResourcesImplTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.feature.ResourcesImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.settings.ProjectSettingsTest"/>
     </classes>
   </test>

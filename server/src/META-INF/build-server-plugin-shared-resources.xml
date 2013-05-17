@@ -14,7 +14,7 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
 
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesWaitPrecondition"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilter"/>
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
 

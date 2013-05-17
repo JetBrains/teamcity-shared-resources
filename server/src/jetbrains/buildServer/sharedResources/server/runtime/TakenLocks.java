@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -53,13 +54,16 @@ public interface TakenLocks {
 
   /**
    * Decides, whether required locks can be acquired by the build
+   *
    * @param locksToTake required locks
    * @param takenLocks taken locks
+   * @param fairSet set used to remember write access requests
    * @return empty collection, if locks can be acquired, collection, that contains unavailable locks otherwise
    */
   @NotNull
   public Collection<Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
                                               @NotNull final Map<String, TakenLock> takenLocks,
-                                              @NotNull final String projectId);
+                                              @NotNull final String projectId,
+                                              @NotNull final Set<String> fairSet);
 
 }

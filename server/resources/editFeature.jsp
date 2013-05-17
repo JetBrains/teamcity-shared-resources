@@ -53,7 +53,7 @@ BS.LocksUtil = {
     result.name = lock.name;
     if (resource.type == 'CUSTOM') {
       if (lock.type == 'writeLock') {
-        result.description = "All Values`";
+        result.description = "All Values";
       } else {
         if (lock.value) {
           result.description = "Specific Value: " + lock.value;

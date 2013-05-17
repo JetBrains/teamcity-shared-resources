@@ -197,8 +197,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
+    final Set<String> fairSet = new HashSet<String>();
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -223,8 +224,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
+    final Set<String> fairSet = new HashSet<String>();
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
 
@@ -251,8 +253,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
+    final Set<String> fairSet = new HashSet<String>();
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -278,7 +281,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -303,8 +309,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myResources).asMap(myProjectId);
       will(returnValue(resources));
     }});
+    final Set<String> fairSet = new HashSet<String>();
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
 
@@ -330,7 +337,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -352,8 +361,194 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId);
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
+  }
+
+
+  /**
+   *
+   * Test setup:
+   * - fairSet is empty
+   * - 1 infinite resource
+   * - 1 build holds read lock
+   * - 1 build tries to pass through agents filter (with write lock request)
+   *
+   * Expected results:
+   *  - wait reason is returned
+   *  - fairSet should contain write lock name requested
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor (issues = "TW-28307")
+  public void testGetUnavailableLocks_WritePrioritySet() throws Exception {
+    final String resourceName = "resource";
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put(resourceName, ResourceFactory.newInfiniteResource(resourceName));
+    final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock(resourceName, LockType.WRITE));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
+      final TakenLock tl = new TakenLock();
+      tl.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      put(resourceName, tl);
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+    final Set<String> fairSet = new HashSet<String>();
+    final Collection<Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals(resourceName, result.iterator().next().getName());
+    assertNotEmpty(fairSet);
+    assertEquals(1, fairSet.size());
+    assertEquals(resourceName, fairSet.iterator().next());
+  }
+
+  /**
+   * Test setup:
+   * - fairSet is empty
+   * - 1 infinite resource
+   * - 1 build holds read lock
+   * - 1 build tries to pass through agents filter (with write lock request)
+   * - 1 another build tries to pass through agents filter (with read lock request)
+   *
+   * Expected results
+   * - collection of unavailable locks for both builds is not empty (i.e. both builds are not allowed to start)
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor (issues = "TW-28307")
+  public void testGetUnavailableLocks_PreservePriority() throws Exception {
+    final String resourceName = "resource";
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put(resourceName, ResourceFactory.newInfiniteResource(resourceName));
+
+    final Collection<Lock> writeLockToTake = new ArrayList<Lock>() {{
+      add(new Lock(resourceName, LockType.WRITE));
+    }};
+
+    final Collection<Lock> readLockToTake = new ArrayList<Lock>() {{
+      add(new Lock(resourceName, LockType.READ));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
+      final TakenLock tl = new TakenLock();
+      tl.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      put(resourceName, tl);
+    }};
+
+    m.checking(new Expectations() {{
+      allowing(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    { // 1) Check that read-read locks are working
+      final Collection<Lock> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEmpty(result);
+      assertEmpty(fairSet);
+    }
+
+    { // 2) Check that fair set influences read lock processing
+      Collection<Lock> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEquals(1, result.size());
+      assertEquals(resourceName, result.iterator().next().getName());
+      assertEquals(1, fairSet.size());
+      assertEquals(resourceName, fairSet.iterator().next());
+
+      // now we have lock name in fair set. read lock must not be acquired
+      result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEquals(1, result.size());
+      assertEquals(resourceName, result.iterator().next().getName());
+      assertEquals(1, fairSet.size());
+      assertEquals(resourceName, fairSet.iterator().next());
+    }
+  }
+
+
+  /**
+   * Same as TakenLocksImplTest#testGetUnavailableLocks_PreservePriority but for custom resources
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor (issues = "TW-28307")
+  public void testGetUnavailableLocks_Custom_Fair() throws Exception {
+    final String resourceName = "resource";
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put(resourceName, ResourceFactory.newCustomResource(resourceName, Arrays.asList("val1", "val2", "val3")));
+
+    final Collection<Lock> allLockToTake = new ArrayList<Lock>() {{
+      add(new Lock(resourceName, LockType.WRITE));
+    }};
+
+    final Collection<Lock> anyLockToTake = new ArrayList<Lock>() {{
+      add(new Lock(resourceName, LockType.READ));
+    }};
+
+    final Map<String, TakenLock> takenLocksAny = new HashMap<String, TakenLock>() {{
+      final TakenLock tl = new TakenLock();
+      tl.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      put(resourceName, tl);
+    }};
+
+    final Map<String, TakenLock> takenLocksSpecific = new HashMap<String, TakenLock>() {{
+      final TakenLock tl = new TakenLock();
+      tl.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock(resourceName, LockType.READ, "val1"));
+      put(resourceName, tl);
+    }};
+
+    m.checking(new Expectations() {{
+      allowing(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    { // Check that any-any locks are working
+      final Collection<Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEmpty(result);
+      assertEmpty(fairSet);
+    }
+
+    { // Check that any-apecific locks are working
+      final Collection<Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksSpecific, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEmpty(result);
+      assertEmpty(fairSet);
+    }
+
+    { // Check that fair set influences read lock processing
+      Collection<Lock> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEquals(1, result.size());
+      assertEquals(resourceName, result.iterator().next().getName());
+      assertEquals(1, fairSet.size());
+      assertEquals(resourceName, fairSet.iterator().next());
+
+      // now we have lock name in fair set. any lock must not be acquired
+      result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
+      assertNotNull(result);
+      assertEquals(1, result.size());
+      assertEquals(resourceName, result.iterator().next().getName());
+      assertEquals(1, fairSet.size());
+      assertEquals(resourceName, fairSet.iterator().next());
+    }
   }
 }
