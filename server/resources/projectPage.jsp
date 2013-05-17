@@ -274,7 +274,7 @@
                             <admin:editBuildTypeNavSteps settings="${buildType}"/>
                             <jsp:useBean id="buildConfigSteps" scope="request" type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
                             <l:li>
-                              <admin:editBuildTypeLink buildTypeId="${buildType.buildTypeId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
+                              <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
                                 <span style="white-space: nowrap">
                                   ${buildType.name} (${lockType.descriptiveName})
                                 </span>
