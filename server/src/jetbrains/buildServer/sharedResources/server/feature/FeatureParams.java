@@ -33,7 +33,7 @@ public interface FeatureParams {
    * Key in feature parameters collection, that contains all locks
    */
   @NotNull
-  public static final String LOCKS_FEATURE_PARAM_KEY = "locks-param";
+  static final String LOCKS_FEATURE_PARAM_KEY = "locks-param";
 
   /**
    * Provides description for build feature parameters to be shown in UI
@@ -41,12 +41,12 @@ public interface FeatureParams {
    * @return parameters description
    */
   @NotNull
-  public String describeParams(@NotNull final Map<String, String> params);
+  String describeParams(@NotNull final Map<String, String> params);
 
   /**
    * Provides default parameters for build feature
    * @return default parameters
    */
   @NotNull
-  public Map<String, String> getDefault();
+  Map<String, String> getDefault();
 }

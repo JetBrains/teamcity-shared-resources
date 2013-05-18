@@ -16,12 +16,12 @@ public interface Resource {
    * @return name of the resource
    */
   @NotNull
-  public String getName();
+  String getName();
 
   /**
    * Returns type of the resource
    * @return type of the resource
    */
   @NotNull
-  public ResourceType getType();
+  ResourceType getType();
 }

@@ -16,6 +16,7 @@ public class ResourceFactory {
    * @param name name of the resource
    * @return new infinite quoted resource
    */
+  @NotNull
   public static Resource newInfiniteResource(@NotNull final String name) {
     return QuotedResource.newInfiniteResource(name);
   }
@@ -26,6 +27,7 @@ public class ResourceFactory {
    * @param quota resource quota
    * @return new quoted resource with limited quota
    */
+  @NotNull
   public static Resource newQuotedResource(@NotNull final String name, final int quota) {
     return QuotedResource.newResource(name, quota);
   }

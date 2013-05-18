@@ -20,11 +20,17 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code BaseResourceAction}
+ *
+ * Defines base action for manipulating with resources as
+ * well as contract for subclasses
+ *
+ * @see AddResourceAction
+ * @see EditResourceAction
+ * @see DeleteResourceAction
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public abstract class BaseResourceAction implements ControllerAction {
 
   protected final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
@@ -35,7 +41,8 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   protected final Resources myResources;
 
-  protected BaseResourceAction(@NotNull ProjectManager projectManager, @NotNull Resources resources) {
+  protected BaseResourceAction(@NotNull final ProjectManager projectManager,
+                               @NotNull final Resources resources) {
     myProjectManager = projectManager;
     myResources = resources;
   }

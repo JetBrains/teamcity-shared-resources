@@ -34,12 +34,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Oleg Rybak
  */
-@SuppressWarnings("UnusedShould")
 public class PluginProjectSettings implements ProjectSettings {
 
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
-
+  @NotNull
   private static final Logger LOG = Logger.getInstance(PluginProjectSettings.class.getName());
+
+  @NotNull
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
   /**
    * XML storage structure
@@ -82,10 +83,10 @@ public class PluginProjectSettings implements ProjectSettings {
     public static final String VALUE_QUOTA_INFINITE = "infinite";
   }
 
+  @NotNull
   private Map<String, Resource> myResourceMap = new HashMap<String, Resource>();
 
-  public PluginProjectSettings() {
-  }
+  public PluginProjectSettings() {}
 
   @Override
   public void dispose() {
@@ -182,7 +183,7 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
-  public void addResource(Resource resource) {
+  public void addResource(@NotNull final Resource resource) {
     try {
       myLock.writeLock().lock();
       myResourceMap.put(resource.getName(), resource);
@@ -191,7 +192,7 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
-  public void deleteResource(String name) {
+  public void deleteResource(@NotNull final String name) {
     try {
       myLock.writeLock().lock();
       myResourceMap.remove(name);
@@ -200,7 +201,8 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
-  public void editResource(String oldName, Resource resource) {
+  public void editResource(@NotNull final String oldName,
+                           @NotNull final Resource resource) {
     try {
       myLock.writeLock().lock();
       myResourceMap.remove(oldName);
@@ -210,6 +212,7 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
+  @NotNull
   public Collection<Resource> getResources() {
     try {
       myLock.readLock().lock();
@@ -219,6 +222,7 @@ public class PluginProjectSettings implements ProjectSettings {
     }
   }
 
+  @NotNull
   public Map<String, Resource> getResourceMap() {
     try {
       myLock.readLock().lock();

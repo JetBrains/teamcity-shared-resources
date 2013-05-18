@@ -19,12 +19,13 @@ import java.util.*;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public class SharedResourcesContextProcessor implements BuildStartContextProcessor {
 
-  private final Object o = new Object();
+  @NotNull
+  private static final Logger log = Logger.getInstance(SharedResourcesContextProcessor.class.getName());
 
-  private static final Logger log = Logger.getInstance(BuildStartContextProcessor.class.getName());
+  @NotNull
+  private final Object o = new Object();
 
   @NotNull
   private final SharedResourcesFeatures myFeatures;
@@ -96,6 +97,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   /**
    * Collects acquired values for all locks from runtime
+   *
    * @param locks locks required by current build
    * @return map of locks and taken values
    */
@@ -124,12 +126,14 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   /**
    * Determines, what locks are acquired on custom resources
+   *
    * @param projectId id of current project
    * @param locks locks required
    * @return collection of resources among required locks that are custom
    */
   @NotNull
-  private Map<String, CustomResource> getCustomResources(@NotNull final String projectId, @NotNull final Map<String, Lock> locks) {
+  private Map<String, CustomResource> getCustomResources(@NotNull final String projectId,
+                                                         @NotNull final Map<String, Lock> locks) {
     final Map<String, CustomResource> myCustomResources = new HashMap<String, CustomResource>();
     final Map<String, Resource> resourceMap = myResources.asMap(projectId);
     for (Map.Entry<String, Lock> entry: locks.entrySet()) {

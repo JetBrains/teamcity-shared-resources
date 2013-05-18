@@ -14,7 +14,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code AddResourceAction}
+ *
+ * Defines action for adding new resources
+ *
+ * @see BaseResourceAction
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
@@ -38,7 +42,7 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      Resource resource = getResourceFromRequest(request);
+      final Resource resource = getResourceFromRequest(request);
       if (resource != null) {
         try {
           myResources.addResource(projectId, resource);

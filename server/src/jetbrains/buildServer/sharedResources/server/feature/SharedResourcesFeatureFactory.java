@@ -32,7 +32,7 @@ public interface SharedResourcesFeatureFactory {
    * @return shared resources feature
    */
   @NotNull
-  public SharedResourcesFeature createFeature(@NotNull final SBuildFeatureDescriptor descriptor);
+  SharedResourcesFeature createFeature(@NotNull final SBuildFeatureDescriptor descriptor);
 
 
 }

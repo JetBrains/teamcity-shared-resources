@@ -18,11 +18,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code EditResourceAction}
+ *
+ * Defines action for editing resources. Supports changing name and type
+ * as well as updating all build configurations that use resource being edited
+ *
+ * @see BaseResourceAction
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public final class EditResourceAction extends BaseResourceAction implements ControllerAction {
 
   private SharedResourcesFeatures myFeatures;
@@ -57,9 +61,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
           myResources.editResource(projectId, oldName, resource);
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree
-            final List<SProject> myAllSubprojects = project.getProjects();
-            myAllSubprojects.add(project);
-            for (SProject p : myAllSubprojects) {
+            final List<SProject> allSubProjects = project.getProjects();
+            allSubProjects.add(project);
+            for (SProject p : allSubProjects) {
               final List<SBuildType> buildTypes = p.getBuildTypes();
               for (SBuildType type : buildTypes) {
                 // todo: do we need resolved features here? Using unresolved for now

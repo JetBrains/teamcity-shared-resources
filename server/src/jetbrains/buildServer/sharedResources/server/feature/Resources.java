@@ -40,6 +40,11 @@ public interface Resources {
   void addResource(@NotNull final String projectId,
                    @NotNull final Resource resource) throws DuplicateResourceException;
 
+  /**
+   * Deletes given resource from the project
+   * @param projectId id of the project
+   * @param resourceName name of the resource
+   */
   void deleteResource(@NotNull final String projectId,
                       @NotNull final String resourceName);
 

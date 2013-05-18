@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
 /**
- * Created with IntelliJ IDEA.
- * Date: 25.10.12
- * Time: 19:04
- *
  * @author Oleg Rybak
  */
 public final class PluginSettingsManager {

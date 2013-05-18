@@ -47,7 +47,7 @@ public interface Locks {
    * @return map of locks, taken by the build
    */
   @NotNull
-  public Map<String, Lock> fromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor);
+  Map<String, Lock> fromFeatureParameters(@NotNull final SBuildFeatureDescriptor descriptor);
 
 
   /**
@@ -57,8 +57,7 @@ public interface Locks {
    * @return map of locks, taken by the build
    */
   @NotNull
-  public Map<String, Lock> fromFeatureParameters(@NotNull final Map<String, String> parameters);
-
+  Map<String, Lock> fromFeatureParameters(@NotNull final Map<String, String> parameters);
 
   /**
    * Serializes given locks to build feature param
@@ -67,7 +66,7 @@ public interface Locks {
    * @return {@code String} that represents given locks
    */
   @NotNull
-  public String asFeatureParameter(@NotNull final Collection<Lock> locks);
+  String asFeatureParameter(@NotNull final Collection<Lock> locks);
 
   /**
    * Converts given lock into build parameter
@@ -75,7 +74,7 @@ public interface Locks {
    * @return name of the build parameter, corresponding to given lock
    */
   @NotNull
-  public String asBuildParameter(@NotNull final Lock lock);
+  String asBuildParameter(@NotNull final Lock lock);
 
   /**
    * Converts given collection of locks to build parameters
@@ -84,7 +83,7 @@ public interface Locks {
    * @return {@code Collection} of build parameters that represent given locks
    */
   @NotNull
-  public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
+  Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
 
   /**
    * Extracts locks from build promotion
@@ -93,7 +92,7 @@ public interface Locks {
    * @return collection of locks extracted from build promotion
    */
   @NotNull
-  public Collection<Lock> fromBuildPromotion(@NotNull final BuildPromotionEx buildPromotion);
+  Collection<Lock> fromBuildPromotion(@NotNull final BuildPromotionEx buildPromotion);
 
   /**
    * Extracts locks from build promotion and represents them as map
@@ -102,5 +101,5 @@ public interface Locks {
    * @return map of locks extracted from build promotion
    */
   @NotNull
-  public Map<String, Lock> fromBuildPromotionAsMap(@NotNull final BuildPromotionEx buildPromotion);
+  Map<String, Lock> fromBuildPromotionAsMap(@NotNull final BuildPromotionEx buildPromotion);
 }

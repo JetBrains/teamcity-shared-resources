@@ -110,6 +110,7 @@ public class LocksStorageImpl implements LocksStorage {
     return artifact.exists();
   }
 
+  @NotNull
   private static String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
     return StringUtil.join("\t", lock.getName(), lock.getType(), value.equals("") ? " " : value);
   }

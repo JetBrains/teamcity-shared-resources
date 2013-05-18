@@ -21,6 +21,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,6 +32,7 @@ import java.util.*;
  */
 public class SharedResourcesBean {
 
+  @Nullable
   private SProject myProject;
 
   @NotNull
@@ -40,7 +42,7 @@ public class SharedResourcesBean {
   private Map<String, Map<SBuildType, LockType>> myUsageMap = new HashMap<String, Map<SBuildType, LockType>>();
 
 
-  public SharedResourcesBean(@NotNull final SProject project,
+  public SharedResourcesBean(@Nullable final SProject project,
                              @NotNull final Map<SProject, Map<String, Resource>> projectResources,
                              @NotNull final Map<String, Map<SBuildType, LockType>> usageMap) {
     myProject = project;
@@ -48,11 +50,11 @@ public class SharedResourcesBean {
     myUsageMap = usageMap;
   }
 
-  public SharedResourcesBean(@NotNull final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
+  public SharedResourcesBean(@Nullable final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
     this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap());
   }
 
-  public SharedResourcesBean(@NotNull final SProject project) {
+  public SharedResourcesBean(@Nullable final SProject project) {
     this(project, Collections.<SProject, Map<String, Resource>>emptyMap(), Collections.<String, Map<SBuildType, LockType>>emptyMap());
   }
 
@@ -70,18 +72,19 @@ public class SharedResourcesBean {
     return result;
   }
 
+  @NotNull
   public Map<SProject, Map<String, Resource>> getInheritedResources() {
     final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>(myProjectResources);
     result.remove(myProject);
     return result;
   }
 
+  @NotNull
   public Collection<Resource> getAllResources() {
     final Collection<Resource> result = new HashSet<Resource>();
     for (Map<String, Resource> map : myProjectResources.values()) {
       result.addAll(map.values());
     }
     return result;
-
   }
 }

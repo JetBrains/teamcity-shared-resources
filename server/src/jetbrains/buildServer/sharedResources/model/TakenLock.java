@@ -30,7 +30,6 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public class TakenLock {
 
   @NotNull

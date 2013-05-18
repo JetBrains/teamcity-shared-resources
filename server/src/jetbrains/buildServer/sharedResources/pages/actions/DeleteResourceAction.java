@@ -12,11 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class {@code DeleteResourceAction}
+ *
+ * Defines action for deleting resources
+ *
+ * @see BaseResourceAction
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public final class DeleteResourceAction extends BaseResourceAction implements ControllerAction {
 
   public DeleteResourceAction(@NotNull final ProjectManager projectManager,

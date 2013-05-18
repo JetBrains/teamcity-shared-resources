@@ -34,10 +34,12 @@ public class QuotedResource extends AbstractResource {
     myQuota = quota;
   }
 
+  @NotNull
   static QuotedResource newResource(@NotNull String name, int quota) {
     return new QuotedResource(name, quota);
   }
 
+  @NotNull
   static QuotedResource newInfiniteResource(@NotNull String name) {
     return new QuotedResource(name, QUOTA_INFINITE);
   }

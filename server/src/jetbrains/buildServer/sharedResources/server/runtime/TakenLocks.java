@@ -31,7 +31,6 @@ import java.util.Set;
  */
 public interface TakenLocks {
 
-
   /**
    * For given project collects taken locks using both artifacts and build promotions.
    *
@@ -48,9 +47,9 @@ public interface TakenLocks {
    * @return map of taken locks in format {@code <lockName, TakenLock>}
    */
   @NotNull
-  public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                                  @NotNull final Collection<SRunningBuild> runningBuilds,
-                                                  @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
+  Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
+                                           @NotNull final Collection<SRunningBuild> runningBuilds,
+                                           @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**
    * Decides, whether required locks can be acquired by the build
@@ -61,9 +60,9 @@ public interface TakenLocks {
    * @return empty collection, if locks can be acquired, collection, that contains unavailable locks otherwise
    */
   @NotNull
-  public Collection<Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
-                                              @NotNull final Map<String, TakenLock> takenLocks,
-                                              @NotNull final String projectId,
-                                              @NotNull final Set<String> fairSet);
+  Collection<Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
+                                       @NotNull final Map<String, TakenLock> takenLocks,
+                                       @NotNull final String projectId,
+                                       @NotNull final Set<String> fairSet);
 
 }

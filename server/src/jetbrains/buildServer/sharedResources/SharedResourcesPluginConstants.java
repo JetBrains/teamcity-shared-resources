@@ -22,7 +22,7 @@ package jetbrains.buildServer.sharedResources;
 public class SharedResourcesPluginConstants {
 
   /**
-   * Virtual path of the feature parameters page
+   * Path of the feature parameters page
    */
   public static final String EDIT_FEATURE_PATH_HTML = "editFeature.html";
 

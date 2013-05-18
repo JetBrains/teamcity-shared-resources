@@ -24,6 +24,7 @@ public class CustomResource extends AbstractResource {
     myValues = new HashSet<String>(values);
   }
 
+  @NotNull
   static CustomResource newCustomResource(@NotNull final String name, @NotNull final Collection<String> values) {
     return new CustomResource(name, values);
   }

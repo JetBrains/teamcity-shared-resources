@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * Interface {@code LocksStorage}
  *
- * Contains method definition for taken locks storage
+ * Contains method definition for storage of taken locks
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
@@ -37,24 +37,24 @@ public interface LocksStorage {
    * @param build build to store locks for
    * @param takenLocks taken locks for given build with values
    */
-  public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks);
+  void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks);
 
   /**
    * Loads taken locks
-   *
    *
    * @param build build to load locks for
    * @return collection of taken locks. Values are restored inside locks
    */
   @NotNull
-  public Map<String, Lock> load(@NotNull final SBuild build);
+  Map<String, Lock> load(@NotNull final SBuild build);
 
   /**
    * Checks, whether locks has been already stored
+   *
    * @param build build to check for
    * @return {@code true} if locks has been stored inside build artifact
    * {@code false} otherwise
    */
-  public boolean locksStored(@NotNull final SBuild build);
+  boolean locksStored(@NotNull final SBuild build);
 
 }

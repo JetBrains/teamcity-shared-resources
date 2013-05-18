@@ -50,6 +50,10 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  */
 public class EditFeatureController extends BaseController {
 
+  /** Parameter, that indicates inherited build feature*/
+  @NotNull
+  private static final String PARAM_INHERITED = "inherited";
+
   @NotNull
   private final PluginDescriptor myDescriptor;
 
@@ -87,10 +91,12 @@ public class EditFeatureController extends BaseController {
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<String, Lock>();
-    final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(project.getProjectId()));
+    final String projectId = project.getProjectId();
+    // map of all visible resources from this project and its subtree
+    final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(projectId));
     final Map<String, Object> model = result.getModel();
     final Collection<Lock> invalidLocks = new ArrayList<Lock>();
-    model.put("inherited", false);
+    model.put(PARAM_INHERITED, false);
     for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
       if (SharedResourcesBuildFeature.FEATURE_TYPE.equals(descriptor.getType())) {
@@ -99,10 +105,10 @@ public class EditFeatureController extends BaseController {
         if (buildFeatureId.equals(descriptor.getId())) {
           // we have feature that we need to edit
           locks.putAll(f.getLockedResources());
-          invalidLocks.addAll(f.getInvalidLocks(project.getProjectId()));
-          model.put("inherited", bfb.isInherited());
+          invalidLocks.addAll(f.getInvalidLocks(projectId));
+          model.put(PARAM_INHERITED, bfb.isInherited());
         } else {
-          // we have feature, that is not current feature under edit. must remove used resources from our resource collection
+          // we have feature, that is not current feature under edit. must remove resources used by other features
           for (String name : f.getLockedResources().keySet()) {
             resources.remove(name);
           }

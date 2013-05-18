@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Oleg Rybak
  */
-@SuppressWarnings("UnusedShould")
 public enum LockType {
 
   /**

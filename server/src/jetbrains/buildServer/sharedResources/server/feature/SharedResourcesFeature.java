@@ -28,9 +28,7 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public interface SharedResourcesFeature {
-
 
   /**
    * Gets locked resources from current build feature
@@ -38,7 +36,7 @@ public interface SharedResourcesFeature {
    * @return map of locked resources. Map format is {@code <LockName, Lock>}
    */
   @NotNull
-  public Map<String, Lock> getLockedResources();
+  Map<String, Lock> getLockedResources();
 
   /**
    * Updates lock inside build feature
@@ -47,9 +45,9 @@ public interface SharedResourcesFeature {
    * @param oldName   name of the existing lock
    * @param newName   new lock name
    */
-  public void updateLock(@NotNull final SBuildType buildType,
-                         @NotNull final String oldName,
-                         @NotNull final String newName);
+  void updateLock(@NotNull final SBuildType buildType,
+                  @NotNull final String oldName,
+                  @NotNull final String newName);
 
   /**
    * Exposes locks as parameters
@@ -57,8 +55,7 @@ public interface SharedResourcesFeature {
    * @return map of locks, exposed as parameters
    */
   @NotNull
-  public Map<String, String> getBuildParameters();
-
+  Map<String, String> getBuildParameters();
 
   /**
    * Checks that build feature is in valid state, i.e. can acquire all of its locks.
@@ -69,6 +66,5 @@ public interface SharedResourcesFeature {
    *         wrong type of resource (in case of custom valued lock backed by quoted resource)
    */
   @NotNull
-  public Collection<Lock> getInvalidLocks(@NotNull final String projectId);
-
+  Collection<Lock> getInvalidLocks(@NotNull final String projectId);
 }

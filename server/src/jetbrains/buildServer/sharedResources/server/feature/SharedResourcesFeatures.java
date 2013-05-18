@@ -12,7 +12,6 @@ import java.util.Collection;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public interface SharedResourcesFeatures {
 
   /**
@@ -33,7 +32,7 @@ public interface SharedResourcesFeatures {
    *      ---
    */
   @NotNull
-  public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType);
+  Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType);
 
   /**
    * Searches for features of type {@code SharedResourcesBuildFeature} in the resolved settings.
@@ -47,8 +46,7 @@ public interface SharedResourcesFeatures {
    * @see jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature#FEATURE_TYPE
    */
   @NotNull
-  public Collection<SharedResourcesFeature> searchForResolvedFeatures(@NotNull final SBuildType buildType);
-
+  Collection<SharedResourcesFeature> searchForResolvedFeatures(@NotNull final SBuildType buildType);
 
   /**
    * Light method used to indicate, that feature corresponding to shared resources is present
@@ -57,5 +55,5 @@ public interface SharedResourcesFeatures {
    * @return {@code true} if we have a feature inside given {@code buildType}, {@code false} otherwise
    * @see jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature#FEATURE_TYPE
    */
-  public boolean featuresPresent(@NotNull final SBuildType buildType);
+  boolean featuresPresent(@NotNull final SBuildType buildType);
 }

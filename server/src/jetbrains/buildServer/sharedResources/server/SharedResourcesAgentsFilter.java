@@ -23,9 +23,11 @@ import java.util.*;
  */
 public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
-  static final String CUSTOM_DATA_KEY = SharedResourcesPluginConstants.PLUGIN_NAME;
-
+  @NotNull
   private static final Logger LOG = Logger.getInstance(SharedResourcesAgentsFilter.class.getName());
+
+  @NotNull
+  static final String CUSTOM_DATA_KEY = SharedResourcesPluginConstants.PLUGIN_NAME;
 
   @NotNull
   private final SharedResourcesFeatures myFeatures;
@@ -40,7 +42,9 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   private final RunningBuildsManager myRunningBuildsManager;
 
   public SharedResourcesAgentsFilter(@NotNull final SharedResourcesFeatures features,
-                                     @NotNull final Locks locks, @NotNull TakenLocks takenLocks, @NotNull RunningBuildsManager runningBuildsManager) {
+                                     @NotNull final Locks locks,
+                                     @NotNull final TakenLocks takenLocks,
+                                     @NotNull final RunningBuildsManager runningBuildsManager) {
     myFeatures = features;
     myLocks = locks;
     myTakenLocks = takenLocks;
@@ -53,7 +57,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // get custom data
     final Set<String> featureContext = getOrCreateFeatureData(context);
     // get or create our collection of resources
-
     WaitReason reason = null;
     QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
@@ -92,7 +95,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   }
 
   @NotNull
-  private WaitReason createWaitReason(@NotNull final Map<String, TakenLock> takenLocks, @NotNull final Collection<Lock> unavailableLocks) {
+  private WaitReason createWaitReason(@NotNull final Map<String, TakenLock> takenLocks,
+                                      @NotNull final Collection<Lock> unavailableLocks) {
     final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
     builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
     builder.append("to become available: ");

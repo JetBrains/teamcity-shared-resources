@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NotNull;
 public class SharedResourcesActionsController extends BaseAjaxActionController {
 
   public SharedResourcesActionsController(@NotNull final WebControllerManager controllerManager,
-                                          @NotNull ProjectManager projectManager,
-                                          @NotNull Resources resources,
-                                          @NotNull SharedResourcesFeatures features) {
+                                          @NotNull final ProjectManager projectManager,
+                                          @NotNull final Resources resources,
+                                          @NotNull final SharedResourcesFeatures features) {
     super(controllerManager);
     controllerManager.registerController(SharedResourcesPluginConstants.WEB.ACTIONS, this);
     registerAction(new AddResourceAction(projectManager, resources));
