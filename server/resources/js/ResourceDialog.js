@@ -67,10 +67,8 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   adjustDialogDisplay: function (editMode) {
     if (editMode) {
       $j("#resourceDialogTitle").html('Edit Resource');
-      $j("#resourceDialogSubmit").prop('value', 'Save');
     } else {
       $j("#resourceDialogTitle").html('Add Resource');
-      $j("#resourceDialogSubmit").prop('value', 'Add Resource');
     }
     this.syncResourceSelectionState();
   },

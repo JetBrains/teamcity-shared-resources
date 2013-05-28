@@ -218,7 +218,7 @@
   </table>
   <div class="popupSaveButtonsBlock">
     <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
-    <forms:submit id="resourceDialogSubmit" type="button" label="Add Resource" onclick="BS.ResourceDialog.submit()"/>
+    <forms:submit id="resourceDialogSubmit" type="button" label="Save" onclick="BS.ResourceDialog.submit()"/>
   </div>
 </bs:dialog>
 

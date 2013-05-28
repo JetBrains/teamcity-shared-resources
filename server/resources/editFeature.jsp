@@ -230,7 +230,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   showDialog: function () {
     this.editMode = false;
     $j('#locksDialogTitle').html('Add Lock');
-    $j('#locksDialogSubmit').val('Add Lock');
     // filter available resources
     this.fillAvailableResources();
     this.fillAvailableResourcesDropdown();
@@ -246,7 +245,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.currentLockName = lockName;
     // set proper title
     $j('#locksDialogTitle').html('Edit Lock');
-    $j('#locksDialogSubmit').val('Save');
     // select resource
     var currentResource = BS.SharedResourcesFeatureDialog.resources[this.currentLockName];
     // select lock
@@ -509,7 +507,9 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
 <tr>
   <td class="noBorder" colspan="2">
-    <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
+    <c:if test="${not inherited}">
+      <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
+    </c:if>
     <bs:dialog dialogId="locksDialog" title="Add Lock" titleId="locksDialogTitle" closeCommand="BS.LocksDialog.close()">
       <div id="lockFromResources_Yes">
         <table class="runnerFormTable">
@@ -518,7 +518,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
             <td>
               <forms:select name="lockFromResources" id="lockFromResources" style="width: 90%"
                             onchange="BS.LocksDialog.chooseResource();"/>
-              <span class="smallNote">Choose the resource you want to lock</span>
+              <span class="smallNote">Select the resource you want to lock</span>
             </td>
           </tr>
 
@@ -542,7 +542,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
                 <forms:option value="ALL">Lock all values</forms:option>
                 <forms:option value="SPECIFIC">Lock specific value</forms:option>
               </forms:select>
-              <span class="smallNote">Select type of lock on custom resource: any available value, all values or specify value you want to lock</span>
+              <span class="smallNote">Select a type of lock on the custom resource: any available value, all values or specify the value you want to lock</span>
             </td>
           </tr>
 
@@ -550,7 +550,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
             <th>Value to lock:</th>
             <td>
               <forms:select name="newCustomLockType_Values" id="newCustomLockType_Values" style="width: 90%"/>
-              <span class="smallNote">Choose value of custom resource to lock</span>
+              <span class="smallNote">Select value of custom resource to lock</span>
             </td>
           </tr>
         </table>
@@ -560,7 +560,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </div>
       <div class="popupSaveButtonsBlock">
         <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
-        <forms:submit id="locksDialogSubmit" type="button" label="Add Lock" onclick="BS.LocksDialog.submit();"/>
+        <forms:submit id="locksDialogSubmit" type="button" label="Save" onclick="BS.LocksDialog.submit();"/>
       </div>
     </bs:dialog>
   </td>
