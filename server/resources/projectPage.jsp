@@ -72,7 +72,7 @@
         onComplete: function (transport) {
           var errors = BS.XMLResponse.processErrors(transport.responseXML, {
             onNameError: function (elem) {
-              $j('#error_Name').html("Name is already used");
+              $j('#error_Name').html("The name is already used");
               BS.Util.show('error_Name');
             }
           });
@@ -183,7 +183,7 @@
         <forms:textField name="resource_name" id="resource_name" style="width: 100%"
                          className="longField buildTypeParams" maxlength="40"/>
         <span class="error" id="error_Name"></span>
-        <span class="smallNote">Specify the name of resource</span>
+        <span class="smallNote">Specify the name of the resource</span>
       </td>
     </tr>
     <tr>
@@ -203,7 +203,7 @@
         <forms:textField name="resource_quota" style="width: 25%" id="resource_quota"
                          className="longField buildTypeParams" maxlength="3"/>
         <span class="error" id="error_Quota"></span>
-        <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on resource</span>
+        <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on the resource</span>
       </td>
     </tr>
     <tr id="custom_row" style="display: none">
@@ -212,7 +212,7 @@
         <props:textarea name="customValues" textAreaName="customValuesArea" value=""
                         linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
         <span class="error" id="error_Values"></span>
-        <span class="smallNote">Define one custom value for resource per line</span>
+        <span class="smallNote">Define one custom value for the resource per line</span>
       </td>
     </tr>
   </table>
@@ -226,7 +226,7 @@
 <c:choose>
   <c:when test="${not empty bean.myResources}">
 
-    <h3>Resources defined in current project</h3>
+    <h3>Resources defined in the current project</h3>
     <l:tableWithHighlighting style="width: 70%"
                              id="resourcesTable"
                              className="parametersTable"
