@@ -34,6 +34,13 @@
 <c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 
+<style type="text/css">
+  .locksTable td {
+    position:static;
+    border: 1px solid #CCCCCC;
+  }
+</style>
+
 <script type="text/javascript">
 
 BS.LocksUtil = {
@@ -168,7 +175,7 @@ BS.SharedResourcesFeatureDialog = {
 
     var tableRow = BS.LocksUtil.lockToTableRow(this.locks[key]);
     //noinspection JSCheckFunctionSignatures
-    tableBody.append($j('<tr>').attr('style', 'border-top: 1px solid #CCC')
+    tableBody.append($j('<tr>')
             .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
             .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc))
             .append(editCell)
@@ -472,7 +479,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
 <tr>
   <td colspan="2" style="padding-right: 8px">
-    <table id="locksTaken" class="parametersTable">
+    <table id="locksTaken" class="parametersTable locksTable">
       <thead>
       <tr>
         <th style="width: 25%">Resource Name</th>
