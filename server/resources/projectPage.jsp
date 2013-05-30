@@ -183,7 +183,16 @@
         <forms:textField name="resource_name" id="resource_name" style="width: 100%"
                          className="longField buildTypeParams" maxlength="40"/>
         <span class="error" id="error_Name"></span>
-        <span class="smallNote">Specify the name of the resource</span>
+        <span id="nameAttention" class="smallNoteAttention" style="display: none">
+            <bs:out value="Please check whether the resource name is used as a "/>
+            <bs:helpLink file="Defining+and+Using+Build+Parameters+in+Build+Configuration">
+              <bs:out value="parameter reference."/>
+            </bs:helpLink>
+            <bs:out value="Changing the name can result in unsatisfied "/>
+            <bs:helpLink file="Agent+Requirements">
+              <bs:out value="agent requirement"/>
+            </bs:helpLink>
+        </span>
       </td>
     </tr>
     <tr>
@@ -321,7 +330,7 @@
   <c:set var="pr" value="${item.value}"/> <%--Map<String, Resource>--%>
   <c:if test="${not empty pr}">
     <h3>Resources inherited from
-    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
+      <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
       <jsp:attribute name="ifAccessGranted">
         <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
         <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
@@ -329,7 +338,7 @@
       <jsp:attribute name="ifAccessDenied">
         <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
       </jsp:attribute>
-    </authz:authorize>
+      </authz:authorize>
     </h3>
     <table class="parametersTable" style="width: 70%">
       <tr>

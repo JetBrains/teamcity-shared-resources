@@ -26,10 +26,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     $j('#resource_quota').val(1);
     $j('#customValues').val('');
     $j('#resource_name').val('');
-
-    this.adjustDialogDisplay();
-    this.showCentered();
-    this.bindCtrlEnterHandler(this.submit.bind(this));
+    this.showCommon();
   },
 
   showEdit: function (resource_name) {
@@ -57,10 +54,19 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     } else {
       $j('#resource_quota').val(1);
     }
+    this.showCommon();
+  },
 
+  showCommon: function() {
     this.adjustDialogDisplay(this.editMode);
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
+    BS.Util.hide('info_row');
+    if (this.editMode) {
+      $j('#resource_name').bind('input propertychange', this.onNameChange);
+    } else {
+      $j('#resource_name').unbind('input propertychange', this.onNameChange);
+    }
     BS.MultilineProperties.updateVisible();
   },
 
@@ -154,5 +160,13 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   toggleModeCustom: function () {
     BS.Util.hide('quota_row');
     BS.Util.show('custom_row');
+  },
+
+  onNameChange: function() {
+    if (BS.ResourceDialog.currentResourceName !== $j('#resource_name').val()) {
+      BS.Util.show('nameAttention');
+    } else {
+      BS.Util.hide('nameAttention');
+    }
   }
 });
