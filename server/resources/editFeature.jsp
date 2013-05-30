@@ -536,7 +536,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
                 <forms:option value="readLock">Read Lock</forms:option>
                 <forms:option value="writeLock">Write Lock</forms:option>
               </forms:select>
-              <span class="smallNote">Select type of lock: read lock (shared), or write lock (exclusive)</span>
+              <span class="smallNote">Select a type of lock: read lock (shared), or write lock (exclusive)</span>
             </td>
           </tr>
 
