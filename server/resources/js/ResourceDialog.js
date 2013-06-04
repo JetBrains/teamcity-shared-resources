@@ -107,7 +107,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.clearErrors();
     var flag = $j('#resource_type option:selected').val();
     if (flag === 'custom') {
-      var val = $j('#customValues').val().trim();
+      var val = $j.trim($j('#customValues').val());
       if (val === '') {
         BS.Util.show('error_Values');
         $j('#error_Values').html("Please define custom values for resource");
@@ -116,7 +116,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     }
 
     var element = $j('#resource_name');
-    var value = element.val().trim();
+    var value = $j.trim(element.val());
     if (value.length === 0) { // check not empty
       BS.Util.show('error_Name');
       $j('#error_Name').html("Name must not be empty");

@@ -118,7 +118,7 @@ BS.SharedResourcesFeatureDialog = {
     }
 
     this.renderInvalidLocks();
-    textArea.val(textAreaContent.trim());
+    textArea.val($j.trim(textAreaContent));
     if (this.inherited) {
       BS.Util.hide('addNewLock');
     } else {
