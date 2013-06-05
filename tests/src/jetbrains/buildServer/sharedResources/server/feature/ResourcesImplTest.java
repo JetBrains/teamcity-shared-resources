@@ -180,8 +180,11 @@ public class ResourcesImplTest extends BaseTestCase {
       oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
 
-      oneOf(myProject).getParentProjectId();
-      will(returnValue(null));
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myProject)));
+
+      oneOf(myProject).getProjectId();
+      will(returnValue(myProjectId));
 
       oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myPluginProjectSettings));
@@ -201,14 +204,17 @@ public class ResourcesImplTest extends BaseTestCase {
       oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
 
-      oneOf(myProject).getParentProjectId();
-      will(returnValue(myRootProjectId));
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myProject, myRootProject)));
+
+      oneOf(myProject).getProjectId();
+      will(returnValue(myProjectId));
 
       oneOf(myProjectManager).findProjectById(myRootProjectId);
       will(returnValue(myRootProject));
 
-      oneOf(myRootProject).getParentProjectId();
-      will(returnValue(null));
+      oneOf(myRootProject).getProjectId();
+      will(returnValue(myRootProjectId));
 
       oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myRootProjectSettings));

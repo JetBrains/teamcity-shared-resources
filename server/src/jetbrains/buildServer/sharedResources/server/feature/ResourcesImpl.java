@@ -101,27 +101,25 @@ public final class ResourcesImpl implements Resources {
   @Override
   public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull String projectId) {
     final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>();
-    SProject project = myProjectManager.findProjectById(projectId);
+    final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      String parentId = project.getParentProjectId();
-      if (parentId != null) {
-        result.putAll(asProjectResourceMap(parentId));
+      final List<SProject> projects = project.getProjectPath();
+      for (SProject p: projects) {
+        result.put(p, getSettings(p.getProjectId()).getResourceMap());
       }
-      result.put(project, getSettings(projectId).getResourceMap());
     }
     return result;
   }
 
   @Override
-  public int getCount(@NotNull String projectId) {
+  public int getCount(@NotNull final String projectId) {
     int result = 0;
-    SProject project = myProjectManager.findProjectById(projectId);
+    final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      String parentId = project.getParentProjectId();
-      if (parentId != null) {
-        result += getCount(parentId);
+      final List<SProject> projects = project.getProjectPath();
+      for (SProject p: projects) {
+        result += getSettings(p.getProjectId()).getCount();
       }
-      result += getSettings(projectId).getCount();
     }
     return  result;
   }
