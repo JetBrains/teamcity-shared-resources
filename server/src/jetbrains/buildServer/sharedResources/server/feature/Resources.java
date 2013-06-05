@@ -79,4 +79,12 @@ public interface Resources {
    */
   @NotNull
   Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
+
+  /**
+   * Gets number of resources, visible for project with given project id
+   *
+   * @param projectId id of the project
+   * @return number of visible resources
+   */
+  int getCount(@NotNull final String projectId);
 }

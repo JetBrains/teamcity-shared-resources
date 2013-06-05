@@ -51,15 +51,13 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private Map<String, Resource> myRootResourceMap;
 
+  private final String myProjectId = TestUtils.generateRandomName();
+
+  private final String myRootProjectId = "<ROOT>";
   /**
    * Class under test
    */
   private ResourcesImpl resources;
-
-  private final String projectId = TestUtils.generateRandomName();
-
-  private final String rootProjectId = "<ROOT>";
-
 
   @BeforeMethod
   @Override
@@ -99,7 +97,7 @@ public class ResourcesImplTest extends BaseTestCase {
 
       oneOf(myPluginProjectSettings).addResource(resource);
     }});
-    resources.addResource(projectId, resource);
+    resources.addResource(myProjectId, resource);
     m.assertIsSatisfied();
   }
 
@@ -111,7 +109,7 @@ public class ResourcesImplTest extends BaseTestCase {
       oneOf(myRootProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
     }});
-    resources.addResource(projectId, resource);
+    resources.addResource(myProjectId, resource);
   }
 
   @Test
@@ -125,7 +123,7 @@ public class ResourcesImplTest extends BaseTestCase {
 
       oneOf(myPluginProjectSettings).editResource(name, resource);
     }});
-    resources.editResource(projectId, name, resource);
+    resources.editResource(myProjectId, name, resource);
     m.assertIsSatisfied();
   }
 
@@ -138,42 +136,97 @@ public class ResourcesImplTest extends BaseTestCase {
       oneOf(myRootProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
     }});
-    resources.editResource(projectId, newName, resource);
+    resources.editResource(myProjectId, newName, resource);
   }
 
   @Test
   public void testDeleteResource() {
     final String name = "myName1";
     m.checking(new Expectations() {{
-      oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myPluginProjectSettings));
 
       oneOf(myPluginProjectSettings).deleteResource(name);
     }});
 
-    resources.deleteResource(projectId, name);
+    resources.deleteResource(myProjectId, name);
     m.assertIsSatisfied();
   }
 
   @Test
   public void testAsMap() {
     m.checking(new Expectations() {{
-      oneOf(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myPluginProjectSettings));
 
       oneOf(myPluginProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
 
-      oneOf(myProjectManager).findProjectById(projectId);
+      oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
 
       oneOf(myProject).getParentProjectId();
       will(returnValue(null));
     }});
 
-    final Map<String, Resource> result = resources.asMap(projectId);
+    final Map<String, Resource> result = resources.asMap(myProjectId);
     assertNotNull(result);
     assertEquals(myProjectResourceMap.size(), result.size());
+  }
+
+  @Test
+  public void testGetCountFlat() {
+    m.checking(new Expectations() {{
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
+
+      oneOf(myProject).getParentProjectId();
+      will(returnValue(null));
+
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      will(returnValue(myPluginProjectSettings));
+
+      oneOf(myPluginProjectSettings).getCount();
+      will(returnValue(myProjectResourceMap.size()));
+
+    }});
+
+    final int count = resources.getCount(myProjectId);
+    assertEquals(myProjectResourceMap.size(), count);
+  }
+
+  @Test
+  public void testGetCountHierarchy() {
+    m.checking(new Expectations() {{
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
+
+      oneOf(myProject).getParentProjectId();
+      will(returnValue(myRootProjectId));
+
+      oneOf(myProjectManager).findProjectById(myRootProjectId);
+      will(returnValue(myRootProject));
+
+      oneOf(myRootProject).getParentProjectId();
+      will(returnValue(null));
+
+      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      will(returnValue(myRootProjectSettings));
+
+      oneOf(myRootProjectSettings).getCount();
+      will(returnValue(myRootResourceMap.size()));
+
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      will(returnValue(myPluginProjectSettings));
+
+      oneOf(myPluginProjectSettings).getCount();
+      will(returnValue(myProjectResourceMap.size()));
+
+    }});
+
+    final int count = resources.getCount(myProjectId);
+    assertEquals(myProjectResourceMap.size() + myRootResourceMap.size(), count);
+
   }
 
   private Expectations createExpectationsCheck() {
@@ -188,22 +241,22 @@ public class ResourcesImplTest extends BaseTestCase {
 
       // get root project id
       oneOf(myRootProject).getProjectId();
-      will(returnValue(rootProjectId));
+      will(returnValue(myRootProjectId));
 
       // get root project settings
-      atLeast(1).of(myProjectSettingsManager).getSettings(rootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      atLeast(1).of(myProjectSettingsManager).getSettings(myRootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myRootProjectSettings));
 
       // get my project id
       atLeast(1).of(myProject).getProjectId();
-      will(returnValue(projectId));
+      will(returnValue(myProjectId));
 
       // get my resources
       atLeast(1).of(myPluginProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
 
       // get my settings
-      atLeast(1).of(myProjectSettingsManager).getSettings(projectId, SharedResourcesPluginConstants.SERVICE_NAME);
+      atLeast(1).of(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
       will(returnValue(myPluginProjectSettings));
     }};
   }

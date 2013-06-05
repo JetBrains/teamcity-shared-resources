@@ -112,6 +112,20 @@ public final class ResourcesImpl implements Resources {
     return result;
   }
 
+  @Override
+  public int getCount(@NotNull String projectId) {
+    int result = 0;
+    SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      String parentId = project.getParentProjectId();
+      if (parentId != null) {
+        result += getCount(parentId);
+      }
+      result += getSettings(projectId).getCount();
+    }
+    return  result;
+  }
+
   @NotNull
   private Map<String, Resource> getAllResources() {
     final Map<String, Resource> result = new HashMap<String, Resource>();

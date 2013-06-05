@@ -231,4 +231,13 @@ public class PluginProjectSettings implements ProjectSettings {
       myLock.readLock().unlock();
     }
   }
+
+  public int getCount() {
+    try {
+      myLock.readLock().lock();
+      return myResourceMap.size();
+    } finally {
+      myLock.readLock().unlock();
+    }
+  }
 }

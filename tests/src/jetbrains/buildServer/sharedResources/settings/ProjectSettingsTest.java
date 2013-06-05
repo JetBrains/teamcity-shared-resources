@@ -236,6 +236,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final Collection<Resource> resources = settings.getResources();
     assertNotEmpty(resources);
     assertEquals(1, resources.size());
+    assertEquals(1, settings.getCount());
     final Resource res = resources.iterator().next();
     assertNotNull(res);
     assertTrue(res instanceof QuotedResource);
@@ -250,6 +251,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final Collection<Resource> resources = settings.getResources();
     assertNotEmpty(resources);
     assertEquals(1, resources.size());
+    assertEquals(1, settings.getCount());
     final Resource res = resources.iterator().next();
     assertNotNull(res);
     assertTrue(res instanceof QuotedResource);
@@ -262,6 +264,7 @@ public class ProjectSettingsTest extends BaseTestCase {
   private void validateSettingsCustom(@NotNull final PluginProjectSettings settings) {
     final Collection<Resource> resources = settings.getResources();
     assertEquals(1, resources.size());
+    assertEquals(1, settings.getCount());
     final Resource res = resources.iterator().next();
     assertNotNull(res);
     assertTrue(res instanceof CustomResource);
@@ -281,6 +284,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final Map<String, Resource> resources = settings.getResourceMap();
     assertNotNull(resources);
     assertEquals(3, resources.size());
+    assertEquals(3, settings.getCount());
 
     Resource r = resources.get("resource0"); // infinite resource
     assertNotNull(r);

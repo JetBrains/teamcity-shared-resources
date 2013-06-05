@@ -47,6 +47,9 @@ import java.util.Map;
 public class SharedResourcesPage extends EditProjectTab {
 
   @NotNull
+  private static final String TITLE_PREFIX = "Shared Resources";
+
+  @NotNull
   private final Resources myResources;
 
   @NotNull
@@ -61,7 +64,7 @@ public class SharedResourcesPage extends EditProjectTab {
                              @NotNull final Resources resources,
                              @NotNull final SharedResourcesFeatures features,
                              @NotNull SecurityContext securityContext) {
-    super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), "Shared Resources", projectManager);
+    super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX, projectManager);
     myResources = resources;
     myFeatures = features;
     mySecurityContext = securityContext;
@@ -101,6 +104,24 @@ public class SharedResourcesPage extends EditProjectTab {
       bean = new SharedResourcesBean(project);
     }
     model.put("bean", bean);
+  }
+
+  @NotNull
+  @Override
+  public String getTabTitle(@NotNull final HttpServletRequest request) {
+    final SProject project = getProject(request);
+    String result;
+    if (project != null) {
+      int n = myResources.getCount(project.getProjectId());
+      if (n > 0) {
+        result = TITLE_PREFIX + " (" + n + ")";
+      } else {
+        result = TITLE_PREFIX;
+      }
+    } else {
+      result = TITLE_PREFIX;
+    }
+    return result;
   }
 
   @Override
