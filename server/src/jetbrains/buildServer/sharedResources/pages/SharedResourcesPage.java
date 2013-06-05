@@ -128,9 +128,7 @@ public class SharedResourcesPage extends EditProjectTab {
   public boolean isAvailable(@NotNull final HttpServletRequest request) {
     final SProject project = getProject(request);
     final SUser user = (SUser) mySecurityContext.getAuthorityHolder().getAssociatedUser();
-    return  user != null
-            && project != null && (
-            user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT)
-                    || user.isPermissionGrantedGlobally(Permission.EDIT_PROJECT));
+    return  user != null && project != null &&
+            user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT);
   }
 }
