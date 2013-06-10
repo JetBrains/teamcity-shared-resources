@@ -21,6 +21,7 @@ import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created with IntelliJ IDEA.
@@ -74,6 +75,6 @@ public class TestUtils {
    * @return random name
    */
   public static String generateRandomName() {
-    return "my_name_" + generateBoundedRandomInt(100000);
+    return UUID.randomUUID().toString();
   }
 }
