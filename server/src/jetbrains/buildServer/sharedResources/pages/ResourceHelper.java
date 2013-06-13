@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -56,7 +56,7 @@ public class ResourceHelper {
       }
     } else if (ResourceType.CUSTOM.equals(resourceType)) {
       final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
-      final Collection<String> strings = StringUtil.split(values, true, '\r', '\n');
+      final List<String> strings = StringUtil.split(values, true, '\r', '\n');
       resource = ResourceFactory.newCustomResource(resourceName, strings);
     }
     return resource;

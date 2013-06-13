@@ -2,7 +2,7 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,11 +35,11 @@ public class ResourceFactory {
   /**
    * Creates new custom resource with specified value space
    * @param name name of the resource
-   * @param values value space
+   * @param values values
    * @return new custom resource with specified value space
    */
   @NotNull
-  public static Resource newCustomResource(@NotNull final String name, @NotNull final Collection<String> values) {
+  public static Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values) {
     return CustomResource.newCustomResource(name, values);
   }
 

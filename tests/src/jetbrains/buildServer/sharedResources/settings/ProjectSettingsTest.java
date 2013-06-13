@@ -33,7 +33,6 @@ import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Class {@code ProjectSettingsTest}
@@ -270,7 +269,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final CustomResource cRes = (CustomResource)res;
     assertEquals("resource1", cRes.getName());
     assertEquals(ResourceType.CUSTOM, cRes.getType());
-    final Set<String> values = cRes.getValues();
+    final List<String> values = cRes.getValues();
     assertNotNull(values);
     assertNotEmpty(values);
     assertEquals(4, values.size());
@@ -302,7 +301,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     assertNotNull(r);
     assertEquals(ResourceType.CUSTOM, r.getType());
     CustomResource cr = (CustomResource)r;
-    final Set<String> values = cr.getValues();
+    final List<String> values = cr.getValues();
     assertNotNull(values);
     assertNotEmpty(values);
     assertEquals(6, values.size());

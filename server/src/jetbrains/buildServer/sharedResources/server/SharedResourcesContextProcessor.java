@@ -73,7 +73,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
               final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
               for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
                 // get value space for current resources
-                final Set<String> values = new HashSet<String>(entry.getValue().getValues());
+                final List<String> values = new ArrayList<String>(entry.getValue().getValues());
                 final String key = entry.getKey();
                 // remove used values
                 values.removeAll(usedValues.get(key));

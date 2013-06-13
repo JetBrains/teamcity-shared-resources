@@ -2,10 +2,9 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Class {@code CustomResource}
@@ -17,20 +16,20 @@ import java.util.Set;
 public class CustomResource extends AbstractResource {
 
   @NotNull
-  private final Set<String> myValues;
+  private final List<String> myValues;
 
-  private CustomResource(@NotNull final String name, @NotNull final Collection<String> values) {
+  private CustomResource(@NotNull final String name, @NotNull final List<String> values) {
     super(name, ResourceType.CUSTOM);
-    myValues = new HashSet<String>(values);
+    myValues = new ArrayList<String>(values);
   }
 
   @NotNull
-  static CustomResource newCustomResource(@NotNull final String name, @NotNull final Collection<String> values) {
+  static CustomResource newCustomResource(@NotNull final String name, @NotNull final List<String> values) {
     return new CustomResource(name, values);
   }
 
   @NotNull
-  public Set<String> getValues() {
-    return Collections.unmodifiableSet(myValues);
+  public List<String> getValues() {
+    return Collections.unmodifiableList(myValues);
   }
 }

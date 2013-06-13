@@ -132,7 +132,7 @@ public class PluginProjectSettings implements ProjectSettings {
   }
 
   private void parseCustomResource(@NotNull final String resourceName, @NotNull final Element valuesElement) {
-    final Collection<String> c = new HashSet<String>();
+    final List<String> c = new ArrayList<String>();
     final List children = valuesElement.getChildren(XML.TAG_VALUE);
     for(Object o: children) {
       c.add(((Element)o).getTextTrim());
