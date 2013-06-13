@@ -20,6 +20,7 @@ import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.server.feature.FeatureParams;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import jetbrains.buildServer.web.util.WebUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull final Map<String, String> params) {
-    return myFeatureParams.describeParams(params);
+    return WebUtil.escapeXml(myFeatureParams.describeParams(params));
   }
 
   @Nullable
