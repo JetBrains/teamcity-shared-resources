@@ -36,7 +36,6 @@
 
 <c:url var="url" value="editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources"/>
 
-
 <script type="text/javascript">
 
   BS.SharedResourcesActions = {
@@ -178,9 +177,9 @@
            title="Resource Management" closeCommand="BS.ResourceDialog.close()">
   <table class="runnerFormTable">
     <tr>
-      <th><label for="resource_name">Resource name:</label></th>
+      <th style="white-space: nowrap"><label for="resource_name">Resource name: <l:star/></label></th>
       <td>
-        <forms:textField name="resource_name" id="resource_name" style="width: 100%"
+        <forms:textField name="resource_name" id="resource_name" style="width: 90%"
                          className="longField buildTypeParams" maxlength="40"/>
         <span class="error" id="error_Name"></span>
         <span id="nameAttention" class="smallNoteAttention" style="display: none">
@@ -196,7 +195,7 @@
       </td>
     </tr>
     <tr>
-      <th>Resource type:</th>
+      <th style="white-space: nowrap">Resource type:<bs:help file="Shared+Resources"/></th>
       <td>
         <forms:select name="resoruce_type" id="resource_type" style="width: 90%"
                       onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;">
@@ -204,19 +203,20 @@
           <forms:option value="quoted">Resource with quota</forms:option>
           <forms:option value="custom">Resource with custom values</forms:option>
         </forms:select>
+
       </td>
     </tr>
     <tr id="quota_row" style="display: none">
-      <th><label for="resource_quota">Resource quota:</label></th>
+      <th style="white-space: nowrap"><label for="resource_quota">Resource quota: <l:star/></label></th>
       <td>
-        <forms:textField name="resource_quota" style="width: 25%" id="resource_quota"
+        <forms:textField name="resource_quota" style="width: 15%" id="resource_quota"
                          className="longField buildTypeParams" maxlength="3"/>
         <span class="error" id="error_Quota"></span>
         <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on the resource</span>
       </td>
     </tr>
     <tr id="custom_row" style="display: none">
-      <th>Custom values:</th>
+      <th style="white-space: nowrap">Custom values: <l:star/></th>
       <td>
         <props:textarea name="customValues" textAreaName="customValuesArea" value=""
                         linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
