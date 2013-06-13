@@ -42,4 +42,6 @@
 
   <bean class="jetbrains.buildServer.sharedResources.settings.PluginSettingsManager"/>
 
+  <bean class="jetbrains.buildServer.sharedResources.pages.ResourceHelper"/>
+
 </beans>

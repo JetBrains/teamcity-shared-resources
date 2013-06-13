@@ -24,7 +24,6 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 
-@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {FeatureParams.class, FeatureParamsImpl.class})
 public class FeatureParamsImplTest extends BaseTestCase {
 

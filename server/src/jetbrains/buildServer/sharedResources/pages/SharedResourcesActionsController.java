@@ -21,11 +21,12 @@ public class SharedResourcesActionsController extends BaseAjaxActionController {
   public SharedResourcesActionsController(@NotNull final WebControllerManager controllerManager,
                                           @NotNull final ProjectManager projectManager,
                                           @NotNull final Resources resources,
+                                          @NotNull final ResourceHelper resourceHelper,
                                           @NotNull final SharedResourcesFeatures features) {
     super(controllerManager);
     controllerManager.registerController(SharedResourcesPluginConstants.WEB.ACTIONS, this);
-    registerAction(new AddResourceAction(projectManager, resources));
-    registerAction(new DeleteResourceAction(projectManager, resources));
-    registerAction(new EditResourceAction(projectManager, resources, features));
+    registerAction(new AddResourceAction(projectManager, resources, resourceHelper));
+    registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper));
+    registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features));
   }
 }

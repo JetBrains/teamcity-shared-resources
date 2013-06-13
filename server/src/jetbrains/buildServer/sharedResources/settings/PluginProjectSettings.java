@@ -70,7 +70,6 @@ public class PluginProjectSettings implements ProjectSettings {
    *    </JetBrains.SharedResources>
    *
    */
-  @SuppressWarnings("UnusedShould")
   private interface XML {
     public static final String TAG_RESOURCE = "resource";
     public static final String TAG_RESOURCE_NAME = "name";

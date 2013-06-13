@@ -30,7 +30,6 @@ import java.util.UUID;
  *
  * @author Oleg Rybak
  */
-@SuppressWarnings("UnusedShould")
 public class TestUtils {
 
   /** For random size of collections */

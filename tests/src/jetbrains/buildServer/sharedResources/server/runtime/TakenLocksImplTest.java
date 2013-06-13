@@ -27,7 +27,6 @@ import java.util.*;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 @TestFor(testForClass = {TakenLocks.class, TakenLocksImpl.class})
-@SuppressWarnings("UnusedShould")
 public class TakenLocksImplTest extends BaseTestCase {
 
   private Mockery m;

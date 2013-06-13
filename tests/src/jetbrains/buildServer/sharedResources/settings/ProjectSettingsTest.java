@@ -45,7 +45,6 @@ import java.util.Set;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 @TestFor (testForClass = PluginProjectSettings.class)
-@SuppressWarnings("UnusedShould")
 public class ProjectSettingsTest extends BaseTestCase {
 
   private static final String xmlQuota =

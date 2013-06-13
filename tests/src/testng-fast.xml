@@ -28,5 +28,10 @@
       <class name="jetbrains.buildServer.sharedResources.settings.ProjectSettingsTest"/>
     </classes>
   </test>
+  <test name="Web tests">
+    <classes>
+      <class name="jetbrains.buildServer.sharedResources.pages.actions.EditActionTest"/>
+    </classes>
+  </test>
 </suite>
 

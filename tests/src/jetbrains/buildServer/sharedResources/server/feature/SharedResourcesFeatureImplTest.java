@@ -25,7 +25,6 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {SharedResourcesFeature.class, SharedResourcesFeatureImpl.class})
 public class SharedResourcesFeatureImplTest extends BaseTestCase {
 

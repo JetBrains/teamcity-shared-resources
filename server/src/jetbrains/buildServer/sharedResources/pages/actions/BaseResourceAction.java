@@ -4,12 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
-import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collection;
 
 /**
  * Class {@code BaseResourceAction}
@@ -41,10 +36,15 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   protected final Resources myResources;
 
+  @NotNull
+  protected final ResourceHelper myResourceHelper;
+
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
-                               @NotNull final Resources resources) {
+                               @NotNull final Resources resources,
+                               @NotNull final ResourceHelper resourceHelper) {
     myProjectManager = projectManager;
     myResources = resources;
+    myResourceHelper = resourceHelper;
   }
 
   @NotNull
@@ -69,31 +69,6 @@ public abstract class BaseResourceAction implements ControllerAction {
   protected abstract void doProcess(@NotNull final HttpServletRequest request,
                                     @NotNull final HttpServletResponse response,
                                     @NotNull final Element ajaxResponse);
-
-  @Nullable
-  protected Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
-    final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
-    final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
-    Resource resource = null;
-    if (ResourceType.QUOTED.equals(resourceType)) {
-      final String resourceQuota = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
-      if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
-        try {
-          int quota = Integer.parseInt(resourceQuota);
-          resource = ResourceFactory.newQuotedResource(resourceName, quota);
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
-        }
-      } else { // we have infinite resource
-        resource = ResourceFactory.newInfiniteResource(resourceName);
-      }
-    } else if (ResourceType.CUSTOM.equals(resourceType)) {
-      final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
-      final Collection<String> strings = StringUtil.split(values, true, '\r', '\n');
-      resource = ResourceFactory.newCustomResource(resourceName, strings);
-    }
-    return resource;
-  }
 
   protected void createNameError(@NotNull final Element ajaxResponse, @NotNull final String name) {
     final ActionErrors errors = new ActionErrors();

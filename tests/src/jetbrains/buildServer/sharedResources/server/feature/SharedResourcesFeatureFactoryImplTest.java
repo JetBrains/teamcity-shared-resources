@@ -16,7 +16,6 @@ import java.util.HashMap;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {SharedResourcesFeatureFactory.class, SharedResourcesFeatureFactoryImpl.class})
 public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
 

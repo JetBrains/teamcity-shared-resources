@@ -27,7 +27,6 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {Resources.class, ResourcesImpl.class})
 public class ResourcesImplTest extends BaseTestCase {
 

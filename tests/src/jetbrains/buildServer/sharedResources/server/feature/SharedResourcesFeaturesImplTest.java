@@ -22,7 +22,6 @@ import java.util.List;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 @TestFor (testForClass = {SharedResourcesFeatures.class, SharedResourcesFeaturesImpl.class})
 public class SharedResourcesFeaturesImplTest extends BaseTestCase {
 

@@ -34,7 +34,6 @@ import java.util.Map;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 public interface Locks {
 
   /** Lock prefix, used in build parameters */

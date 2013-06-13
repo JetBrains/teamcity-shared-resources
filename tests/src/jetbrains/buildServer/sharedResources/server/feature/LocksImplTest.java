@@ -24,7 +24,6 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("UnusedShould")
 @TestFor(testForClass = {Locks.class, LocksImpl.class})
 public class LocksImplTest extends BaseTestCase {
 
