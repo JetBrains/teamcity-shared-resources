@@ -309,7 +309,9 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     for (var key in this.availableResources) {
       if (this.availableResources.hasOwnProperty(key)) {
         //noinspection JSCheckFunctionSignatures
-        resourceDropdown.append("<option value='" + this.availableResources[key].name + "'>" + this.availableResources[key].name + "</option>");
+        resourceDropdown.append(
+                $j("<option>").attr('value', this.availableResources[key].name).text(this.availableResources[key].name)
+        );
       }
     }
   },
@@ -435,30 +437,30 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   <c:forEach var="item" items="${resourcesMap}">
   rc = {};
-  rc.name = '${item.name}';
+  rc.name = '<bs:escapeForJs text="${item.name}"/>';
   rc.type = '${item.type}';
   <c:choose>
   <c:when test="${item.type == 'CUSTOM'}">
   rc.values = [];
   <c:forEach var="cr" items="${item.values}">
-  rc.values.push('${cr}');
+  rc.values.push('<bs:escapeForJs text="${cr}"/>');
   </c:forEach>
   </c:when>
   <c:when test="${item.type == 'QUOTED'}">
   rc.quota = ${item.quota};
   </c:when>
   </c:choose>
-  rs['${item.name}'] = rc; // push resource to map
+  rs['<bs:escapeForJs text="${item.name}"/>'] = rc; // push resource to map
   </c:forEach>
   /* load locks into javascript */
   var locks = self.locks;
   var lc;
   <c:forEach var="item" items="${locks}">
   lc = {};
-  lc.name = '${item.value.name}';
+  lc.name = '<bs:escapeForJs text="${item.value.name}"/>';
   lc.type = '${item.value.type.name}';
-  lc.value = '${item.value.value}';
-  locks['${item.value.name}'] = lc;
+  lc.value = '<bs:escapeForJs text="${item.value.value}"/>';
+  locks['<bs:escapeForJs text="${item.value.name}"/>'] = lc;
   </c:forEach>
   self.inherited = ${inherited};
 
@@ -467,10 +469,10 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   <jsp:useBean id="invalidLocks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
   <c:forEach var="item" items="${invalidLocks}">
   lc = {};
-  lc.name = '${item.value.name}';
+  lc.name = '<bs:escapeForJs text="${item.value.name}"/>';
   lc.type = '${item.value.type.name}';
-  lc.value = '${item.value.value}';
-  invalid['${item.value.name}'] = lc;
+  lc.value = '<bs:escapeForJs text="${item.value.value}"/>';
+  invalid['<bs:escapeForJs text="${item.value.name}"/>'] = lc;
   </c:forEach>
 
   BS.SharedResourcesFeatureDialog.refreshUI();
