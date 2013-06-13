@@ -139,7 +139,7 @@
   <c:forEach var="item" items="${bean.allResources}">
   <c:set var="type" value="${item.type}"/>
   r = {
-    name: '${item.name}',
+    name: '<bs:escapeForJs text="${item.name}"/>',
     type: '${item.type}'
   };
   <c:choose>
@@ -148,24 +148,24 @@
   <c:when test="${type == type_quota}">
   r['quota'] = '${item.quota}';
   r['infinite'] = ${item.infinite};
-  BS.ResourceDialog.myData['${item.name}'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
   </c:when>
 
   <%-- custom resource--%>
   <c:when test="${type == type_custom}">
   myValues = [];
   <c:forEach items="${item.values}" var="val">
-  myValues.push('${val}');
+  myValues.push('<bs:escapeForJs text="${val}"/>');
   </c:forEach>
   r['customValues'] = myValues;
-  BS.ResourceDialog.myData['${item.name}'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
   </c:when>
 
   <c:otherwise>
-  console.log('Resource [${item.name}] was not recognized');
+  console.log('Resource [<bs:escapeForJs text="${item.name}"/>] was not recognized');
   </c:otherwise>
   </c:choose>
-  BS.ResourceDialog.existingResources['${item.name}'] = true;
+  BS.ResourceDialog.existingResources['<bs:escapeForJs text="${item.name}"/>'] = true;
   </c:forEach>
 </script>
 
@@ -271,7 +271,12 @@
             <c:when test="${used}">
               <td class="highlight" onclick="${onclick}">
                 <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="${fn:replace(resourceName, ' ', '_')}"
+                <c:set var="controlId">
+                  <bs:escapeForJs text="${resource.value.name}"/>
+                </c:set>
+
+
+                <bs:simplePopup controlId="${fn:replace(controlId, ' ', '_')}"
                                 linkOpensPopup="false"
                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
