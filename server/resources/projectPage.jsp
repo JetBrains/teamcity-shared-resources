@@ -17,7 +17,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
-<%@ page import="java.util.UUID" %>
 
 <jsp:useBean id="project" scope="request" type="jetbrains.buildServer.serverSide.SProject"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
@@ -33,6 +32,7 @@
 
 <c:set var="type_quota" value="<%=ResourceType.QUOTED%>"/>
 <c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
+
 
 <c:url var="url" value="editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources"/>
 
@@ -271,7 +271,12 @@
             <c:when test="${used}">
               <td class="highlight" onclick="${onclick}">
                 <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="<%=UUID.randomUUID().toString()%>"
+                <c:set var="controlId">
+                  <bs:escapeForJs text="${resource.value.name}"/>
+                </c:set>
+
+
+                <bs:simplePopup controlId="${fn:replace(controlId, ' ', '_')}"
                                 linkOpensPopup="false"
                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
@@ -371,7 +376,7 @@
             <c:when test="${used}">
               <td>
                 <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="<%=UUID.randomUUID().toString()%>"
+                <bs:simplePopup controlId="${fn:replace(r.key, ' ', '_')}"
                                 linkOpensPopup="false"
                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
