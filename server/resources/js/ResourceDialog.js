@@ -113,6 +113,19 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
         $j('#error_Values').html("Please define custom values for resource");
         errorsPresent = true;
       }
+    } else if (flag === 'quoted') {
+      var val = $j.trim($j('#resource_quota').val());
+      if (val.length === 0) {
+        BS.Util.show('error_Quota');
+        $j('#error_Quota').html("Value must not be empty");
+        errorsPresent = true;
+      }
+      if (!val.match(/^[0-9]+$/)) {
+        BS.Util.show('error_Quota');
+        var message = "Value " + val + " is not correct";
+        $j('#error_Quota').html(message.escapeHTML());
+        errorsPresent = true;
+      }
     }
 
     var element = $j('#resource_name');
