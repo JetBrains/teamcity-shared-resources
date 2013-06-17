@@ -120,7 +120,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
         $j('#error_Quota').html("Value must not be empty");
         errorsPresent = true;
       }
-      if (!val.match(/^[0-9]+$/)) {
+      if (!/^[0-9]+$/.test(val)) {
         BS.Util.show('error_Quota');
         var message = "Value " + val + " is not correct";
         $j('#error_Quota').html(message.escapeHTML());
@@ -133,6 +133,10 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     if (value.length === 0) { // check not empty
       BS.Util.show('error_Name');
       $j('#error_Name').html("Name must not be empty");
+      errorsPresent = true;
+    } else if (!/^[A-Za-z0-9_]+$/.test(value)) {
+      BS.Util.show('error_Name');
+      $j('#error_Name').html("Name contains illegal characters");
       errorsPresent = true;
     }
     if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
