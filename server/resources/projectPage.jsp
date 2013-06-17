@@ -271,12 +271,7 @@
             <c:when test="${used}">
               <td class="highlight" onclick="${onclick}">
                 <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <c:set var="controlId">
-                  <bs:escapeForJs text="${resource.value.name}"/>
-                </c:set>
-
-
-                <bs:simplePopup controlId="${fn:replace(controlId, ' ', '_')}"
+                <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}"
                                 linkOpensPopup="false"
                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
@@ -376,7 +371,7 @@
             <c:when test="${used}">
               <td>
                 <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="${fn:replace(r.key, ' ', '_')}"
+                <bs:simplePopup controlId="${util:forJSIdentifier(r.key)}"
                                 linkOpensPopup="false"
                                 popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
                     <jsp:attribute name="content">
