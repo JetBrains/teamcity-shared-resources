@@ -169,6 +169,10 @@
 </script>
 
 <div>
+  This page contains shared resources defined in current project as well as inherited resources<bs:help file="Shared+Resources"/>
+</div>
+
+<div>
 <p>
   <forms:addButton id="addNewResource"
                    onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
