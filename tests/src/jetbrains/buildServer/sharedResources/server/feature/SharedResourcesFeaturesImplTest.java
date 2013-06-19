@@ -86,17 +86,26 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
   @Test
   public void testSearchForFeatures() {
     m.checking(new Expectations() {{
-
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(myAllFeatureDescriptors));
 
-      for (int i = 0; i < NUM; i++) {
-        oneOf(myInvalidDescriptors.get(i)).getType();
-        will(returnValue("$$some_other_type$$"));
+      atLeast(1).of(myBuildType).isEnabled(with(any(String.class)));
+      will(returnValue(true));
 
+      for (int i=0; i<myAllFeatureDescriptors.size(); i++) {
+        allowing(myAllFeatureDescriptors.get(i)).getId();
+        will(returnValue(String.valueOf(i)));
+      }
+
+      for (int i=0; i<NUM; i++) {
         oneOf(myValidDescriptors.get(i)).getType();
         will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
 
+        oneOf(myInvalidDescriptors.get(i)).getType();
+        will(returnValue("$$some_other_type$$"));
+      }
+
+      for (int i = 0; i < NUM; i++) {
         oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
         will(returnValue(myFeature));
       }
@@ -112,56 +121,58 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
   @Test
   public void testSearchForResolvedFeatures() {
     m.checking(new Expectations() {{
+      never(myBuildType).getBuildFeatures();
+
+      never(myBuildType).isEnabled(with(any(String.class)));
 
       oneOf(myBuildType).getResolvedSettings();
       will(returnValue(myResolvedSettings));
 
       oneOf(myResolvedSettings).getBuildFeatures();
-      will(returnValue(myAllFeatureDescriptors));
+      will(returnValue(myValidDescriptors));
 
-      for (int i = 0; i < NUM; i++) {
-        oneOf(myInvalidDescriptors.get(i)).getType();
-        will(returnValue("$$some_other_type$$"));
-
+      for (int i=0; i<NUM; i++) {
         oneOf(myValidDescriptors.get(i)).getType();
         will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
+      }
 
-        oneOf(myValidDescriptors.get(i)).getId();
-        will(returnValue("some-id-" + i));
-
-        oneOf(myBuildType).isEnabled("some-id-" + i);
-        will(returnValue(i % 2 == 0));
-
-        if (i % 2 == 0) {
-          oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
-          will(returnValue(myFeature));
-        }
+      for (int i = 0; i < NUM; i++) {
+        oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
+        will(returnValue(myFeature));
       }
     }});
 
     final Collection<SharedResourcesFeature> myFeatures = mySharedResourcesFeatures.searchForResolvedFeatures(myBuildType);
     assertNotNull(myFeatures);
     assertNotEmpty(myFeatures);
-    assertEquals(NUM / 2, myFeatures.size());
+    assertEquals(NUM, myFeatures.size());
     m.assertIsSatisfied();
   }
 
   @Test
   public void testFeaturesPresent() {
-    m.checking(new Expectations() {{
 
+    m.checking(new Expectations() {{
       oneOf(myBuildType).getBuildFeatures();
       will(returnValue(myAllFeatureDescriptors));
 
-      for (int i = 0; i < NUM; i++) {
+      atLeast(1).of(myBuildType).isEnabled(with(any(String.class)));
+      will(returnValue(true));
+
+      for (int i=0; i<myAllFeatureDescriptors.size(); i++) {
+        allowing(myAllFeatureDescriptors.get(i)).getId();
+        will(returnValue(String.valueOf(i)));
+      }
+
+      for (int i=0; i<NUM; i++) {
+        oneOf(myValidDescriptors.get(i)).getType();
+        will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
+
         oneOf(myInvalidDescriptors.get(i)).getType();
         will(returnValue("$$some_other_type$$"));
       }
-
-      oneOf(myValidDescriptors.get(0)).getType();
-      will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
-
     }});
+
     assertTrue(mySharedResourcesFeatures.featuresPresent(myBuildType));
   }
 }
