@@ -102,8 +102,8 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).featuresPresent(myBuildType);
-      will(returnValue(false));
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(Collections.emptyList()));
 
     }});
 
@@ -128,10 +128,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).featuresPresent(myBuildType);
-      will(returnValue(true));
-
-      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
       oneOf(myFeature).getBuildParameters();
@@ -161,10 +158,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).featuresPresent(myBuildType);
-      will(returnValue(true));
-
-      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
       oneOf(myFeature).getBuildParameters();
@@ -193,10 +187,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myFeatures).featuresPresent(myBuildType);
-      will(returnValue(true));
-
-      oneOf(myFeatures).searchForResolvedFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
       oneOf(myFeature).getBuildParameters();
