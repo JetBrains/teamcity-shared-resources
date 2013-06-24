@@ -26,10 +26,7 @@ import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResource
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
@@ -105,7 +102,7 @@ public final class ResourcesImpl implements Resources {
     if (project != null) {
       final List<SProject> projects = project.getProjectPath();
       for (SProject p: projects) {
-        result.put(p, getSettings(p.getProjectId()).getResourceMap());
+        result.put(p, new TreeMap<String, Resource>(getSettings(p.getProjectId()).getResourceMap()));
       }
     }
     return result;
