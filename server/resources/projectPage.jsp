@@ -169,7 +169,7 @@
 </script>
 
 <div>
-  This page contains shared resources defined in current project as well as inherited resources<bs:help file="Shared+Resources"/>
+  This page contains shared resources defined in the current project, as well as inherited resources.<bs:help file="Shared+Resources"/>
 </div>
 
 <div>
@@ -323,7 +323,7 @@
   </c:when>
   <c:otherwise>
     <p>
-      <c:out value="There are no resources defined"/>
+      <c:out value="There are no resources defined in the current project."/>
     </p>
   </c:otherwise>
 </c:choose>
