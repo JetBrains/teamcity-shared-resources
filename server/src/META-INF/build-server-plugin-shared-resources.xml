@@ -18,6 +18,8 @@
 
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
 
+  <bean class="jetbrains.buildServer.sharedResources.server.InvalidLocksReport"/>
+
   <!-- ===  INTERNALS  === -->
 
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
