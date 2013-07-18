@@ -16,6 +16,8 @@
 
 package jetbrains.buildServer.sharedResources;
 
+import java.util.Comparator;
+
 /**
  * @author Oleg Rybak
  */
@@ -57,4 +59,11 @@ public class SharedResourcesPluginConstants {
     public static final String PARAM_RESOURCE_VALUES = "resource_values";
     public static final String PARAM_RESOURCE_QUOTA = "resource_quota";
   }
+
+  public static Comparator<String> RESOURCE_NAMES_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return o1.compareToIgnoreCase(o2);
+    }
+  };
 }

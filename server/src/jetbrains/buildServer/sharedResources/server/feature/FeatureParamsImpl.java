@@ -20,10 +20,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 
 /**
  * Class {@code FeatureParamsImpl}
@@ -68,6 +67,8 @@ public final class FeatureParamsImpl implements FeatureParams {
           break;
       }
     }
+    Collections.sort(readLockNames, RESOURCE_NAMES_COMPARATOR);
+    Collections.sort(writeLockNames, RESOURCE_NAMES_COMPARATOR);
     if (!readLockNames.isEmpty()) {
       sb.append(READ_LOCKS_MESSAGE);
       sb.append(StringUtil.join(readLockNames, ", "));

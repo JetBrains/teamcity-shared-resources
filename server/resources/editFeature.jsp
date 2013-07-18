@@ -206,7 +206,7 @@ BS.SharedResourcesFeatureDialog = {
    * Keeps collection of lock objects sorted by name
    */
   sortObject: function(map) {
-    var keys = _.sortBy(_.keys(map), function(a) { return a; });
+    var keys = _.sortBy(_.keys(map), function(a) { return a.toLowerCase(); });
     var newmap = {};
     _.each(keys, function(k) {
       newmap[k] = map[k];
@@ -328,6 +328,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         this.availableResources[key] = resources[key];
       }
     }
+    this.availableResources = BS.SharedResourcesFeatureDialog.sortObject(this.availableResources);
   },
 
   displayResourceChooser: function () {

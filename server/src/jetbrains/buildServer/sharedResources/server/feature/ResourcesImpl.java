@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
 /**
@@ -102,7 +103,9 @@ public final class ResourcesImpl implements Resources {
     if (project != null) {
       final List<SProject> projects = project.getProjectPath();
       for (SProject p: projects) {
-        result.put(p, new TreeMap<String, Resource>(getSettings(p.getProjectId()).getResourceMap()));
+        TreeMap<String, Resource> map = new TreeMap<String, Resource>(RESOURCE_NAMES_COMPARATOR);
+        map.putAll(getSettings(p.getProjectId()).getResourceMap());
+        result.put(p, map);
       }
     }
     return result;
