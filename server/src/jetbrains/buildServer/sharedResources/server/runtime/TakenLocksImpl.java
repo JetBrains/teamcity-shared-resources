@@ -105,7 +105,7 @@ public class TakenLocksImpl implements TakenLocks {
       final TakenLock takenLock = takenLocks.get(lock.getName());
       if (takenLock != null) {
         final Resource resource = resources.get(lock.getName());
-        if (resource != null && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
+        if (resource != null && resource.isEnabled() && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
           result.add(lock);
         }
       }

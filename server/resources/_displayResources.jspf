@@ -1,0 +1,63 @@
+<c:forEach var="resource" items="${bean.myResources}">
+  <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.value.name}');"/>
+  <c:set var="resourceName" value="${resource.value.name}"/>
+  <c:set var="usage" value="${bean.usageMap[resourceName]}"/> <%--Map<SBuildType -> LockType>--%>
+  <c:set var="used" value="${not empty usage}"/>
+  <tr>
+    <td class="name highlight" onclick="${onclick}"><c:out value="${resourceName}"/><c:if test="${not resource.value.enabled}"><bs:out value=" (disabled)"/></c:if> </td>
+    <c:choose>
+      <c:when test="${resource.value.type == type_quota}">
+        <c:choose>
+          <c:when test="${resource.value.infinite}">
+            <td class="highlight" onclick="${onclick}">Quota: Infinite</td>
+          </c:when>
+          <c:otherwise>
+            <td class="highlight" onclick="${onclick}">Quota: <c:out value="${resource.value.quota}"/></td>
+          </c:otherwise>
+        </c:choose>
+      </c:when>
+      <c:when test="${resource.value.type == type_custom}">
+        <td class="highlight" onclick="${onclick}">Custom values</td>
+      </c:when>
+    </c:choose>
+    <c:choose>
+      <c:when test="${used}">
+        <td class="highlight" onclick="${onclick}">
+          <%@ include file="_resourceUsage.jspf" %>
+        </td>
+      </c:when>
+      <c:otherwise>
+        <td class="highlight" onclick="${onclick}">Resource is not used</td>
+      </c:otherwise>
+    </c:choose>
+    <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a></td>
+    <td class="edit">
+      <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}_actions" linkOpensPopup="true"
+                      popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+              <jsp:attribute name="content">
+                <div>
+                  <ul class="menuList">
+                    <l:li>
+                      <a href="#" onclick="BS.SharedResourcesActions.enableDisableResource('${resource.value.name}', ${not resource.value.enabled})">
+                        <bs:out value="${resource.value.enabled ? 'Disable' : 'Enable'} "/> shared resource</a>
+                    </l:li>
+                    <l:li>
+                      <c:choose>
+                        <c:when test="${used}">
+                          <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.value.name}')"/>
+                        </c:when>
+                        <c:otherwise>
+                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.value.name}')"/>
+                        </c:otherwise>
+                      </c:choose>
+                      <a href="#" onclick="${onclick}">Delete shared resource</a>
+                    </l:li>
+                  </ul>
+                </div>
+              </jsp:attribute>
+        <jsp:body>more</jsp:body>
+      </bs:simplePopup>
+    </td>
+  </tr>
+
+</c:forEach>

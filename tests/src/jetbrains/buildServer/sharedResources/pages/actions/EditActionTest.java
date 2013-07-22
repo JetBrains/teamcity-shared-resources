@@ -89,7 +89,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-29355")
   public void testPersistNameNotChanged() {
-    final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME, 111);
+    final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME, 111, true);
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);

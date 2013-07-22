@@ -24,4 +24,10 @@ public interface Resource {
    */
   @NotNull
   ResourceType getType();
+
+  /**
+   * State of the resource {@code enabled} / {@code disabled}
+   * @return state of the resource {@code enabled} / {@code disabled}
+   */
+  boolean isEnabled();
 }

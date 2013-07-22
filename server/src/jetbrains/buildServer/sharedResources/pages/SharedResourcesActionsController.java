@@ -6,6 +6,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.DeleteResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction;
+import jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
@@ -28,5 +29,6 @@ public class SharedResourcesActionsController extends BaseAjaxActionController {
     registerAction(new AddResourceAction(projectManager, resources, resourceHelper));
     registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper));
     registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features));
+    registerAction(new EnableDisableResourceAction(projectManager, resources, resourceHelper));
   }
 }

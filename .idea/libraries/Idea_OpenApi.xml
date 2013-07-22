@@ -8,6 +8,17 @@
       <root url="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/jdom.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/test/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/test/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/samples" />
+    </SOURCES>
   </library>
 </component>

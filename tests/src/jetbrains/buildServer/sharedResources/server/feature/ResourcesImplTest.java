@@ -76,19 +76,19 @@ public class ResourcesImplTest extends BaseTestCase {
     resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager, mySecurityContextEx);
 
     myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource("resource1", 1));
-      put("resource2", ResourceFactory.newInfiniteResource("resource2"));
-      put("resource3", ResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3")));
+      put("resource1", ResourceFactory.newQuotedResource("resource1", 1, true));
+      put("resource2", ResourceFactory.newInfiniteResource("resource2", true));
+      put("resource3", ResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3"), true));
     }};
 
     myRootResourceMap = new HashMap<String, Resource>() {{
-      put("root_resource", ResourceFactory.newInfiniteResource("root_resource"));
+      put("root_resource", ResourceFactory.newInfiniteResource("root_resource", true));
     }};
   }
 
   @Test
   public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", 1);
+    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", 1, true);
     m.checking(createExpectationsCheck());
     m.checking(new Expectations() {{
       oneOf(myRootProjectSettings).getResourceMap();
@@ -114,7 +114,7 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test
   public void testEditResource_Success() throws Exception {
     final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource("resource1_newName", 1);
+    final Resource resource = ResourceFactory.newQuotedResource("resource1_newName", 1, true);
     m.checking(createExpectationsCheck());
     m.checking(new Expectations() {{
       oneOf(myRootProjectSettings).getResourceMap();

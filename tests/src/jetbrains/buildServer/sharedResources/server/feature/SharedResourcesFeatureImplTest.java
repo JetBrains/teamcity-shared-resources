@@ -216,9 +216,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1"));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1")));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
     }};
 
     m.checking(new Expectations() {{
@@ -245,8 +245,8 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1")));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
     }};
 
     m.checking(new Expectations() {{
@@ -275,10 +275,10 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1"));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
       // wrong type here
-      put("lock3", ResourceFactory.newInfiniteResource("lock3"));
+      put("lock3", ResourceFactory.newInfiniteResource("lock3", true));
     }};
 
     m.checking(new Expectations() {{
@@ -307,9 +307,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1"));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value2")));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value2"), true));
     }};
 
     m.checking(new Expectations() {{

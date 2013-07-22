@@ -15,9 +15,12 @@ public abstract class AbstractResource implements Resource {
   @NotNull
   private final ResourceType myType;
 
-  protected AbstractResource(@NotNull final String name, @NotNull final ResourceType type) {
+  private final boolean myState;
+
+  protected AbstractResource(@NotNull final String name, @NotNull final ResourceType type, boolean state) {
     myName = name;
     myType = type;
+    myState = state;
   }
 
   @NotNull
@@ -30,6 +33,11 @@ public abstract class AbstractResource implements Resource {
   @Override
   public final ResourceType getType() {
     return myType;
+  }
+
+  @Override
+  public final boolean isEnabled() {
+    return myState;
   }
 
   @Override

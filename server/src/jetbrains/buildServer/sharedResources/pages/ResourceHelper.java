@@ -18,9 +18,7 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.model.resources.*;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,24 +39,44 @@ public class ResourceHelper {
   public Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
     final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
     final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
+    boolean resourceState = StringUtil.isTrue(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE));
     Resource resource = null;
     if (ResourceType.QUOTED.equals(resourceType)) {
       final String resourceQuota = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
       if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
         try {
           int quota = Integer.parseInt(resourceQuota);
-          resource = ResourceFactory.newQuotedResource(resourceName, quota);
+          resource = ResourceFactory.newQuotedResource(resourceName, quota, resourceState);
         } catch (IllegalArgumentException e) {
           LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
         }
       } else { // we have infinite resource
-        resource = ResourceFactory.newInfiniteResource(resourceName);
+        resource = ResourceFactory.newInfiniteResource(resourceName, resourceState);
       }
     } else if (ResourceType.CUSTOM.equals(resourceType)) {
       final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
       final List<String> strings = StringUtil.split(values, true, '\r', '\n');
-      resource = ResourceFactory.newCustomResource(resourceName, strings);
+      resource = ResourceFactory.newCustomResource(resourceName, strings, resourceState);
     }
     return resource;
   }
+
+  @NotNull
+  public Resource getResourceInState(@NotNull final Resource resource, final boolean state) {
+    Resource result;
+    final ResourceType resourceType = resource.getType();
+    if (ResourceType.QUOTED.equals(resourceType)) {
+      final QuotedResource qr = (QuotedResource) resource;
+      if (qr.isInfinite()) {
+        result = ResourceFactory.newInfiniteResource(resource.getName(), state);
+      } else {
+        result = ResourceFactory.newQuotedResource(resource.getName(), qr.getQuota(), state);
+      }
+    } else {
+      final CustomResource cr = (CustomResource) resource;
+      result = ResourceFactory.newCustomResource(resource.getName(), cr.getValues(), state);
+    }
+    return result;
+  }
 }
+

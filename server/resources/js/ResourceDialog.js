@@ -46,6 +46,8 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       self.prop("selected", self.val() == type);
     });
 
+    $j('#resource_enabled').prop('checked', r['enabled']);
+
     if (type === 'quoted') {
       $j('#resource_quota').val(r['quota']);
     } else if (type === 'custom') {

@@ -27,6 +27,7 @@
 <c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_VALUES" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES%>"/>
 <c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
+<c:set var="PARAM_RESOURCE_STATE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE%>"/>
 
 <c:set var="ACTIONS" value="<%=SharedResourcesPluginConstants.WEB.ACTIONS%>"/>
 
@@ -45,6 +46,8 @@
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
       params['${PARAM_RESOURCE_NAME}'] = $j('#resource_name').val();
+      params['${PARAM_RESOURCE_STATE}'] = $j('#resource_enabled').prop('checked');
+
       // infinite
       if (type === 'infinite') {
         params['${PARAM_RESOURCE_TYPE}'] = 'quoted';
@@ -106,7 +109,6 @@
       return false;
     },
 
-
     deleteResource: function (resource_name) {
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
@@ -122,8 +124,25 @@
         });
       }
     },
+
     alertCantDelete: function (resource_name) {
       alert('Resource ' + resource_name + " can't be deleted because it is in use");
+    },
+
+    enableDisableResource: function (resource_name, new_state) {
+      var params = {};
+      params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
+      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['${PARAM_RESOURCE_STATE}'] = new_state;
+      params['action'] = 'enableDisableResource';
+      if (confirm('Are you sure you want to ' + (new_state ? 'enable' : 'disable') + ' this resource?')) {
+        BS.ajaxRequest(this.actionsUrl, {
+          parameters: params,
+          onSuccess: function () {
+            window.location.reload();
+          }
+        });
+      }
     }
   };
 
@@ -139,7 +158,8 @@
   <c:set var="type" value="${item.type}"/>
   r = {
     name: '<bs:escapeForJs text="${item.name}"/>',
-    type: '${item.type}'
+    type: '${item.type}',
+    enabled: ${item.enabled}
   };
   <c:choose>
 
@@ -207,7 +227,12 @@
           <forms:option value="quoted">Resource with quota</forms:option>
           <forms:option value="custom">Resource with custom values</forms:option>
         </forms:select>
-
+      </td>
+    </tr>
+    <tr>
+      <th style="white-space: nowrap">Enabled: </th>
+      <td>
+        <forms:checkbox name="resource_enabled" id="resource_enabled" checked="true"/>
       </td>
     </tr>
     <tr id="quota_row" style="display: none">
@@ -238,7 +263,6 @@
 
 <c:choose>
   <c:when test="${not empty bean.myResources}">
-
     <h3>Resources defined in the current project</h3>
     <l:tableWithHighlighting style="width: 70%"
                              id="resourcesTable"
@@ -249,76 +273,7 @@
         <th>Resource name</th>
         <th style="width:55%" colspan="4">Resource description</th>
       </tr>
-      <c:forEach var="resource" items="${bean.myResources}">
-        <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.value.name}');"/>
-        <c:set var="resourceName" value="${resource.value.name}"/>
-        <c:set var="usage" value="${bean.usageMap[resourceName]}"/> <%--Map<SBuildType -> LockType>--%>
-        <c:set var="used" value="${not empty usage}"/>
-        <tr>
-          <td class="name highlight" onclick="${onclick}"><c:out value="${resourceName}"/></td>
-          <c:choose>
-            <c:when test="${resource.value.type == type_quota}">
-              <c:choose>
-                <c:when test="${resource.value.infinite}">
-                  <td class="highlight" onclick="${onclick}">Quota: Infinite</td>
-                </c:when>
-                <c:otherwise>
-                  <td class="highlight" onclick="${onclick}">Quota: <c:out value="${resource.value.quota}"/></td>
-                </c:otherwise>
-              </c:choose>
-            </c:when>
-            <c:when test="${resource.value.type == type_custom}">
-              <td class="highlight" onclick="${onclick}">Custom values</td>
-            </c:when>
-          </c:choose>
-          <c:choose>
-            <c:when test="${used}">
-              <td class="highlight" onclick="${onclick}">
-                <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}"
-                                linkOpensPopup="false"
-                                popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
-                    <jsp:attribute name="content">
-                      <div>
-                        <ul class="menuList">
-                          <c:forEach items="${usage}" var="usedInBuildType">
-                            <c:set var="buildType" value="${usedInBuildType.key}"/>
-                            <c:set var="lockType" value="${usedInBuildType.value}"/>
-                            <admin:editBuildTypeNavSteps settings="${buildType}"/>
-                            <jsp:useBean id="buildConfigSteps" scope="request" type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
-                            <l:li>
-                              <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
-                                <span style="white-space: nowrap">
-                                  ${buildType.name} (${lockType.descriptiveName})
-                                </span>
-                              </admin:editBuildTypeLink>
-                            </l:li>
-                          </c:forEach>
-                        </ul>
-                      </div>
-                    </jsp:attribute>
-                  <jsp:body>Used in ${usageSize} build configuration<bs:s val="${usageSize}"/>
-                  </jsp:body>
-                </bs:simplePopup>
-              </td>
-            </c:when>
-            <c:otherwise>
-              <td class="highlight" onclick="${onclick}">Resource is not used</td>
-            </c:otherwise>
-          </c:choose>
-          <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a></td>
-          <td class="edit">
-            <c:choose>
-              <c:when test="${used}">
-                <a href="#" onclick="BS.SharedResourcesActions.alertCantDelete('${resource.value.name}')">delete</a>
-              </c:when>
-              <c:otherwise>
-                <a href="#" onclick="BS.SharedResourcesActions.deleteResource('${resource.value.name}')">delete</a>
-              </c:otherwise>
-            </c:choose>
-          </td>
-        </tr>
-      </c:forEach>
+      <%@ include file="_displayResources.jspf" %>
     </l:tableWithHighlighting>
   </c:when>
   <c:otherwise>
@@ -349,24 +304,24 @@
         <th>Resource name</th>
         <th style="width:55%" colspan="2">Resource description</th>
       </tr>
-      <c:forEach var="r" items="${pr}">
-        <c:set var="usage" value="${bean.usageMap[r.key]}"/> <%--Map<SBuildType -> LockType>--%>
+      <c:forEach var="resource" items="${pr}">
+        <c:set var="usage" value="${bean.usageMap[resource.key]}"/> <%--Map<SBuildType -> LockType>--%>
         <c:set var="used" value="${not empty usage}"/>
 
         <tr>
-          <td><bs:out value="${r.key}"/></td>
+          <td><bs:out value="${resource.key}"/></td>
           <c:choose>
-            <c:when test="${r.value.type == type_quota}">
+            <c:when test="${resource.value.type == type_quota}">
               <c:choose>
-                <c:when test="${r.value.infinite}">
+                <c:when test="${resource.value.infinite}">
                   <td>Quota: Infinite</td>
                 </c:when>
                 <c:otherwise>
-                  <td>Quota: <c:out value="${r.value.quota}"/></td>
+                  <td>Quota: <c:out value="${resource.value.quota}"/></td>
                 </c:otherwise>
               </c:choose>
             </c:when>
-            <c:when test="${r.value.type == type_custom}">
+            <c:when test="${resource.value.type == type_custom}">
               <td>Custom values</td>
             </c:when>
           </c:choose>
@@ -374,30 +329,7 @@
           <c:choose>
             <c:when test="${used}">
               <td>
-                <c:set var="usageSize" value="${fn:length(usage)}"/>
-                <bs:simplePopup controlId="${util:forJSIdentifier(r.key)}"
-                                linkOpensPopup="false"
-                                popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
-                    <jsp:attribute name="content">
-                      <div>
-                        <ul class="menuList">
-                          <c:forEach items="${usage}" var="usedInBuildType">
-                            <c:set var="buildType" value="${usedInBuildType.key}"/>
-                            <c:set var="lockType" value="${usedInBuildType.value}"/>
-                            <l:li>
-                              <bs:buildTypeLink buildType="${buildType}" style="padding-left:0px;">
-                                <span style="white-space: nowrap">
-                                  ${buildType.name} (${lockType.descriptiveName})
-                                </span>
-                              </bs:buildTypeLink>
-                            </l:li>
-                          </c:forEach>
-                        </ul>
-                      </div>
-                    </jsp:attribute>
-                  <jsp:body>Used in ${usageSize} build configuration<bs:s val="${usageSize}"/>
-                  </jsp:body>
-                </bs:simplePopup>
+                <%@ include file="_resourceUsage.jspf" %>
               </td>
             </c:when>
             <c:otherwise>

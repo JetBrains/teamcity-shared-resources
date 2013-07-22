@@ -55,6 +55,7 @@ public class SharedResourcesPluginConstants {
 
     public static final String PARAM_RESOURCE_NAME = "resource_name";
     public static final String PARAM_RESOURCE_TYPE = "resource_type";
+    public static final String PARAM_RESOURCE_STATE = "resource_state";
 
     public static final String PARAM_RESOURCE_VALUES = "resource_values";
     public static final String PARAM_RESOURCE_QUOTA = "resource_quota";

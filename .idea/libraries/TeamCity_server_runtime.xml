@@ -791,6 +791,16 @@
       <root url="file://$USER_HOME$/work_mac/TeamServer/BuildServer/buildDurationStatisticsPlugin/src" />
       <root url="file://$USER_HOME$/work_mac/TeamServer/BuildServer/idea-runner-runtime-execution/src" />
       <root url="file://$USER_HOME$/work_mac/TeamServer/BuildServer/TeamCityArtifactsSizeStatisticsPlugin/src" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/test/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/core/samples" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/test/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/src/java" />
+      <root url="file://$PROJECT_DIR$/../3rd_party/jdom/contrib/samples" />
     </SOURCES>
     <jarDirectory url="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib" recursive="false" />
   </library>

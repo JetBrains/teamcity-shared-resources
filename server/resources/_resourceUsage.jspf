@@ -1,0 +1,26 @@
+<c:set var="usageSize" value="${fn:length(usage)}"/>
+
+<bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}"
+                linkOpensPopup="false"
+                popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+  <jsp:attribute name="content">
+    <div>
+      <ul class="menuList">
+        <c:forEach items="${usage}" var="usedInBuildType">
+          <c:set var="buildType" value="${usedInBuildType.key}"/>
+          <c:set var="lockType" value="${usedInBuildType.value}"/>
+          <admin:editBuildTypeNavSteps settings="${buildType}"/>
+          <l:li>
+            <%--@elvariable id="buildConfigSteps" type="type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"--%>
+            <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
+              <span style="white-space: nowrap">
+                ${buildType.name} (${lockType.descriptiveName})
+              </span>
+            </admin:editBuildTypeLink>
+          </l:li>
+        </c:forEach>
+      </ul>
+    </div>
+  </jsp:attribute>
+  <jsp:body>Used in ${usageSize} build configuration<bs:s val="${usageSize}"/></jsp:body>
+</bs:simplePopup>

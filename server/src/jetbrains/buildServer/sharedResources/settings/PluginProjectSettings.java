@@ -69,6 +69,16 @@ public class PluginProjectSettings implements ProjectSettings {
    *      </resource>
    *    </JetBrains.SharedResources>
    *
+   *    since 8.1
+   *    <resource>
+   *      <name></name>
+   *      ...
+   *      <enabled>false</enabled> means resource is disabled and will not get processed by runtime
+   *      ...
+   *    </resource>
+   *    ...
+   *
+   *
    */
   private interface XML {
     public static final String TAG_RESOURCE = "resource";
@@ -77,6 +87,7 @@ public class PluginProjectSettings implements ProjectSettings {
     public static final String TAG_VALUES = "values";
     public static final String TAG_VALUE = "value";
     public static final String TAG_QUOTA = "quota";
+    public static final String TAG_ENABLED = "enabled";
     public static final String VALUE_TYPE_QUOTA = "quota";
     public static final String VALUE_TYPE_CUSTOM = "custom";
     public static final String VALUE_QUOTA_INFINITE = "infinite";
@@ -109,35 +120,45 @@ public class PluginProjectSettings implements ProjectSettings {
 
   private void parseResource(@NotNull final Element resourceElement) {
     final String resourceName = resourceElement.getChild(XML.TAG_RESOURCE_NAME).getTextTrim();
+
+    final Element stateElement = resourceElement.getChild(XML.TAG_ENABLED);
+    boolean state = true;
+    if (stateElement != null) {
+      state = Boolean.parseBoolean(stateElement.getTextTrim());
+    }
     Element e = resourceElement.getChild(XML.TAG_VALUES);
     final String valuesType = e.getAttributeValue(XML.ATTR_VALUES_TYPE);
+    Resource parsedResource = null;
     if (XML.VALUE_TYPE_QUOTA.equals(valuesType)) {
-      parseQuotedResource(resourceName, e);
+      parsedResource = parseQuotedResource(resourceName, e, state);
     } else if (XML.VALUE_TYPE_CUSTOM.equals(valuesType)) {
-      parseCustomResource(resourceName, e);
+      parsedResource = parseCustomResource(resourceName, e, state);
     } else {
       LOG.warn("Wrong resource values type [" + valuesType + "] for resource [" + resourceName + "]");
     }
+    if (parsedResource != null) {
+      myResourceMap.put(resourceName, parsedResource);
+    }
   }
 
-  private void parseQuotedResource(@NotNull final String resourceName, @NotNull final Element valuesElement) {
+  private Resource parseQuotedResource(@NotNull final String resourceName, @NotNull final Element valuesElement, boolean state) {
     final String resourceQuota = valuesElement.getChild(XML.TAG_QUOTA).getTextTrim();
     Resource parsedResource;
     if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
-      parsedResource = ResourceFactory.newInfiniteResource(resourceName);
+      parsedResource = ResourceFactory.newInfiniteResource(resourceName, state);
     } else {
-      parsedResource = ResourceFactory.newQuotedResource(resourceName,  Integer.parseInt(resourceQuota));
+      parsedResource = ResourceFactory.newQuotedResource(resourceName,  Integer.parseInt(resourceQuota), state);
     }
-    myResourceMap.put(resourceName, parsedResource);
+    return parsedResource;
   }
 
-  private void parseCustomResource(@NotNull final String resourceName, @NotNull final Element valuesElement) {
+  private Resource parseCustomResource(@NotNull final String resourceName, @NotNull final Element valuesElement, boolean state) {
     final List<String> c = new ArrayList<String>();
     final List children = valuesElement.getChildren(XML.TAG_VALUE);
     for(Object o: children) {
       c.add(((Element)o).getTextTrim());
     }
-    myResourceMap.put(resourceName, ResourceFactory.newCustomResource(resourceName, c));
+    return ResourceFactory.newCustomResource(resourceName, c, state);
   }
 
 
@@ -147,9 +168,14 @@ public class PluginProjectSettings implements ProjectSettings {
       myLock.readLock().lock();
       for (Resource resource : myResourceMap.values()) {
         final Element el = new Element(XML.TAG_RESOURCE);
-        final Element resourceName = new Element(XML.TAG_RESOURCE_NAME);
-        resourceName.setText(resource.getName());
-        el.addContent(resourceName);
+        final Element resourceNameElement = new Element(XML.TAG_RESOURCE_NAME);
+        resourceNameElement.setText(resource.getName());
+        el.addContent(resourceNameElement);
+        if (!resource.isEnabled()) {
+          Element stateElement = new Element(XML.TAG_ENABLED);
+          stateElement.setText(Boolean.toString(false));
+          el.addContent(stateElement);
+        }
         final Element values = new Element(XML.TAG_VALUES);
         // serializing here
         switch (resource.getType()) {
