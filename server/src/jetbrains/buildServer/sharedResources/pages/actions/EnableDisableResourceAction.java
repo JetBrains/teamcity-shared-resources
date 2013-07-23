@@ -67,6 +67,7 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
         createNameError(ajaxResponse, resourceName);
       }
       project.persist();
+      addMessage(request, "Resource " + resourceName + " was " + (newState ? "enabled" : "disabled"));
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }

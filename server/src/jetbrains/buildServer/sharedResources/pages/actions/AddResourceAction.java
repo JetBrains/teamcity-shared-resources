@@ -49,6 +49,7 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
         try {
           myResources.addResource(projectId, resource);
           project.persist();
+          addMessage(request, "Resource " + resource.getName() + " was added");
         } catch (DuplicateResourceException e) {
           createNameError(ajaxResponse, resource.getName());
         }

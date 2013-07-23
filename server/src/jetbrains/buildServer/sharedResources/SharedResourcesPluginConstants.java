@@ -59,6 +59,8 @@ public class SharedResourcesPluginConstants {
 
     public static final String PARAM_RESOURCE_VALUES = "resource_values";
     public static final String PARAM_RESOURCE_QUOTA = "resource_quota";
+
+    public static final String ACTION_MESSAGE_KEY = "resourceActionResultMessage";
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = new Comparator<String>() {

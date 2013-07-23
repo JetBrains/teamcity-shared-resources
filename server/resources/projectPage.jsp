@@ -188,6 +188,8 @@
   </c:forEach>
 </script>
 
+<bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
+
 <div>
   This page contains shared resources defined in the current project, as well as inherited resources.<bs:help file="Shared+Resources"/>
 </div>

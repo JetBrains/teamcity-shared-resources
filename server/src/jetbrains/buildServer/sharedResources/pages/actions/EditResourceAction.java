@@ -76,6 +76,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
             }
           }
           project.persist();
+          addMessage(request, "Resource " + newName + " was updated");
         } catch (DuplicateResourceException e) {
           createNameError(ajaxResponse, newName);
         }

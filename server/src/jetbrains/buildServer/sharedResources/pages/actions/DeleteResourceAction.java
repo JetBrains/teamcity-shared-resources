@@ -45,6 +45,7 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
     if (project != null) {
       myResources.deleteResource(projectId, resourceName);
       project.persist();
+      addMessage(request, "Resource " + resourceName + " was deleted");
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }

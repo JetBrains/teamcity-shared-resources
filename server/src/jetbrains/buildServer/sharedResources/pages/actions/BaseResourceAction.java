@@ -2,8 +2,10 @@ package jetbrains.buildServer.sharedResources.pages.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.ActionErrors;
+import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.ControllerAction;
@@ -23,11 +25,13 @@ import javax.servlet.http.HttpServletResponse;
  * @see AddResourceAction
  * @see EditResourceAction
  * @see DeleteResourceAction
+ * @see EnableDisableResourceAction
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public abstract class BaseResourceAction implements ControllerAction {
 
+  @NotNull
   protected final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
 
   @NotNull
@@ -74,5 +78,9 @@ public abstract class BaseResourceAction implements ControllerAction {
     final ActionErrors errors = new ActionErrors();
     errors.addError("name", "Name " + name + " is already used");
     errors.serialize(ajaxResponse);
+  }
+
+  protected void addMessage(@NotNull final HttpServletRequest request, @NotNull final String message) {
+    ActionMessages.getOrCreateMessages(request).addMessage(SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY, message);
   }
 }
