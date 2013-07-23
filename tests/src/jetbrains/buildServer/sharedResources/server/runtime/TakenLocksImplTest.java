@@ -550,4 +550,32 @@ public class TakenLocksImplTest extends BaseTestCase {
       assertEquals(resourceName, fairSet.iterator().next());
     }
   }
+
+  @Test
+  @TestFor (issues = "TW-27930")
+  public void testGetUnavailableLocks_ResourceDisabled() throws Exception {
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put("quoted_resource1", ResourceFactory.newQuotedResource("quoted_resource1", 1, false));
+
+    final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock("quoted_resource1", LockType.READ));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
+      TakenLock tl1 = new TakenLock();
+      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("quoted_resource1", LockType.WRITE));
+      put("quoted_resource1", tl1);
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    assertNotNull(result);
+    assertEmpty(result);
+  }
 }

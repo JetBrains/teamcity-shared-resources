@@ -72,19 +72,21 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
             if (!myCustomResources.isEmpty()) {
               final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
               for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
-                // get value space for current resources
-                final List<String> values = new ArrayList<String>(entry.getValue().getValues());
-                final String key = entry.getKey();
-                // remove used values
-                values.removeAll(usedValues.get(key));
-                if (!values.isEmpty()) {
-                  final Lock currentLock = locks.get(key);
-                  final String paramName = myLocks.asBuildParameter(currentLock);
-                  final String currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
-                  context.addSharedParameter(paramName, currentValue);
-                  myTakenValues.put(currentLock, currentValue);
-                } else {
-                  log.warn("Unable to assign value lo lock [" + key + "]");
+                if (entry.getValue().isEnabled()) {
+                  // get value space for current resources
+                  final List<String> values = new ArrayList<String>(entry.getValue().getValues());
+                  final String key = entry.getKey();
+                  // remove used values
+                  values.removeAll(usedValues.get(key));
+                  if (!values.isEmpty()) {
+                    final Lock currentLock = locks.get(key);
+                    final String paramName = myLocks.asBuildParameter(currentLock);
+                    final String currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                    context.addSharedParameter(paramName, currentValue);
+                    myTakenValues.put(currentLock, currentValue);
+                  } else {
+                    log.warn("Unable to assign value lo lock [" + key + "]");
+                  }
                 }
               }
             }
