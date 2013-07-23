@@ -1,8 +1,10 @@
+<c:set var="used" value="${not empty usage}"/>
 <c:set var="usageSize" value="${fn:length(usage)}"/>
-
-<bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}"
-                linkOpensPopup="false"
-                popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+<c:choose>
+  <c:when test="${used}">
+    <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}"
+                    linkOpensPopup="false"
+                    popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
   <jsp:attribute name="content">
     <div>
       <ul class="menuList">
@@ -22,5 +24,13 @@
       </ul>
     </div>
   </jsp:attribute>
-  <jsp:body>Used in ${usageSize} build configuration<bs:s val="${usageSize}"/></jsp:body>
-</bs:simplePopup>
+      <jsp:body>
+          Used in ${usageSize} build configuration<bs:s val="${usageSize}"/>
+      </jsp:body>
+    </bs:simplePopup>
+  </c:when>
+  <c:otherwise>
+      Resource is not used
+  </c:otherwise>
+</c:choose>
+

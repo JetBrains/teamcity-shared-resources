@@ -1,39 +1,65 @@
-<c:forEach var="resource" items="${bean.myResources}">
-  <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.value.name}');"/>
+<c:forEach var="resource" items="${resourcesToDisplay}">
+
+  <c:choose>
+    <c:when test="${allowChange}">
+      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.value.name}');"/>
+      <c:set var="highlight" value="highlight"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="onclick" value=""/>
+      <c:set var="highlight" value=""/>
+    </c:otherwise>
+  </c:choose>
+
+  <c:set var="cellStyle">
+    <c:choose>
+      <c:when test="${not resource.value.enabled}">
+        color: #888
+      </c:when>
+      <c:otherwise>
+
+      </c:otherwise>
+    </c:choose>
+  </c:set>
+
   <c:set var="resourceName" value="${resource.value.name}"/>
   <c:set var="usage" value="${bean.usageMap[resourceName]}"/> <%--Map<SBuildType -> LockType>--%>
-  <c:set var="used" value="${not empty usage}"/>
   <tr>
-    <td class="name highlight" onclick="${onclick}"><c:out value="${resourceName}"/><c:if test="${not resource.value.enabled}"><bs:out value=" (disabled)"/></c:if> </td>
+    <td class="${highlight}" onclick="${onclick}">
+      <div style="${cellStyle}">
+        <c:out value="${resourceName}"/><c:if test="${not resource.value.enabled}"><bs:out value=" (disabled)"/></c:if>
+      </div>
+    </td>
     <c:choose>
       <c:when test="${resource.value.type == type_quota}">
         <c:choose>
           <c:when test="${resource.value.infinite}">
-            <td class="highlight" onclick="${onclick}">Quota: Infinite</td>
+            <c:set var="typeValue" value="Quota: Infinite"/>
           </c:when>
           <c:otherwise>
-            <td class="highlight" onclick="${onclick}">Quota: <c:out value="${resource.value.quota}"/></td>
+            <c:set var="typeValue" value="Quota: ${resource.value.quota}"/>
           </c:otherwise>
         </c:choose>
       </c:when>
       <c:when test="${resource.value.type == type_custom}">
-        <td class="highlight" onclick="${onclick}">Custom values</td>
+        <c:set var="typeValue" value="Custom values"/>
       </c:when>
     </c:choose>
-    <c:choose>
-      <c:when test="${used}">
-        <td class="highlight" onclick="${onclick}">
-          <%@ include file="_resourceUsage.jspf" %>
-        </td>
-      </c:when>
-      <c:otherwise>
-        <td class="highlight" onclick="${onclick}">Resource is not used</td>
-      </c:otherwise>
-    </c:choose>
-    <td class="edit highlight" onclick="${onclick}"><a href="#">edit</a></td>
-    <td class="edit">
-      <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}_actions" linkOpensPopup="true"
-                      popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+    <td style="width: 15%" class="highlight" onclick="${onclick}">
+      <div style="${cellStyle}">
+        <bs:out value="${typeValue}"/>
+      </div>
+    </td>
+    <td class="${highlight}" onclick="${onclick}">
+      <div style="${cellStyle}">
+        <%@ include file="_resourceUsage.jspf" %>
+      </div>
+    </td>
+    <c:if test="${allowChange}">
+      <td class="edit ${highlight}" onclick="${onclick}"><a href="#">edit</a></td>
+      <td class="edit">
+        <bs:simplePopup controlId="${util:forJSIdentifier(resource.value.name)}_actions" linkOpensPopup="true"
+                        popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
               <jsp:attribute name="content">
                 <div>
                   <ul class="menuList">
@@ -55,9 +81,9 @@
                   </ul>
                 </div>
               </jsp:attribute>
-        <jsp:body>more</jsp:body>
-      </bs:simplePopup>
-    </td>
+          <jsp:body>more</jsp:body>
+        </bs:simplePopup>
+      </td>
+    </c:if>
   </tr>
-
 </c:forEach>

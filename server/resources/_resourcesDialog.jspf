@@ -1,0 +1,78 @@
+<%--
+  ~ Copyright 2000-2013 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  --%>
+
+<bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle"
+           title="Resource Management" closeCommand="BS.ResourceDialog.close()">
+  <table class="runnerFormTable">
+    <tr>
+      <th style="white-space: nowrap"><label for="resource_name">Resource name: <l:star/></label></th>
+      <td>
+        <forms:textField name="resource_name" id="resource_name" style="width: 90%"
+                         className="longField buildTypeParams" maxlength="40"/>
+        <span class="error" id="error_Name"></span>
+        <span id="nameAttention" class="smallNoteAttention" style="display: none">
+            <bs:out value="Please check whether the resource name is used as a "/>
+            <bs:helpLink file="Defining+and+Using+Build+Parameters+in+Build+Configuration">
+              <bs:out value="parameter reference."/>
+            </bs:helpLink>
+            <bs:out value="Changing the name can result in unsatisfied "/>
+            <bs:helpLink file="Agent+Requirements">
+              <bs:out value="agent requirement"/>
+            </bs:helpLink>
+        </span>
+      </td>
+    </tr>
+    <tr>
+      <th style="white-space: nowrap">Resource type:<bs:help file="Shared+Resources"/></th>
+      <td>
+        <forms:select name="resoruce_type" id="resource_type" style="width: 90%"
+                      onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;">
+          <forms:option value="infinite">Infinite resource</forms:option>
+          <forms:option value="quoted">Resource with quota</forms:option>
+          <forms:option value="custom">Resource with custom values</forms:option>
+        </forms:select>
+      </td>
+    </tr>
+    <tr>
+      <th style="white-space: nowrap">Enabled: </th>
+      <td>
+        <forms:checkbox name="resource_enabled" id="resource_enabled" checked="true"/>
+      </td>
+    </tr>
+    <tr id="quota_row" style="display: none">
+      <th style="white-space: nowrap"><label for="resource_quota">Resource quota: <l:star/></label></th>
+      <td>
+        <forms:textField name="resource_quota" style="width: 15%" id="resource_quota"
+                         className="longField buildTypeParams" maxlength="3"/>
+        <span class="error" id="error_Quota"></span>
+        <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on the resource</span>
+      </td>
+    </tr>
+    <tr id="custom_row" style="display: none">
+      <th style="white-space: nowrap">Custom values: <l:star/></th>
+      <td>
+        <props:textarea name="customValues" textAreaName="customValuesArea" value=""
+                        linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
+        <span class="error" id="error_Values"></span>
+        <span class="smallNote">Define one custom value for the resource per line</span>
+      </td>
+    </tr>
+  </table>
+  <div class="popupSaveButtonsBlock">
+    <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
+    <forms:submit id="resourceDialogSubmit" type="button" label="Save" onclick="BS.ResourceDialog.submit()"/>
+  </div>
+</bs:dialog>

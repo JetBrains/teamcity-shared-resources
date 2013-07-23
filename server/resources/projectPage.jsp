@@ -193,103 +193,43 @@
 </div>
 
 <div>
-<p>
-  <forms:addButton id="addNewResource"
-                   onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
-</p>
-<bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle"
-           title="Resource Management" closeCommand="BS.ResourceDialog.close()">
-  <table class="runnerFormTable">
-    <tr>
-      <th style="white-space: nowrap"><label for="resource_name">Resource name: <l:star/></label></th>
-      <td>
-        <forms:textField name="resource_name" id="resource_name" style="width: 90%"
-                         className="longField buildTypeParams" maxlength="40"/>
-        <span class="error" id="error_Name"></span>
-        <span id="nameAttention" class="smallNoteAttention" style="display: none">
-            <bs:out value="Please check whether the resource name is used as a "/>
-            <bs:helpLink file="Defining+and+Using+Build+Parameters+in+Build+Configuration">
-              <bs:out value="parameter reference."/>
-            </bs:helpLink>
-            <bs:out value="Changing the name can result in unsatisfied "/>
-            <bs:helpLink file="Agent+Requirements">
-              <bs:out value="agent requirement"/>
-            </bs:helpLink>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <th style="white-space: nowrap">Resource type:<bs:help file="Shared+Resources"/></th>
-      <td>
-        <forms:select name="resoruce_type" id="resource_type" style="width: 90%"
-                      onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;">
-          <forms:option value="infinite">Infinite resource</forms:option>
-          <forms:option value="quoted">Resource with quota</forms:option>
-          <forms:option value="custom">Resource with custom values</forms:option>
-        </forms:select>
-      </td>
-    </tr>
-    <tr>
-      <th style="white-space: nowrap">Enabled: </th>
-      <td>
-        <forms:checkbox name="resource_enabled" id="resource_enabled" checked="true"/>
-      </td>
-    </tr>
-    <tr id="quota_row" style="display: none">
-      <th style="white-space: nowrap"><label for="resource_quota">Resource quota: <l:star/></label></th>
-      <td>
-        <forms:textField name="resource_quota" style="width: 15%" id="resource_quota"
-                         className="longField buildTypeParams" maxlength="3"/>
-        <span class="error" id="error_Quota"></span>
-        <span class="smallNote">Quota is a number of concurrent read locks that can be acquired on the resource</span>
-      </td>
-    </tr>
-    <tr id="custom_row" style="display: none">
-      <th style="white-space: nowrap">Custom values: <l:star/></th>
-      <td>
-        <props:textarea name="customValues" textAreaName="customValuesArea" value=""
-                        linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
-        <span class="error" id="error_Values"></span>
-        <span class="smallNote">Define one custom value for the resource per line</span>
-      </td>
-    </tr>
-  </table>
-  <div class="popupSaveButtonsBlock">
-    <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
-    <forms:submit id="resourceDialogSubmit" type="button" label="Save" onclick="BS.ResourceDialog.submit()"/>
-  </div>
-</bs:dialog>
+  <p>
+    <forms:addButton id="addNewResource"
+                     onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+  </p>
+  <%@ include file="_resourcesDialog.jspf" %>
+
+  <c:choose>
+    <c:when test="${not empty bean.myResources}">
+      <h3>Resources defined in the current project</h3>
+      <l:tableWithHighlighting style="width: 70%"
+                               id="resourcesTable"
+                               className="parametersTable"
+                               mouseovertitle="Click to edit resource"
+                               highlightImmediately="true">
+        <tr>
+          <th style="width: 45%">Resource name</th>
+          <th colspan="4">Resource description</th>
+        </tr>
+        <c:set var="resourcesToDisplay" value="${bean.myResources}"/>
+        <c:set var="allowChange" value="${true}"/>
+        <%@ include file="_displayResources.jspf" %>
+      </l:tableWithHighlighting>
+    </c:when>
+    <c:otherwise>
+      <p>
+        <c:out value="There are no resources defined in the current project."/>
+      </p>
+    </c:otherwise>
+  </c:choose>
 
 
-<c:choose>
-  <c:when test="${not empty bean.myResources}">
-    <h3>Resources defined in the current project</h3>
-    <l:tableWithHighlighting style="width: 70%"
-                             id="resourcesTable"
-                             className="parametersTable"
-                             mouseovertitle="Click to edit resource"
-                             highlightImmediately="true">
-      <tr>
-        <th>Resource name</th>
-        <th style="width:55%" colspan="4">Resource description</th>
-      </tr>
-      <%@ include file="_displayResources.jspf" %>
-    </l:tableWithHighlighting>
-  </c:when>
-  <c:otherwise>
-    <p>
-      <c:out value="There are no resources defined in the current project."/>
-    </p>
-  </c:otherwise>
-</c:choose>
-
-
-<c:forEach var="item" items="${bean.inheritedResources}">
-  <c:set var="p" value="${item.key}"/> <%-- project --%>
-  <c:set var="pr" value="${item.value}"/> <%--Map<String, Resource>--%>
-  <c:if test="${not empty pr}">
-    <h3>Resources inherited from
-      <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
+  <c:forEach var="item" items="${bean.inheritedResources}">
+    <c:set var="p" value="${item.key}"/> <%-- project --%>
+    <c:set var="pr" value="${item.value}"/> <%--Map<String, Resource>--%>
+    <c:if test="${not empty pr}">
+      <h3>Resources inherited from
+        <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
       <jsp:attribute name="ifAccessGranted">
         <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
         <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
@@ -297,49 +237,17 @@
       <jsp:attribute name="ifAccessDenied">
         <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
       </jsp:attribute>
-      </authz:authorize>
-    </h3>
-    <table class="parametersTable" style="width: 70%">
-      <tr>
-        <th>Resource name</th>
-        <th style="width:55%" colspan="2">Resource description</th>
-      </tr>
-      <c:forEach var="resource" items="${pr}">
-        <c:set var="usage" value="${bean.usageMap[resource.key]}"/> <%--Map<SBuildType -> LockType>--%>
-        <c:set var="used" value="${not empty usage}"/>
-
+        </authz:authorize>
+      </h3>
+      <table class="parametersTable" style="width: 70%">
         <tr>
-          <td><bs:out value="${resource.key}"/></td>
-          <c:choose>
-            <c:when test="${resource.value.type == type_quota}">
-              <c:choose>
-                <c:when test="${resource.value.infinite}">
-                  <td>Quota: Infinite</td>
-                </c:when>
-                <c:otherwise>
-                  <td>Quota: <c:out value="${resource.value.quota}"/></td>
-                </c:otherwise>
-              </c:choose>
-            </c:when>
-            <c:when test="${resource.value.type == type_custom}">
-              <td>Custom values</td>
-            </c:when>
-          </c:choose>
-
-          <c:choose>
-            <c:when test="${used}">
-              <td>
-                <%@ include file="_resourceUsage.jspf" %>
-              </td>
-            </c:when>
-            <c:otherwise>
-              <td>Resource is not used</td>
-            </c:otherwise>
-          </c:choose>
+          <th style="width: 45%">Resource name</th>
+          <th colspan="2">Resource description</th>
         </tr>
-      </c:forEach>
-    </table>
-  </c:if>
-</c:forEach>
+        <c:set var="resourcesToDisplay" value="${pr}"/>
+        <c:set var="allowChange" value="${false}"/>
+        <%@ include file="_displayResources.jspf" %>
+      </table>
+    </c:if>
+  </c:forEach>
 </div>
-
