@@ -481,41 +481,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 </script>
 
 <tr>
-  <td colspan="2" style="padding-right: 8px">
-    <table id="locksTaken" class="parametersTable locksTable">
-      <thead>
-      <tr>
-        <th style="width: 25%">Resource Name</th>
-        <th colspan="3" style="width: 75%">Lock Details</th>
-      </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
-    <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
-
-    <div id="noLocksTaken" style="display: none">
-      No locks are currently defined
-    </div>
-  </td>
-</tr>
-
-<tr style="display: none">
-  <th>Locks</th>
-  <td>
-    <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
-    <span class="error" id="error_${locksFeatureParamKey}"></span>
-  </td>
-</tr>
-
-<tr style="display: none" id="invalidLocksRow">
-  <td colspan="2">
-    <div class="attentionComment" id="invalidLocksMessage" style="width: 97%">
-    </div>
-  </td>
-</tr>
-
-<tr>
   <td class="noBorder" colspan="2">
     <c:if test="${not inherited}">
       <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
@@ -573,5 +538,44 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <forms:submit id="locksDialogSubmit" type="button" label="Save" onclick="BS.LocksDialog.submit();"/>
       </div>
     </bs:dialog>
+    <div style="float:right">
+      <c:url var="url" value="editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+      <a href="${url}">Configure resources</a>
+    </div>
+  </td>
+</tr>
+
+<tr>
+  <td colspan="2" style="padding-right: 8px; border: none">
+    <table id="locksTaken" class="parametersTable locksTable">
+      <thead>
+      <tr>
+        <th style="width: 25%">Resource Name</th>
+        <th colspan="3" style="width: 75%">Lock Details</th>
+      </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
+
+    <div id="noLocksTaken" style="display: none">
+      No locks are currently defined
+    </div>
+  </td>
+</tr>
+
+<tr style="display: none">
+  <th>Locks</th>
+  <td>
+    <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
+    <span class="error" id="error_${locksFeatureParamKey}"></span>
+  </td>
+</tr>
+
+<tr style="display: none" id="invalidLocksRow">
+  <td colspan="2">
+    <div class="attentionComment" id="invalidLocksMessage" style="width: 97%">
+    </div>
   </td>
 </tr>

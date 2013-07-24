@@ -35,7 +35,7 @@
 <c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
 
 
-<c:url var="url" value="editProject.html?projectId=${project.projectId}&tab=JetBrains.SharedResources"/>
+<c:url var="url" value="editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
 
 <script type="text/javascript">
 
