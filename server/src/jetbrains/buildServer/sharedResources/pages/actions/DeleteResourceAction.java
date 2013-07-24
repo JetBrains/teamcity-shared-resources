@@ -3,6 +3,7 @@ package jetbrains.buildServer.sharedResources.pages.actions;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.ControllerAction;
@@ -25,8 +26,9 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
 
   public DeleteResourceAction(@NotNull final ProjectManager projectManager,
                               @NotNull final Resources resources,
-                              @NotNull final ResourceHelper resourceHelper) {
-    super(projectManager, resources, resourceHelper);
+                              @NotNull final ResourceHelper resourceHelper,
+                              @NotNull final Messages messages) {
+    super(projectManager, resources, resourceHelper, messages);
   }
 
   @NotNull

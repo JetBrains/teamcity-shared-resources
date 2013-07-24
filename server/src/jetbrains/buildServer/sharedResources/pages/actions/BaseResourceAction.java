@@ -2,10 +2,9 @@ package jetbrains.buildServer.sharedResources.pages.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.ActionErrors;
-import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.ControllerAction;
@@ -43,12 +42,17 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   protected final ResourceHelper myResourceHelper;
 
+  @NotNull
+  private final Messages myMessages;
+
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
                                @NotNull final Resources resources,
-                               @NotNull final ResourceHelper resourceHelper) {
+                               @NotNull final ResourceHelper resourceHelper,
+                               @NotNull final Messages messages) {
     myProjectManager = projectManager;
     myResources = resources;
     myResourceHelper = resourceHelper;
+    myMessages = messages;
   }
 
   @NotNull
@@ -81,6 +85,6 @@ public abstract class BaseResourceAction implements ControllerAction {
   }
 
   protected void addMessage(@NotNull final HttpServletRequest request, @NotNull final String message) {
-    ActionMessages.getOrCreateMessages(request).addMessage(SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY, message);
+    myMessages.addMessage(request, message);
   }
 }

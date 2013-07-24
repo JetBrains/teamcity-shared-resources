@@ -5,6 +5,7 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -35,8 +36,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
   public EditResourceAction(@NotNull final ProjectManager projectManager,
                             @NotNull final Resources resources,
                             @NotNull final ResourceHelper resourceHelper,
-                            @NotNull final SharedResourcesFeatures features) {
-    super(projectManager, resources, resourceHelper);
+                            @NotNull final SharedResourcesFeatures features,
+                            @NotNull final Messages messages) {
+    super(projectManager, resources, resourceHelper,messages);
     myFeatures = features;
   }
 

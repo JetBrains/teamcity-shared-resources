@@ -22,6 +22,7 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
+import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -66,6 +67,8 @@ public class EditActionTest extends BaseTestCase {
 
   private SProject myProject;
 
+  private Messages myMessages;
+
 
   @BeforeMethod
   @Override
@@ -82,7 +85,8 @@ public class EditActionTest extends BaseTestCase {
     myResponse = m.mock(HttpServletResponse.class);
     myAjaxResponse = m.mock(Element.class);
     myProject = m.mock(SProject.class);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features);
+    myMessages = m.mock(Messages.class);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features, myMessages);
 
   }
 
@@ -110,6 +114,8 @@ public class EditActionTest extends BaseTestCase {
 
       // key part - resource is persisted even if name is not changed
       oneOf(myProject).persist();
+
+      oneOf(myMessages).addMessage(myRequest, "Resource NAME was updated");
 
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
