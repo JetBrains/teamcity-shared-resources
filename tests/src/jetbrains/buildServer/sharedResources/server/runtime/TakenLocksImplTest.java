@@ -13,15 +13,12 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
-import jetbrains.buildServer.util.FileUtil;
-import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -287,26 +284,6 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
-  }
-
-  @Test
-  public void testWriteExists() throws Exception {
-    File temp = createTempDir();
-    List<String> strings = new ArrayList<String>(1000);
-    for (int i = 0; i < 1000; i++) {
-      strings.add("This is string " + i);
-    }
-
-    final File artifact = new File(temp, "1/2/3/4/5/test.txt");
-    System.out.println(artifact.getAbsolutePath());
-    assertFalse(artifact.exists());
-    if (FileUtil.createParentDirs(artifact)) {
-      assertFalse(artifact.exists());
-      FileUtil.writeFile(artifact, StringUtil.join(strings, "\n"), "UTF-8");
-      assertTrue(artifact.exists());
-    } else {
-      fail("Failed to create parent dirs for file with taken locks");
-    }
   }
 
   @Test
