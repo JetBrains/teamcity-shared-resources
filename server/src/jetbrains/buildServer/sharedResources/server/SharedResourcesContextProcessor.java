@@ -85,7 +85,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
                     context.addSharedParameter(paramName, currentValue);
                     myTakenValues.put(currentLock, currentValue);
                   } else {
-                    log.warn("Unable to assign value lo lock [" + key + "]");
+                    log.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
                   }
                 }
               }

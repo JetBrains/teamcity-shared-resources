@@ -24,10 +24,14 @@ import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class {@code LocksStorageImpl}
@@ -53,22 +57,37 @@ public class LocksStorageImpl implements LocksStorage {
   @NotNull
   private static final String MY_ENCODING = "UTF-8";
 
+  /**
+   * Map with separate guarding lock for each build
+   */
+  @NotNull
+  private final ConcurrentMap<Long, ReentrantLock> myGuards = new ConcurrentHashMap<Long, ReentrantLock>();
+
   @Override
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
     if (!takenLocks.isEmpty()) {
-      final Collection<String> serializedStrings = new ArrayList<String>();
-      for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
-        serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
-      }
+      final Long buildId = build.getBuildId();
+      final ReentrantLock l = new ReentrantLock(true);
       try {
-        final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-        if (FileUtil.createParentDirs(artifact)) {
-          FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
-        } else {
-          log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
+        l.lock();
+        myGuards.put(buildId, l);
+        final Collection<String> serializedStrings = new ArrayList<String>();
+        for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
+          serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
         }
-      } catch (IOException e) {
-        log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
+        try {
+          final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+          if (FileUtil.createParentDirs(artifact)) {
+            FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
+          } else {
+            log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
+          }
+        } catch (IOException e) {
+          log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
+        }
+      } finally {
+        l.unlock();
+        myGuards.remove(buildId);
       }
     }
   }
@@ -76,42 +95,71 @@ public class LocksStorageImpl implements LocksStorage {
   @NotNull
   @Override
   public Map<String, Lock> load(@NotNull final SBuild build) {
-    final Map<String, Lock> result = new HashMap<String, Lock>();
-    final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-    if (artifact.exists()) {
-      try {
-        final String content = FileUtil.readText(artifact, MY_ENCODING);
-        final String[] lines = content.split("\\r?\\n");
-        for (String line: lines) {
-          final List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
-          if (strings.size() == 3) {
-            String value =  StringUtil.trim(strings.get(2));
-            if (value == null) {
-              value = "";
-            }
-            Lock lock = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
-            result.put(lock.getName(), lock);
-          } else {
-            if (log.isDebugEnabled()) {
-              log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
+    final ReentrantLock l = myGuards.get(build.getBuildId());
+    try {
+      if (l != null) {
+        l.lock();
+      }
+      final Map<String, Lock> result = new HashMap<String, Lock>();
+      final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+      if (artifact.exists()) {
+        try {
+          final String content = FileUtil.readText(artifact, MY_ENCODING);
+          final String[] lines = content.split("\\r?\\n");
+          for (String line: lines) {
+            final Lock lock = deserializeTakenLock(line);
+            if (lock != null) {
+              result.put(lock.getName(), lock);
+            } else {
+              if (log.isDebugEnabled()) {
+                log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
+              }
             }
           }
+        } catch(IOException e) {
+          log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
         }
-      } catch(IOException e) {
-        log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
+      }
+      return result;
+    } finally {
+      if (l != null) {
+        l.unlock();
       }
     }
-    return result;
   }
 
   @Override
   public boolean locksStored(@NotNull final SBuild build) {
-    final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-    return artifact.exists();
+    final ReentrantLock l = myGuards.get(build.getBuildId());
+    try {
+      if (l != null) {
+        l.lock();
+      }
+      final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+      return artifact.exists();
+    } finally {
+      if (l != null) {
+        l.unlock();
+      }
+    }
   }
 
   @NotNull
-  private static String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
+  private String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
     return StringUtil.join("\t", lock.getName(), lock.getType(), value.equals("") ? " " : value);
+  }
+
+  @Nullable
+  private Lock deserializeTakenLock(@NotNull final String line) {
+    final List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
+    Lock result = null;
+    if (strings.size() == 3) {
+      String value =  StringUtil.trim(strings.get(2));
+      if (value == null) {
+        value = "";
+      }
+      result = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
+    }
+    return result;
   }
 }

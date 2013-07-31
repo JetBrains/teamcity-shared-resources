@@ -65,10 +65,10 @@ public class TakenLocksImpl implements TakenLocks {
       BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
       Collection<Lock> locks;
       RunningBuildEx rbEx = (RunningBuildEx) build;
-      if (myLocksStorage.locksStored(rbEx)) {
+      if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
         locks = myLocksStorage.load(rbEx).values();
       } else {
-        locks = myLocks.fromBuildPromotion(bpEx);
+        locks = myLocks.fromBuildPromotion(bpEx); // lock values are not resolved. But we know, that lock is already requested (for custom locks all but ANY case)
       }
       addToTakenLocks(result, bpEx, locks);
     }
@@ -145,8 +145,8 @@ public class TakenLocksImpl implements TakenLocks {
         }
 
         // check for write locks
-        if (takenLock.hasWriteLocks()) {
-          result = false; //
+        if (takenLock.hasWriteLocks()) { // ALL values are locked
+          result = false;
           break;
         }
         // 2) check for quota (read + write)
