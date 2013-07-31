@@ -31,6 +31,8 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,6 +46,8 @@ public class LocksStorageImplTest extends BaseTestCase {
   private static final String file_Values = "lock1\treadLock\tMy Value 1\nlock2\twriteLock\tMy Value 2\n";
   private static final String file_Mixed = "lock1\treadLock\tMy Value 1\nlock2\twriteLock\tMy Value 2\nlock3\twriteLock\t ";
   private static final String file_Incorrect = "lock1\treadLock\t \nHELLO!\n";
+
+  private final Long buildId = 1L;
 
   private LocksStorage myLocksStorage;
 
@@ -81,6 +85,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_NoValues() throws Exception {
     final File artifactsDir = crateTempFileWithContent(file_noValues);
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -94,6 +101,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_Values() throws Exception {
     final File artifactsDir = crateTempFileWithContent(file_Values);
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -107,6 +117,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_Mixed() throws Exception {
     final File artifactsDir = crateTempFileWithContent(file_Mixed);
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -120,6 +133,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_IgnoreIncorrectFormat() throws Exception {
     final File artifactsDir = crateTempFileWithContent(file_Incorrect);
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -135,6 +151,9 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
 
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -150,6 +169,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testStore_NoValues() throws Exception {
     final File artifactsDir = createTempDir();
     m.checking(new Expectations() {{
+      exactly(2).of(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       atMost(2).of(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -174,6 +196,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testStore_Values() throws Exception {
     final File artifactsDir = createTempDir();
     m.checking(new Expectations() {{
+      exactly(2).of(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       atMost(2).of(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -198,6 +223,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testStore_Mixed() throws Exception {
     final File artifactsDir = createTempDir();
     m.checking(new Expectations() {{
+      exactly(2).of(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       atMost(2).of(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -224,6 +252,9 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testArtifactExists_Yes() throws Exception {
     final File artifactsDir = crateTempFileWithContent("");
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
@@ -235,9 +266,70 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testArtifactExists_No() throws Exception {
     final File artifactsDir = createTempDir();
     m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildId();
+      will(returnValue(buildId));
+
       oneOf(myBuild).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
     assertFalse(myLocksStorage.locksStored(myBuild));
+  }
+
+  @Test
+  @TestFor(issues = "TW-31068")
+  public void testLoadStore_MultiThreaded() throws Exception {
+    final File artifactsDir = createTempDir();
+    final CountDownLatch myLatch = new CountDownLatch(2);
+
+
+    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Lock lock1 = new Lock("lock1", LockType.READ);
+    final Lock lock2 = new Lock("lock2", LockType.WRITE);
+    final Lock lock11 = new Lock("lock11", LockType.READ);
+
+    final String value = "_MY_VALUE_";
+    takenLocks.put(lock1, "");
+    takenLocks.put(lock11, value);
+    takenLocks.put(lock2, "");
+
+    m.checking(new Expectations() {{
+      allowing(myBuild).getBuildId();
+      will(returnValue(buildId));
+
+      allowing(myBuild).getArtifactsDirectory();
+      will(returnValue(artifactsDir));
+    }});
+
+
+    final Runnable runReader = new Runnable() {
+      @Override
+      public void run() {
+        while (!myLocksStorage.locksStored(myBuild)) {
+          try {
+            Thread.sleep(10);
+          } catch (InterruptedException e) {
+            fail(e.getMessage());
+          }
+        }
+        final Map<String, Lock> result = myLocksStorage.load(myBuild);
+        assertNotNull(result);
+        assertEquals(3, result.size());
+        assertEquals("", result.get(lock1.getName()).getValue());
+        assertEquals("", result.get(lock2.getName()).getValue());
+        assertEquals(value, result.get(lock11.getName()).getValue());
+        myLatch.countDown();
+      }
+    };
+    new Thread(runReader).start();
+
+    final Runnable runWriter = new Runnable() {
+      @Override
+      public void run() {
+        myLocksStorage.store(myBuild, takenLocks);
+        myLatch.countDown();
+      }
+    };
+    new Thread(runWriter).start();
+    myLatch.await(10, TimeUnit.SECONDS);
   }
 }
