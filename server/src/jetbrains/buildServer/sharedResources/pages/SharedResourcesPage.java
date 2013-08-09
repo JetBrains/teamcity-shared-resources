@@ -59,12 +59,11 @@ public class SharedResourcesPage extends EditProjectTab {
   private final SecurityContext mySecurityContext;
 
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
-                             @NotNull final ProjectManager projectManager,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
                              @NotNull final SharedResourcesFeatures features,
                              @NotNull SecurityContext securityContext) {
-    super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX, projectManager);
+    super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     myFeatures = features;
     mySecurityContext = securityContext;
