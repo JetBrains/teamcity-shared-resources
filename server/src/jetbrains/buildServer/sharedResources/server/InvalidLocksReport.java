@@ -26,7 +26,10 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -56,6 +59,7 @@ public class InvalidLocksReport extends HealthStatusReport {
     myCategory = new ItemCategory(CATEGORY_ID, CATEGORY_NAME, ItemSeverity.WARN);
     final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(CATEGORY_ID, pagePlaces);
     myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("invalidLocksReport.jsp"));
+    myPEx.addCssFile("/css/admin/buildTypeForm.css");
     myPEx.setVisibleOutsideAdminArea(true);
     myPEx.register();
   }
@@ -81,22 +85,22 @@ public class InvalidLocksReport extends HealthStatusReport {
   @Override
   public void report(@NotNull final HealthStatusScope scope, @NotNull final HealthStatusItemConsumer resultConsumer) {
     for (final SBuildType type: scope.getBuildTypes()) {
-      final List<String> invalidLocks = getInvalidLocks(type);
+      final Map<Lock, String> invalidLocks = getInvalidLocks(type);
       if (!invalidLocks.isEmpty()) {
-        resultConsumer.consumeForBuildType(type, new HealthStatusItem("shared_resources_invalid_locks_" + type.getExtendedFullName(), myCategory, new HashMap<String, Object>() {{
-          put("invalid_locks", invalidLocks.toArray(new String[invalidLocks.size()]));
+        resultConsumer.consumeForBuildType(
+                type,
+                new HealthStatusItem("shared_resources_invalid_locks_" + type.getExtendedFullName(), myCategory, new HashMap<String, Object>() {{
+          put("invalid_locks", invalidLocks);
           put("build_type", type);
         }}));
       }
     }
   }
 
-  private List<String> getInvalidLocks(@NotNull final SBuildType type) {
-    final List<String> result = new ArrayList<String>();
+  private Map<Lock, String> getInvalidLocks(@NotNull final SBuildType type) {
+    final Map<Lock, String> result = new HashMap<Lock, String>();
     for (SharedResourcesFeature feature: myFeatures.searchForFeatures(type)) {
-      for (Lock lock: feature.getInvalidLocks(type.getProjectId())) {
-        result.add(lock.getName());
-      }
+      result.putAll(feature.getInvalidLocks(type.getProjectId()));
     }
     return result;
   }

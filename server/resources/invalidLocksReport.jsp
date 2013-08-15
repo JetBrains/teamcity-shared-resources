@@ -15,7 +15,12 @@
   --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/include-internal.jsp" %>
+<%@ page import="com.intellij.openapi.util.text.StringUtil" %>
+<%@ page import="com.intellij.util.Function" %>
+<%@ page import="jetbrains.buildServer.sharedResources.model.Lock" %>
 <%@ page import="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.Set" %>
 
 <jsp:useBean id="healthStatusItem" type="jetbrains.buildServer.serverSide.healthStatus.HealthStatusItem" scope="request"/>
 <jsp:useBean id="showMode" type="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" scope="request"/>
@@ -24,22 +29,34 @@
 <c:set var="buildType" value="${healthStatusItem.additionalData['build_type']}"/>
 <c:set var="inplaceMode" value="<%=HealthStatusItemDisplayMode.IN_PLACE%>"/>
 
-
-<c:choose>
-  <c:when test="${showMode == inplaceMode}">
-    <c:if test="${not empty invalidLocks}">
+<c:if test="${not empty invalidLocks}">
+  <c:choose>
+    <c:when test="${showMode == inplaceMode}">
       <div>
         <bs:out value="${buildType.name}"/> contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
-          ${fn:join(invalidLocks, ", ")}
+        <c:url var="resourcesUrl" value="admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+        <ul>
+          <c:forEach items="${invalidLocks}" var="item">
+            <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>
+          </c:forEach>
+        </ul>
       </div>
-    </c:if>
-  </c:when>
-  <c:otherwise>
-    <div>
-      <c:if test="${not empty invalidLocks}">
+    </c:when>
+    <c:otherwise>
+      <div>
         <bs:buildTypeLink buildType="${buildType}"/>&nbsp;contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
-        ${fn:join(invalidLocks, ", ")}
-      </c:if>
-    </div>
-  </c:otherwise>
-</c:choose>
+        <%
+          @SuppressWarnings("unchecked")
+          final Set<Lock> locks = ((Map<Lock, String>)healthStatusItem.getAdditionalData().get("invalid_locks")).keySet();
+        %>
+        <%=StringUtil.join(locks, new Function<Lock, String>() {
+          @Override
+          public String fun(Lock lock) {
+            return lock.getName();
+          }
+        }, ", ")
+        %>
+      </div>
+    </c:otherwise>
+  </c:choose>
+</c:if>
