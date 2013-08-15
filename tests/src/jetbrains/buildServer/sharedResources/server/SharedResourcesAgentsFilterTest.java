@@ -142,8 +142,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
     features.add(m.mock(SharedResourcesFeature.class));
 
-    final Collection<Lock> invalidLocks = new ArrayList<Lock>();
-    invalidLocks.add(new Lock("lock1", LockType.READ));
+    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
+    invalidLocks.put(new Lock("lock1", LockType.READ), "");
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -161,7 +161,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
       will(returnValue(invalidLocks));
 
-      oneOf(myBuildType).getFullName();
+      oneOf(myBuildType).getExtendedName();
+      will(returnValue("My Build Type"));
+
+      atMost(2).of(myBuildType).getFullName();
       will(returnValue("My Build Type"));
 
     }});
@@ -190,7 +193,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(features));
 
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(Collections.emptyList()));
@@ -227,7 +230,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(features));
 
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
@@ -282,7 +285,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(features));
 
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));
@@ -341,7 +344,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(features));
 
       oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
       will(returnValue(locks));

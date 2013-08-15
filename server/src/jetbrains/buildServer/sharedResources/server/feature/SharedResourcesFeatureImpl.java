@@ -22,11 +22,14 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
+import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
@@ -100,8 +103,9 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
 
   @NotNull
   @Override
-  public Collection<Lock> getInvalidLocks(@NotNull final String projectId) {
-    final Collection<Lock> result = new ArrayList<Lock>();
+  public Map<Lock, String> getInvalidLocks(@NotNull final String projectId) {
+    // Lock is mapped to description of its invalid state
+    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
     // get visible resources
     if (!myLockedResources.isEmpty()) {
       final Map<String, Resource> resources = myResources.asMap(projectId);
@@ -114,17 +118,19 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
           if (!"".equals(lock.getValue())) {
             if (ResourceType.CUSTOM == r.getType()) {
               if (!((CustomResource) r).getValues().contains(lock.getValue())) {
-                result.add(lock);
+                // values domain does not contain required value
+                invalidLocks.put(lock, "Resource '" + lock.getName() + "' does not contain required value '" + lock.getValue() + "'.");
               }
             } else {
-              result.add(lock);
+              // wrong resource type. Expected quoted / infinite, got custom
+              invalidLocks.put(lock, "Resource '" + lock.getName() + "' has wrong type: expected 'custom' got " + (((QuotedResource) r).isInfinite() ? "'infinite'." : "'quoted'."));
             }
           }
-        } else {
-          result.add(lock);
+        } else {// resource does not exist
+          invalidLocks.put(lock, "Required resource: '" + lock.getName() + "' does not exist.");
         }
       }
     }
-    return result;
+    return invalidLocks;
   }
 }

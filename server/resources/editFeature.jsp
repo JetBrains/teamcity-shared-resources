@@ -34,6 +34,21 @@
 <c:set var="PARAM_RESOURCE_TYPE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 
+<c:set var="templateLink">
+  <c:choose>
+    <c:when test="${inherited}">
+      <%--@elvariable id="template" type="jetbrains.buildServer.serverSide.BuildTypeTemplate"--%>
+      <admin:editBuildTypeNavSteps settings="${template}"/>
+      <jsp:useBean id="buildConfigSteps"
+                   scope="request"
+                   type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
+      <admin:editTemplateLink templateId="${template.externalId}"
+                              step="${buildConfigSteps[2].stepId}"
+                              withoutLink="true"/>
+    </c:when>
+  </c:choose>
+</c:set>
+
 <style type="text/css">
   .locksTable td {
     position:static;
@@ -96,19 +111,19 @@ BS.SharedResourcesFeatureDialog = {
     tableBody.children().remove();
     var locks = this.sortObject(this.locks);
     var textAreaContent = "";
-    //noinspection JSUnresolvedVariable
-    var size = _.size(locks);
-    if (size > 0) { // we have some locks
-      for (var key in locks) {
-        if (locks.hasOwnProperty(key)) {
-          textAreaContent += BS.LocksUtil.lockToString(locks[key]);
-          // if we have invalid lock - do not render it in the table
-          if (!this.invalid[key]) {
-            this.renderSingleValidRow(tableBody, key);
-          }
+    var needRendering = false;
+    for (var key in locks) {
+      if (locks.hasOwnProperty(key)) {
+        textAreaContent += BS.LocksUtil.lockToString(locks[key]);
+        // if we have invalid lock - do not render it in the table
+        if (!this.invalid[key]) {
+          this.renderSingleValidRow(tableBody, key);
+          needRendering = true;
         }
       }
+    }
 
+    if (needRendering) { // we have some locks
       this.rehighlight();
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
@@ -142,7 +157,8 @@ BS.SharedResourcesFeatureDialog = {
       var text = "Build feature contains invalid lock" + (size > 1 ? "s" : "") + ": " + arr.join(', ') + ". ";
       var messageElement = $j('#invalidLocksMessage');
       if (this.inherited) {
-        text += (size > 1 ? "They" : "It") + " can be removed in corresponding template."
+        text += (size > 1 ? "They" : "It") + " can be removed in ";
+        text += "<a href=\"${templateLink}\">corresponding template</a>.";
       }
       messageElement.html(text);
       if (!this.inherited) {
@@ -464,7 +480,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   locks['<bs:escapeForJs text="${item.value.name}"/>'] = lc;
   </c:forEach>
   self.inherited = ${inherited};
-
 
   var invalid = self.invalid;
   <jsp:useBean id="invalidLocks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>

@@ -21,6 +21,7 @@ import jetbrains.buildServer.controllers.admin.projects.BuildFeatureBean;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
+import jetbrains.buildServer.serverSide.BuildTypeSettings;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -49,10 +50,6 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
  * @author Oleg Rybak
  */
 public class EditFeatureController extends BaseController {
-
-  /** Parameter, that indicates inherited build feature*/
-  @NotNull
-  private static final String PARAM_INHERITED = "inherited";
 
   @NotNull
   private final PluginDescriptor myDescriptor;
@@ -87,6 +84,8 @@ public class EditFeatureController extends BaseController {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     assert form != null;
+    final BuildTypeSettings buildTypeSettings = form.getSettings();
+    assert buildTypeSettings != null;
     final SProject project = form.getProject();
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
@@ -96,7 +95,7 @@ public class EditFeatureController extends BaseController {
     final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(projectId));
     final Map<String, Object> model = result.getModel();
     final Collection<Lock> invalidLocks = new ArrayList<Lock>();
-    model.put(PARAM_INHERITED, false);
+    boolean inherited = false;
     for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
       if (SharedResourcesBuildFeature.FEATURE_TYPE.equals(descriptor.getType())) {
@@ -105,8 +104,11 @@ public class EditFeatureController extends BaseController {
         if (buildFeatureId.equals(descriptor.getId())) {
           // we have feature that we need to edit
           locks.putAll(f.getLockedResources());
-          invalidLocks.addAll(f.getInvalidLocks(projectId));
-          model.put(PARAM_INHERITED, bfb.isInherited());
+          invalidLocks.addAll(f.getInvalidLocks(projectId).keySet());
+          inherited =  bfb.isInherited();
+          if (inherited) {
+            model.put("template", buildTypeSettings.getTemplate());
+          }
         } else {
           // we have feature, that is not current feature under edit. must remove resources used by other features
           for (String name : f.getLockedResources().keySet()) {
@@ -122,6 +124,7 @@ public class EditFeatureController extends BaseController {
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);
     }
+    model.put("inherited", inherited);
     model.put("invalidLocks", invalidLocksMap);
     model.put("locks", locks);
     model.put("bean", bean);
