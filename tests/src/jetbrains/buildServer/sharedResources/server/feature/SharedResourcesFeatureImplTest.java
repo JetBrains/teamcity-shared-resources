@@ -15,7 +15,6 @@ import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -201,9 +200,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
 
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Collection<Lock> invalidLocks = feature.getInvalidLocks(myProjectId);
+    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
     assertNotNull(invalidLocks);
-    assertEmpty(invalidLocks);
+    assertEmpty(invalidLocks.entrySet());
   }
 
   @Test
@@ -230,9 +229,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
 
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Collection<Lock> invalidLocks = feature.getInvalidLocks(myProjectId);
+    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
     assertNotNull(invalidLocks);
-    assertEmpty(invalidLocks);
+    assertEmpty(invalidLocks.entrySet());
   }
 
   @Test
@@ -258,11 +257,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
 
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Collection<Lock> invalidLocks = feature.getInvalidLocks(myProjectId);
+    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
     assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks);
+    assertNotEmpty(invalidLocks.entrySet());
     assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks, lock1);
+    assertContains(invalidLocks.keySet(), lock1);
   }
 
   @Test
@@ -290,11 +289,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
 
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Collection<Lock> invalidLocks = feature.getInvalidLocks(myProjectId);
+    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
     assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks);
+    assertNotEmpty(invalidLocks.entrySet());
     assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks, lock3);
+    assertContains(invalidLocks.keySet(), lock3);
   }
 
   @Test
@@ -321,11 +320,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }});
 
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Collection<Lock> invalidLocks = feature.getInvalidLocks(myProjectId);
+    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
     assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks);
+    assertNotEmpty(invalidLocks.entrySet());
     assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks, lock3);
+    assertContains(invalidLocks.keySet(), lock3);
   }
 }
 

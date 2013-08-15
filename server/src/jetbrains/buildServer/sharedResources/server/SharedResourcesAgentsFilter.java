@@ -126,22 +126,21 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   }
 
   @Nullable
+  @SuppressWarnings("StringBufferReplaceableByString")
   private WaitReason checkForInvalidLocks(@NotNull final Collection<SharedResourcesFeature> features,
                                           @NotNull final String projectId,
                                           @NotNull final SBuildType buildType) {
     WaitReason result = null;
-    final Collection<Lock> invalidLocks = new ArrayList<Lock>();
+    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
     for (SharedResourcesFeature feature : features) {
-      invalidLocks.addAll(feature.getInvalidLocks(projectId));
+      invalidLocks.putAll(feature.getInvalidLocks(projectId));
     }
     if (!invalidLocks.isEmpty()) {
-      StringBuilder builder = new StringBuilder("Build configuration ");
-      builder.append(buildType.getFullName()).append(" has invalid ");
-      builder.append(invalidLocks.size() > 1 ? "locks: " : "lock: ");
-      for (Lock lock : invalidLocks) {
-        builder.append(lock.getName()).append(", ");
-      }
-      result = new SimpleWaitReason(builder.substring(0, builder.length() - 2));
+      final StringBuilder builder = new StringBuilder("Build configuration ");
+      builder.append(buildType.getExtendedName()).append(" has shared resources configuration error");
+      builder.append(invalidLocks.size() > 1 ? "s: " : ": ");
+      builder.append(StringUtil.join(invalidLocks.values(), " "));
+      result = new SimpleWaitReason(builder.toString());
     }
     return result;
   }

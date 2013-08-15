@@ -20,7 +20,6 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -66,5 +65,5 @@ public interface SharedResourcesFeature {
    *         wrong type of resource (in case of custom valued lock backed by quoted resource)
    */
   @NotNull
-  Collection<Lock> getInvalidLocks(@NotNull final String projectId);
+  Map<Lock, String> getInvalidLocks(@NotNull final String projectId);
 }
