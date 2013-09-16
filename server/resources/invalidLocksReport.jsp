@@ -34,7 +34,7 @@
     <c:when test="${showMode == inplaceMode}">
       <div>
         <bs:out value="${buildType.name}"/> contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
-        <c:url var="resourcesUrl" value="admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+        <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
             <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>
