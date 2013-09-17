@@ -1,0 +1,48 @@
+<c:set var="configurationErrors" value="${bean.configurationErrors}"/>
+<c:set var="errorsCount" value="${fn:length(configurationErrors)}"/>
+
+<%-- TODO: check permissions to view projects--%>
+
+<script type="text/javascript">
+  BS.SharedResourcesErrors = {
+    visible: false,
+    toggle: function() {
+      if (this.visible) {
+        $j("#errorDetailsToggle").html("Show details...");
+      } else {
+        $j("#errorDetailsToggle").html("Hide");
+      }
+      this.visible = !this.visible;
+      BS.Util.toggleVisible("errorDetails")
+    }
+  }
+</script>
+
+<c:if test="${errorsCount gt 0}">
+  <div class="attentionComment" style="width: 100%">
+    Found <strong>${errorsCount}</strong> build configuration<bs:s val="${errorsCount}"/> containing  errors. <a id="errorDetailsToggle" href="#" onclick="BS.SharedResourcesErrors.toggle()">Show details...</a>
+    <div id="errorDetails" style="display: none">
+      <ul>
+        <c:forEach var="err" items="${configurationErrors}">
+          <c:set var="bt" value="${err.key}"/>
+          <admin:editBuildTypeNavSteps settings="${bt}"/>
+          <jsp:useBean id="buildConfigSteps" scope="request"
+                       type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
+          <c:set var="errDetails" value="${err.value}"/>
+          <li>
+            <admin:editBuildTypeLink buildTypeId="${bt.externalId}"
+                                     step="${buildConfigSteps[2].stepId}"
+                                     cameFromUrl="${url}">
+              <bs:out value="${bt.extendedName}"/>
+            </admin:editBuildTypeLink>
+            <ul>
+              <c:forEach var="d" items="${errDetails}">
+                <li><bs:out value="${d.value}"/> </li>
+              </c:forEach>
+            </ul>
+          </li>
+        </c:forEach>
+      </ul>
+    </div>
+  </div>
+</c:if>

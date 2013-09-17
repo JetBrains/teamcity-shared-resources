@@ -127,7 +127,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
             }
           }
         } else {// resource does not exist
-          invalidLocks.put(lock, "Required resource: '" + lock.getName() + "' does not exist.");
+          invalidLocks.put(lock, "Resource '" + lock.getName() + "' does not exist.");
         }
       }
     }

@@ -199,12 +199,14 @@
     <forms:addButton id="addNewResource"
                      onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
   </p>
+
   <%@ include file="_resourcesDialog.jspf" %>
+  <%@ include file="_displayErrors.jspf" %>
 
   <c:choose>
     <c:when test="${not empty bean.myResources}">
       <h3>Resources defined in the current project</h3>
-      <l:tableWithHighlighting style="width: 70%"
+      <l:tableWithHighlighting style="width: 80%"
                                id="resourcesTable"
                                className="parametersTable"
                                mouseovertitle="Click to edit resource"
@@ -226,9 +228,9 @@
   </c:choose>
 
 
-  <c:forEach var="item" items="${bean.inheritedResources}">
-    <c:set var="p" value="${item.key}"/> <%-- project --%>
-    <c:set var="pr" value="${item.value}"/> <%--Map<String, Resource>--%>
+  <c:forEach var="ir" items="${bean.inheritedResources}">
+    <c:set var="p" value="${ir.key}"/> <%-- project --%>
+    <c:set var="pr" value="${ir.value}"/> <%--Map<String, Resource>--%>
     <c:if test="${not empty pr}">
       <h3>Resources inherited from
         <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
@@ -241,7 +243,7 @@
       </jsp:attribute>
         </authz:authorize>
       </h3>
-      <table class="parametersTable" style="width: 70%">
+      <table class="parametersTable" style="width: 80%">
         <tr>
           <th style="width: 45%">Resource name</th>
           <th colspan="2">Resource description</th>

@@ -17,7 +17,6 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
-import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.Permission;
@@ -25,6 +24,7 @@ import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -58,15 +58,20 @@ public class SharedResourcesPage extends EditProjectTab {
   @NotNull
   private final SecurityContext mySecurityContext;
 
+  @NotNull
+  private final ConfigurationInspector myInspector;
+
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
                              @NotNull final SharedResourcesFeatures features,
-                             @NotNull SecurityContext securityContext) {
+                             @NotNull final SecurityContext securityContext,
+                             @NotNull final ConfigurationInspector inspector) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     myFeatures = features;
     mySecurityContext = securityContext;
+    myInspector = inspector;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -79,8 +84,8 @@ public class SharedResourcesPage extends EditProjectTab {
     if (project != null) {
       final List<SProject> meAndSubtree = project.getProjects();
       meAndSubtree.add(project);
-      // <resource_name> -> <>
       final Map<String, Map<SBuildType, LockType>> usageMap = new HashMap<String, Map<SBuildType, LockType>>();
+      final Map<SBuildType, Map<Lock, String>> configurationErrors = new HashMap<SBuildType, Map<Lock, String>>();
       for (SProject p : meAndSubtree) {
         final List<SBuildType> buildTypes = p.getBuildTypes();
         for (SBuildType type : buildTypes) {
@@ -95,14 +100,16 @@ public class SharedResourcesPage extends EditProjectTab {
               usageMap.get(str).put(type, locksMap.get(str).getType());
             }
           }
+          Map<Lock, String> inspection = myInspector.inspect(type);
+          if (!inspection.isEmpty()) {
+            configurationErrors.put(type, inspection);
+          }
         }
       }
       final String projectId = project.getProjectId();
-      bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), usageMap);
-    } else {
-      bean = new SharedResourcesBean(project);
+      bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), usageMap, configurationErrors);
+      model.put("bean", bean);
     }
-    model.put("bean", bean);
   }
 
   @NotNull

@@ -41,14 +41,19 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @NotNull
   private final RunningBuildsManager myRunningBuildsManager;
 
+  @NotNull
+  private final ConfigurationInspector myInspector;
+
   public SharedResourcesAgentsFilter(@NotNull final SharedResourcesFeatures features,
                                      @NotNull final Locks locks,
                                      @NotNull final TakenLocks takenLocks,
-                                     @NotNull final RunningBuildsManager runningBuildsManager) {
+                                     @NotNull final RunningBuildsManager runningBuildsManager,
+                                     @NotNull final ConfigurationInspector inspector) {
     myFeatures = features;
     myLocks = locks;
     myTakenLocks = takenLocks;
     myRunningBuildsManager = runningBuildsManager;
+    myInspector = inspector;
   }
 
   @NotNull
@@ -66,7 +71,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
-        reason = checkForInvalidLocks(features, projectId, buildType);
+        reason = checkForInvalidLocks(buildType);
         if (reason == null) {
           final Collection<Lock> locksToTake = myLocks.fromBuildPromotion(myPromotion);
           if (!locksToTake.isEmpty()) {
@@ -127,14 +132,9 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   @Nullable
   @SuppressWarnings("StringBufferReplaceableByString")
-  private WaitReason checkForInvalidLocks(@NotNull final Collection<SharedResourcesFeature> features,
-                                          @NotNull final String projectId,
-                                          @NotNull final SBuildType buildType) {
+  private WaitReason checkForInvalidLocks(@NotNull final SBuildType buildType) {
     WaitReason result = null;
-    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
-    for (SharedResourcesFeature feature : features) {
-      invalidLocks.putAll(feature.getInvalidLocks(projectId));
-    }
+    final Map<Lock, String> invalidLocks = myInspector.inspect(buildType);
     if (!invalidLocks.isEmpty()) {
       final StringBuilder builder = new StringBuilder("Build configuration ");
       builder.append(buildType.getExtendedName()).append(" has shared resources configuration error");

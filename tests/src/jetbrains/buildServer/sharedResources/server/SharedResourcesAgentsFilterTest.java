@@ -15,6 +15,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -50,6 +51,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Map<String, Object> myCustomData;
 
+  private ConfigurationInspector myInspector;
+
   private Set<String> fairSet = new HashSet<String>();
 
 
@@ -63,7 +66,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = new Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+    }};
     myLocks = m.mock(Locks.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myBuildType = m.mock(BuildTypeEx.class);
@@ -74,7 +79,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
     myCustomData = new HashMap<String, Object>();
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
-    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager);
+    myInspector = m.mock(ConfigurationInspector.class);
+    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector);
   }
 
   @Test
@@ -158,7 +164,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(myInspector).inspect(myBuildType);
       will(returnValue(invalidLocks));
 
       oneOf(myBuildType).getExtendedName();
@@ -192,7 +198,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(myInspector).inspect(myBuildType);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
@@ -229,7 +235,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(myInspector).inspect(myBuildType);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
@@ -284,7 +290,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(myInspector).inspect(myBuildType);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
@@ -343,7 +349,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(myInspector).inspect(myBuildType);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildPromotion(myBuildPromotion);

@@ -18,6 +18,7 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
@@ -41,21 +42,21 @@ public class SharedResourcesBean {
   @NotNull
   private Map<String, Map<SBuildType, LockType>> myUsageMap = new HashMap<String, Map<SBuildType, LockType>>();
 
+  @NotNull
+  private final Map<SBuildType, Map<Lock, String>> myConfigurationErrors;
 
   public SharedResourcesBean(@Nullable final SProject project,
                              @NotNull final Map<SProject, Map<String, Resource>> projectResources,
-                             @NotNull final Map<String, Map<SBuildType, LockType>> usageMap) {
+                             @NotNull final Map<String, Map<SBuildType, LockType>> usageMap,
+                             @NotNull final Map<SBuildType, Map<Lock, String>> configurationErrors) {
     myProject = project;
     myProjectResources = projectResources;
     myUsageMap = usageMap;
+    myConfigurationErrors = configurationErrors;
   }
 
   public SharedResourcesBean(@Nullable final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
-    this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap());
-  }
-
-  public SharedResourcesBean(@Nullable final SProject project) {
-    this(project, Collections.<SProject, Map<String, Resource>>emptyMap(), Collections.<String, Map<SBuildType, LockType>>emptyMap());
+    this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap(), Collections.<SBuildType, Map<Lock, String>>emptyMap());
   }
 
   @NotNull
@@ -86,5 +87,10 @@ public class SharedResourcesBean {
       result.addAll(map.values());
     }
     return result;
+  }
+
+  @NotNull
+  public Map<SBuildType, Map<Lock, String>> getConfigurationErrors() {
+    return Collections.unmodifiableMap(myConfigurationErrors);
   }
 }

@@ -19,8 +19,6 @@ package jetbrains.buildServer.sharedResources.server;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.healthStatus.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
@@ -49,13 +47,14 @@ public class InvalidLocksReport extends HealthStatusReport {
 
   @NotNull
   private final ItemCategory myCategory;
+
   @NotNull
-  private final SharedResourcesFeatures myFeatures;
+  final ConfigurationInspector myInspector;
 
   public InvalidLocksReport(@NotNull final PluginDescriptor pluginDescriptor,
                             @NotNull final PagePlaces pagePlaces,
-                            @NotNull final SharedResourcesFeatures features) {
-    myFeatures = features;
+                            @NotNull final ConfigurationInspector inspector) {
+    myInspector = inspector;
     myCategory = new ItemCategory(CATEGORY_ID, CATEGORY_NAME, ItemSeverity.WARN);
     final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(CATEGORY_ID, pagePlaces);
     myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("invalidLocksReport.jsp"));
@@ -85,7 +84,7 @@ public class InvalidLocksReport extends HealthStatusReport {
   @Override
   public void report(@NotNull final HealthStatusScope scope, @NotNull final HealthStatusItemConsumer resultConsumer) {
     for (final SBuildType type: scope.getBuildTypes()) {
-      final Map<Lock, String> invalidLocks = getInvalidLocks(type);
+      final Map<Lock, String> invalidLocks = myInspector.inspect(type);
       if (!invalidLocks.isEmpty()) {
         resultConsumer.consumeForBuildType(
                 type,
@@ -95,13 +94,5 @@ public class InvalidLocksReport extends HealthStatusReport {
         }}));
       }
     }
-  }
-
-  private Map<Lock, String> getInvalidLocks(@NotNull final SBuildType type) {
-    final Map<Lock, String> result = new HashMap<Lock, String>();
-    for (SharedResourcesFeature feature: myFeatures.searchForFeatures(type)) {
-      result.putAll(feature.getInvalidLocks(type.getProjectId()));
-    }
-    return result;
   }
 }

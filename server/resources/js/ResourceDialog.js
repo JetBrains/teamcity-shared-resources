@@ -70,6 +70,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       $j('#resource_name').unbind('input propertychange', this.onNameChange);
     }
     BS.MultilineProperties.updateVisible();
+    $j('#resource_name').focus();
   },
 
   adjustDialogDisplay: function (editMode) {
