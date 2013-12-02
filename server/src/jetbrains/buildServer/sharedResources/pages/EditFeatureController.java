@@ -128,9 +128,6 @@ public class EditFeatureController extends BaseController {
     model.put("invalidLocks", invalidLocksMap);
     model.put("locks", locks);
     model.put("bean", bean);
-    model.put("project", project);
     return result;
   }
-
-
 }

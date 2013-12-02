@@ -22,7 +22,6 @@ import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -33,8 +32,8 @@ import java.util.*;
  */
 public class SharedResourcesBean {
 
-  @Nullable
-  private SProject myProject;
+  @NotNull
+  private final SProject myProject;
 
   @NotNull
   private Map<SProject, Map<String, Resource>> myProjectResources = new HashMap<SProject, Map<String, Resource>>();
@@ -45,7 +44,7 @@ public class SharedResourcesBean {
   @NotNull
   private final Map<SBuildType, Map<Lock, String>> myConfigurationErrors;
 
-  public SharedResourcesBean(@Nullable final SProject project,
+  public SharedResourcesBean(@NotNull final SProject project,
                              @NotNull final Map<SProject, Map<String, Resource>> projectResources,
                              @NotNull final Map<String, Map<SBuildType, LockType>> usageMap,
                              @NotNull final Map<SBuildType, Map<Lock, String>> configurationErrors) {
@@ -55,8 +54,13 @@ public class SharedResourcesBean {
     myConfigurationErrors = configurationErrors;
   }
 
-  public SharedResourcesBean(@Nullable final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
+  public SharedResourcesBean(@NotNull final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
     this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap(), Collections.<SBuildType, Map<Lock, String>>emptyMap());
+  }
+
+  @NotNull
+  public SProject getProject() {
+    return myProject;
   }
 
   @NotNull
