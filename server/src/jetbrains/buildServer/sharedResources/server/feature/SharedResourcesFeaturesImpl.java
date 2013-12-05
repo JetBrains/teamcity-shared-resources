@@ -3,6 +3,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,7 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   @NotNull
   @Override
   public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType) {
-    return searchForFeatureInternal(buildType.getBuildFeatures());
+    return createFeatures(getEnabledUnresolvedFeatureDescriptors(buildType));
   }
 
   @Override
@@ -35,31 +36,33 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   public Collection<SharedResourcesFeature> searchForResolvedFeatures(@NotNull final SBuildType buildType) {
     final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
     for (SBuildFeatureDescriptor descriptor : buildType.getResolvedSettings().getBuildFeatures()) {
-      if (FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
+      if (FEATURE_TYPE.equals(descriptor.getType())) {
         result.add(myFactory.createFeature(descriptor));
       }
     }
     return result;
   }
 
-  @Override
-  public boolean featuresPresent(@NotNull final SBuildType buildType) {
-    boolean result = false;
-    for (SBuildFeatureDescriptor descriptor : buildType.getBuildFeatures()) {
-      if (FEATURE_TYPE.equals(descriptor.getType())) {
-        result = true;
-        break;
-      }
+  @Override  
+  public boolean featuresPresent(@Nullable final SBuildType buildType) {
+    return buildType != null && getEnabledUnresolvedFeatureDescriptors(buildType).size() > 0;
+  }    
+
+  @NotNull
+  private Collection<SharedResourcesFeature> createFeatures(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
+    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
+    for (SBuildFeatureDescriptor descriptor : descriptors) {
+        result.add(myFactory.createFeature(descriptor));
     }
     return result;
   }
 
   @NotNull
-  private Collection<SharedResourcesFeature> searchForFeatureInternal(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
-    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
-    for (SBuildFeatureDescriptor descriptor : descriptors) {
-      if (FEATURE_TYPE.equals(descriptor.getType())) {
-        result.add(myFactory.createFeature(descriptor));
+  private Collection<SBuildFeatureDescriptor> getEnabledUnresolvedFeatureDescriptors(@NotNull final SBuildType buildType) {
+    final List<SBuildFeatureDescriptor> result = new ArrayList<SBuildFeatureDescriptor>();
+    for (SBuildFeatureDescriptor descriptor : buildType.getBuildFeatures()) {
+      if (FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
+        result.add(descriptor);
       }
     }
     return result;
