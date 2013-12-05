@@ -2,6 +2,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.serverSide.SBuildType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -55,5 +56,5 @@ public interface SharedResourcesFeatures {
    * @return {@code true} if we have a feature inside given {@code buildType}, {@code false} otherwise
    * @see jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature#FEATURE_TYPE
    */
-  boolean featuresPresent(@NotNull final SBuildType buildType);
+  boolean featuresPresent(@Nullable final SBuildType buildType);
 }

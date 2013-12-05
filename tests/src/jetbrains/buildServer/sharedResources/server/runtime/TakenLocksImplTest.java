@@ -3,6 +3,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
@@ -13,6 +14,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -42,6 +44,8 @@ public class TakenLocksImplTest extends BaseTestCase {
    */
   private TakenLocks myTakenLocks;
 
+  private SharedResourcesFeatures myFeatures;
+
   private final String myProjectId = "MY_PROJECT_ID";
 
   @BeforeMethod
@@ -52,7 +56,8 @@ public class TakenLocksImplTest extends BaseTestCase {
     myLocks = m.mock(Locks.class);
     myResources = m.mock(Resources.class);
     myLocksStorage = m.mock(LocksStorage.class);
-    myTakenLocks = new TakenLocksImpl(myLocks, myResources, myLocksStorage);
+    myFeatures = m.mock(SharedResourcesFeatures.class);
+    myTakenLocks = new TakenLocksImpl(myLocks, myResources, myLocksStorage, myFeatures);
   }
 
   @Test
@@ -78,6 +83,9 @@ public class TakenLocksImplTest extends BaseTestCase {
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
     final RunningBuildEx rb2 = m.mock(RunningBuildEx.class, "rb-2");
 
+    final SBuildType rb1_bt = m.mock(SBuildType.class, "rb1_bt");
+    final SBuildType rb2_bt = m.mock(SBuildType.class, "rb2_bt");
+
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
 
@@ -87,6 +95,12 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
+      oneOf(rb1).getBuildType();
+      will(returnValue(rb1_bt));
+
+      oneOf(myFeatures).featuresPresent(rb1_bt);
+      will(returnValue(true));
+
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 
@@ -95,6 +109,12 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       oneOf(myLocksStorage).load(rb1);
       will(returnValue(takenLocks1));
+
+      oneOf(rb2).getBuildType();
+      will(returnValue(rb2_bt));
+
+      oneOf(myFeatures).featuresPresent(rb2_bt);
+      will(returnValue(true));
 
       oneOf(rb2).getBuildPromotionInfo();
       will(returnValue(bp2));
@@ -122,6 +142,29 @@ public class TakenLocksImplTest extends BaseTestCase {
   }
 
   @Test
+  @TestFor(issues = "TW-33790")
+  public void testShouldNotAskParametersNoFeatures() throws Exception {
+    final RunningBuildEx rb = m.mock(RunningBuildEx.class, "rb");
+    final SBuildType rb_bt = m.mock(SBuildType.class, "rb_bt");
+    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+      add(rb);
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(rb).getBuildType();
+      will(returnValue(rb_bt));
+
+      oneOf(myFeatures).featuresPresent(rb_bt);
+      will(returnValue(false));
+    }});
+
+    final Map<String, TakenLock> result = myTakenLocks.collectTakenLocks(
+            myProjectId, runningBuilds, Collections.<QueuedBuildInfo>emptyList());
+    assertNotNull(result);
+    assertEquals(0, result.size());
+  }
+
+  @Test
   public void testCollectRunningQueued_Promotions() throws Exception {
     final Map<Lock, String> takenLocks1 = new HashMap<Lock, String>() {{
       put(new Lock("lock1", LockType.READ), "");
@@ -132,6 +175,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
+    final SBuildType rb1_bt = m.mock(SBuildType.class, "rb1_bt");
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
 
     final QueuedBuildInfo qb1 = m.mock(QueuedBuildInfo.class, "qb-1");
@@ -146,6 +190,12 @@ public class TakenLocksImplTest extends BaseTestCase {
 
 
     m.checking(new Expectations() {{
+      oneOf(rb1).getBuildType();
+      will(returnValue(rb1_bt));
+
+      oneOf(myFeatures).featuresPresent(rb1_bt);
+      will(returnValue(true));
+
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 

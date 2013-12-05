@@ -175,4 +175,9 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
 
     assertTrue(mySharedResourcesFeatures.featuresPresent(myBuildType));
   }
+
+  @Test
+  public void testFeaturesPresentNull() throws Exception {
+    assertFalse(mySharedResourcesFeatures.featuresPresent(null));
+  }
 }

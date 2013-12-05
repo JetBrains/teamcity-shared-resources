@@ -29,6 +29,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,12 +48,17 @@ public class TakenLocksImpl implements TakenLocks {
   @NotNull
   private final LocksStorage myLocksStorage;
 
+  @NotNull
+  private final SharedResourcesFeatures myFeatures;
+
   public TakenLocksImpl(@NotNull final Locks locks,
                         @NotNull final Resources resources,
-                        @NotNull final LocksStorage locksStorage) {
+                        @NotNull final LocksStorage locksStorage,
+                        @NotNull final SharedResourcesFeatures features) {
     myLocks = locks;
     myResources = resources;
     myLocksStorage = locksStorage;
+    myFeatures = features;
   }
 
   @NotNull
@@ -62,6 +68,7 @@ public class TakenLocksImpl implements TakenLocks {
                                                   @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
     for (SRunningBuild build : runningBuilds) {
+      if (!myFeatures.featuresPresent(build.getBuildType())) continue;
       BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
       Collection<Lock> locks;
       RunningBuildEx rbEx = (RunningBuildEx) build;

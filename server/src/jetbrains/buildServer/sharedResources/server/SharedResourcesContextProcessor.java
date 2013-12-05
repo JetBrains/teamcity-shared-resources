@@ -62,12 +62,10 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final SRunningBuild build = context.getBuild();
     final SBuildType myType = build.getBuildType();
     final String projectId = build.getProjectId();
-    if (myType != null && projectId != null) {
-      if (myFeatures.featuresPresent(myType)) {
-        final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(((BuildPromotionEx)build.getBuildPromotion()));
-        if (!locks.isEmpty()) {
-          processCustomLocks(context, build, projectId, locks);
-        }
+    if (projectId != null && myFeatures.featuresPresent(myType)) {
+      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(((BuildPromotionEx)build.getBuildPromotion()));
+      if (!locks.isEmpty()) {
+        processCustomLocks(context, build, projectId, locks);
       }
     }
   }
@@ -99,8 +97,6 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
                 // todo: add support of multiple values per lock in custom storage
                 myTakenValues.put(currentLock, currentValue);
               } else {
-                // we can only have one write lock on each resource at any given time
-                // no need to store all values, as lock is exclusive
                 currentValue = StringUtil.join(values, ";");
               }
               context.addSharedParameter(paramName, currentValue);
