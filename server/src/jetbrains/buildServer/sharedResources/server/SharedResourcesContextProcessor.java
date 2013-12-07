@@ -8,6 +8,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import org.jetbrains.annotations.NotNull;
@@ -60,34 +61,40 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final SRunningBuild build = context.getBuild();
     final SBuildType myType = build.getBuildType();
     final String projectId = build.getProjectId();
-    if (projectId != null && myFeatures.featuresPresent(myType)) {
-      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(((BuildPromotionEx)build.getBuildPromotion()));
-      if (!locks.isEmpty()) {
-        final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
-        // get custom resources from our locks
-        final Map<String, CustomResource> myCustomResources = getCustomResources(projectId, locks);
-        synchronized (o) {
-          // decide whether we need to resolve values
-          if (!myCustomResources.isEmpty()) {
-            final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
-            for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
-              // get value space for current resources
-              final List<String> values = new ArrayList<String>(entry.getValue().getValues());
-              final String key = entry.getKey();
-              // remove used values
-              values.removeAll(usedValues.get(key));
-              if (!values.isEmpty()) {
-                final Lock currentLock = locks.get(key);
-                final String paramName = myLocks.asBuildParameter(currentLock);
-                final String currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
-                context.addSharedParameter(paramName, currentValue);
-                myTakenValues.put(currentLock, currentValue);
-              } else {
-                log.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
+    if (projectId != null && myType != null) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myType);
+      if (!features.isEmpty()) {
+        final Map<String, Lock> locks = new HashMap<String, Lock>();
+        for (SharedResourcesFeature f: features) {
+          locks.putAll(f.getLockedResources());
+        }     
+        if (!locks.isEmpty()) {
+          final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
+          // get custom resources from our locks
+          final Map<String, CustomResource> myCustomResources = getCustomResources(projectId, locks);
+          synchronized (o) {
+            // decide whether we need to resolve values
+            if (!myCustomResources.isEmpty()) {
+              final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
+              for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
+                // get value space for current resources
+                final List<String> values = new ArrayList<String>(entry.getValue().getValues());
+                final String key = entry.getKey();
+                // remove used values
+                values.removeAll(usedValues.get(key));
+                if (!values.isEmpty()) {
+                  final Lock currentLock = locks.get(key);
+                  final String paramName = myLocks.asBuildParameter(currentLock);
+                  final String currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                  context.addSharedParameter(paramName, currentValue);
+                  myTakenValues.put(currentLock, currentValue);
+                } else {
+                  log.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
+                }
               }
             }
-          }
           myLocksStorage.store(build, myTakenValues);
+          }
         }
       }
     }

@@ -15,6 +15,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -52,7 +53,6 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<String>();
 
-
   /**
    * Class under test
    */
@@ -63,7 +63,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = new Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+    }};
     myLocks = m.mock(Locks.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myBuildType = m.mock(BuildTypeEx.class);
@@ -139,8 +141,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   public void testInvalidLocksPresent() throws Exception {
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
-    features.add(m.mock(SharedResourcesFeature.class));
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
     invalidLocks.put(new Lock("lock1", LockType.READ), "");
@@ -158,7 +160,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(feature).getInvalidLocks(myProjectId);
       will(returnValue(invalidLocks));
 
       oneOf(myBuildType).getExtendedName();
@@ -176,8 +178,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   public void testNoLocksInFeatures() throws Exception {
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
-    features.add(m.mock(SharedResourcesFeature.class));
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -192,12 +194,11 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(feature).getInvalidLocks(myProjectId);
       will(returnValue(Collections.emptyMap()));
 
-      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
-      will(returnValue(Collections.emptyList()));
-
+      oneOf(myLocks).fromBuildFeaturesAsMap(features);
+      will(returnValue(Collections.emptyMap()));
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -206,12 +207,12 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   public void testLocksPresentSingleBuild() throws Exception {
-    final Collection<Lock> locks = new ArrayList<Lock>() {{
-      add(new Lock("lock1", LockType.READ));
-    }};
+    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    locksToTake.put(lock.getName(), lock);
 
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
-    features.add(m.mock(SharedResourcesFeature.class));
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
@@ -229,11 +230,11 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
+      oneOf(feature).getInvalidLocks(myProjectId);
       will(returnValue(Collections.emptyMap()));
 
-      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
-      will(returnValue(locks));
+      oneOf(myLocks).fromBuildFeaturesAsMap(features);
+      will(returnValue(locksToTake));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();
       will(returnValue(runningBuilds));
@@ -255,21 +256,22 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Test
   @SuppressWarnings("unchecked")
   public void testMultipleBuildsLocksNotCrossing() throws Exception {
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
-    features.add(m.mock(SharedResourcesFeature.class));
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Collection<Lock> locks = new ArrayList<Lock>() {{
-      add(new Lock("lock1", LockType.READ));
-    }};
+    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    locksToTake.put(lock.getName(), lock);
+
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
-    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
-      final TakenLock tl = new TakenLock();
-      tl.addLock(m.mock(BuildPromotionInfo.class), new Lock("lock2", LockType.READ));
-      put("lock2", tl);
+    final Lock lock2 = new Lock("lock2", LockType.READ);
 
-    }};
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
+    final TakenLock tl = new TakenLock();
+    tl.addLock(m.mock(BuildPromotionInfo.class), lock2);
+    takenLocks.put(lock2.getName(), tl);
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -284,11 +286,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyMap()));
-
-      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
-      will(returnValue(locks));
+      oneOf(myLocks).fromBuildFeaturesAsMap(features);
+      will(returnValue(locksToTake));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(runningBuilds));
@@ -299,7 +298,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
-      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId, fairSet);
+      oneOf(feature).getInvalidLocks(myProjectId);
+      will(returnValue(Collections.emptyMap()));
+
+      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
       will(returnValue(Collections.emptyList()));
 
     }});
@@ -307,25 +309,26 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
-
   }
 
   @Test
   public void testMultipleBuildsLocksCrossing() throws Exception {
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
-    features.add(m.mock(SharedResourcesFeature.class));
-    final Collection<Lock> locks = new ArrayList<Lock>() {{
-      add(new Lock("lock1", LockType.READ));
-    }};
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
+    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    locksToTake.put(lock.getName(), lock);
+
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
     final BuildPromotionEx bpex = m.mock(BuildPromotionEx.class, "bpex-lock1");
-    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
-      final TakenLock tl = new TakenLock();
-      tl.addLock(bpex, new Lock("lock1", LockType.WRITE));
-      put("lock1", tl);
-    }};
+    final Lock takenLock1 = new Lock("lock1", LockType.WRITE);
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
+    final TakenLock tl = new TakenLock();
+    tl.addLock(bpex, takenLock1);
+    takenLocks.put(takenLock1.getName(), tl);
 
     final BuildTypeEx buildTypeEx = m.mock(BuildTypeEx.class, "bpex-btex");
     final String name = "UNAVAILABLE";
@@ -343,11 +346,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(features.iterator().next()).getInvalidLocks(myProjectId);
-      will(returnValue(Collections.emptyMap()));
-
-      oneOf(myLocks).fromBuildPromotion(myBuildPromotion);
-      will(returnValue(locks));
+      oneOf(myLocks).fromBuildFeaturesAsMap(features);
+      will(returnValue(locksToTake));
 
       oneOf(myBuildDistributorInput).getRunningBuilds();
       will(returnValue(runningBuilds));
@@ -358,8 +358,11 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
-      oneOf(myTakenLocks).getUnavailableLocks(locks, takenLocks, myProjectId, fairSet);
-      will(returnValue(locks));
+      oneOf(feature).getInvalidLocks(myProjectId);
+      will(returnValue(Collections.emptyMap()));
+
+      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
+      will(returnValue(locksToTake.values()));
 
       oneOf(bpex).getBuildType();
       will(returnValue(buildTypeEx));

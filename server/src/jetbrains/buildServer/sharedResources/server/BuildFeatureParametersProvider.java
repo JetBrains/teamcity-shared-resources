@@ -33,7 +33,7 @@ import java.util.Map;
  *
  * Exposes {@code SharedResourcesBuildFeature} parameters to build
  *
- * @see SharedResourcesBuildFeature
+ * @see jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class BuildFeatureParametersProvider extends AbstractBuildParametersProvider implements BuildParametersProvider {
@@ -51,11 +51,8 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<String, String>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      if (myFeatures.featuresPresent(buildType)) {
-        // we have features. Now get resolved settings
-        for (SharedResourcesFeature feature: myFeatures.searchForResolvedFeatures(buildType)) {
-          result.putAll(feature.getBuildParameters());
-        }
+      for (SharedResourcesFeature feature: myFeatures.searchForFeatures(buildType)) {
+        result.putAll(feature.getBuildParameters());
       }
     }
     return result;

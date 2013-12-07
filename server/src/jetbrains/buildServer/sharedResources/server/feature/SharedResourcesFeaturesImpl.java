@@ -3,7 +3,6 @@ package jetbrains.buildServer.sharedResources.server.feature;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,23 +29,6 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final SBuildType buildType) {
     return createFeatures(getEnabledUnresolvedFeatureDescriptors(buildType));
   }
-
-  @Override
-  @NotNull
-  public Collection<SharedResourcesFeature> searchForResolvedFeatures(@NotNull final SBuildType buildType) {
-    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
-    for (SBuildFeatureDescriptor descriptor : buildType.getResolvedSettings().getBuildFeatures()) {
-      if (FEATURE_TYPE.equals(descriptor.getType())) {
-        result.add(myFactory.createFeature(descriptor));
-      }
-    }
-    return result;
-  }
-
-  @Override  
-  public boolean featuresPresent(@Nullable final SBuildType buildType) {
-    return buildType != null && getEnabledUnresolvedFeatureDescriptors(buildType).size() > 0;
-  }    
 
   @NotNull
   private Collection<SharedResourcesFeature> createFeatures(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {

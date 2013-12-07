@@ -1,10 +1,7 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.RunningBuildEx;
-import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -14,6 +11,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
@@ -70,6 +68,9 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testCollectRunningBuilds_Stored() throws Exception {
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
       put("lock1", new Lock("lock1", LockType.READ, ""));
       put("lock2", new Lock("lock2", LockType.WRITE, ""));
@@ -98,8 +99,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildType();
       will(returnValue(rb1_bt));
 
-      oneOf(myFeatures).featuresPresent(rb1_bt);
-      will(returnValue(true));
+      oneOf(myFeatures).searchForFeatures(rb1_bt);
+      will(returnValue(features));
 
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
@@ -113,8 +114,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb2).getBuildType();
       will(returnValue(rb2_bt));
 
-      oneOf(myFeatures).featuresPresent(rb2_bt);
-      will(returnValue(true));
+      oneOf(myFeatures).searchForFeatures(rb2_bt);
+      will(returnValue(features));
 
       oneOf(rb2).getBuildPromotionInfo();
       will(returnValue(bp2));
@@ -154,8 +155,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb).getBuildType();
       will(returnValue(rb_bt));
 
-      oneOf(myFeatures).featuresPresent(rb_bt);
-      will(returnValue(false));
+      oneOf(myFeatures).searchForFeatures(rb_bt);
+      will(returnValue(Collections.emptyList()));
+
     }});
 
     final Map<String, TakenLock> result = myTakenLocks.collectTakenLocks(
@@ -166,19 +168,27 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testCollectRunningQueued_Promotions() throws Exception {
-    final Map<Lock, String> takenLocks1 = new HashMap<Lock, String>() {{
-      put(new Lock("lock1", LockType.READ), "");
-      put(new Lock("lock2", LockType.WRITE), "");
+    final SharedResourcesFeature rFeature = m.mock(SharedResourcesFeature.class, "r-feature");
+    final Collection<SharedResourcesFeature> rFeatures = Collections.singleton(rFeature);
+
+    final SharedResourcesFeature qFeature = m.mock(SharedResourcesFeature.class, "q-feature");
+    final Collection<SharedResourcesFeature> qFeatures = Collections.singleton(qFeature);
+
+    final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
+      put("lock1" , new Lock("lock1", LockType.READ));
+      put("lock2", new Lock("lock2", LockType.WRITE));
     }};
-    final Map<Lock, String> takenLocks2 = new HashMap<Lock, String>() {{
-      put(new Lock("lock1", LockType.READ), "");
+
+    final Map<String, Lock> takenLocks2 = new HashMap<String, Lock>() {{
+      put("lock1", new Lock("lock1", LockType.READ));
     }};
 
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
-    final SBuildType rb1_bt = m.mock(SBuildType.class, "rb1_bt");
+    final BuildTypeEx rb1_bt = m.mock(BuildTypeEx.class, "rb1_bt");
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
 
     final QueuedBuildInfo qb1 = m.mock(QueuedBuildInfo.class, "qb-1");
+    final BuildTypeEx qb1_bt = m.mock(BuildTypeEx.class, "qb2_bt");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
     final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
       add(rb1);
@@ -188,13 +198,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(qb1);
     }};
 
-
     m.checking(new Expectations() {{
       oneOf(rb1).getBuildType();
       will(returnValue(rb1_bt));
-
-      oneOf(myFeatures).featuresPresent(rb1_bt);
-      will(returnValue(true));
 
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
@@ -202,14 +208,24 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myLocksStorage).locksStored(rb1);
       will(returnValue(false));
 
-      oneOf(myLocks).fromBuildPromotion(bp1);
-      will(returnValue(takenLocks1.keySet()));
+      oneOf(myFeatures).searchForFeatures(rb1_bt);
+      will(returnValue(rFeatures));
+
+      oneOf(myLocks).fromBuildFeaturesAsMap(rFeatures);
+      will(returnValue(takenLocks1));
 
       oneOf(qb1).getBuildPromotionInfo();
       will(returnValue(bp2));
 
-      oneOf(myLocks).fromBuildPromotion(bp2);
-      will(returnValue(takenLocks2.keySet()));
+      oneOf(bp2).getBuildType();
+      will(returnValue(qb1_bt));
+
+      oneOf(myFeatures).searchForFeatures(qb1_bt);
+      will(returnValue(qFeatures));
+
+      oneOf(myLocks).fromBuildFeaturesAsMap(qFeatures);
+      will(returnValue(takenLocks2));
+
     }});
 
     final Map<String, TakenLock> result = myTakenLocks.collectTakenLocks(

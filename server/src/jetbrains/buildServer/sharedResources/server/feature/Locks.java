@@ -16,7 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
@@ -85,20 +84,11 @@ public interface Locks {
   Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks);
 
   /**
-   * Extracts locks from build promotion
-   *
-   * @param buildPromotion build promotion to extract from
-   * @return collection of locks extracted from build promotion
+   * Extracts locks from build features
+   * @param features features to extract locks from
+   * @return map of locks defined in build features
    */
   @NotNull
-  Collection<Lock> fromBuildPromotion(@NotNull final BuildPromotionEx buildPromotion);
+  Map<String, Lock> fromBuildFeaturesAsMap(@NotNull final Collection<SharedResourcesFeature> features);
 
-  /**
-   * Extracts locks from build promotion and represents them as map
-   *
-   * @param buildPromotion build promotion to extract from
-   * @return map of locks extracted from build promotion
-   */
-  @NotNull
-  Map<String, Lock> fromBuildPromotionAsMap(@NotNull final BuildPromotionEx buildPromotion);
 }
