@@ -1,8 +1,6 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.parameters.ParametersProvider;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -36,8 +34,8 @@ public class LocksImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLocks = new LocksImpl();
     m = new Mockery();
+    myLocks = new LocksImpl();
   }
 
   @Test
@@ -185,50 +183,7 @@ public class LocksImplTest extends BaseTestCase {
     }
   }
 
-  @Test
-  public void testFromBuildPromotion() throws Exception {
-    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
-    final ParametersProvider pp = m.mock(ParametersProvider.class);
 
-    final Map<String, String> buildParams = new HashMap<String, String>();
-    final Collection<Lock> expectedLocks = new ArrayList<Lock>();
-
-    int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-    for (int i = 0; i < N * 2; i++) {
-      expectedLocks.add(TestUtils.generateRandomLock());
-    }
-    for (Lock lock: expectedLocks) {
-      buildParams.put(TestUtils.generateLockAsBuildParam(lock.getName(), lock.getType()), "");
-    }
-
-    m.checking(new Expectations() {{
-      atMost(2).of(promo).getParametersProvider();
-      will(returnValue(pp));
-
-      atMost(2).of(pp).getAll();
-      will(returnValue(buildParams));
-    }});
-
-    {
-      final Collection<Lock> locks = myLocks.fromBuildPromotion(promo);
-      assertNotNull(locks);
-      assertNotEmpty(locks);
-      assertEquals(N * 2, locks.size());
-      for (Lock lock: expectedLocks) {
-        assertContains(locks, lock);
-      }
-    }
-
-    {
-      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(promo);
-      assertNotNull(locks);
-      assertEquals(N * 2, locks.size());
-      for (Lock lock: expectedLocks) {
-        assertContains(locks.values(), lock);
-      }
-    }
-    m.assertIsSatisfied();
-  }
 
   @Test
   public void testAsBuildParam() throws Exception {
@@ -238,6 +193,43 @@ public class LocksImplTest extends BaseTestCase {
     final String param2 = myLocks.asBuildParameter(lock2);
     assertEquals("teamcity.locks.readLock.lock1", param1);
     assertEquals("teamcity.locks.writeLock.lock2", param2);
+  }
+
+  /**
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testFromBuildFeatureAsMap() throws Exception {
+
+    final Map<String, Lock> locks1 = new HashMap<String, Lock>() {{
+      put("lock1", new Lock("lock1", LockType.READ));
+      put("lock2", new Lock("lock2", LockType.WRITE));
+    }};
+
+    final Map<String, Lock> locks2 = new HashMap<String, Lock>() {{
+      put("lock3", new Lock("lock3", LockType.READ, "lock3_value"));
+    }};
+
+    final SharedResourcesFeature feature1 = m.mock(SharedResourcesFeature.class, "f1");
+    final SharedResourcesFeature feature2 = m.mock(SharedResourcesFeature.class, "f2");
+    final Collection<SharedResourcesFeature> features = Arrays.asList(feature1, feature2);
+    m.checking(new Expectations() {{
+      oneOf(feature1).getLockedResources();
+      will(returnValue(locks1));
+
+      oneOf(feature2).getLockedResources();
+      will(returnValue(locks2));
+    }});
+    final Map<String, Lock> result = myLocks.fromBuildFeaturesAsMap(features);
+    assertNotNull(result);
+    assertEquals(locks1.size() + locks2.size(), result.size());
+    for (Lock lock: locks1.values()) {
+      assertContains(result.values(), lock);
+    }
+    for (Lock lock: locks2.values()) {
+      assertContains(result.values(), lock);
+    }
   }
 
   @Test
@@ -299,42 +291,6 @@ public class LocksImplTest extends BaseTestCase {
       String val = buildParams.get(lockName);
       assertNotNull(val);
       assertEquals(lock.getValue(), val);
-    }
-  }
-
-  @Test
-  public void testFromBuildParams_Values() throws Exception {
-    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
-    final ParametersProvider pp = m.mock(ParametersProvider.class);
-
-    final Map<String, String> buildParams = new HashMap<String, String>();
-    final Collection<Lock> expectedLocks = new ArrayList<Lock>();
-
-    int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-    for (int i = 0; i < N * 2; i++) {
-      expectedLocks.add(TestUtils.generateRandomLockWithValue());
-    }
-    for (Lock lock: expectedLocks) {
-      buildParams.put(TestUtils.generateLockAsBuildParam(lock.getName(), lock.getType()), lock.getValue());
-    }
-
-    m.checking(new Expectations() {{
-      atMost(2).of(promo).getParametersProvider();
-      will(returnValue(pp));
-
-      atMost(2).of(pp).getAll();
-      will(returnValue(buildParams));
-    }});
-
-    {
-      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(promo);
-      assertNotNull(locks);
-      assertEquals(N * 2, locks.size());
-      for (Lock lock: expectedLocks) {
-        Lock l = locks.get(lock.getName());
-        assertNotNull(l);
-        assertEquals(lock, l);
-      }
     }
   }
 }

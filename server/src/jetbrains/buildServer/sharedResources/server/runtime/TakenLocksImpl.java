@@ -16,9 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.RunningBuildEx;
-import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -29,6 +27,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,21 +67,31 @@ public class TakenLocksImpl implements TakenLocks {
                                                   @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
     for (SRunningBuild build : runningBuilds) {
-      if (!myFeatures.featuresPresent(build.getBuildType())) continue;
-      BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
-      Collection<Lock> locks;
-      RunningBuildEx rbEx = (RunningBuildEx) build;
-      if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
-        locks = myLocksStorage.load(rbEx).values();
-      } else {
-        locks = myLocks.fromBuildPromotion(bpEx); // lock values are not resolved. But we know, that lock is already requested (for custom locks all but ANY case)
+      final SBuildType buildType = build.getBuildType();
+      if (buildType != null) {
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+        if (features.isEmpty()) continue;
+        BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
+        Collection<Lock> locks;
+        RunningBuildEx rbEx = (RunningBuildEx) build;
+        if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
+          locks = myLocksStorage.load(rbEx).values();
+        } else {
+          locks = myLocks.fromBuildFeaturesAsMap(features).values();
+        }
+        addToTakenLocks(result, bpEx, locks);
       }
-      addToTakenLocks(result, bpEx, locks);
     }
+
     for (QueuedBuildInfo build : queuedBuilds) {
       BuildPromotionEx bpEx = (BuildPromotionEx) build.getBuildPromotionInfo();
-      Collection<Lock> locks = myLocks.fromBuildPromotion(bpEx);
-      addToTakenLocks(result, bpEx, locks);
+      final BuildTypeEx buildType = bpEx.getBuildType();
+      if (buildType != null) {
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+        if (features.isEmpty()) continue;
+        final Collection<Lock> locks = myLocks.fromBuildFeaturesAsMap(features).values();
+        addToTakenLocks(result, bpEx, locks);
+      }
     }
     return result;
   }

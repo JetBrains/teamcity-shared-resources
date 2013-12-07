@@ -26,6 +26,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.TestFor;
@@ -34,10 +35,7 @@ import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -93,8 +91,14 @@ public class ContextProcessorTest extends BaseTestCase {
 
     final String lockParamName = "teamcity.locks.writeLock." + lock.getName();
 
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
     m.checking(new Expectations() {{
-      oneOf(myLocks).fromBuildPromotionAsMap(myBuildPromotion);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
       oneOf(myResources).asMap(PROJECT_ID);
@@ -125,8 +129,14 @@ public class ContextProcessorTest extends BaseTestCase {
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
     m.checking(new Expectations() {{
-      oneOf(myLocks).fromBuildPromotionAsMap(myBuildPromotion);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
       oneOf(myResources).asMap(PROJECT_ID);
@@ -158,12 +168,17 @@ public class ContextProcessorTest extends BaseTestCase {
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
     final SRunningBuild otherRunningBuild = m.mock(SRunningBuild.class, "other-running-build");
-    final Map<String, Lock> runtimeLocks = new HashMap<String, Lock>();
-    runtimeLocks.put("CustomResource", new Lock("CustomResource", LockType.READ, "value1"));
+    final Map<String, Lock> otherTakenLocks = new HashMap<String, Lock>();
+    otherTakenLocks.put("CustomResource", new Lock("CustomResource", LockType.READ, "value1"));
 
+    final SharedResourcesFeature currentFeature = m.mock(SharedResourcesFeature.class, "my-build-feature");
+    final Collection<SharedResourcesFeature> currentFeatures = Collections.singleton(currentFeature);
 
     m.checking(new Expectations() {{
-      oneOf(myLocks).fromBuildPromotionAsMap(myBuildPromotion);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(currentFeatures));
+
+      oneOf(currentFeature).getLockedResources();
       will(returnValue(myTakenLocks));
 
       oneOf(myResources).asMap(PROJECT_ID);
@@ -173,7 +188,7 @@ public class ContextProcessorTest extends BaseTestCase {
       will(returnValue(Collections.singletonList(otherRunningBuild)));
 
       oneOf(myLocksStorage).load(otherRunningBuild);
-      will(returnValue(runtimeLocks));
+      will(returnValue(otherTakenLocks));
 
       oneOf(myLocks).asBuildParameter(lock);
       will(returnValue(lockParamName));
@@ -199,10 +214,16 @@ public class ContextProcessorTest extends BaseTestCase {
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
     m.checking(new Expectations() {{
       createCommonExpectations();
 
-      oneOf(myLocks).fromBuildPromotionAsMap(myBuildPromotion);
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
       oneOf(myResources).asMap(PROJECT_ID);
@@ -231,9 +252,6 @@ public class ContextProcessorTest extends BaseTestCase {
 
       oneOf(myRunningBuild).getProjectId();
       will(returnValue(PROJECT_ID));
-
-      oneOf(myFeatures).featuresPresent(myBuildType);
-      will(returnValue(true));
 
       oneOf(myRunningBuild).getBuildPromotion();
       will(returnValue(myBuildPromotion));

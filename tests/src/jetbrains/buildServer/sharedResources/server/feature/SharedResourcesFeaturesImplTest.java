@@ -1,7 +1,6 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
@@ -52,9 +51,6 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
   /** Mock for feature */
   private SharedResourcesFeature myFeature;
 
-  /** Resolved setting of */
-  private ResolvedSettings myResolvedSettings;
-
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
@@ -75,7 +71,6 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
     myAllFeatureDescriptors.addAll(myInvalidDescriptors);
     myAllFeatureDescriptors.addAll(myValidDescriptors);
 
-    myResolvedSettings = m.mock(ResolvedSettings.class);
     mySharedResourcesFeatureFactory = m.mock(SharedResourcesFeatureFactory.class);
 
     mySharedResourcesFeatures = new SharedResourcesFeaturesImpl(mySharedResourcesFeatureFactory);
@@ -118,66 +113,4 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  @Test
-  public void testSearchForResolvedFeatures() {
-    m.checking(new Expectations() {{
-      never(myBuildType).getBuildFeatures();
-
-      never(myBuildType).isEnabled(with(any(String.class)));
-
-      oneOf(myBuildType).getResolvedSettings();
-      will(returnValue(myResolvedSettings));
-
-      oneOf(myResolvedSettings).getBuildFeatures();
-      will(returnValue(myValidDescriptors));
-
-      for (int i=0; i<NUM; i++) {
-        oneOf(myValidDescriptors.get(i)).getType();
-        will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
-      }
-
-      for (int i = 0; i < NUM; i++) {
-        oneOf(mySharedResourcesFeatureFactory).createFeature(myValidDescriptors.get(i));
-        will(returnValue(myFeature));
-      }
-    }});
-
-    final Collection<SharedResourcesFeature> myFeatures = mySharedResourcesFeatures.searchForResolvedFeatures(myBuildType);
-    assertNotNull(myFeatures);
-    assertNotEmpty(myFeatures);
-    assertEquals(NUM, myFeatures.size());
-    m.assertIsSatisfied();
-  }
-
-  @Test
-  public void testFeaturesPresent() {
-
-    m.checking(new Expectations() {{
-      oneOf(myBuildType).getBuildFeatures();
-      will(returnValue(myAllFeatureDescriptors));
-
-      atLeast(1).of(myBuildType).isEnabled(with(any(String.class)));
-      will(returnValue(true));
-
-      for (int i=0; i<myAllFeatureDescriptors.size(); i++) {
-        allowing(myAllFeatureDescriptors.get(i)).getId();
-        will(returnValue(String.valueOf(i)));
-      }
-
-      for (int i=0; i<NUM; i++) {
-        oneOf(myValidDescriptors.get(i)).getType();
-        will(returnValue(SharedResourcesBuildFeature.FEATURE_TYPE));
-
-        oneOf(myInvalidDescriptors.get(i)).getType();
-        will(returnValue("$$some_other_type$$"));
-      }
-    }});
-
-    assertTrue(mySharedResourcesFeatures.featuresPresent(myBuildType));
-  }
-
-  @Test
-  public void testFeaturesPresentNull() throws Exception {
-    assertFalse(mySharedResourcesFeatures.featuresPresent(null));
-  }
 }

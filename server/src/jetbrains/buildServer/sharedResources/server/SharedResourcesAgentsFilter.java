@@ -73,7 +73,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       if (!features.isEmpty()) {
         reason = checkForInvalidLocks(buildType);
         if (reason == null) {
-          final Collection<Lock> locksToTake = myLocks.fromBuildPromotion(myPromotion);
+          final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
             final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
             if (!takenLocks.isEmpty()) {
@@ -144,7 +144,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     }
     return result;
   }
-
 
   @SuppressWarnings("unchecked")
   @NotNull

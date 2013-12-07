@@ -9,6 +9,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.StringUtil;
@@ -62,10 +63,16 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final SRunningBuild build = context.getBuild();
     final SBuildType myType = build.getBuildType();
     final String projectId = build.getProjectId();
-    if (projectId != null && myFeatures.featuresPresent(myType)) {
-      final Map<String, Lock> locks = myLocks.fromBuildPromotionAsMap(((BuildPromotionEx)build.getBuildPromotion()));
-      if (!locks.isEmpty()) {
-        processCustomLocks(context, build, projectId, locks);
+    if (projectId != null && myType != null) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myType);
+      if (!features.isEmpty()) {
+        final Map<String, Lock> locks = new HashMap<String, Lock>();
+        for (SharedResourcesFeature f: features) {
+          locks.putAll(f.getLockedResources());
+        }
+        if (!locks.isEmpty()) {
+          processCustomLocks(context, build, projectId, locks);
+        }
       }
     }
   }

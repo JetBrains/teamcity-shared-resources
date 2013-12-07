@@ -16,8 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -25,7 +23,10 @@ import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
@@ -35,12 +36,6 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public final class LocksImpl implements Locks {
-
-  private static final Logger LOG = Logger.getInstance(LocksImpl.class.getName());
-
-  private static final int PREFIX_OFFSET = LOCK_PREFIX.length();
-
-  // BEGIN interface Locks
 
   @NotNull
   @Override
@@ -66,20 +61,18 @@ public final class LocksImpl implements Locks {
 
   @NotNull
   @Override
+  public Map<String, Lock> fromBuildFeaturesAsMap(@NotNull final Collection<SharedResourcesFeature> features) {
+    final Map<String, Lock> result = new HashMap<String, Lock>();
+    for (SharedResourcesFeature feature: features) {
+      result.putAll(feature.getLockedResources());
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
   public String asBuildParameter(@NotNull final Lock lock) {
     return asBuildParameterInternal(lock);
-  }
-
-  @NotNull
-  @Override
-  public Collection<Lock> fromBuildPromotion(@NotNull BuildPromotionEx buildPromotion) {
-    return fromBuildParametersInternal(buildPromotion.getParametersProvider().getAll());
-  }
-
-  @NotNull
-  @Override
-  public Map<String, Lock> fromBuildPromotionAsMap(@NotNull BuildPromotionEx buildPromotion) {
-    return fromBuildParametersAsMapInternal(buildPromotion.getParametersProvider().getAll());
   }
 
   @NotNull
@@ -112,6 +105,7 @@ public final class LocksImpl implements Locks {
    * @param lock lock to convert
    * @return lock as {@code String}
    */
+  @SuppressWarnings("StringBufferReplaceableByString")
   @NotNull
   private String asBuildParameterInternal(@NotNull final Lock lock) {
     final StringBuilder sb = new StringBuilder(LOCK_PREFIX);
@@ -132,27 +126,6 @@ public final class LocksImpl implements Locks {
         if (lock != null) {
           result.put(lock.getName(), lock);
         }
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  private Map<String, Lock> fromBuildParametersAsMapInternal(Map<String, String> buildParams) {
-    final Map<String, Lock> result = new HashMap<String, Lock>();
-    for (Lock lock: fromBuildParametersInternal(buildParams)) {
-      result.put(lock.getName(), lock);
-    }
-    return result;
-  }
-
-  @NotNull
-  private List<Lock> fromBuildParametersInternal(@NotNull final Map<String, String> buildParams) {
-    final List<Lock> result = new ArrayList<Lock>();
-    for (Map.Entry<String, String> entry: buildParams.entrySet()) {
-      Lock lock = fromBuildParameterInternal(entry.getKey(), entry.getValue());
-      if (lock != null) {
-        result.add(lock);
       }
     }
     return result;
@@ -185,52 +158,4 @@ public final class LocksImpl implements Locks {
     }
     return result;
   }
-
-  /**
-   * Extracts lock from build parameter
-   *
-   * @param paramName name of the build parameter
-   * @param paramValue value of the build parameter
-   * @return {@code Lock} of appropriate type, if parsing was successful, {@code null} otherwise
-   */
-  @Nullable
-  private Lock fromBuildParameterInternal(@NotNull final String paramName, @NotNull final String paramValue) {
-    Lock result = null;
-    if (paramName.startsWith(LOCK_PREFIX)) {
-      String lockString = paramName.substring(PREFIX_OFFSET);
-      LockType lockType = null;
-      for (LockType type : LockType.values()) {
-        if (lockString.startsWith(type.getName())) {
-          lockType = type;
-          break;
-        }
-      }
-
-      if (lockType == null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Error parsing lock type of '" + paramName + "'. Supported values are " + Arrays.toString(LockType.values()));
-        }
-        return null;
-      }
-
-      try {
-        String lockName = lockString.substring(lockType.getName().length() + 1);
-        if (lockName.length() == 0) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
-          }
-          return null;
-        }
-        result = new Lock(lockName, lockType, paramValue);
-      } catch (IndexOutOfBoundsException e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Error parsing lock name of '" + paramName + "'. Supported format is 'teamcity.locks.[read|write]Lock.<lock name>'");
-        }
-        return null;
-      }
-    }
-    return result;
-  }
-
-
 }
