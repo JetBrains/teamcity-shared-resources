@@ -16,7 +16,7 @@
             <%--@elvariable id="buildConfigSteps" type="type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"--%>
             <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
               <span style="white-space: nowrap">
-                ${buildType.name} (${lockType.descriptiveName})
+                ${buildType.extendedFullName} (${lockType.descriptiveName})
               </span>
             </admin:editBuildTypeLink>
           </l:li>
