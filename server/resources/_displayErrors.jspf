@@ -19,6 +19,7 @@
 </script>
 
 <c:if test="${errorsCount gt 0}">
+  <p>
   <div class="attentionComment" style="width: 100%">
     Found <strong>${errorsCount}</strong> build configuration<bs:s val="${errorsCount}"/> containing  errors. <a id="errorDetailsToggle" href="#" onclick="BS.SharedResourcesErrors.toggle()">Show details...</a>
     <div id="errorDetails" style="display: none">
@@ -33,7 +34,7 @@
             <admin:editBuildTypeLink buildTypeId="${bt.externalId}"
                                      step="${buildConfigSteps[2].stepId}"
                                      cameFromUrl="${url}">
-              <bs:out value="${bt.extendedName}"/>
+              <bs:out value="${bt.extendedFullName}"/>
             </admin:editBuildTypeLink>
             <ul>
               <c:forEach var="d" items="${errDetails}">
@@ -45,4 +46,5 @@
       </ul>
     </div>
   </div>
+  </p>
 </c:if>

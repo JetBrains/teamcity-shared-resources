@@ -30,21 +30,20 @@
 <c:set var="inplaceMode" value="<%=HealthStatusItemDisplayMode.IN_PLACE%>"/>
 
 <c:if test="${not empty invalidLocks}">
-  <c:choose>
-    <c:when test="${showMode == inplaceMode}">
-      <div>
-        <bs:out value="${buildType.name}"/> contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
+  <div>
+    <bs:buildTypeLink buildType="${buildType}">
+      <bs:out value="${buildType.extendedFullName}"/>
+    </bs:buildTypeLink> contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
+    <c:choose>
+      <c:when test="${showMode == inplaceMode}">
         <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
             <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>
           </c:forEach>
         </ul>
-      </div>
-    </c:when>
-    <c:otherwise>
-      <div>
-        <bs:buildTypeLink buildType="${buildType}"/>&nbsp;contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
+      </c:when>
+      <c:otherwise>
         <%
           @SuppressWarnings("unchecked")
           final Set<Lock> locks = ((Map<Lock, String>)healthStatusItem.getAdditionalData().get("invalid_locks")).keySet();
@@ -56,7 +55,7 @@
           }
         }, ", ")
         %>
-      </div>
-    </c:otherwise>
-  </c:choose>
+      </c:otherwise>
+    </c:choose>
+  </div>
 </c:if>
