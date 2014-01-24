@@ -550,8 +550,8 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <bs:out value="No resources available. Please add resource in the project settings."/>
       </div>
       <div class="popupSaveButtonsBlock">
-        <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
         <forms:submit id="locksDialogSubmit" type="button" label="Save" onclick="BS.LocksDialog.submit();"/>
+        <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
       </div>
     </bs:dialog>
     <div style="float:right">
