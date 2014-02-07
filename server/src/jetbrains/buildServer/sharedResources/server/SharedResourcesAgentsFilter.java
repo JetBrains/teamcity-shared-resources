@@ -14,7 +14,10 @@ import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -90,12 +93,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       }
     }
     final AgentsFilterResult result = new AgentsFilterResult();
-    if (reason != null) {
-      result.setWaitReason(reason);
-      result.setFilteredConnectedAgents(Collections.<SBuildAgent>emptyList());
-    } else {
-      result.setFilteredConnectedAgents(null);
-    }
+    result.setWaitReason(reason);
     return result;
   }
 

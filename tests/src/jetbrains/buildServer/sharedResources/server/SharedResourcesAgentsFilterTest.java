@@ -100,6 +100,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -118,6 +119,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -141,6 +143,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -177,7 +180,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNotNull(result.getWaitReason());
-
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -207,6 +210,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -254,6 +258,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
 
@@ -313,6 +318,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
   @Test
@@ -378,6 +384,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNotNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
   }
 
 
