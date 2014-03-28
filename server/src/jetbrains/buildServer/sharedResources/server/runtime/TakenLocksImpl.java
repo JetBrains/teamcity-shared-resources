@@ -100,11 +100,7 @@ public class TakenLocksImpl implements TakenLocks {
                                @NotNull final BuildPromotionInfo bpInfo,
                                @NotNull final Collection<Lock> locks) {
     for (Lock lock : locks) {
-      TakenLock takenLock = takenLocks.get(lock.getName());
-      if (takenLock == null) {
-        takenLock = new TakenLock();
-        takenLocks.put(lock.getName(), takenLock);
-      }
+      final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
       takenLock.addLock(bpInfo, lock);
     }
   }
@@ -118,12 +114,9 @@ public class TakenLocksImpl implements TakenLocks {
     final Map<String, Resource> resources = myResources.asMap(projectId);
     final Collection<Lock> result = new ArrayList<Lock>();
     for (Lock lock : locksToTake) {
-      final TakenLock takenLock = takenLocks.get(lock.getName());
-      if (takenLock != null) {
-        final Resource resource = resources.get(lock.getName());
-        if (resource != null && resource.isEnabled() && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
-          result.add(lock);
-        }
+      final Resource resource = resources.get(lock.getName());
+      if (resource != null && resource.isEnabled() && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
+        result.add(lock);
       }
     }
     return result;
@@ -151,7 +144,7 @@ public class TakenLocksImpl implements TakenLocks {
     // write            -> all
     // read with value  -> specific
     // read             -> any
-    final TakenLock takenLock = takenLocks.get(lock.getName());
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
     switch (lock.getType()) {
       case READ:   // check at least one value is available
         // check for unique writeLocks
@@ -166,7 +159,7 @@ public class TakenLocksImpl implements TakenLocks {
           break;
         }
         // 2) check for quota (read + write)
-        if (resource.getValues().size() <= takenLock.getReadLocks().size() + takenLock.getWriteLocks().size()) {
+        if (resource.getValues().size() <= takenLock.getLocksCount()) {
           // quota exceeded
           result = false;
           break;
@@ -201,7 +194,7 @@ public class TakenLocksImpl implements TakenLocks {
                                              @NotNull final QuotedResource resource,
                                              @NotNull final Set<String> fairSet) {
     boolean result = true;
-    final TakenLock takenLock = takenLocks.get(lock.getName());
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
     switch (lock.getType()) {
       case READ:
         if (fairSet.contains(lock.getName())) { // some build requested write lock before us
@@ -214,18 +207,31 @@ public class TakenLocksImpl implements TakenLocks {
           break;
         }
         if (!resource.isInfinite()) {
-          if (takenLock.getReadLocks().size() >= resource.getQuota()) {
+          if (takenLock.getLocksCount() >= resource.getQuota()) {
             result = false;
             break;
           }
         }
         break;
       case WRITE:
-        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) { // if anyone is accessing the resource
+        if (takenLock.hasReadLocks()
+                || takenLock.hasWriteLocks()
+                || takenLock.getLocksCount() >= resource.getQuota()) { // if anyone is accessing the resource
           fairSet.add(lock.getName()); // remember write access request
           result = false;
         }
     }
     return result;
+  }
+
+  @NotNull
+  private TakenLock getOrCreateTakenLock(@NotNull final Map<String, TakenLock> takenLocks,
+                                         @NotNull final String name) {
+    TakenLock takenLock = takenLocks.get(name);
+    if (takenLock == null) {
+      takenLock = new TakenLock();
+      takenLocks.put(name, takenLock);
+    }
+    return takenLock;
   }
 }

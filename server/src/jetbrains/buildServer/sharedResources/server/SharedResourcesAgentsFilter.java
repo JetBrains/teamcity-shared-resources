@@ -79,13 +79,11 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
             final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
-            if (!takenLocks.isEmpty()) {
-              final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
-              if (!unavailableLocks.isEmpty()) {
-                reason = createWaitReason(takenLocks, unavailableLocks);
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + reason.getDescription() + "]");
-                }
+            final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
+            if (!unavailableLocks.isEmpty()) {
+              reason = createWaitReason(takenLocks, unavailableLocks);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + reason.getDescription() + "]");
               }
             }
           }
@@ -103,7 +101,9 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
     builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
     builder.append("to become available: ");
+    final Set<String> lockDescriptions = new HashSet<String>();
     for (Lock lock : unavailableLocks) {
+      final StringBuilder descr = new StringBuilder();
       final Set<String> buildTypeNames = new HashSet<String>();
       for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getReadLocks().keySet()) {
         BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
@@ -117,14 +117,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           buildTypeNames.add(bt.getName());
         }
       }
+      descr.append(lock.getName());
       if (!buildTypeNames.isEmpty()) {
-        builder.append(lock.getName()).append(" (locked by ");
-        builder.append(StringUtil.join(buildTypeNames, ","));
-        builder.append(")");
+        descr.append(" (locked by ");
+        descr.append(StringUtil.join(buildTypeNames, ", "));
+        descr.append(")");
       }
-      builder.append(", ");
+      lockDescriptions.add(descr.toString());
     }
-    final String reasonDescription = builder.substring(0, builder.length() - 2);
+    builder.append(StringUtil.join(lockDescriptions, ", "));
+    final String reasonDescription = builder.toString();
     return new SimpleWaitReason(reasonDescription);
   }
 

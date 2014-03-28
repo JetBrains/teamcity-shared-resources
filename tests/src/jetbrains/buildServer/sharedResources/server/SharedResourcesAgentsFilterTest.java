@@ -225,6 +225,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
+    final Map<String, TakenLock> takenLocks = Collections.emptyMap();
+
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
@@ -251,7 +253,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(runningBuilds));
 
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
-      will(returnValue(Collections.emptyMap()));
+      will(returnValue(takenLocks));
+
+      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
+      will(returnValue(Collections.emptyList()));
 
     }});
 
@@ -386,7 +391,6 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     assertNotNull(result.getWaitReason());
     assertNull(result.getFilteredConnectedAgents());
   }
-
 
   private AgentsFilterContext createContext() {
     return new DefaultAgentsFilterContext(myCustomData) {
