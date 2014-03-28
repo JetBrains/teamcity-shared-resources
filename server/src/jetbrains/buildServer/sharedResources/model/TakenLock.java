@@ -59,6 +59,14 @@ public class TakenLock {
     return Collections.unmodifiableMap(writeLocks);
   }
 
+  /**
+   * Gets overall locks count without differentiation by type
+   * @return overall locks count
+   */
+  public int getLocksCount() {
+    return readLocks.size() + writeLocks.size();
+  }
+
   public boolean hasReadLocks() {
     return !readLocks.isEmpty();
   }

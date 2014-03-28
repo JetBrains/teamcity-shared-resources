@@ -642,4 +642,54 @@ public class TakenLocksImplTest extends BaseTestCase {
     assertNotNull(result);
     assertEmpty(result);
   }
+
+  @Test
+  @TestFor (issues = "TW-34917")
+  public void testGetUnavailableLocks_ZeroQuota_Read() throws Exception {
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put("quoted_resource1", ResourceFactory.newQuotedResource("quoted_resource1", 0, true));
+
+    final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock("quoted_resource1", LockType.READ));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
+
+    m.checking(new Expectations() {{
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection<Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    assertNotNull(result);
+    assertNotEmpty(result);
+    assertContains(result, locksToTake.iterator().next());
+  }
+
+  @Test
+  @TestFor (issues = "TW-34917")
+  public void testGetUnavailableLocks_ZeroQuota_Write() throws Exception {
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put("quoted_resource1", ResourceFactory.newQuotedResource("quoted_resource1", 0, true));
+
+    final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock("quoted_resource1", LockType.WRITE));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
+
+    m.checking(new Expectations() {{
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection<Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    assertNotNull(result);
+    assertNotEmpty(result);
+    assertContains(result, locksToTake.iterator().next());
+  }
 }
