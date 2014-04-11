@@ -382,7 +382,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(bpex).getBuildType();
       will(returnValue(buildTypeEx));
 
-      oneOf(buildTypeEx).getName();
+      oneOf(buildTypeEx).getExtendedFullName();
       will(returnValue(name));
     }});
 
