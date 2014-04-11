@@ -692,4 +692,38 @@ public class TakenLocksImplTest extends BaseTestCase {
     assertNotEmpty(result);
     assertContains(result, locksToTake.iterator().next());
   }
+
+
+  /**
+   * Test setup:
+   * 1 infinite resource
+   * 0 locks on the resource
+   *
+   * build should succeed in acquiring resource
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor(issues = "TW-36042")
+  public void testGetUnavailableLocks_MultipleBuilds_InfiniteLock() throws Exception {
+    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    resources.put("infinite_resource", ResourceFactory.newInfiniteResource("infinite_resource", true));
+
+    final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
+      add(new Lock("infinite_resource", LockType.WRITE));
+    }};
+
+    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
+
+    m.checking(new Expectations() {{
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+    }});
+
+    final Set<String> fairSet = new HashSet<String>();
+
+    final Collection<Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    assertNotNull(result);
+    assertEmpty(result);
+  }
 }
