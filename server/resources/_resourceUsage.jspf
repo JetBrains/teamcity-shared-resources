@@ -1,3 +1,4 @@
+<%@ page import="jetbrains.buildServer.controllers.admin.projects.BuildConfigurationSteps" %>
 <c:set var="used" value="${not empty usage}"/>
 <c:set var="usageSize" value="${fn:length(usage)}"/>
 <c:choose>
@@ -11,10 +12,8 @@
         <c:forEach items="${usage}" var="usedInBuildType">
           <c:set var="buildType" value="${usedInBuildType.key}"/>
           <c:set var="lockType" value="${usedInBuildType.value}"/>
-          <admin:editBuildTypeNavSteps settings="${buildType}"/>
           <l:li>
-            <%--@elvariable id="buildConfigSteps" type="type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"--%>
-            <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="${buildConfigSteps[2].stepId}" cameFromUrl="${url}">
+            <admin:editBuildTypeLink buildTypeId="${buildType.externalId}" step="<%=BuildConfigurationSteps.BUILD_FEATURES_STEP_ID%>" cameFromUrl="${url}">
               <span style="white-space: nowrap">
                 ${buildType.extendedFullName} (${lockType.descriptiveName})
               </span>
