@@ -206,22 +206,23 @@ public class TakenLocksImpl implements TakenLocks {
           result = false;
           break;
         }
-        if (!resource.isInfinite()) {
-          if (takenLock.getLocksCount() >= resource.getQuota()) {
-            result = false;
-            break;
-          }
+        if (!isQuotaEnough(takenLock, resource)) {
+          result = false;
+          break;
         }
         break;
       case WRITE:
-        if (takenLock.hasReadLocks()
-                || takenLock.hasWriteLocks()
-                || takenLock.getLocksCount() >= resource.getQuota()) { // if anyone is accessing the resource
+        // if anyone is accessing the resource
+        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks() || !isQuotaEnough(takenLock, resource)) {
           fairSet.add(lock.getName()); // remember write access request
           result = false;
         }
     }
     return result;
+  }
+
+  private boolean isQuotaEnough(@NotNull final TakenLock takenLock, @NotNull final QuotedResource resource) {
+    return resource.isInfinite() || takenLock.getLocksCount() < resource.getQuota();
   }
 
   @NotNull
