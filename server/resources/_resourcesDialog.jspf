@@ -46,12 +46,6 @@
         </forms:select>
       </td>
     </tr>
-    <tr>
-      <th style="white-space: nowrap">Enabled: </th>
-      <td>
-        <forms:checkbox name="resource_enabled" id="resource_enabled" checked="true"/>
-      </td>
-    </tr>
     <tr id="quota_row" style="display: none">
       <th style="white-space: nowrap"><label for="resource_quota">Resource quota: <l:star/></label></th>
       <td>

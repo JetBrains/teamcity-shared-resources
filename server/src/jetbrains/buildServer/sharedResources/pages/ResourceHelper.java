@@ -39,24 +39,23 @@ public class ResourceHelper {
   public Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
     final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
     final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
-    boolean resourceState = StringUtil.isTrue(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE));
     Resource resource = null;
     if (ResourceType.QUOTED.equals(resourceType)) {
       final String resourceQuota = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
       if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
         try {
           int quota = Integer.parseInt(resourceQuota);
-          resource = ResourceFactory.newQuotedResource(resourceName, quota, resourceState);
+          resource = ResourceFactory.newQuotedResource(resourceName, quota, true);
         } catch (IllegalArgumentException e) {
           LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
         }
       } else { // we have infinite resource
-        resource = ResourceFactory.newInfiniteResource(resourceName, resourceState);
+        resource = ResourceFactory.newInfiniteResource(resourceName, true);
       }
     } else if (ResourceType.CUSTOM.equals(resourceType)) {
       final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
       final List<String> strings = StringUtil.split(values, true, '\r', '\n');
-      resource = ResourceFactory.newCustomResource(resourceName, strings, resourceState);
+      resource = ResourceFactory.newCustomResource(resourceName, strings, true);
     }
     return resource;
   }
