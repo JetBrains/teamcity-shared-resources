@@ -621,14 +621,9 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     resources.put("quoted_resource1", ResourceFactory.newQuotedResource("quoted_resource1", 1, false));
 
+    final Lock lockToTake = new Lock("quoted_resource1", LockType.READ);
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock("quoted_resource1", LockType.READ));
-    }};
-
-    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>() {{
-      TakenLock tl1 = new TakenLock();
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("quoted_resource1", LockType.WRITE));
-      put("quoted_resource1", tl1);
+      add(lockToTake);
     }};
 
     m.checking(new Expectations() {{
@@ -638,9 +633,10 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<String>();
 
-    final Collection result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Collection<Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.<String, TakenLock>emptyMap(), myProjectId, fairSet);
     assertNotNull(result);
-    assertEmpty(result);
+    assertEquals(1, result.size());
+    assertEquals(lockToTake, result.iterator().next());
   }
 
   @Test

@@ -115,8 +115,10 @@ public class TakenLocksImpl implements TakenLocks {
     final Collection<Lock> result = new ArrayList<Lock>();
     for (Lock lock : locksToTake) {
       final Resource resource = resources.get(lock.getName());
-      if (resource != null && resource.isEnabled() && !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
-        result.add(lock);
+      if (resource != null) {
+        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
+          result.add(lock);
+        }
       }
     }
     return result;
