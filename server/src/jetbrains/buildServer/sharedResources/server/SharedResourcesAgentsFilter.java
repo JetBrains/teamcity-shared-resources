@@ -105,16 +105,19 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     for (Lock lock : unavailableLocks) {
       final StringBuilder descr = new StringBuilder();
       final Set<String> buildTypeNames = new HashSet<String>();
-      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getReadLocks().keySet()) {
-        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
-        if (bt != null) {
-          buildTypeNames.add(bt.getExtendedFullName());
+      final TakenLock takenLock = takenLocks.get(lock.getName());
+      if (takenLock != null) {
+        for (BuildPromotionInfo promotion : takenLock.getReadLocks().keySet()) {
+          BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+          if (bt != null) {
+            buildTypeNames.add(bt.getExtendedFullName());
+          }
         }
-      }
-      for (BuildPromotionInfo promotion: takenLocks.get(lock.getName()).getWriteLocks().keySet()) {
-        BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
-        if (bt != null) {
-          buildTypeNames.add(bt.getExtendedFullName());
+        for (BuildPromotionInfo promotion : takenLock.getWriteLocks().keySet()) {
+          BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+          if (bt != null) {
+            buildTypeNames.add(bt.getExtendedFullName());
+          }
         }
       }
       descr.append(lock.getName());
