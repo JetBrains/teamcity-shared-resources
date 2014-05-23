@@ -392,6 +392,68 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     assertNull(result.getFilteredConnectedAgents());
   }
 
+  /**
+   * Tests case when no locks are taken on the resource, but resource is anyway unavailable
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor(issues = "TW-27930")
+  public void testNoLockedResources_ResourceDisabled() throws Exception {
+    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    locksToTake.put(lock.getName(), lock);
+
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
+    final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
+    final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
+
+    final Map<String, TakenLock> takenLocks = Collections.emptyMap();
+    final List<Lock> unavailableLocks = new ArrayList<Lock>() {{
+      add(lock);
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(myQueuedBuild).getBuildPromotionInfo();
+      will(returnValue(myBuildPromotion));
+
+      oneOf(myBuildPromotion).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myBuildPromotion).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(myLocks).fromBuildFeaturesAsMap(features);
+      will(returnValue(locksToTake));
+
+      oneOf(myInspector).inspect(myBuildType);
+      will(returnValue(Collections.emptyMap()));
+
+      oneOf(myBuildDistributorInput).getRunningBuilds();
+      will(returnValue(runningBuilds));
+
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(runningBuilds));
+
+      oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
+      will(returnValue(Collections.emptyMap()));
+
+      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
+      will(returnValue(unavailableLocks));
+
+    }});
+
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNotNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
+
+  }
+
   private AgentsFilterContext createContext() {
     return new DefaultAgentsFilterContext(myCustomData) {
 
