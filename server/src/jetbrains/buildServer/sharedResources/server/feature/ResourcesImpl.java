@@ -83,14 +83,13 @@ public final class ResourcesImpl implements Resources {
   @NotNull
   @Override
   public Map<String, Resource> asMap(@NotNull final String projectId) {
-    final Map<String, Resource> result = new HashMap<String, Resource>();
+    final Map<String, Resource> result = new TreeMap<String, Resource>(RESOURCE_NAMES_COMPARATOR);
     SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      String parentId = project.getParentProjectId();
-      if (parentId != null) {
-        result.putAll(asMap(parentId));
+      final List<SProject> projects = project.getProjectPath();
+      for (SProject p: projects) {
+        result.putAll(getSettings(p.getProjectId()).getResourceMap());
       }
-      result.putAll(getSettings(projectId).getResourceMap());
     }
     return result;
   }

@@ -19,6 +19,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -164,8 +165,11 @@ public class ResourcesImplTest extends BaseTestCase {
       oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
 
-      oneOf(myProject).getParentProjectId();
-      will(returnValue(null));
+      oneOf(myProject).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Collections.singletonList(myProject)));
     }});
 
     final Map<String, Resource> result = resources.asMap(myProjectId);
