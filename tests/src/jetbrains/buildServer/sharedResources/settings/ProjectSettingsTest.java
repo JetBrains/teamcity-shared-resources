@@ -128,6 +128,20 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "  </JetBrains.SharedResources>\n" +
                   "</settings>\n" +
                   "\n";
+  // disabled resource
+  private static final String xmlDisabled =
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                  "<settings>\n" +
+                  "  <JetBrains.SharedResources>\n" +
+                  "    <resource>\n" +
+                  "      <name>DisabledResource</name>\n" +
+                  "      <enabled>false</enabled>\n" +
+                  "      <values type=\"quota\">\n" +
+                  "        <quota>1</quota>\n" +
+                  "      </values>\n" +
+                  "    </resource>\n" +
+                  "  </JetBrains.SharedResources>\n" +
+                  "</settings>\n";
 
   @BeforeMethod
   @Override
@@ -189,6 +203,12 @@ public class ProjectSettingsTest extends BaseTestCase {
     validateSettingsMixed(settings);
   }
 
+  @Test
+  public void testReadFromDisabled() throws Exception {
+    final PluginProjectSettings settings = createProjectSettings(xmlDisabled);
+    validateSettingsDisabled(settings);
+  }
+
   /**
    * @see PluginProjectSettings#writeTo(org.jdom.Element)
    * @throws Exception if something goes wrong
@@ -211,6 +231,11 @@ public class ProjectSettingsTest extends BaseTestCase {
   @Test
   public void testWriteTo_Mixed() throws Exception {
     validateSettingsMixed(readWrite(xmlMixed));
+  }
+
+  @Test
+  public void testWriteTo_Disabled() throws Exception {
+    validateSettingsDisabled(readWrite(xmlDisabled));
   }
 
   /**
@@ -308,6 +333,22 @@ public class ProjectSettingsTest extends BaseTestCase {
     for (int i = 0; i < 6; i++) {
       assertContains(values, "value" + i);
     }
+  }
+
+  private void validateSettingsDisabled(@NotNull final PluginProjectSettings settings) {
+    final Map<String, Resource> resources = settings.getResourceMap();
+    assertNotNull(resources);
+    assertEquals(1, resources.size());
+    assertEquals(1, settings.getCount());
+
+    final Resource r = resources.get("DisabledResource");
+    assertNotNull(r);
+    assertFalse(r.isEnabled());
+    assertEquals(ResourceType.QUOTED, r.getType());
+
+    final QuotedResource qr = (QuotedResource)r;
+    assertFalse(qr.isInfinite());
+    assertEquals(1, qr.getQuota());
   }
 
   /**
