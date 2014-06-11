@@ -31,6 +31,7 @@
   <test name="Web tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.pages.actions.EditActionTest"/>
+      <class name="jetbrains.buildServer.sharedResources.pages.ResourceHelperTest"/>
     </classes>
   </test>
 </suite>
