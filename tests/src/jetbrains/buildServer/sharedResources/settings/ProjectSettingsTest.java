@@ -17,11 +17,9 @@
 package jetbrains.buildServer.sharedResources.settings;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
-import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.model.resources.*;
 import jetbrains.buildServer.util.TestFor;
+import org.intellij.lang.annotations.Language;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -30,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +45,7 @@ import java.util.Map;
 @TestFor (testForClass = PluginProjectSettings.class)
 public class ProjectSettingsTest extends BaseTestCase {
 
+  @Language("XML")
   private static final String xmlQuota =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -59,6 +59,8 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "  </JetBrains.SharedResources>\n" +
                   "</settings>\n" +
                   "\n";
+
+  @Language("XML")
   private static final String xmlQuotaInfinite =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -73,6 +75,7 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "</settings>\n" +
                   "\n";
 
+  @Language("XML")
   private static final String xmlEmpty =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -81,6 +84,7 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "</settings>\n" +
                   "\n";
 
+  @Language("XML")
   private static final String xmlCustom =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -98,6 +102,7 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "</settings>\n" +
                   "\n";
   // mixed quoted (2 types) and custom resources, untrimmed strings etc
+  @Language("XML")
   private static final String xmlMixed =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -129,6 +134,7 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "</settings>\n" +
                   "\n";
   // disabled resource
+  @Language("XML")
   private static final String xmlDisabled =
           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                   "<settings>\n" +
@@ -251,6 +257,102 @@ public class ProjectSettingsTest extends BaseTestCase {
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     assertEmpty(newSettings.getResources());
+  }
+
+  @Test
+  public void testAddResource() throws Exception {
+    final PluginProjectSettings settings = createProjectSettings(xmlEmpty);
+    assertNotNull(settings);
+    final Collection<Resource> resources = settings.getResources();
+    assertNotNull(resources);
+    assertEmpty(resources);
+
+    final Resource infinite = ResourceFactory.newInfiniteResource("infinite", true);
+    settings.addResource(infinite);
+    final Resource quoted = ResourceFactory.newQuotedResource("quoted", 1, true);
+    settings.addResource(quoted);
+    final Resource custom = ResourceFactory.newCustomResource("custom", Arrays.asList("value1", "value2"), true);
+    settings.addResource(custom);
+
+    final Element newSettingsRoot = createNewSettingsBase();
+    settings.writeTo(newSettingsRoot);
+    final PluginProjectSettings newSettings = new PluginProjectSettings();
+
+    newSettings.readFrom(newSettingsRoot);
+    assertNotNull(newSettings.getResources());
+    final Collection newResources = newSettings.getResources();
+    assertNotEmpty(newResources);
+    assertContains(newResources, infinite);
+    assertContains(newResources, quoted);
+    assertContains(newResources, custom);
+  }
+
+  @Test
+  public void testDeleteResource() throws Exception {
+    final PluginProjectSettings settings = createProjectSettings(xmlEmpty);
+    assertNotNull(settings);
+    final Collection<Resource> resources = settings.getResources();
+    assertNotNull(resources);
+    assertEmpty(resources);
+
+    final Resource infinite = ResourceFactory.newInfiniteResource("infinite", true);
+    settings.addResource(infinite);
+
+    Element newSettingsRoot = createNewSettingsBase();
+    settings.writeTo(newSettingsRoot);
+    PluginProjectSettings newSettings = new PluginProjectSettings();
+    newSettings.readFrom(newSettingsRoot);
+    assertNotNull(newSettings.getResources());
+    Collection newResources = newSettings.getResources();
+    assertNotEmpty(newResources);
+    assertContains(newResources, infinite);
+
+    settings.deleteResource("infinite");
+
+    newSettingsRoot = createNewSettingsBase();
+    settings.writeTo(newSettingsRoot);
+    newSettings = new PluginProjectSettings();
+    newSettings.readFrom(newSettingsRoot);
+    assertNotNull(newSettings.getResources());
+    newResources = newSettings.getResources();
+    assertEmpty(newResources);
+  }
+
+  @Test
+  public void testEditResource() throws Exception {
+    final String oldName = "oldResource";
+    final String newName = "newResource";
+
+    final PluginProjectSettings settings = createProjectSettings(xmlEmpty);
+    assertNotNull(settings);
+    final Collection<Resource> resources = settings.getResources();
+    assertNotNull(resources);
+    assertEmpty(resources);
+
+    final Resource oldResource = ResourceFactory.newInfiniteResource(oldName, true);
+    settings.addResource(oldResource);
+
+    Element newSettingsRoot = createNewSettingsBase();
+    settings.writeTo(newSettingsRoot);
+    PluginProjectSettings newSettings = new PluginProjectSettings();
+    newSettings.readFrom(newSettingsRoot);
+    assertNotNull(newSettings.getResources());
+    Collection newResources = newSettings.getResources();
+    assertNotEmpty(newResources);
+    assertContains(newResources, oldResource);
+
+    final Resource newResource = ResourceFactory.newQuotedResource(newName, 10, true);
+    settings.editResource(oldName, newResource);
+    newSettingsRoot = createNewSettingsBase();
+    settings.writeTo(newSettingsRoot);
+    newSettings = new PluginProjectSettings();
+    newSettings.readFrom(newSettingsRoot);
+    assertNotNull(newSettings.getResources());
+    newResources = newSettings.getResources();
+    assertNotEmpty(newResources);
+    assertEquals(1, newResources.size());
+    assertNotContains(newResources, oldResource);
+    assertContains(newResources, newResource);
   }
 
   // UTILS
