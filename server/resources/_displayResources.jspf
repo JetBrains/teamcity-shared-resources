@@ -45,7 +45,7 @@
         <c:set var="typeValue" value="Custom values"/>
       </c:when>
     </c:choose>
-    <td style="width: 15%" class="highlight" onclick="${onclick}">
+    <td style="width: 15%" class="${highlight}" onclick="${onclick}">
       <div style="${cellStyle}">
         <bs:out value="${typeValue}"/>
       </div>
