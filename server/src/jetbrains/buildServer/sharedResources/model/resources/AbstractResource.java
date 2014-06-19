@@ -13,12 +13,19 @@ public abstract class AbstractResource implements Resource {
   private final String myName;
 
   @NotNull
+  private final String myProjectId;
+
+  @NotNull
   private final ResourceType myType;
 
   private final boolean myState;
 
-  protected AbstractResource(@NotNull final String name, @NotNull final ResourceType type, boolean state) {
+  protected AbstractResource(@NotNull final String projectId,
+                             @NotNull final String name,
+                             @NotNull final ResourceType type,
+                             boolean state) {
     myName = name;
+    myProjectId = projectId;
     myType = type;
     myState = state;
   }
@@ -41,15 +48,23 @@ public abstract class AbstractResource implements Resource {
   }
 
   @Override
+  @NotNull
+  public String getProjectId() {
+    return myProjectId;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof AbstractResource)) return false;
     AbstractResource that = (AbstractResource) o;
-    return myName.equals(that.myName);
+    return myName.equals(that.myName) && myProjectId.equals(that.myProjectId);
   }
 
   @Override
   public int hashCode() {
-    return myName.hashCode();
+    int result = myName.hashCode();
+    result = 31 * result + myProjectId.hashCode();
+    return result;
   }
 }

@@ -62,7 +62,7 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
       final Resource resource = myResources.asMap(projectId).get(resourceName);
-      final Resource resourceInState = myResourceHelper.getResourceInState(resource, newState);
+      final Resource resourceInState = myResourceHelper.getResourceInState(projectId, resource, newState);
       try {
         myResources.editResource(projectId, resourceName, resourceInState);
       } catch (DuplicateResourceException e) {

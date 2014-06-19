@@ -42,6 +42,9 @@ public class PluginProjectSettings implements ProjectSettings {
   @NotNull
   private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
+  @NotNull
+  private final ResourceFactory myFactory;
+
   /**
    * XML storage structure
    *
@@ -96,7 +99,9 @@ public class PluginProjectSettings implements ProjectSettings {
   @NotNull
   private Map<String, Resource> myResourceMap = new HashMap<String, Resource>();
 
-  public PluginProjectSettings() {}
+  public PluginProjectSettings(@NotNull final String projectId) {
+    myFactory = ResourceFactory.getFactory(projectId);
+  }
 
   @Override
   public void dispose() {
@@ -145,9 +150,9 @@ public class PluginProjectSettings implements ProjectSettings {
     final String resourceQuota = valuesElement.getChild(XML.TAG_QUOTA).getTextTrim();
     Resource parsedResource;
     if (XML.VALUE_QUOTA_INFINITE.equals(resourceQuota)) {
-      parsedResource = ResourceFactory.newInfiniteResource(resourceName, state);
+      parsedResource = myFactory.newInfiniteResource(resourceName, state);
     } else {
-      parsedResource = ResourceFactory.newQuotedResource(resourceName,  Integer.parseInt(resourceQuota), state);
+      parsedResource = myFactory.newQuotedResource(resourceName,  Integer.parseInt(resourceQuota), state);
     }
     return parsedResource;
   }
@@ -158,7 +163,7 @@ public class PluginProjectSettings implements ProjectSettings {
     for(Object o: children) {
       c.add(((Element)o).getTextTrim());
     }
-    return ResourceFactory.newCustomResource(resourceName, c, state);
+    return myFactory.newCustomResource(resourceName, c, state);
   }
 
 

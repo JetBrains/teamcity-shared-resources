@@ -51,13 +51,18 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private Map<String, Resource> myRootResourceMap;
 
-  private final String myProjectId = TestUtils.generateRandomName();
+  private ResourceFactory myResourceFactory;
 
-  private final String myRootProjectId = "<ROOT>";
+  private ResourceFactory myRootResourceFactory;
+
   /**
    * Class under test
    */
   private ResourcesImpl resources;
+
+  private final String myProjectId = TestUtils.generateRandomName();
+
+  private final String myRootProjectId = "<ROOT>";
 
   @BeforeMethod
   @Override
@@ -76,20 +81,24 @@ public class ResourcesImplTest extends BaseTestCase {
     myRootProjectSettings = m.mock(PluginProjectSettings.class, "myRootProjectSettings");
     resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager, mySecurityContextEx);
 
+    myRootResourceFactory = ResourceFactory.getFactory(myRootProjectId);
+    myResourceFactory = ResourceFactory.getFactory(myProjectId);
+
+
     myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource("resource1", 1, true));
-      put("resource2", ResourceFactory.newInfiniteResource("resource2", true));
-      put("resource3", ResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3"), true));
+      put("resource1", myResourceFactory.newQuotedResource("resource1", 1, true));
+      put("resource2", myResourceFactory.newInfiniteResource("resource2", true));
+      put("resource3", myResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3"), true));
     }};
 
     myRootResourceMap = new HashMap<String, Resource>() {{
-      put("root_resource", ResourceFactory.newInfiniteResource("root_resource", true));
+      put("root_resource", myRootResourceFactory.newInfiniteResource("root_resource", true));
     }};
   }
 
   @Test
   public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", 1, true);
+    final Resource resource = myRootResourceFactory.newQuotedResource("new_resource1", 1, true);
     m.checking(createExpectationsCheck());
     m.checking(new Expectations() {{
       oneOf(myRootProjectSettings).getResourceMap();
@@ -115,7 +124,7 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test
   public void testEditResource_Success() throws Exception {
     final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource("resource1_newName", 1, true);
+    final Resource resource = myResourceFactory.newQuotedResource("resource1_newName", 1, true);
     m.checking(createExpectationsCheck());
     m.checking(new Expectations() {{
       oneOf(myRootProjectSettings).getResourceMap();

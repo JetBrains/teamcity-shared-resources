@@ -11,6 +11,22 @@ import java.util.List;
  */
 public class ResourceFactory {
 
+  @NotNull
+  private final String myProjectId;
+
+  /**
+   * Returns {@code ResourceFactory} that constructs resources for priject with given {@code projectId}
+   * @param projectId internal id of the project
+   * @return {@code ResourceFactory} for project with given id
+   */
+  public static ResourceFactory getFactory(@NotNull final String projectId) {
+    return new ResourceFactory(projectId);
+  }
+
+  private ResourceFactory(@NotNull final String projectId) {
+    myProjectId = projectId;
+  }
+
   /**
    * Creates new quoted resource with infinite quota
    *
@@ -19,8 +35,8 @@ public class ResourceFactory {
    * @return new infinite quoted resource
    */
   @NotNull
-  public static Resource newInfiniteResource(@NotNull final String name, boolean state) {
-    return QuotedResource.newInfiniteResource(name, state);
+  public Resource newInfiniteResource(@NotNull final String name, boolean state) {
+    return QuotedResource.newInfiniteResource(myProjectId, name, state);
   }
 
   /**
@@ -32,8 +48,8 @@ public class ResourceFactory {
    * @return new quoted resource with limited quota
    */
   @NotNull
-  public static Resource newQuotedResource(@NotNull final String name, final int quota, boolean state) {
-    return QuotedResource.newResource(name, quota, state);
+  public Resource newQuotedResource(@NotNull final String name, final int quota, boolean state) {
+    return QuotedResource.newResource(myProjectId, name, quota, state);
   }
 
   /**
@@ -45,8 +61,8 @@ public class ResourceFactory {
    * @return new custom resource with specified value space
    */
   @NotNull
-  public static Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
-    return CustomResource.newCustomResource(name, values, state);
+  public Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
+    return CustomResource.newCustomResource(myProjectId, name, values, state);
   }
 
 }

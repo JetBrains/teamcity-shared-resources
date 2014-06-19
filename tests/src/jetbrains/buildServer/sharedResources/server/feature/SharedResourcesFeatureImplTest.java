@@ -47,6 +47,8 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private final String myProjectId = "PROJECT_ID";
 
+  private ResourceFactory myResourceFactory;
+
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
@@ -58,6 +60,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     myBuildType = m.mock(SBuildType.class);
     myBuildTypeTemplate = m.mock(BuildTypeTemplate.class);
     params = new HashMap<String, String>();
+    myResourceFactory = ResourceFactory.getFactory(myProjectId);
     myLockedResources = new HashMap<String, Lock>() {{
       put("lock1", new Lock("lock1", LockType.READ));
       put("lock2", new Lock("lock2", LockType.WRITE));
@@ -215,9 +218,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
+      put("lock1", myResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", myResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", myResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
     }};
 
     m.checking(new Expectations() {{
@@ -244,8 +247,8 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
+      put("lock2", myResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", myResourceFactory.newCustomResource("lock3", Collections.singletonList("value1"), true));
     }};
 
     m.checking(new Expectations() {{
@@ -274,10 +277,10 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock1", myResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", myResourceFactory.newQuotedResource("lock2", 123, true));
       // wrong type here
-      put("lock3", ResourceFactory.newInfiniteResource("lock3", true));
+      put("lock3", myResourceFactory.newInfiniteResource("lock3", true));
     }};
 
     m.checking(new Expectations() {{
@@ -306,9 +309,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", Collections.singletonList("value2"), true));
+      put("lock1", myResourceFactory.newInfiniteResource("lock1", true));
+      put("lock2", myResourceFactory.newQuotedResource("lock2", 123, true));
+      put("lock3", myResourceFactory.newCustomResource("lock3", Collections.singletonList("value2"), true));
     }};
 
     m.checking(new Expectations() {{

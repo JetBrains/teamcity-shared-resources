@@ -69,6 +69,7 @@ public class EditActionTest extends BaseTestCase {
 
   private Messages myMessages;
 
+  private ResourceFactory myResourceFactory;
 
   @BeforeMethod
   @Override
@@ -86,6 +87,7 @@ public class EditActionTest extends BaseTestCase {
     myAjaxResponse = m.mock(Element.class);
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
+    myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
     myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features, myMessages);
 
   }
@@ -93,7 +95,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-29355")
   public void testPersistNameNotChanged() {
-    final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME, 111, true);
+    final Resource rc = myResourceFactory.newQuotedResource(RESOURCE_NAME, 111, true);
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -107,7 +109,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(rc));
 
       allowing(myResources);

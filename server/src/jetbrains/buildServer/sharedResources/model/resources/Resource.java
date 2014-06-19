@@ -30,4 +30,13 @@ public interface Resource {
    * @return state of the resource {@code enabled} / {@code disabled}
    */
   boolean isEnabled();
+
+  /**
+   * Returns internal id of the project, where
+   * current resource is defined
+   * @since 9.0
+   * @return internal id of the project
+   */
+  @NotNull
+  String getProjectId();
 }
