@@ -235,15 +235,17 @@ public class ResourcesImplTest extends BaseTestCase {
 
   @Test
   public void testDeleteResource() {
-    final String name = "myName1";
+    final Resource resource = myProjectResourceMap.get("resource1");
+    assertNotNull(resource);
+
     m.checking(new Expectations() {{
       oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
       will(returnValue(myProjectSettings));
 
-      oneOf(myProjectSettings).deleteResource(name);
+      oneOf(myProjectSettings).deleteResource(resource.getName());
     }});
 
-    resources.deleteResource(myProjectId, name);
+    resources.deleteResource(myProjectId, resource.getName());
     m.assertIsSatisfied();
   }
 
