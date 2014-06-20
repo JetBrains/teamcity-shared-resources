@@ -180,10 +180,5 @@ public class ResourceHelperTest extends BaseTestCase {
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
-
   }
-
-
-
-
 }

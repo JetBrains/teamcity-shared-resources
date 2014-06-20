@@ -74,11 +74,14 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
-        reason = checkForInvalidLocks(buildType);
+        reason = checkForInvalidLocks(buildType); // typecheck here
         if (reason == null) {
+          // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
+            // Resolved locks as multi-valued taken locks (for custom - multiple custom values, for quoted - number of quotes to take)
             final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
+            // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
             final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(takenLocks, unavailableLocks);

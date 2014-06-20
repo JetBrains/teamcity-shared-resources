@@ -33,15 +33,14 @@ public interface Resources {
   /**
    * Adds given resource to project resources
    *
-   * @param projectId id of the project
    * @param resource resource to add
    * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
    */
-  void addResource(@NotNull final String projectId,
-                   @NotNull final Resource resource) throws DuplicateResourceException;
+  void addResource(@NotNull final Resource resource) throws DuplicateResourceException;
 
   /**
    * Deletes given resource from the project
+   *
    * @param projectId id of the project
    * @param resourceName name of the resource
    */

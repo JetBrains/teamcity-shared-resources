@@ -34,6 +34,7 @@ public interface Resource {
   /**
    * Returns internal id of the project, where
    * current resource is defined
+   *
    * @since 9.0
    * @return internal id of the project
    */
