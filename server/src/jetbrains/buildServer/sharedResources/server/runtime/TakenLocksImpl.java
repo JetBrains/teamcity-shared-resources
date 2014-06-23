@@ -114,24 +114,6 @@ public class TakenLocksImpl implements TakenLocks {
     return result;
   }
 
-  private void addLockToTaken(@NotNull final Map<Resource, TakenLock> takenLocks,
-                              @NotNull final BuildPromotionEx bpEx,
-                              @NotNull final Resource resource,
-                              @NotNull final Lock lock) {
-    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
-    takenLock.addLock(bpEx, lock);
-  }
-
-  private TakenLock getOrCreateTakenLock(@NotNull final Map<Resource, TakenLock> takenLocks,
-                                         @NotNull final Resource resource) {
-    TakenLock takenLock = takenLocks.get(resource);
-    if (takenLock == null) {
-      takenLock = new TakenLock(resource);
-      takenLocks.put(resource, takenLock);
-    }
-    return takenLock;
-  }
-
   @NotNull
   @Override // todo: support several locks on resource here too -> Map<Resource, Collection<Lock>>
   public Map<Resource, Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
@@ -149,6 +131,24 @@ public class TakenLocksImpl implements TakenLocks {
       }
     }
     return result;
+  }
+
+  private void addLockToTaken(@NotNull final Map<Resource, TakenLock> takenLocks,
+                              @NotNull final BuildPromotionEx bpEx,
+                              @NotNull final Resource resource,
+                              @NotNull final Lock lock) {
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
+    takenLock.addLock(bpEx, lock);
+  }
+
+  private TakenLock getOrCreateTakenLock(@NotNull final Map<Resource, TakenLock> takenLocks,
+                                         @NotNull final Resource resource) {
+    TakenLock takenLock = takenLocks.get(resource);
+    if (takenLock == null) {
+      takenLock = new TakenLock(resource);
+      takenLocks.put(resource, takenLock);
+    }
+    return takenLock;
   }
 
   private boolean checkAgainstResource(@NotNull final Lock lock,
