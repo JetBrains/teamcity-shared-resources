@@ -20,6 +20,7 @@ import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -36,20 +37,20 @@ public interface TakenLocks {
    *
    * For running builds :
    *    looking first into artifact
-   *    secondly, if no artifact exists, looking into promotion
+   *    secondly, if no artifact exists, looking into promotion+buildType
    *
-   * For queued builds looking only in promotion
-   *
+   * For queued builds looking only in promotion+buildType
    *
    * @param projectId id of the project to filter by
    * @param runningBuilds running builds
    * @param queuedBuilds queued builds
-   * @return map of taken locks in format {@code <lockName, TakenLock>}
+   *
+   * @return map of taken locks in format {@code <Resource, TakenLock>}
    */
   @NotNull
-  Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                           @NotNull final Collection<SRunningBuild> runningBuilds,
-                                           @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
+  Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
+                                             @NotNull final Collection<SRunningBuild> runningBuilds,
+                                             @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**
    * Decides, whether required locks can be acquired by the build
@@ -60,9 +61,9 @@ public interface TakenLocks {
    * @return empty collection, if locks can be acquired, collection, that contains unavailable locks otherwise
    */
   @NotNull
-  Collection<Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
-                                       @NotNull final Map<String, TakenLock> takenLocks,
-                                       @NotNull final String projectId,
-                                       @NotNull final Set<String> fairSet);
+  Map<Resource, Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
+                                          @NotNull final Map<Resource, TakenLock> takenLocks,
+                                          @NotNull final String projectId,
+                                          @NotNull final Set<String> fairSet);
 
 }

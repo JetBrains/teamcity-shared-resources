@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.model;
 
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -33,10 +34,17 @@ import java.util.Map;
 public class TakenLock {
 
   @NotNull
+  private final Resource myResource;
+
+  @NotNull
   private final Map<BuildPromotionInfo, String> readLocks = new HashMap<BuildPromotionInfo, String>();
 
   @NotNull
   private final Map<BuildPromotionInfo, String> writeLocks = new HashMap<BuildPromotionInfo, String>();
+
+  public TakenLock(@NotNull final Resource resource) {
+    myResource = resource;
+  }
 
   public void addLock(@NotNull final BuildPromotionInfo info, @NotNull final Lock lock) {
     switch (lock.getType()) {
@@ -59,6 +67,11 @@ public class TakenLock {
     return Collections.unmodifiableMap(writeLocks);
   }
 
+  @NotNull
+  public Resource getResource() {
+    return myResource;
+  }
+
   /**
    * Gets overall locks count without differentiation by type
    * @return overall locks count
@@ -74,4 +87,6 @@ public class TakenLock {
   public boolean hasWriteLocks() {
     return !writeLocks.isEmpty();
   }
+
+
 }
