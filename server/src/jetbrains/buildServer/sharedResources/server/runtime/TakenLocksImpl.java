@@ -64,7 +64,8 @@ public class TakenLocksImpl implements TakenLocks {
   public Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
                                                     @NotNull final Collection<SRunningBuild> runningBuilds,
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
-    Map<Resource, TakenLock> result = new HashMap<Resource, TakenLock>();
+    final Map<Resource, TakenLock> result = new HashMap<Resource, TakenLock>();
+    final Map<String, Map<String, Resource>> cachedResources = new HashMap<String, Map<String, Resource>>();
     for (SRunningBuild build: runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
@@ -79,12 +80,13 @@ public class TakenLocksImpl implements TakenLocks {
         } else {
           locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
         }
+        if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
-        Map<String, Resource> buildTypeResources = myResources.asMap(buildType.getProjectId());
+        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
         // resolve locks against resources defined in project tree
         for (Map.Entry<String, Lock> entry: locks.entrySet()) {
           // collection, promotion, resource, lock
-          addLockToTaken(result, bpEx, buildTypeResources.get(entry.getKey()), entry.getValue());
+          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
         }
       }
     }
@@ -96,18 +98,26 @@ public class TakenLocksImpl implements TakenLocks {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
         Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+        if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
-        Map<String, Resource> buildTypeResources = myResources.asMap(buildType.getProjectId());
+        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
         for (Map.Entry<String, Lock> entry: locks.entrySet()) {
           // collection, promotion, resource, lock
-          addLockToTaken(result, bpEx, buildTypeResources.get(entry.getKey()), entry.getValue());
+          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
         }
       }
     }
-    /* todo: add local cache for already requested resources - so as not to call myResources.asMap for every single running build and build in queue
-     * todo: if no locks are defined in build features - skip the whole mess - do not request resources at all
-     */
+    return result;
+  }
 
+  @NotNull
+  private Map<String, Resource> getResources(@NotNull final String btProjectId,
+                                             @NotNull final Map<String, Map<String, Resource>> cachedResources) {
+    Map<String, Resource> result = cachedResources.get(btProjectId);
+    if (result == null) {
+      result = myResources.asMap(btProjectId);
+      cachedResources.put(btProjectId, result);
+    }
     return result;
   }
 

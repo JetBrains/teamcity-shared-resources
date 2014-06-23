@@ -146,9 +146,6 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb2_bt).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
-      will(returnValue(resources));
-
     }});
 
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
@@ -265,9 +262,6 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       oneOf(qb1_bt).getProjectId();
       will(returnValue(myProjectId));
-
-      oneOf(myResources).asMap(myProjectId);
-      will(returnValue(resources));
 
     }});
 
