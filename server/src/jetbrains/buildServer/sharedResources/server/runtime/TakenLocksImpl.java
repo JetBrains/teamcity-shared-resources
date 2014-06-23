@@ -59,7 +59,6 @@ public class TakenLocksImpl implements TakenLocks {
     myFeatures = features;
   }
 
-
   @NotNull
   @Override
   public Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
@@ -73,15 +72,13 @@ public class TakenLocksImpl implements TakenLocks {
         if (features.isEmpty()) continue;
         // at this point we have features
         BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
-        //RunningBuildEx rbEx = (RunningBuildEx) build;
-        //if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
-        // locks storage should provide {projectId, resourceName, locked values}
-        // myLocksStorage.load(rbEx)
-        // todo: make use of locks storage
-        //}
-        // todo: split execution flows for stored and not stored locks
-        // get locks defined in build features
-        Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+        RunningBuildEx rbEx = (RunningBuildEx) build;
+        Map<String, Lock> locks;
+        if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
+          locks = myLocksStorage.load(rbEx);
+        } else {
+          locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+        }
         // get resources defined in project tree, respecting inheritance
         Map<String, Resource> buildTypeResources = myResources.asMap(buildType.getProjectId());
         // resolve locks against resources defined in project tree

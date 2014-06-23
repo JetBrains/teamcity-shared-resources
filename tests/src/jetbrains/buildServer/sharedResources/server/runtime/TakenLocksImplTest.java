@@ -74,27 +74,32 @@ public class TakenLocksImplTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Resource lock1 = myResourceFactory.newInfiniteResource("lock1", true);
-    final Resource lock2 = myResourceFactory.newInfiniteResource("lock2", true);
+    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", true);
+    final Resource resource2 = myResourceFactory.newInfiniteResource("resource2", true);
+
+    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
+      put(resource1.getName(), resource1);
+      put(resource2.getName(), resource2);
+    }};
 
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ, ""));
-      put("lock2", new Lock("lock2", LockType.WRITE, ""));
+      put("resource1", new Lock("resource1", LockType.READ, ""));
+      put("resource2", new Lock("resource2", LockType.WRITE, ""));
 
     }};
 
     final Map<String, Lock> takenLocks2 = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ, ""));
+      put("resource1", new Lock("resource1", LockType.READ, ""));
     }};
 
-    final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
-    final RunningBuildEx rb2 = m.mock(RunningBuildEx.class, "rb-2");
+    final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "runningBuild_1");
+    final RunningBuildEx rb2 = m.mock(RunningBuildEx.class, "runningBuild_2");
 
-    final SBuildType rb1_bt = m.mock(SBuildType.class, "rb1_bt");
-    final SBuildType rb2_bt = m.mock(SBuildType.class, "rb2_bt");
+    final SBuildType rb1_bt = m.mock(SBuildType.class, "runningBuild_1-buildType");
+    final SBuildType rb2_bt = m.mock(SBuildType.class, "runningBuild_2-buildType");
 
-    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
-    final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "buildPromotion_1");
+    final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "buildPromotion_2");
 
     final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
       add(rb1);
@@ -117,6 +122,12 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myLocksStorage).load(rb1);
       will(returnValue(takenLocks1));
 
+      oneOf(rb1_bt).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+
       oneOf(rb2).getBuildType();
       will(returnValue(rb2_bt));
 
@@ -132,17 +143,23 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myLocksStorage).load(rb2);
       will(returnValue(takenLocks2));
 
+      oneOf(rb2_bt).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+
     }});
 
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
             myProjectId, runningBuilds, Collections.<QueuedBuildInfo>emptyList());
     assertNotNull(result);
     assertEquals(2, result.size());
-    final TakenLock tl1 = result.get(lock1);
+    final TakenLock tl1 = result.get(resource1);
     assertNotNull(tl1);
     assertEquals(2, tl1.getReadLocks().size());
 
-    final TakenLock tl2 = result.get(lock2);
+    final TakenLock tl2 = result.get(resource2);
     assertNotNull(tl2);
     assertTrue(tl2.hasWriteLocks());
     m.assertIsSatisfied();
@@ -180,16 +197,21 @@ public class TakenLocksImplTest extends BaseTestCase {
     final SharedResourcesFeature qFeature = m.mock(SharedResourcesFeature.class, "q-feature");
     final Collection<SharedResourcesFeature> qFeatures = Collections.singleton(qFeature);
 
-    final Resource lock1 = myResourceFactory.newInfiniteResource("lock1", true);
-    final Resource lock2 = myResourceFactory.newInfiniteResource("lock2", true);
+    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", true);
+    final Resource resource2 = myResourceFactory.newInfiniteResource("resource2", true);
+
+    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
+      put(resource1.getName(), resource1);
+      put(resource2.getName(), resource2);
+    }};
 
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
-      put("lock1" , new Lock("lock1", LockType.READ));
-      put("lock2", new Lock("lock2", LockType.WRITE));
+      put("resource1" , new Lock("resource1", LockType.READ));
+      put("resource2", new Lock("resource2", LockType.WRITE));
     }};
 
     final Map<String, Lock> takenLocks2 = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ));
+      put("resource1", new Lock("resource1", LockType.READ));
     }};
 
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
@@ -197,7 +219,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp-1");
 
     final QueuedBuildInfo qb1 = m.mock(QueuedBuildInfo.class, "qb-1");
-    final BuildTypeEx qb1_bt = m.mock(BuildTypeEx.class, "qb2_bt");
+    final BuildTypeEx qb1_bt = m.mock(BuildTypeEx.class, "qb1_bt");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
     final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
       add(rb1);
@@ -223,6 +245,12 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myLocks).fromBuildFeaturesAsMap(rFeatures);
       will(returnValue(takenLocks1));
 
+      oneOf(rb1_bt).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+
       oneOf(qb1).getBuildPromotionInfo();
       will(returnValue(bp2));
 
@@ -235,17 +263,23 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myLocks).fromBuildFeaturesAsMap(qFeatures);
       will(returnValue(takenLocks2));
 
+      oneOf(qb1_bt).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myResources).asMap(myProjectId);
+      will(returnValue(resources));
+
     }});
 
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
             myProjectId, runningBuilds, queuedBuilds);
     assertNotNull(result);
     assertEquals(2, result.size());
-    final TakenLock tl1 = result.get(lock1);
+    final TakenLock tl1 = result.get(resource1);
     assertNotNull(tl1);
     assertEquals(2, tl1.getReadLocks().size());
 
-    final TakenLock tl2 = result.get(lock2);
+    final TakenLock tl2 = result.get(resource2);
     assertNotNull(tl2);
     assertTrue(tl2.hasWriteLocks());
     m.assertIsSatisfied();
