@@ -83,13 +83,13 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
-      put("resource1", new Lock("resource1", LockType.READ, ""));
-      put("resource2", new Lock("resource2", LockType.WRITE, ""));
+      put(resource1.getName(), new Lock(resource1.getName(), LockType.READ, ""));
+      put(resource2.getName(), new Lock(resource2.getName(), LockType.WRITE, ""));
 
     }};
 
     final Map<String, Lock> takenLocks2 = new HashMap<String, Lock>() {{
-      put("resource1", new Lock("resource1", LockType.READ, ""));
+      put(resource1.getName(), new Lock(resource1.getName(), LockType.READ, ""));
     }};
 
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "runningBuild_1");
@@ -203,12 +203,12 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     final Map<String, Lock> takenLocks1 = new HashMap<String, Lock>() {{
-      put("resource1" , new Lock("resource1", LockType.READ));
-      put("resource2", new Lock("resource2", LockType.WRITE));
+      put(resource1.getName() , new Lock(resource1.getName(), LockType.READ));
+      put(resource2.getName(), new Lock(resource2.getName(), LockType.WRITE));
     }};
 
     final Map<String, Lock> takenLocks2 = new HashMap<String, Lock>() {{
-      put("resource1", new Lock("resource1", LockType.READ));
+      put(resource1.getName(), new Lock(resource1.getName(), LockType.READ));
     }};
 
     final RunningBuildEx rb1 = m.mock(RunningBuildEx.class, "rb-1");
@@ -283,7 +283,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_Custom_All() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
-    resources.put("custom_resource1", myCustomResource);
+    resources.put(myCustomResource.getName(), myCustomResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("custom_resource1", LockType.WRITE));
@@ -311,7 +311,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_Custom_Specific() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
-    resources.put("custom_resource1", myCustomResource);
+    resources.put(myCustomResource.getName(), myCustomResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("custom_resource1", LockType.WRITE, "v1"));
@@ -341,7 +341,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     // case when write lock ALL is taken
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
-    resources.put("custom_resource1", myCustomResource);
+    resources.put(myCustomResource.getName(), myCustomResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("custom_resource1", LockType.READ));
@@ -369,7 +369,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_Custom_Any_NoValuesAvailable() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
-    resources.put("custom_resource1", myCustomResource);
+    resources.put(myCustomResource.getName(), myCustomResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("custom_resource1", LockType.READ));
@@ -397,7 +397,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_ReadRead_Quota() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
-    resources.put("quoted_resource1", quotedResource);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("quoted_resource1", LockType.READ));
@@ -426,7 +426,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_ReadWrite() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
-    resources.put("quoted_resource1", quotedResource);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("quoted_resource1", LockType.READ));
@@ -454,7 +454,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_WriteRead() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
-    resources.put("quoted_resource1", quotedResource);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
       add(new Lock("quoted_resource1", LockType.WRITE));
@@ -495,19 +495,18 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_WritePrioritySet() throws Exception {
-    final String resourceName = "resource";
     final Map<String, Resource> resources = new HashMap<String, Resource>();
 
-    final Resource infiniteResource = myResourceFactory.newInfiniteResource(resourceName, true);
-    resources.put(resourceName, infiniteResource);
+    final Resource infiniteResource = myResourceFactory.newInfiniteResource("resource", true);
+    resources.put(infiniteResource.getName(), infiniteResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock(resourceName, LockType.WRITE));
+      add(new Lock(infiniteResource.getName(), LockType.WRITE));
     }};
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -519,11 +518,11 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(resourceName, result.get(infiniteResource).getName());
+    assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
 
     assertNotEmpty(fairSet);
     assertEquals(1, fairSet.size());
-    assertEquals(resourceName, fairSet.iterator().next());
+    assertEquals(infiniteResource.getName(), fairSet.iterator().next());
   }
 
   /**
@@ -542,23 +541,22 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_PreservePriority() throws Exception {
-    final String resourceName = "resource";
     final Map<String, Resource> resources = new HashMap<String, Resource>();
 
-    final Resource infiniteResource = myResourceFactory.newInfiniteResource(resourceName, true);
-    resources.put(resourceName, infiniteResource);
+    final Resource infiniteResource = myResourceFactory.newInfiniteResource("resource", true);
+    resources.put(infiniteResource.getName(), infiniteResource);
 
     final Collection<Lock> writeLockToTake = new ArrayList<Lock>() {{
-      add(new Lock(resourceName, LockType.WRITE));
+      add(new Lock(infiniteResource.getName(), LockType.WRITE));
     }};
 
     final Collection<Lock> readLockToTake = new ArrayList<Lock>() {{
-      add(new Lock(resourceName, LockType.READ));
+      add(new Lock(infiniteResource.getName(), LockType.READ));
     }};
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -581,17 +579,17 @@ public class TakenLocksImplTest extends BaseTestCase {
       Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, fairSet);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(resourceName, result.get(infiniteResource).getName());
+      assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
       assertEquals(1, fairSet.size());
-      assertEquals(resourceName, fairSet.iterator().next());
+      assertEquals(infiniteResource.getName(), fairSet.iterator().next());
 
       // now we have lock name in fair set. read lock must not be acquired
       result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(resourceName, result.get(infiniteResource).getName());
+      assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
       assertEquals(1, fairSet.size());
-      assertEquals(resourceName, fairSet.iterator().next());
+      assertEquals(infiniteResource.getName(), fairSet.iterator().next());
     }
   }
 
@@ -604,28 +602,27 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_Custom_Fair() throws Exception {
-    final String resourceName = "resource";
     final Map<String, Resource> resources = new HashMap<String, Resource>();
-    final Resource customResource = myResourceFactory.newCustomResource(resourceName, Arrays.asList("val1", "val2", "val3"), true);
-    resources.put(resourceName, customResource);
+    final Resource customResource = myResourceFactory.newCustomResource("custom_resource", Arrays.asList("val1", "val2", "val3"), true);
+    resources.put(customResource.getName(), customResource);
 
     final Collection<Lock> allLockToTake = new ArrayList<Lock>() {{
-      add(new Lock(resourceName, LockType.WRITE));
+      add(new Lock(customResource.getName(), LockType.WRITE));
     }};
 
     final Collection<Lock> anyLockToTake = new ArrayList<Lock>() {{
-      add(new Lock(resourceName, LockType.READ));
+      add(new Lock(customResource.getName(), LockType.READ));
     }};
 
     final Map<Resource, TakenLock> takenLocksAny = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(customResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(resourceName, LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(customResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     final Map<Resource, TakenLock> takenLocksSpecific = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl = new TakenLock(customResource);
-      tl.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock(resourceName, LockType.READ, "val1"));
+      tl.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock(customResource.getName(), LockType.READ, "val1"));
       put(tl.getResource(), tl);
     }};
 
@@ -654,17 +651,17 @@ public class TakenLocksImplTest extends BaseTestCase {
       Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, fairSet);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(resourceName, result.get(customResource).getName());
+      assertEquals(customResource.getName(), result.get(customResource).getName());
       assertEquals(1, fairSet.size());
-      assertEquals(resourceName, fairSet.iterator().next());
+      assertEquals(customResource.getName(), fairSet.iterator().next());
 
       // now we have lock name in fair set. any lock must not be acquired
       result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(resourceName, result.get(customResource).getName());
+      assertEquals(customResource.getName(), result.get(customResource).getName());
       assertEquals(1, fairSet.size());
-      assertEquals(resourceName, fairSet.iterator().next());
+      assertEquals(customResource.getName(), fairSet.iterator().next());
     }
   }
 
@@ -673,7 +670,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testGetUnavailableLocks_ResourceDisabled() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 1, false);
-    resources.put("quoted_resource1", quotedResource);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Lock lockToTake = new Lock("quoted_resource1", LockType.READ);
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
@@ -697,10 +694,11 @@ public class TakenLocksImplTest extends BaseTestCase {
   @TestFor (issues = "TW-34917")
   public void testGetUnavailableLocks_ZeroQuota_Read() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
-    resources.put("quoted_resource1", myResourceFactory.newQuotedResource("quoted_resource1", 0, true));
+    final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 0, true);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock("quoted_resource1", LockType.READ));
+      add(new Lock(quotedResource.getName(), LockType.READ));
     }};
 
     m.checking(new Expectations() {{
@@ -722,10 +720,11 @@ public class TakenLocksImplTest extends BaseTestCase {
   @TestFor (issues = "TW-34917")
   public void testGetUnavailableLocks_ZeroQuota_Write() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
-    resources.put("quoted_resource1", myResourceFactory.newQuotedResource("quoted_resource1", 0, true));
+    final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 0, true);
+    resources.put(quotedResource.getName(), quotedResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock("quoted_resource1", LockType.WRITE));
+      add(new Lock(quotedResource.getName(), LockType.WRITE));
     }};
 
     m.checking(new Expectations() {{
@@ -734,7 +733,6 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
 
     final Set<String> fairSet = new HashSet<String>();
-
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
@@ -756,10 +754,11 @@ public class TakenLocksImplTest extends BaseTestCase {
   @TestFor(issues = "TW-36042")
   public void testGetUnavailableLocks_MultipleBuilds_InfiniteLock() throws Exception {
     final Map<String, Resource> resources = new HashMap<String, Resource>();
-    resources.put("infinite_resource", myResourceFactory.newInfiniteResource("infinite_resource", true));
+    final Resource infiniteResource = myResourceFactory.newInfiniteResource("infinite_resource", true);
+    resources.put(infiniteResource.getName(), infiniteResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock("infinite_resource", LockType.WRITE));
+      add(new Lock(infiniteResource.getName(), LockType.WRITE));
     }};
 
     m.checking(new Expectations() {{

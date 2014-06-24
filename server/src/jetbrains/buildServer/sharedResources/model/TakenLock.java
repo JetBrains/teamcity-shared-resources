@@ -67,6 +67,12 @@ public class TakenLock {
     return Collections.unmodifiableMap(writeLocks);
   }
 
+  /**
+   * Returns resource associated with current {@code TakenLock}
+   *
+   * @since 9.0
+   * @return {@code Resource} of the {@code TakenLock}
+   */
   @NotNull
   public Resource getResource() {
     return myResource;
@@ -87,6 +93,5 @@ public class TakenLock {
   public boolean hasWriteLocks() {
     return !writeLocks.isEmpty();
   }
-
 
 }

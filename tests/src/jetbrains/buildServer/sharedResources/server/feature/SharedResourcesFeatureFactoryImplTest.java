@@ -23,12 +23,9 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
 
   private Locks myLocks;
 
-  private Resources myResources;
-
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
   private SharedResourcesFeatureFactory myFactory;
-
 
   @BeforeMethod
   @Override
@@ -37,8 +34,8 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
     m = new Mockery();
     myLocks = m.mock(Locks.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
-    myResources = m.mock(Resources.class);
-    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks, myResources);
+    final Resources resources = m.mock(Resources.class);
+    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks, resources);
   }
 
   @Test
