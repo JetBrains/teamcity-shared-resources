@@ -3,9 +3,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.SecurityContextEx;
 import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
@@ -15,6 +13,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -22,6 +21,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,7 +36,7 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private ProjectSettingsManager myProjectSettingsManager;
 
-  private PluginProjectSettings myPluginProjectSettings;
+  private PluginProjectSettings myProjectSettings;
 
   private ProjectManager myProjectManager;
 
@@ -43,21 +44,26 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private SProject myRootProject;
 
-  private SecurityContextEx mySecurityContextEx;
-
-  private PluginProjectSettings myRootProjectSettings;
+  private PluginProjectSettings myRootSettings;
 
   private Map<String, Resource> myProjectResourceMap;
 
   private Map<String, Resource> myRootResourceMap;
 
-  private final String myProjectId = TestUtils.generateRandomName();
+  private Map<String, Resource> myEmptyResourceMap;
 
-  private final String myRootProjectId = "<ROOT>";
+  private ResourceFactory myProjectResourceFactory;
+
+  private ResourceFactory myRootResourceFactory;
+
   /**
    * Class under test
    */
   private ResourcesImpl resources;
+
+  private final String myProjectId = TestUtils.generateRandomName();
+
+  private final String myRootProjectId = "<ROOT>";
 
   @BeforeMethod
   @Override
@@ -68,98 +74,188 @@ public class ResourcesImplTest extends BaseTestCase {
     }};
 
     myProjectSettingsManager = m.mock(ProjectSettingsManager.class);
-    myPluginProjectSettings = m.mock(PluginProjectSettings.class);
     myProjectManager = m.mock(ProjectManager.class);
-    mySecurityContextEx = m.mock(SecurityContextEx.class);
+
+    myProjectSettings = m.mock(PluginProjectSettings.class, "ProjectSettings");
+    myRootSettings = m.mock(PluginProjectSettings.class, "RootSettings");
+
     myProject = m.mock(SProject.class, "currentProject");
     myRootProject = m.mock(SProject.class, "rootProject");
-    myRootProjectSettings = m.mock(PluginProjectSettings.class, "myRootProjectSettings");
-    resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager, mySecurityContextEx);
+
+    resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager);
+
+    myRootResourceFactory = ResourceFactory.getFactory(myRootProjectId);
+    myProjectResourceFactory = ResourceFactory.getFactory(myProjectId);
 
     myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource("resource1", 1, true));
-      put("resource2", ResourceFactory.newInfiniteResource("resource2", true));
-      put("resource3", ResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3"), true));
+      put("resource1", myProjectResourceFactory.newQuotedResource("resource1", 1, true));
+      put("resource2", myProjectResourceFactory.newInfiniteResource("resource2", true));
+      put("resource3", myProjectResourceFactory.newCustomResource("resource3", Arrays.asList("value1", "value2", "value3"), true));
     }};
 
     myRootResourceMap = new HashMap<String, Resource>() {{
-      put("root_resource", ResourceFactory.newInfiniteResource("root_resource", true));
+      put("root_resource", myRootResourceFactory.newInfiniteResource("root_resource", true));
     }};
+
+    myEmptyResourceMap = new HashMap<String, Resource>();
   }
 
-  @Test
-  public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", 1, true);
-    m.checking(createExpectationsCheck());
-    m.checking(new Expectations() {{
-      oneOf(myRootProjectSettings).getResourceMap();
-      will(returnValue(myProjectResourceMap));
-
-      oneOf(myPluginProjectSettings).addResource(resource);
-    }});
-    resources.addResource(myProjectId, resource);
+  @Override
+  @AfterMethod
+  public void tearDown() throws Exception {
+    super.tearDown();
     m.assertIsSatisfied();
   }
 
-  @Test (expectedExceptions = DuplicateResourceException.class)
-  public void testAddResource_Fail() throws Exception {
-    final Resource resource = myProjectResourceMap.get("resource1");
-    m.checking(createExpectationsCheck());
+  /**
+   * Adds new resource to root project
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testAddResource_Success() throws Exception {
+    final Resource resource = myRootResourceFactory.newQuotedResource("new_resource1", 1, true);
     m.checking(new Expectations() {{
-      oneOf(myRootProjectSettings).getResourceMap();
-      will(returnValue(myProjectResourceMap));
+      atLeast(2).of(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myEmptyResourceMap));
+
+      oneOf(myProjectSettings).addResource(resource);
+
     }});
-    resources.addResource(myProjectId, resource);
+    resources.addResource(resource);
   }
 
+  /**
+   * Adds resource to subproject
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testAddResourceToSubproject_Success() throws Exception {
+    final Resource resource = myProjectResourceFactory.newInfiniteResource("infinite_resource", true);
+    m.checking(new Expectations() {{
+      atLeast(2).of(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myEmptyResourceMap));
+
+      oneOf(myProjectSettings).addResource(resource);
+    }});
+    resources.addResource(resource);
+  }
+
+  /**
+   * Adds new resource to project. Resource with same name exists in {@code Root} project.
+   * Only resources of current project must be checked for name collision
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  public void testAddResource_RespectHierarchy_Success() throws Exception {
+    final Resource resource = myProjectResourceFactory.newInfiniteResource("root_resource", true);
+    m.checking(new Expectations() {{
+      atLeast(2).of(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myEmptyResourceMap));
+
+      oneOf(myProjectSettings).addResource(resource);
+    }});
+    resources.addResource(resource);
+  }
+
+  /**
+   * Tries to add resource with the same name as existing to {@code Root} project.
+   * {@code DuplicateResourceException} is expected to be thrown.
+   *
+   * @see jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException
+   * @throws Exception if something goes wrong
+   */
+  @Test (expectedExceptions = DuplicateResourceException.class)
+  public void testAddResource_NameConflict_Fail() throws Exception {
+    final Resource resource = myRootResourceFactory.newInfiniteResource("root_resource", true);
+
+    m.checking(new Expectations() {{
+      oneOf(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myRootSettings));
+
+      oneOf(myRootSettings).getResourceMap();
+      will(returnValue(myRootResourceMap));
+    }});
+    resources.addResource(resource);
+  }
+
+
+  /**
+   * Tests name change for existing resource
+   * @throws Exception if something goes wrong
+   */
   @Test
   public void testEditResource_Success() throws Exception {
     final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource("resource1_newName", 1, true);
-    m.checking(createExpectationsCheck());
+    final Resource resource = myProjectResourceFactory.newQuotedResource("resource1_newName", 1, true);
+    
     m.checking(new Expectations() {{
-      oneOf(myRootProjectSettings).getResourceMap();
-      will(returnValue(myRootResourceMap));
+      atLeast(2).of(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+      
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myProjectResourceMap));
 
-      oneOf(myPluginProjectSettings).editResource(name, resource);
+      oneOf(myProjectSettings).editResource(name, resource);
     }});
     resources.editResource(myProjectId, name, resource);
-    m.assertIsSatisfied();
   }
 
+  /**
+   * Tries to change the name of the existing resource to the name of
+   * another existing resource.
+   * {@code DuplicateResourceException} is expected to be thrown.
+   *
+   * @throws Exception if something goes wrong
+   */
   @Test (expectedExceptions = DuplicateResourceException.class)
   public void testEditResource_Fail() throws Exception {
-    final Resource resource = myProjectResourceMap.get("resource1");
+    final String oldName = "resource1";
     final String newName = "resource2";
-    m.checking(createExpectationsCheck());
+    final Resource resource = myProjectResourceFactory.newInfiniteResource(newName, true);
+
     m.checking(new Expectations() {{
-      oneOf(myRootProjectSettings).getResourceMap();
+      oneOf(myProjectSettingsManager).getSettings(resource.getProjectId(), SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
     }});
-    resources.editResource(myProjectId, newName, resource);
+    resources.editResource(myProjectId, oldName, resource);
   }
 
   @Test
   public void testDeleteResource() {
-    final String name = "myName1";
-    m.checking(new Expectations() {{
-      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myPluginProjectSettings));
+    final Resource resource = myProjectResourceMap.get("resource1");
+    assertNotNull(resource);
 
-      oneOf(myPluginProjectSettings).deleteResource(name);
+    m.checking(new Expectations() {{
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).deleteResource(resource.getName());
     }});
 
-    resources.deleteResource(myProjectId, name);
+    resources.deleteResource(myProjectId, resource.getName());
     m.assertIsSatisfied();
   }
 
   @Test
   public void testAsMap() {
     m.checking(new Expectations() {{
-      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myPluginProjectSettings));
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
+      will(returnValue(myProjectSettings));
 
-      oneOf(myPluginProjectSettings).getResourceMap();
+      oneOf(myProjectSettings).getResourceMap();
       will(returnValue(myProjectResourceMap));
 
       oneOf(myProjectManager).findProjectById(myProjectId);
@@ -178,95 +274,95 @@ public class ResourcesImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testGetCountFlat() {
+  public void testGetCount_SingleProject() {
     m.checking(new Expectations() {{
-      oneOf(myProjectManager).findProjectById(myProjectId);
-      will(returnValue(myProject));
+      oneOf(myProjectManager).findProjectById(myRootProjectId);
+      will(returnValue(myRootProject));
 
-      oneOf(myProject).getProjectPath();
-      will(returnValue(Arrays.asList(myProject)));
+      oneOf(myRootProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject)));
 
-      oneOf(myProject).getProjectId();
-      will(returnValue(myProjectId));
+      oneOf(myRootProject).getProjectId();
+      will(returnValue(myRootProjectId));
 
-      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myPluginProjectSettings));
+      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SERVICE_NAME);
+      will(returnValue(myRootSettings));
 
-      oneOf(myPluginProjectSettings).getCount();
-      will(returnValue(myProjectResourceMap.size()));
+      oneOf(myRootSettings).getResourceMap();
+      will(returnValue(myRootResourceMap));
 
     }});
 
-    final int count = resources.getCount(myProjectId);
-    assertEquals(myProjectResourceMap.size(), count);
+    final int count = resources.getCount(myRootProjectId);
+    assertEquals(myRootResourceMap.size(), count);
   }
 
   @Test
-  public void testGetCountHierarchy() {
+  public void testGetCount_Hierarchy() {
     m.checking(new Expectations() {{
-      oneOf(myProjectManager).findProjectById(myProjectId);
-      will(returnValue(myProject));
+      oneOf(myProject).getProjectId();
+      will(returnValue(myProjectId));
 
       oneOf(myProject).getProjectPath();
       will(returnValue(Arrays.asList(myProject, myRootProject)));
 
+      oneOf(myRootProject).getProjectId();
+      will(returnValue(myRootProjectId));
+
+      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SERVICE_NAME);
+      will(returnValue(myRootSettings));
+
+      oneOf(myRootSettings).getResourceMap();
+      will(returnValue(myRootResourceMap));
+
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
+
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myProjectResourceMap));
+    }});
+    final int count = resources.getCount(myProjectId);
+    assertEquals(myRootResourceMap.size() + myProjectResourceMap.size(), count);
+  }
+
+  @Test
+  public void testGetCount_HierarchyOverriding() throws Exception {
+    final Map<String, Resource> baseMap = new HashMap<String, Resource>() {{
+      put("RESOURCE", myRootResourceFactory.newInfiniteResource("RESOURCE", true));
+    }};
+
+    final Map<String, Resource> inheritedMap = new HashMap<String, Resource>() {{
+      put("RESOURCE", myProjectResourceFactory.newInfiniteResource("RESOURCE", true));
+    }};
+    m.checking(new Expectations() {{
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myProjectManager).findProjectById(myRootProjectId);
-      will(returnValue(myRootProject));
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myProject, myRootProject)));
 
       oneOf(myRootProject).getProjectId();
       will(returnValue(myRootProjectId));
 
-      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myRootProjectSettings));
+      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SERVICE_NAME);
+      will(returnValue(myRootSettings));
 
-      oneOf(myRootProjectSettings).getCount();
-      will(returnValue(myRootResourceMap.size()));
+      oneOf(myRootSettings).getResourceMap();
+      will(returnValue(baseMap));
 
-      oneOf(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myPluginProjectSettings));
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
 
-      oneOf(myPluginProjectSettings).getCount();
-      will(returnValue(myProjectResourceMap.size()));
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
+      will(returnValue(myProjectSettings));
 
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(inheritedMap));
     }});
-
     final int count = resources.getCount(myProjectId);
-    assertEquals(myProjectResourceMap.size() + myRootResourceMap.size(), count);
-
-  }
-
-  private Expectations createExpectationsCheck() {
-    return new Expectations() {{
-      // get root project
-      oneOf(myProjectManager).getRootProject();
-      will(returnValue(myRootProject));
-
-      // get all subprojects as SYSTEM user
-      exactly(1).of(same(mySecurityContextEx)).method("runAsSystem");
-      will(returnValue(Arrays.asList(myProject)));
-
-      // get root project id
-      oneOf(myRootProject).getProjectId();
-      will(returnValue(myRootProjectId));
-
-      // get root project settings
-      atLeast(1).of(myProjectSettingsManager).getSettings(myRootProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myRootProjectSettings));
-
-      // get my project id
-      atLeast(1).of(myProject).getProjectId();
-      will(returnValue(myProjectId));
-
-      // get my resources
-      atLeast(1).of(myPluginProjectSettings).getResourceMap();
-      will(returnValue(myProjectResourceMap));
-
-      // get my settings
-      atLeast(1).of(myProjectSettingsManager).getSettings(myProjectId, SharedResourcesPluginConstants.SERVICE_NAME);
-      will(returnValue(myPluginProjectSettings));
-    }};
+    assertEquals(1, count);
   }
 }

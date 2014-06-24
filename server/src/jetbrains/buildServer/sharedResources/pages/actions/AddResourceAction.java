@@ -46,10 +46,10 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      final Resource resource = myResourceHelper.getResourceFromRequest(request);
+      final Resource resource = myResourceHelper.getResourceFromRequest(projectId, request);
       if (resource != null) {
         try {
-          myResources.addResource(projectId, resource);
+          myResources.addResource(resource);
           project.persist();
           addMessage(request, "Resource " + resource.getName() + " was added");
         } catch (DuplicateResourceException e) {

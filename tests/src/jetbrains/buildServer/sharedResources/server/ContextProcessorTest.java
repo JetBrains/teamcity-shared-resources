@@ -55,6 +55,7 @@ public class ContextProcessorTest extends BaseTestCase {
   private SBuildType myBuildType;
   private BuildPromotionEx myBuildPromotion;
   private BuildStartContext myBuildStartContext;
+  private ResourceFactory myResourceFactory;
 
   /** Class under test */
   private SharedResourcesContextProcessor myProcessor;
@@ -74,6 +75,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myRunningBuild = m.mock(SRunningBuild.class);
     myBuildType = m.mock(SBuildType.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class);
+    myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
     myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager);
     m.checking(createCommonExpectations());
   }
@@ -86,7 +88,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
-    final CustomResource resource = (CustomResource)ResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.writeLock." + lock.getName();
@@ -124,7 +126,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
-    final CustomResource resource = (CustomResource)ResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
@@ -162,7 +164,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
-    final CustomResource resource = (CustomResource)ResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
@@ -209,7 +211,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
-    final CustomResource resource = (CustomResource)ResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();

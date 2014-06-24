@@ -142,15 +142,6 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       $j('#error_Name').html("Name contains illegal characters");
       errorsPresent = true;
     }
-    if ((this.editMode && (this.currentResourceName !== value)) || (!this.editMode)) {
-      // name changed
-      if (this.existingResources[value]) {
-        // quick check for current subtree
-        BS.Util.show('error_Name');
-        $j('#error_Name').html("Name is already used");
-        errorsPresent = true;
-      }
-    }
     element.val(value);
     return !errorsPresent;
   },

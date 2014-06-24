@@ -39,11 +39,16 @@ import java.util.List;
 public class ResourceHelperTest extends BaseTestCase {
 
   private static final String RESOURCE_NAME = "resource name";
+
+  private static final String PROJECT_ID = "PROJECT_ID";
+
   private Mockery m;
 
   private HttpServletRequest myRequest;
 
   private ResourceHelper myHelper;
+
+  private ResourceFactory myResourceFactory;
 
   @Override
   @BeforeMethod
@@ -52,6 +57,7 @@ public class ResourceHelperTest extends BaseTestCase {
     m = new Mockery();
     myRequest = m.mock(HttpServletRequest.class);
     myHelper = new ResourceHelper();
+    myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
   }
 
   @Override
@@ -73,7 +79,7 @@ public class ResourceHelperTest extends BaseTestCase {
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
       will(returnValue(null));
     }});
-    final Resource rc = myHelper.getResourceFromRequest(myRequest);
+    final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNotNull(rc);
     assertEquals(RESOURCE_NAME, rc.getName());
     assertTrue(rc.isEnabled());
@@ -92,7 +98,7 @@ public class ResourceHelperTest extends BaseTestCase {
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
       will(returnValue("1"));
     }});
-    final Resource rc = myHelper.getResourceFromRequest(myRequest);
+    final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNotNull(rc);
     assertEquals(RESOURCE_NAME, rc.getName());
     assertTrue(rc.isEnabled());
@@ -112,7 +118,7 @@ public class ResourceHelperTest extends BaseTestCase {
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
       will(returnValue("value1\r\nvalue2\r\nvalue3"));
     }});
-    final Resource rc = myHelper.getResourceFromRequest(myRequest);
+    final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNotNull(rc);
     assertEquals(RESOURCE_NAME, rc.getName());
     assertTrue(rc.isEnabled());
@@ -135,7 +141,7 @@ public class ResourceHelperTest extends BaseTestCase {
         oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
         will(returnValue("some value"));
       }});
-    final Resource rc = myHelper.getResourceFromRequest(myRequest);
+    final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNull(rc);
   }
 
@@ -148,36 +154,31 @@ public class ResourceHelperTest extends BaseTestCase {
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE);
       will(returnValue("unsupported_type"));
     }});
-    final Resource rc = myHelper.getResourceFromRequest(myRequest);
+    final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNull(rc);
   }
 
   @Test
   public void testGetResourceInState() throws Exception {
     {
-      final Resource rc = ResourceFactory.newInfiniteResource(RESOURCE_NAME, true);
-      final Resource result = myHelper.getResourceInState(rc, false);
+      final Resource rc = myResourceFactory.newInfiniteResource(RESOURCE_NAME, true);
+      final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
 
     {
-      final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME, 1, true);
-      final Resource result = myHelper.getResourceInState(rc, false);
+      final Resource rc = myResourceFactory.newQuotedResource(RESOURCE_NAME, 1, true);
+      final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
 
     {
-      final Resource rc = ResourceFactory.newCustomResource(RESOURCE_NAME, Arrays.asList("value1"), true);
-      final Resource result = myHelper.getResourceInState(rc, false);
+      final Resource rc = myResourceFactory.newCustomResource(RESOURCE_NAME, Arrays.asList("value1"), true);
+      final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
-
   }
-
-
-
-
 }

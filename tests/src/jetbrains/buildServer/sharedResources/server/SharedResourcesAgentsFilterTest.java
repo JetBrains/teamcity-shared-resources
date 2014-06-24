@@ -7,6 +7,8 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -55,6 +57,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<String>();
 
+  private ResourceFactory myResourceFactory;
+
 
   /**
    * Class under test
@@ -80,6 +84,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myCustomData = new HashMap<String, Object>();
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
+    myResourceFactory = ResourceFactory.getFactory(myProjectId);
     myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector);
   }
 
@@ -225,7 +230,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
-    final Map<String, TakenLock> takenLocks = Collections.emptyMap();
+    final Map<Resource, TakenLock> takenLocks = Collections.emptyMap();
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -256,7 +261,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(takenLocks));
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
     }});
 
@@ -273,19 +278,21 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
+    final Resource resource2 = myResourceFactory.newInfiniteResource("resource2", true);
+
     final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
-    final Lock lock = new Lock("lock1", LockType.READ);
+    final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
-    final Lock lock2 = new Lock("lock2", LockType.READ);
+    final Lock lock2 = new Lock("resource2", LockType.READ);
 
-    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
-    final TakenLock tl = new TakenLock();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final TakenLock tl = new TakenLock(resource2);
     tl.addLock(m.mock(BuildPromotionInfo.class), lock2);
-    takenLocks.put(lock2.getName(), tl);
+    takenLocks.put(tl.getResource(), tl);
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -316,7 +323,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(takenLocks));
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(Collections.emptyList()));
+      will(returnValue(Collections.emptyMap()));
 
     }});
 
@@ -331,22 +338,29 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
+    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", true);
+
     final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
-    final Lock lock = new Lock("lock1", LockType.READ);
+    final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
     final BuildPromotionEx bpex = m.mock(BuildPromotionEx.class, "bpex-lock1");
-    final Lock takenLock1 = new Lock("lock1", LockType.WRITE);
-    final Map<String, TakenLock> takenLocks = new HashMap<String, TakenLock>();
-    final TakenLock tl = new TakenLock();
+    final Lock takenLock1 = new Lock("resource1", LockType.WRITE);
+
+    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final TakenLock tl = new TakenLock(resource1);
     tl.addLock(bpex, takenLock1);
-    takenLocks.put(takenLock1.getName(), tl);
+    takenLocks.put(tl.getResource(), tl);
 
     final BuildTypeEx buildTypeEx = m.mock(BuildTypeEx.class, "bpex-btex");
     final String name = "UNAVAILABLE";
+
+    final Map<Resource, Lock> expectedUnavailableLocks = new HashMap<Resource, Lock>() {{
+      put(resource1, lock);
+    }};
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -377,7 +391,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(takenLocks));
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(locksToTake.values()));
+      will(returnValue(expectedUnavailableLocks));
 
       oneOf(bpex).getBuildType();
       will(returnValue(buildTypeEx));
@@ -400,8 +414,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @TestFor(issues = "TW-27930")
   public void testNoLockedResources_ResourceDisabled() throws Exception {
     final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
-    final Lock lock = new Lock("lock1", LockType.READ);
+    final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
+
+    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", false);
 
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
@@ -409,9 +425,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Map<QueuedBuildInfo, BuildAgent> canBeStarted = Collections.emptyMap();
     final Collection<SRunningBuild> runningBuilds = Collections.emptyList();
 
-    final Map<String, TakenLock> takenLocks = Collections.emptyMap();
-    final List<Lock> unavailableLocks = new ArrayList<Lock>() {{
-      add(lock);
+    final Map<Resource, TakenLock> takenLocks = Collections.emptyMap();
+
+    final Map<Resource, Lock> unavailableLocks = new HashMap<Resource, Lock>() {{
+      put(resource1, lock);
     }};
 
     m.checking(new Expectations() {{

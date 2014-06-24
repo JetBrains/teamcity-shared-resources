@@ -7,6 +7,7 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -74,12 +75,15 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
-        reason = checkForInvalidLocks(buildType);
+        reason = checkForInvalidLocks(buildType); // typecheck here
         if (reason == null) {
+          // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
-            final Map<String, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
-            final Collection<Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
+            // Resolved locks as multi-valued taken locks (for custom - multiple custom values, for quoted - number of quotes to take)
+            final Map<Resource, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
+            // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
+            final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(takenLocks, unavailableLocks);
               if (LOG.isDebugEnabled()) {
@@ -96,16 +100,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   }
 
   @NotNull
-  private WaitReason createWaitReason(@NotNull final Map<String, TakenLock> takenLocks,
-                                      @NotNull final Collection<Lock> unavailableLocks) {
+  private WaitReason createWaitReason(@NotNull final Map<Resource, TakenLock> takenLocks,
+                                      @NotNull final Map<Resource, Lock> unavailableLocks) {
     final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
     builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
     builder.append("to become available: ");
     final Set<String> lockDescriptions = new HashSet<String>();
-    for (Lock lock : unavailableLocks) {
+    for (Map.Entry<Resource, Lock> entry : unavailableLocks.entrySet()) {
       final StringBuilder descr = new StringBuilder();
       final Set<String> buildTypeNames = new HashSet<String>();
-      final TakenLock takenLock = takenLocks.get(lock.getName());
+      final TakenLock takenLock = takenLocks.get(entry.getKey());
       if (takenLock != null) {
         for (BuildPromotionInfo promotion : takenLock.getReadLocks().keySet()) {
           BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
@@ -120,7 +124,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           }
         }
       }
-      descr.append(lock.getName());
+      descr.append(entry.getValue().getName());
       if (!buildTypeNames.isEmpty()) {
         descr.append(" (locked by ");
         descr.append(StringUtil.join(buildTypeNames, ", "));

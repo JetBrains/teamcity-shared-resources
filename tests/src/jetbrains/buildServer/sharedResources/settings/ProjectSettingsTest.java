@@ -149,10 +149,15 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "  </JetBrains.SharedResources>\n" +
                   "</settings>\n";
 
+  private static final String PROJECT_ID = "PROJECT_ID";
+
+  private ResourceFactory myResourceFactory;
+
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
   }
 
   /**
@@ -253,7 +258,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final PluginProjectSettings settings = createProjectSettings(xmlEmpty);
     final Element newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    final PluginProjectSettings newSettings = new PluginProjectSettings();
+    final PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     assertEmpty(newSettings.getResources());
@@ -267,16 +272,16 @@ public class ProjectSettingsTest extends BaseTestCase {
     assertNotNull(resources);
     assertEmpty(resources);
 
-    final Resource infinite = ResourceFactory.newInfiniteResource("infinite", true);
+    final Resource infinite = myResourceFactory.newInfiniteResource("infinite", true);
     settings.addResource(infinite);
-    final Resource quoted = ResourceFactory.newQuotedResource("quoted", 1, true);
+    final Resource quoted = myResourceFactory.newQuotedResource("quoted", 1, true);
     settings.addResource(quoted);
-    final Resource custom = ResourceFactory.newCustomResource("custom", Arrays.asList("value1", "value2"), true);
+    final Resource custom = myResourceFactory.newCustomResource("custom", Arrays.asList("value1", "value2"), true);
     settings.addResource(custom);
 
     final Element newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    final PluginProjectSettings newSettings = new PluginProjectSettings();
+    final PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
 
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
@@ -295,12 +300,12 @@ public class ProjectSettingsTest extends BaseTestCase {
     assertNotNull(resources);
     assertEmpty(resources);
 
-    final Resource infinite = ResourceFactory.newInfiniteResource("infinite", true);
+    final Resource infinite = myResourceFactory.newInfiniteResource("infinite", true);
     settings.addResource(infinite);
 
     Element newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    PluginProjectSettings newSettings = new PluginProjectSettings();
+    PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     Collection newResources = newSettings.getResources();
@@ -311,7 +316,7 @@ public class ProjectSettingsTest extends BaseTestCase {
 
     newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    newSettings = new PluginProjectSettings();
+    newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     newResources = newSettings.getResources();
@@ -329,23 +334,23 @@ public class ProjectSettingsTest extends BaseTestCase {
     assertNotNull(resources);
     assertEmpty(resources);
 
-    final Resource oldResource = ResourceFactory.newInfiniteResource(oldName, true);
+    final Resource oldResource = myResourceFactory.newInfiniteResource(oldName, true);
     settings.addResource(oldResource);
 
     Element newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    PluginProjectSettings newSettings = new PluginProjectSettings();
+    PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     Collection newResources = newSettings.getResources();
     assertNotEmpty(newResources);
     assertContains(newResources, oldResource);
 
-    final Resource newResource = ResourceFactory.newQuotedResource(newName, 10, true);
+    final Resource newResource = myResourceFactory.newQuotedResource(newName, 10, true);
     settings.editResource(oldName, newResource);
     newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    newSettings = new PluginProjectSettings();
+    newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
     newResources = newSettings.getResources();
@@ -463,7 +468,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     final PluginProjectSettings settings = createProjectSettings(xml);
     final Element newSettingsRoot = createNewSettingsBase();
     settings.writeTo(newSettingsRoot);
-    final PluginProjectSettings newSettings = new PluginProjectSettings();
+    final PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     return newSettings;
   }
@@ -500,7 +505,7 @@ public class ProjectSettingsTest extends BaseTestCase {
   @NotNull
   private static PluginProjectSettings createProjectSettings(@NotNull final String xmlString) throws Exception {
     final Element settingsRoot = createXML(xmlString);
-    final PluginProjectSettings settings = new PluginProjectSettings();
+    final PluginProjectSettings settings = new PluginProjectSettings(PROJECT_ID);
     settings.readFrom(settingsRoot);
     return  settings;
   }

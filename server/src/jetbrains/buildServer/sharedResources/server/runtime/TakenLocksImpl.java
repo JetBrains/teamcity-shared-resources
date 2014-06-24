@@ -17,7 +17,6 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -62,24 +61,33 @@ public class TakenLocksImpl implements TakenLocks {
 
   @NotNull
   @Override
-  public Map<String, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                                  @NotNull final Collection<SRunningBuild> runningBuilds,
-                                                  @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
-    final Map<String, TakenLock> result = new HashMap<String, TakenLock>();
-    for (SRunningBuild build : runningBuilds) {
+  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
+                                                    @NotNull final Collection<SRunningBuild> runningBuilds,
+                                                    @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
+    final Map<Resource, TakenLock> result = new HashMap<Resource, TakenLock>();
+    final Map<String, Map<String, Resource>> cachedResources = new HashMap<String, Map<String, Resource>>();
+    for (SRunningBuild build: runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
+        // at this point we have features
         BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
-        Collection<Lock> locks;
         RunningBuildEx rbEx = (RunningBuildEx) build;
+        Map<String, Lock> locks;
         if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
-          locks = myLocksStorage.load(rbEx).values();
+          locks = myLocksStorage.load(rbEx);
         } else {
-          locks = myLocks.fromBuildFeaturesAsMap(features).values();
+          locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
         }
-        addToTakenLocks(result, bpEx, locks);
+        if (locks.isEmpty()) continue;
+        // get resources defined in project tree, respecting inheritance
+        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
+        // resolve locks against resources defined in project tree
+        for (Map.Entry<String, Lock> entry: locks.entrySet()) {
+          // collection, promotion, resource, lock
+          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
+        }
       }
     }
 
@@ -89,43 +97,69 @@ public class TakenLocksImpl implements TakenLocks {
       if (buildType != null) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
-        final Collection<Lock> locks = myLocks.fromBuildFeaturesAsMap(features).values();
-        addToTakenLocks(result, bpEx, locks);
-      }
-    }
-    return result;
-  }
-
-  private void addToTakenLocks(@NotNull final Map<String, TakenLock> takenLocks,
-                               @NotNull final BuildPromotionInfo bpInfo,
-                               @NotNull final Collection<Lock> locks) {
-    for (Lock lock : locks) {
-      final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
-      takenLock.addLock(bpInfo, lock);
-    }
-  }
-
-  @NotNull
-  @Override
-  public Collection<Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
-                                              @NotNull Map<String, TakenLock> takenLocks,
-                                              @NotNull String projectId,
-                                              @NotNull final Set<String> fairSet) {
-    final Map<String, Resource> resources = myResources.asMap(projectId);
-    final Collection<Lock> result = new ArrayList<Lock>();
-    for (Lock lock : locksToTake) {
-      final Resource resource = resources.get(lock.getName());
-      if (resource != null) {
-        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
-          result.add(lock);
+        Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+        if (locks.isEmpty()) continue;
+        // get resources defined in project tree, respecting inheritance
+        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
+        for (Map.Entry<String, Lock> entry: locks.entrySet()) {
+          // collection, promotion, resource, lock
+          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
         }
       }
     }
     return result;
   }
 
+  @NotNull
+  private Map<String, Resource> getResources(@NotNull final String btProjectId,
+                                             @NotNull final Map<String, Map<String, Resource>> cachedResources) {
+    Map<String, Resource> result = cachedResources.get(btProjectId);
+    if (result == null) {
+      result = myResources.asMap(btProjectId);
+      cachedResources.put(btProjectId, result);
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override // todo: support several locks on resource here too -> Map<Resource, Collection<Lock>>
+  public Map<Resource, Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
+                                                 @NotNull Map<Resource, TakenLock> takenLocks,
+                                                 @NotNull String projectId,
+                                                 @NotNull final Set<String> fairSet) {
+    final Map<String, Resource> resources = myResources.asMap(projectId);
+    final Map<Resource, Lock> result = new HashMap<Resource, Lock>();
+    for (Lock lock : locksToTake) {
+      final Resource resource = resources.get(lock.getName());
+      if (resource != null) {
+        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
+          result.put(resource, lock);
+        }
+      }
+    }
+    return result;
+  }
+
+  private void addLockToTaken(@NotNull final Map<Resource, TakenLock> takenLocks,
+                              @NotNull final BuildPromotionEx bpEx,
+                              @NotNull final Resource resource,
+                              @NotNull final Lock lock) {
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
+    takenLock.addLock(bpEx, lock);
+  }
+
+  private TakenLock getOrCreateTakenLock(@NotNull final Map<Resource, TakenLock> takenLocks,
+                                         @NotNull final Resource resource) {
+    TakenLock takenLock = takenLocks.get(resource);
+    if (takenLock == null) {
+      takenLock = new TakenLock(resource);
+      takenLocks.put(resource, takenLock);
+    }
+    return takenLock;
+  }
+
   private boolean checkAgainstResource(@NotNull final Lock lock,
-                                       @NotNull final Map<String, TakenLock> takenLocks,
+                                       @NotNull final Map<Resource, TakenLock> takenLocks,
                                        @NotNull final Resource resource,
                                        @NotNull final Set<String> fairSet) {
     boolean result = true;
@@ -138,7 +172,7 @@ public class TakenLocksImpl implements TakenLocks {
   }
 
   private boolean checkAgainstCustomResource(@NotNull final Lock lock,
-                                             @NotNull final Map<String, TakenLock> takenLocks,
+                                             @NotNull final Map<Resource, TakenLock> takenLocks,
                                              @NotNull final CustomResource resource,
                                              @NotNull final Set<String> fairSet) {
     boolean result = true;
@@ -146,7 +180,7 @@ public class TakenLocksImpl implements TakenLocks {
     // write            -> all
     // read with value  -> specific
     // read             -> any
-    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
     switch (lock.getType()) {
       case READ:   // check at least one value is available
         // check for unique writeLocks
@@ -192,11 +226,11 @@ public class TakenLocksImpl implements TakenLocks {
   }
 
   private boolean checkAgainstQuotedResource(@NotNull final Lock lock,
-                                             @NotNull final Map<String, TakenLock> takenLocks,
+                                             @NotNull final Map<Resource, TakenLock> takenLocks,
                                              @NotNull final QuotedResource resource,
                                              @NotNull final Set<String> fairSet) {
     boolean result = true;
-    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, lock.getName());
+    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
     switch (lock.getType()) {
       case READ:
         if (fairSet.contains(lock.getName())) { // some build requested write lock before us
@@ -225,16 +259,5 @@ public class TakenLocksImpl implements TakenLocks {
 
   private boolean isQuotaEnough(@NotNull final TakenLock takenLock, @NotNull final QuotedResource resource) {
     return resource.isInfinite() || takenLock.getLocksCount() < resource.getQuota();
-  }
-
-  @NotNull
-  private TakenLock getOrCreateTakenLock(@NotNull final Map<String, TakenLock> takenLocks,
-                                         @NotNull final String name) {
-    TakenLock takenLock = takenLocks.get(name);
-    if (takenLock == null) {
-      takenLock = new TakenLock();
-      takenLocks.put(name, takenLock);
-    }
-    return takenLock;
   }
 }

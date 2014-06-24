@@ -30,6 +30,6 @@ public final class PluginProjectSettingsFactory implements ProjectSettingsFactor
   @NotNull
   @Override
   public ProjectSettings createProjectSettings(@NotNull final String projectId) {
-    return new PluginProjectSettings();
+    return new PluginProjectSettings(projectId);
   }
 }
