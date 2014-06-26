@@ -82,6 +82,11 @@ public class InvalidLocksReport extends HealthStatusReport {
   }
 
   @Override
+  public boolean canReportItemsFor(HealthStatusScope scope) {
+    return scope.isItemWithSeverityAccepted(myCategory.getSeverity());
+  }
+
+  @Override
   public void report(@NotNull final HealthStatusScope scope, @NotNull final HealthStatusItemConsumer resultConsumer) {
     for (final SBuildType type: scope.getBuildTypes()) {
       final Map<Lock, String> invalidLocks = myInspector.inspect(type);
