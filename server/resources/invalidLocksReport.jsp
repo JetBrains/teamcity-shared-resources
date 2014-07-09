@@ -15,12 +15,11 @@
   --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/include-internal.jsp" %>
-<%@ page import="com.intellij.openapi.util.text.StringUtil" %>
-<%@ page import="com.intellij.util.Function" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.Lock" %>
 <%@ page import="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Set" %>
+<%@ page import="jetbrains.buildServer.sharedResources.pages.ResourceHelper" %>
 
 <jsp:useBean id="healthStatusItem" type="jetbrains.buildServer.serverSide.healthStatus.HealthStatusItem" scope="request"/>
 <jsp:useBean id="showMode" type="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" scope="request"/>
@@ -36,6 +35,7 @@
     </bs:buildTypeLink> contains invalid lock<bs:s val="${fn:length(invalidLocks)}"/>:
     <c:choose>
       <c:when test="${showMode == inplaceMode}">
+        <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
         <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
@@ -48,12 +48,7 @@
           @SuppressWarnings("unchecked")
           final Set<Lock> locks = ((Map<Lock, String>)healthStatusItem.getAdditionalData().get("invalid_locks")).keySet();
         %>
-        <%=StringUtil.join(locks, new Function<Lock, String>() {
-          @Override
-          public String fun(Lock lock) {
-            return lock.getName();
-          }
-        }, ", ")
+        <%=ResourceHelper.formatLocksList(locks)
         %>
       </c:otherwise>
     </c:choose>

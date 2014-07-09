@@ -17,13 +17,16 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.*;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -78,6 +81,16 @@ public class ResourceHelper {
       result = factory.newCustomResource(resource.getName(), cr.getValues(), state);
     }
     return result;
+  }
+
+  @NotNull
+  public static String formatLocksList(@NotNull final Collection<Lock> invalidLocks) {
+    return StringUtil.join(invalidLocks, new Function<Lock, String>() {
+      @Override
+      public String fun(Lock lock) {
+        return lock.getName();
+      }
+    }, ", ");
   }
 }
 
