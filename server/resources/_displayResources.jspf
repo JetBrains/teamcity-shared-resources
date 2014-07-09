@@ -23,7 +23,7 @@
   </c:set>
 
   <c:set var="resourceName" value="${resource.value.name}"/>
-  <c:set var="usage" value="${bean.usageMap[resourceName]}"/> <%--Map<SBuildType -> LockType>--%>
+  <c:set var="usage" value="${usages[resource.value]}"/> <%--Map<SBuildType -> List<Lock>>--%>
   <tr>
     <td class="${highlight}" onclick="${onclick}">
       <div style="${cellStyle}">

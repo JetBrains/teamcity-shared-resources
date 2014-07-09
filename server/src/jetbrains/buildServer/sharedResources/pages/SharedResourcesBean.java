@@ -39,33 +39,23 @@ public class SharedResourcesBean {
   private Map<SProject, Map<String, Resource>> myProjectResources = new HashMap<SProject, Map<String, Resource>>();
 
   @NotNull
-  private Map<String, Map<SBuildType, LockType>> myUsageMap = new HashMap<String, Map<SBuildType, LockType>>();
-
-  @NotNull
   private final Map<SBuildType, Map<Lock, String>> myConfigurationErrors;
 
   public SharedResourcesBean(@NotNull final SProject project,
                              @NotNull final Map<SProject, Map<String, Resource>> projectResources,
-                             @NotNull final Map<String, Map<SBuildType, LockType>> usageMap,
                              @NotNull final Map<SBuildType, Map<Lock, String>> configurationErrors) {
     myProject = project;
     myProjectResources = projectResources;
-    myUsageMap = usageMap;
     myConfigurationErrors = configurationErrors;
   }
 
   public SharedResourcesBean(@NotNull final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
-    this(project, projectResources, Collections.<String, Map<SBuildType, LockType>>emptyMap(), Collections.<SBuildType, Map<Lock, String>>emptyMap());
+    this(project, projectResources, Collections.<SBuildType, Map<Lock, String>>emptyMap());
   }
 
   @NotNull
   public SProject getProject() {
     return myProject;
-  }
-
-  @NotNull
-  public Map<String, Map<SBuildType, LockType>> getUsageMap() {
-    return Collections.unmodifiableMap(myUsageMap);
   }
 
   @NotNull

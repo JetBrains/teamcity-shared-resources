@@ -10,6 +10,11 @@
       <class name="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImplTest"/>
     </classes>
   </test>
+  <test name="Inspection tests">
+    <classes>
+      <class name="jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzerTest" />
+    </classes>
+  </test>
   <test name="Decision making tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilterTest"/>

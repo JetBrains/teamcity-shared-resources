@@ -24,7 +24,9 @@ import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
+import jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
@@ -61,17 +63,22 @@ public class SharedResourcesPage extends EditProjectTab {
   @NotNull
   private final ConfigurationInspector myInspector;
 
+  @NotNull
+  private final ResourceUsageAnalyzer myAnalyzer;
+
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
                              @NotNull final SharedResourcesFeatures features,
                              @NotNull final SecurityContext securityContext,
-                             @NotNull final ConfigurationInspector inspector) {
+                             @NotNull final ConfigurationInspector inspector,
+                             @NotNull final ResourceUsageAnalyzer analyzer) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     myFeatures = features;
     mySecurityContext = securityContext;
     myInspector = inspector;
+    myAnalyzer = analyzer;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -82,33 +89,17 @@ public class SharedResourcesPage extends EditProjectTab {
     SharedResourcesBean bean;
     final SProject project = getProject(request);
     if (project != null) {
+
+      // collect usages of resources defined in current project (for this project and its subtree)
+      final Map<Resource, Map<SBuildType, List<Lock>>> usages = myAnalyzer.collectResourceUsages(project);
+
       final List<SProject> meAndSubtree = project.getProjects();
       meAndSubtree.add(project);
-      final Map<String, Map<SBuildType, LockType>> usageMap = new HashMap<String, Map<SBuildType, LockType>>();
       final Map<SBuildType, Map<Lock, String>> configurationErrors = new HashMap<SBuildType, Map<Lock, String>>();
-      for (SProject p : meAndSubtree) {
-        final List<SBuildType> buildTypes = p.getBuildTypes();
-        for (SBuildType type : buildTypes) {
-          // todo: investigate here, what happens if we use resolved settings on lock name with %%. Does it change to the value of the parameter?
-          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(type);
-          for (SharedResourcesFeature feature : features) {
-            final Map<String, Lock> locksMap = feature.getLockedResources();
-            for (String str : locksMap.keySet()) {
-              if (usageMap.get(str) == null) {
-                usageMap.put(str, new HashMap<SBuildType, LockType>());
-              }
-              usageMap.get(str).put(type, locksMap.get(str).getType());
-            }
-          }
-          Map<Lock, String> inspection = myInspector.inspect(type);
-          if (!inspection.isEmpty()) {
-            configurationErrors.put(type, inspection);
-          }
-        }
-      }
       final String projectId = project.getProjectId();
-      bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), usageMap, configurationErrors);
+      bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), configurationErrors);
       model.put("bean", bean);
+      model.put("usages", usages);
     }
   }
 
