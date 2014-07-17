@@ -497,6 +497,10 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 </script>
 
 <tr>
+  <td colspan="2"><em>Allows limiting the number of concurrently running builds which use a shared resource.</em> <bs:help file="Shared+Resources"/></td>
+</tr>
+
+<tr>
   <td class="noBorder" colspan="2">
     <c:if test="${not inherited}">
       <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
