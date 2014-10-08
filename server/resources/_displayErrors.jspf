@@ -32,7 +32,7 @@
           <c:set var="errDetails" value="${err.value}"/>
           <li>
             <admin:editBuildTypeLink buildTypeId="${bt.externalId}"
-                                     step="${buildConfigSteps[2].stepId}"
+                                     step="${buildConfigSteps[5].stepId}"
                                      cameFromUrl="${url}">
               <bs:out value="${bt.extendedFullName}"/>
             </admin:editBuildTypeLink>

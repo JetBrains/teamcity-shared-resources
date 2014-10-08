@@ -44,7 +44,7 @@
                    scope="request"
                    type="java.util.ArrayList<jetbrains.buildServer.controllers.admin.projects.ConfigurationStep>"/>
       <admin:editTemplateLink templateId="${template.externalId}"
-                              step="${buildConfigSteps[2].stepId}"
+                              step="${buildConfigSteps[5].stepId}"
                               withoutLink="true"/>
     </c:when>
   </c:choose>
