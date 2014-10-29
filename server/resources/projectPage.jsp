@@ -117,7 +117,7 @@
       params['${PARAM_RESOURCE_NAME}'] = resource_name;
       params['action'] = 'deleteResource';
 
-      if (confirm('Are you sure you want to delete this resource?')) {
+      if (confirm('Are you sure you want to delete this resource? It may result in errors if the name is used as a parameter reference.')) {
         BS.ajaxRequest(this.actionsUrl, {
           parameters: params,
           onSuccess: function () {

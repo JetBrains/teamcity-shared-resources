@@ -139,7 +139,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       errorsPresent = true;
     } else if (!/^[A-Za-z0-9_]+$/.test(value)) {
       BS.Util.show('error_Name');
-      $j('#error_Name').html("Name contains illegal characters");
+      $j('#error_Name').html("The name is invalid. It should start with a latin letter and contain only latin letters, digits and underscores (80 characters max).");
       errorsPresent = true;
     }
     element.val(value);
