@@ -80,13 +80,9 @@
               BS.Util.show('error_Name');
             }
           });
-
-          if (!errors) {
-            window.location.reload();
-          }
+          BS.ResourceDialog.afterSubmit(errors);
         }
       });
-      return false;
     },
 
     editResource: function (old_resource_name) {
@@ -102,13 +98,9 @@
               BS.Util.show('error_Name');
             }
           });
-
-          if (!errors) {
-            window.location.reload();
-          }
+          BS.ResourceDialog.afterSubmit(errors);
         }
       });
-      return false;
     },
 
     deleteResource: function (resource_name) {

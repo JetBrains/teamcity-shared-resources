@@ -11,8 +11,13 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   currentResourceName: "",
   existingResources: {},
   myData: {},
+
   getContainer: function () {
-    return $('resourceDialog');
+    return $('resourcesFormDialog');
+  },
+
+  formElement: function() {
+    return $('resourcesForm');
   },
 
   showDialog: function () {
@@ -60,6 +65,8 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   },
 
   showCommon: function() {
+    Form.enable(this.formElement());
+    this.setSaving(false);
     this.adjustDialogDisplay(this.editMode);
     this.showCentered();
     this.bindCtrlEnterHandler(this.submit.bind(this));
@@ -84,16 +91,33 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
 
   submit: function () {
     if (!this.validate()) return false;
-    var result = true;
+    Form.disable(this.formElement());
+    this.setSaving(true);
     if (this.editMode) {
-      result = BS.SharedResourcesActions.editResource(this.currentResourceName);
+      BS.SharedResourcesActions.editResource(this.currentResourceName);
     } else {
-      result = BS.SharedResourcesActions.addResource();
-    }
-    if (result) {
-      this.close();
+      BS.SharedResourcesActions.addResource();
     }
     return false;
+  },
+
+  afterSubmit: function(errors) {
+    this.setSaving(false);
+    Form.enable(this.formElement());
+    if (!errors) {
+      this.close();
+      window.location.reload();
+    } else {
+      return false;
+    }
+  },
+
+  setSaving: function(saving) {
+    if (saving) {
+      BS.Util.show('resourceDialogSaving');
+    } else {
+      BS.Util.hide('resourceDialogSaving');
+    }
   },
 
   clearErrors: function () {

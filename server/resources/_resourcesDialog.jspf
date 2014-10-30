@@ -14,8 +14,10 @@
   ~ limitations under the License.
   --%>
 
-<bs:dialog dialogId="resourceDialog" titleId="resourceDialogTitle"
-           title="Resource Management" closeCommand="BS.ResourceDialog.close()">
+<bs:modalDialog formId="resourcesForm"
+                action="#"
+                saveCommand="BS.ResourceDialog.submit()"
+                title="Resource Management" closeCommand="BS.ResourceDialog.close()">
   <table class="runnerFormTable">
     <tr>
       <th style="white-space: nowrap">
@@ -66,7 +68,8 @@
     </tr>
   </table>
   <div class="popupSaveButtonsBlock">
-    <forms:submit id="resourceDialogSubmit" type="button" label="Save" onclick="BS.ResourceDialog.submit()"/>
+    <forms:submit id="resourceDialogSubmit" label="Save"/>
     <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
+    <forms:saving id="resourceDialogSaving" className="progressRingSubmitBlock"/>
   </div>
-</bs:dialog>
+</bs:modalDialog>
