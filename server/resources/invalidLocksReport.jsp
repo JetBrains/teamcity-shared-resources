@@ -16,10 +16,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/include-internal.jsp" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.Lock" %>
+<%@ page import="jetbrains.buildServer.sharedResources.pages.ResourceHelper" %>
 <%@ page import="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Set" %>
-<%@ page import="jetbrains.buildServer.sharedResources.pages.ResourceHelper" %>
 
 <jsp:useBean id="healthStatusItem" type="jetbrains.buildServer.serverSide.healthStatus.HealthStatusItem" scope="request"/>
 <jsp:useBean id="showMode" type="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" scope="request"/>
@@ -36,7 +36,7 @@
     <c:choose>
       <c:when test="${showMode == inplaceMode}">
         <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
-        <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+        <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&item=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
             <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>

@@ -37,7 +37,7 @@
 <c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
 
 
-<c:url var="url" value="editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+<c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&item=JetBrains.SharedResources"/>
 
 <script type="text/javascript">
 
@@ -236,7 +236,7 @@
           Resources inherited from
           <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
             <jsp:attribute name="ifAccessGranted">
-              <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
+              <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&item=JetBrains.SharedResources"/>
               <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
             </jsp:attribute>
             <jsp:attribute name="ifAccessDenied">
