@@ -559,7 +559,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </div>
     </bs:dialog>
     <div style="float:right">
-      <c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&item=JetBrains.SharedResources"/>
+      <c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
       <a href="${url}">Configure resources</a>
     </div>
   </td>

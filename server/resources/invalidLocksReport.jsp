@@ -36,7 +36,7 @@
     <c:choose>
       <c:when test="${showMode == inplaceMode}">
         <%--@elvariable id="project" type="jetbrains.buildServer.serverSide.SProject"--%>
-        <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&item=JetBrains.SharedResources"/>
+        <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
             <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>
