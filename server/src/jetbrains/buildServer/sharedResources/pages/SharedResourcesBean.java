@@ -19,7 +19,6 @@ package jetbrains.buildServer.sharedResources.pages;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +68,7 @@ public class SharedResourcesBean {
 
   @NotNull
   public Map<SProject, Map<String, Resource>> getInheritedResources() {
-    final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>(myProjectResources);
+    final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<SProject, Map<String, Resource>>(myProjectResources);
     result.remove(myProject);
     return result;
   }

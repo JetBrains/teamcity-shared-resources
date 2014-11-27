@@ -133,7 +133,7 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   private Map<SProject, Map<String, Resource>> asProjectResourcesMapWithInheritance(@NotNull final String projectId) {
-    final Map<SProject, Map<String, Resource>> result = new HashMap<SProject, Map<String, Resource>>();
+    final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<SProject, Map<String, Resource>>();
     // cache for already fetched resources
     final Map<String, Resource> treeResources = new HashMap<String, Resource>();
     final SProject currentProject = myProjectManager.findProjectById(projectId);

@@ -17,10 +17,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.SERVICE_NAME;
 
@@ -274,13 +271,53 @@ public class ResourcesImplTest extends BaseTestCase {
   }
 
   @Test
+  @TestFor(issues = "TW-37406")
+  public void testAsProjectResourceMap_PreserveOrder() {
+    m.checking(new Expectations() {{
+      oneOf(myProjectSettingsManager).getSettings(myProjectId, SERVICE_NAME);
+      will(returnValue(myProjectSettings));
+
+      oneOf(myProjectSettings).getResourceMap();
+      will(returnValue(myProjectResourceMap));
+
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
+
+      allowing(myProject).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      allowing(myRootProject).getProjectId();
+      will(returnValue(myRootProjectId));
+
+      oneOf(myProjectSettingsManager).getSettings(myRootProjectId, SERVICE_NAME);
+      will(returnValue(myRootSettings));
+
+      oneOf(myRootSettings).getResourceMap();
+      will(returnValue(myRootResourceMap));
+    }});
+
+    final Map<SProject, Map<String, Resource>> result = resources.asProjectResourceMap(myProjectId);
+    assertEquals(2, result.size());
+    Iterator<SProject> it = result.keySet().iterator();
+    assertTrue(it.hasNext());
+    SProject p = it.next();
+    assertEquals(myProjectId, p.getProjectId());
+    assertTrue(it.hasNext());
+    p = it.next();
+    assertEquals(myRootProjectId, p.getProjectId());
+  }
+
+  @Test
   public void testGetCount_SingleProject() {
     m.checking(new Expectations() {{
       oneOf(myProjectManager).findProjectById(myRootProjectId);
       will(returnValue(myRootProject));
 
       oneOf(myRootProject).getProjectPath();
-      will(returnValue(Arrays.asList(myRootProject)));
+      will(returnValue(Collections.singletonList(myRootProject)));
 
       oneOf(myRootProject).getProjectId();
       will(returnValue(myRootProjectId));
