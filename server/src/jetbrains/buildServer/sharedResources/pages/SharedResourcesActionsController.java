@@ -1,6 +1,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import jetbrains.buildServer.controllers.BaseAjaxActionController;
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction;
@@ -24,12 +25,13 @@ public class SharedResourcesActionsController extends BaseAjaxActionController {
                                           @NotNull final Resources resources,
                                           @NotNull final ResourceHelper resourceHelper,
                                           @NotNull final SharedResourcesFeatures features,
-                                          @NotNull final Messages messages) {
+                                          @NotNull final Messages messages,
+                                          @NotNull final ConfigActionFactory configActionFactory) {
     super(controllerManager);
     controllerManager.registerController(SharedResourcesPluginConstants.WEB.ACTIONS, this);
-    registerAction(new AddResourceAction(projectManager, resources, resourceHelper, messages));
-    registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper, messages));
-    registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features, messages));
-    registerAction(new EnableDisableResourceAction(projectManager, resources, resourceHelper, messages));
+    registerAction(new AddResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
+    registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
+    registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features, messages, configActionFactory));
+    registerAction(new EnableDisableResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
   }
 }

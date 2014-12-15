@@ -1,8 +1,6 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
-import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
@@ -37,8 +35,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
                             @NotNull final Resources resources,
                             @NotNull final ResourceHelper resourceHelper,
                             @NotNull final SharedResourcesFeatures features,
-                            @NotNull final Messages messages) {
-    super(projectManager, resources, resourceHelper,messages);
+                            @NotNull final Messages messages,
+                            @NotNull final ConfigActionFactory configActionFactory) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory);
     myFeatures = features;
   }
 
@@ -63,6 +62,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
         final String newName = resource.getName();
         try {
           myResources.editResource(projectId, oldName, resource);
+          ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree
             final List<SProject> allSubProjects = project.getProjects();
@@ -74,10 +74,10 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
                   feature.updateLock(type, oldName, newName);
                 }
               }
-              p.persist();
+              p.persist(cause);
             }
           }
-          project.persist();
+          project.persist(cause);
           addMessage(request, "Resource " + newName + " was updated");
         } catch (DuplicateResourceException e) {
           createNameError(ajaxResponse, newName);

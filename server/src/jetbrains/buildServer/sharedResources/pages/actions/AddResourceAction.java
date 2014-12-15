@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -35,8 +36,9 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
   public AddResourceAction(@NotNull final ProjectManager projectManager,
                            @NotNull final Resources resources,
                            @NotNull final ResourceHelper resourceHelper,
-                           @NotNull final Messages messages) {
-    super(projectManager, resources, resourceHelper, messages);
+                           @NotNull final Messages messages,
+                           @NotNull final ConfigActionFactory configActionFactory) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory);
   }
 
   @Override
@@ -50,7 +52,7 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
       if (resource != null) {
         try {
           myResources.addResource(resource);
-          project.persist();
+          project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was created"));
           addMessage(request, "Resource " + resource.getName() + " was added");
         } catch (DuplicateResourceException e) {
           createNameError(ajaxResponse, resource.getName());

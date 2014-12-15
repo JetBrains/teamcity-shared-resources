@@ -17,6 +17,8 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.serverSide.ConfigAction;
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -28,6 +30,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -71,6 +74,8 @@ public class EditActionTest extends BaseTestCase {
 
   private ResourceFactory myResourceFactory;
 
+  private ConfigActionFactory myConfigActionFactory;
+
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
@@ -88,8 +93,8 @@ public class EditActionTest extends BaseTestCase {
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
     myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features, myMessages);
-
+    myConfigActionFactory = mockConfigActionFactory(m);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features, myMessages, myConfigActionFactory);
   }
 
   @Test
@@ -115,11 +120,22 @@ public class EditActionTest extends BaseTestCase {
       allowing(myResources);
 
       // key part - resource is persisted even if name is not changed
-      oneOf(myProject).persist();
+      oneOf(myProject).persist(with(any(ConfigAction.class)));
 
       oneOf(myMessages).addMessage(myRequest, "Resource NAME was updated");
 
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
+  }
+
+
+  @NotNull
+  private ConfigActionFactory mockConfigActionFactory(@NotNull final Mockery m) {
+    final ConfigActionFactory result = m.mock(ConfigActionFactory.class);
+    m.checking(new Expectations() {{
+      allowing(result).createAction(with(any(SProject.class)), with(any(String.class)));
+      will(returnValue(m.mock(ConfigAction.class)));
+    }});
+    return result;
   }
 }

@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -42,8 +43,9 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
   public EnableDisableResourceAction(@NotNull final ProjectManager projectManager,
                                      @NotNull final Resources resources,
                                      @NotNull final ResourceHelper resourceHelper,
-                                     @NotNull final Messages messages) {
-    super(projectManager, resources, resourceHelper, messages);
+                                     @NotNull final Messages messages,
+                                     @NotNull final ConfigActionFactory configActionFactory) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory);
   }
 
   @NotNull
@@ -68,8 +70,9 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
       } catch (DuplicateResourceException e) {
         createNameError(ajaxResponse, resourceName);
       }
-      project.persist();
-      addMessage(request, "Resource " + resourceName + " was " + (newState ? "enabled" : "disabled"));
+      String changed = newState ? "enabled" : "disabled";
+      project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
+      addMessage(request, "Resource " + resourceName + " was " + changed);
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }
