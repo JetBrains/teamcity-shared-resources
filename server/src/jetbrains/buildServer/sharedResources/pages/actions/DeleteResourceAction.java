@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -27,8 +28,9 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
   public DeleteResourceAction(@NotNull final ProjectManager projectManager,
                               @NotNull final Resources resources,
                               @NotNull final ResourceHelper resourceHelper,
-                              @NotNull final Messages messages) {
-    super(projectManager, resources, resourceHelper, messages);
+                              @NotNull final Messages messages,
+                              @NotNull final ConfigActionFactory configActionFactory) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory);
   }
 
   @NotNull
@@ -46,7 +48,7 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
       myResources.deleteResource(projectId, resourceName);
-      project.persist();
+      project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' shared resource was removed"));
       addMessage(request, "Resource " + resourceName + " was deleted");
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");

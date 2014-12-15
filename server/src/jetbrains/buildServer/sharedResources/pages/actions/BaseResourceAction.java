@@ -3,6 +3,7 @@ package jetbrains.buildServer.sharedResources.pages.actions;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
@@ -45,14 +46,19 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   private final Messages myMessages;
 
+  @NotNull
+  protected final ConfigActionFactory myConfigActionFactory;
+
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
                                @NotNull final Resources resources,
                                @NotNull final ResourceHelper resourceHelper,
-                               @NotNull final Messages messages) {
+                               @NotNull final Messages messages,
+                               @NotNull final ConfigActionFactory configActionFactory) {
     myProjectManager = projectManager;
     myResources = resources;
     myResourceHelper = resourceHelper;
     myMessages = messages;
+    myConfigActionFactory = configActionFactory;
   }
 
   @NotNull
