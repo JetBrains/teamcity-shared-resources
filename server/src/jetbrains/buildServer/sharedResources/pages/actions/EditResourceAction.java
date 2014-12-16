@@ -65,8 +65,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
           ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree
-            final List<SProject> allSubProjects = project.getProjects();
-            for (SProject p : allSubProjects) {
+            final List<SProject> projects = project.getProjects();
+            projects.add(project);
+            for (SProject p: projects) {
               final List<SBuildType> buildTypes = p.getBuildTypes();
               for (SBuildType type : buildTypes) {
                 // todo: do we need resolved features here? Using unresolved for now
@@ -76,8 +77,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
               }
               p.persist(cause);
             }
+          } else { // just persist project so that settings will be saved
+            project.persist(cause);
           }
-          project.persist(cause);
           addMessage(request, "Resource " + newName + " was updated");
         } catch (DuplicateResourceException e) {
           createNameError(ajaxResponse, newName);
