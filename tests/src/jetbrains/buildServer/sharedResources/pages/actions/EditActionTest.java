@@ -17,16 +17,14 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.ConfigAction;
-import jetbrains.buildServer.serverSide.ConfigActionFactory;
-import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jdom.Element;
@@ -39,6 +37,9 @@ import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -74,7 +75,7 @@ public class EditActionTest extends BaseTestCase {
 
   private ResourceFactory myResourceFactory;
 
-  private ConfigActionFactory myConfigActionFactory;
+  private SharedResourcesFeatures myFeatures;
 
   @BeforeMethod
   @Override
@@ -83,7 +84,6 @@ public class EditActionTest extends BaseTestCase {
     m = new Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};
-    final SharedResourcesFeatures features = m.mock(SharedResourcesFeatures.class);
     myProjectManager = m.mock(ProjectManager.class);
     myResources = m.mock(Resources.class);
     myResourceHelper = m.mock(ResourceHelper.class);
@@ -92,9 +92,10 @@ public class EditActionTest extends BaseTestCase {
     myAjaxResponse = m.mock(Element.class);
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
+    myFeatures = m.mock(SharedResourcesFeatures.class);
     myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
-    myConfigActionFactory = mockConfigActionFactory(m);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, features, myMessages, myConfigActionFactory);
+    final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
   }
 
   @Test
@@ -128,6 +129,60 @@ public class EditActionTest extends BaseTestCase {
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
   }
 
+  @Test
+  public void testUpdateLockNameInTree() {
+    final String NEW_RESOURCE_NAME = "NEW_NAME";
+    final Resource rcNewName = myResourceFactory.newQuotedResource(NEW_RESOURCE_NAME, 111, true);
+    final SProject subProject = m.mock(SProject.class,  "sub-project") ;
+    final List<SProject> projects = new ArrayList<SProject>();
+    projects.add(subProject);
+
+    final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");
+    final SBuildType subProjectBuildType = m.mock(SBuildType.class, "subproject-build-type");
+
+    final SharedResourcesFeature projectFeature = m.mock(SharedResourcesFeature.class, "project-feature");
+    final SharedResourcesFeature subProjectFeature = m.mock(SharedResourcesFeature.class, "sub-project-feature");
+
+    m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
+      will(returnValue(RESOURCE_NAME));
+
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
+      will(returnValue(PROJECT_ID));
+
+      oneOf(myProjectManager).findProjectById(PROJECT_ID);
+      will(returnValue(myProject));
+
+      allowing(myRequest);
+
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
+      will(returnValue(rcNewName));
+
+      oneOf(myProject).getProjects();
+      will(returnValue(projects));
+
+      // update locks in subprojects
+      oneOf(subProject).getBuildTypes();
+      will(returnValue(Collections.singletonList(subProjectBuildType)));
+      oneOf(myFeatures).searchForFeatures(subProjectBuildType);
+      will(returnValue(Collections.singletonList(subProjectFeature)));
+      oneOf(subProjectFeature).updateLock(subProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      oneOf(subProject).persist(with(any(ConfigAction.class)));
+
+      // update lock in project itself
+      allowing(myProject).getBuildTypes();
+      will(returnValue(Collections.singletonList(projectBuildType)));
+      oneOf(myFeatures).searchForFeatures(projectBuildType);
+      will(returnValue(Collections.singletonList(projectFeature)));
+      oneOf(projectFeature).updateLock(projectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      oneOf(myProject).persist(with(any(ConfigAction.class)));
+
+      // update resource
+      allowing(myResources);
+      oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
+    }});
+    myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
+  }
 
   @NotNull
   private ConfigActionFactory mockConfigActionFactory(@NotNull final Mockery m) {
