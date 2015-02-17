@@ -61,7 +61,7 @@
       <th style="white-space: nowrap">Custom values: <l:star/></th>
       <td>
         <props:textarea name="customValues" textAreaName="customValuesArea" value=""
-                        linkTitle="Define custom values" cols="30" rows="5" expanded="${true}"/>
+                        linkTitle="Define custom values" cols="26" rows="5" expanded="${true}"/>
         <span class="error" id="error_Values"></span>
         <span class="smallNote">Define one custom value for the resource per line</span>
       </td>
