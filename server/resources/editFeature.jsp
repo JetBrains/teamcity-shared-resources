@@ -589,7 +589,6 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   <th>Locks</th>
   <td>
     <props:multilineProperty name="${locksFeatureParamKey}" linkTitle="names" cols="49" rows="5" expanded="${false}"/>
-    <span class="error" id="error_${locksFeatureParamKey}"></span>
   </td>
 </tr>
 
