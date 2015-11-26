@@ -190,8 +190,10 @@
 
   <bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
 
+  <c:if test="${not project.readOnly}">
   <forms:addButton id="addNewResource"
                    onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+  </c:if>
 
   <div>
     <%@ include file="_resourcesDialog.jspf" %>
@@ -209,7 +211,7 @@
             <th colspan="4">Description</th>
           </tr>
           <c:set var="resourcesToDisplay" value="${bean.myResources}"/>
-          <c:set var="allowChange" value="${true}"/>
+          <c:set var="allowChange" value="${not project.readOnly}"/>
           <%@ include file="_displayResources.jspf" %>
         </l:tableWithHighlighting>
       </c:when>
