@@ -41,12 +41,14 @@ public interface SharedResourcesFeature {
    * Updates lock inside build feature
    *
    * @param buildType build
-   * @param oldName   name of the existing lock
-   * @param newName   new lock name
+   * @param oldName name of the existing lock
+   * @param newName new lock name
+   * @return {@code true} if lock was updated (i.e. there were usages of resource), {@code false} otherwise
+   *
    */
-  void updateLock(@NotNull final SBuildType buildType,
-                  @NotNull final String oldName,
-                  @NotNull final String newName);
+  boolean updateLock(@NotNull final SBuildType buildType,
+                     @NotNull final String oldName,
+                     @NotNull final String newName);
 
   /**
    * Exposes locks as parameters

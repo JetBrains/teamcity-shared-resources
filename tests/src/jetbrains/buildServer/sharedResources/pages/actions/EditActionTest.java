@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -162,21 +163,93 @@ public class EditActionTest extends BaseTestCase {
       will(returnValue(projects));
 
       // update locks in subprojects
-      oneOf(subProject).getBuildTypes();
+      oneOf(subProject).getOwnBuildTypes();
       will(returnValue(Collections.singletonList(subProjectBuildType)));
       oneOf(myFeatures).searchForFeatures(subProjectBuildType);
       will(returnValue(Collections.singletonList(subProjectFeature)));
       oneOf(subProjectFeature).updateLock(subProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
       oneOf(subProject).persist(with(any(ConfigAction.class)));
 
       // update lock in project itself
-      allowing(myProject).getBuildTypes();
+      allowing(myProject).getOwnBuildTypes();
       will(returnValue(Collections.singletonList(projectBuildType)));
       oneOf(myFeatures).searchForFeatures(projectBuildType);
       will(returnValue(Collections.singletonList(projectFeature)));
       oneOf(projectFeature).updateLock(projectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
       oneOf(myProject).persist(with(any(ConfigAction.class)));
 
+      // update resource
+      allowing(myResources);
+      oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
+    }});
+    myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
+  }
+
+  @Test
+  @TestFor(issues = {"TW-44397", "TW-44398"})
+  public void testUpdateAffectsOnlyProjectsWithUsages() throws Exception {
+    final String NEW_RESOURCE_NAME = "NEW_NAME";
+
+    final Resource newResource = myResourceFactory.newQuotedResource(NEW_RESOURCE_NAME, 111, true);
+
+    final SProject childWithUsage = m.mock(SProject.class, "child-with-usage");
+    final SProject childWithoutUsage = m.mock(SProject.class, "child-without-usage");
+    final List<SProject> projects = new ArrayList<SProject>();
+    projects.addAll(Arrays.asList(childWithUsage, childWithoutUsage));
+
+    final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");
+    final SBuildType childWithUsageType = m.mock(SBuildType.class, "child-with-usage-build-type");
+    final SBuildType childWithoutUsageType = m.mock(SBuildType.class, "child-without-usage-build-type");
+
+    final SharedResourcesFeature projectFeature = m.mock(SharedResourcesFeature.class, "project-feature");
+    final SharedResourcesFeature childWithUsageFeature = m.mock(SharedResourcesFeature.class, "child-with-usage-feature");
+    final SharedResourcesFeature childWithoutUsageFeature = m.mock(SharedResourcesFeature.class, "child-without-usage-feature");
+
+    m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
+      will(returnValue(RESOURCE_NAME));
+
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
+      will(returnValue(PROJECT_ID));
+
+      oneOf(myProjectManager).findProjectById(PROJECT_ID);
+      will(returnValue(myProject));
+
+      allowing(myRequest);
+
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
+      will(returnValue(newResource));
+
+      allowing(myResources);
+
+      oneOf(myProject).getProjects();
+      will(returnValue(projects));
+
+      // update lock child that uses it
+      oneOf(childWithUsage).getOwnBuildTypes();
+      will(returnValue(Collections.singletonList(childWithUsageType)));
+      oneOf(myFeatures).searchForFeatures(childWithUsageType);
+      will(returnValue(Collections.singletonList(childWithUsageFeature)));
+      oneOf(childWithUsageFeature).updateLock(childWithUsageType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
+      oneOf(childWithUsage).persist(with(any(ConfigAction.class)));      
+      // skip persisting project without usage
+      oneOf(childWithoutUsage).getOwnBuildTypes();
+      will(returnValue(Collections.singletonList(childWithoutUsageType)));
+      oneOf(myFeatures).searchForFeatures(childWithoutUsageType);
+      will(returnValue(Collections.singletonList(childWithoutUsageFeature)));
+      oneOf(childWithoutUsageFeature).updateLock(childWithoutUsageType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(false));
+      // update lock in project itself
+      allowing(myProject).getOwnBuildTypes();
+      will(returnValue(Collections.singletonList(projectBuildType)));
+      oneOf(myFeatures).searchForFeatures(projectBuildType);
+      will(returnValue(Collections.singletonList(projectFeature)));
+      oneOf(projectFeature).updateLock(projectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
+      oneOf(myProject).persist(with(any(ConfigAction.class)));
       // update resource
       allowing(myResources);
       oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
