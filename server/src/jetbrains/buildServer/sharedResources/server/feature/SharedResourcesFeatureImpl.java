@@ -69,10 +69,14 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   }
 
   @Override
-  public void updateLock(@NotNull final SBuildType buildType, @NotNull final String oldName, @NotNull final String newName) {
+  public boolean updateLock(@NotNull final SBuildType buildType,
+                            @NotNull final String oldName,
+                            @NotNull final String newName) {
+    boolean result = false;
     final Lock lock = myLockedResources.remove(oldName);
     if (lock != null) {
       // save its type
+      result = true;
       final LockType lockType = lock.getType();
       final String lockValue = lock.getValue();
       // add lock with new resource name and saved type
@@ -92,6 +96,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
         }
       }
     }
+    return result;
   }
 
   @NotNull

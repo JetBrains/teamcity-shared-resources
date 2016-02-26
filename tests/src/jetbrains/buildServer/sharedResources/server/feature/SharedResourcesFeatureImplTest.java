@@ -140,7 +140,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(true));
     }});
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    feature.updateLock(myBuildType, oldName, newName);
+    assertTrue("Resource was not updated from " + oldName + " to " + newName, feature.updateLock(myBuildType, oldName, newName));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);
     assertNull(lock);
@@ -157,7 +157,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(true));
     }});
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    feature.updateLock(myBuildType, "lock_with_value1", "lock_with_value2");
+    assertTrue("Resource was not updated from lock_with_value1 to lock_with_value2", feature.updateLock(myBuildType, "lock_with_value1", "lock_with_value2"));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get("lock_with_value1");
     assertNull(lock);
@@ -187,7 +187,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
     }});
     final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    feature.updateLock(myBuildType, oldName, newName);
+    assertTrue("Resource was not updated from " + oldName + " to " + newName, feature.updateLock(myBuildType, oldName, newName));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);
     assertNull(lock);

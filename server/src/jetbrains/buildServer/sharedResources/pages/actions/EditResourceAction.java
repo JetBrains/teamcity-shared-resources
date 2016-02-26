@@ -68,14 +68,17 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
             final List<SProject> projects = project.getProjects();
             projects.add(project);
             for (SProject p: projects) {
-              final List<SBuildType> buildTypes = p.getBuildTypes();
-              for (SBuildType type : buildTypes) {
+              boolean updated = false;
+              final List<SBuildType> buildTypes = p.getOwnBuildTypes();
+              for (SBuildType type: buildTypes) {
                 // todo: do we need resolved features here? Using unresolved for now
-                for (SharedResourcesFeature feature : myFeatures.searchForFeatures(type)) {
-                  feature.updateLock(type, oldName, newName);
+                for (SharedResourcesFeature feature: myFeatures.searchForFeatures(type)) {
+                  updated = updated || feature.updateLock(type, oldName, newName);
                 }
               }
-              p.persist(cause);
+              if (updated) {
+                p.persist(cause);
+              }
             }
           } else { // just persist project so that settings will be saved
             project.persist(cause);
