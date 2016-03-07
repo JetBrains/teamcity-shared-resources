@@ -56,6 +56,18 @@ public class Lock {
     this(name, type, NO_VALUE);
   }
 
+
+  /**
+   * Creates copy of lock with given value
+   *
+   * @param from lock definition
+   * @param value taken value
+   * @return copy of combined lock definition and custom value
+   */
+  public static Lock createFrom(@NotNull final Lock from, @NotNull final String value) {
+    return new Lock(from.getName(), from.getType(), value);
+  }
+
   @NotNull
   public String getName() {
     return myName;
