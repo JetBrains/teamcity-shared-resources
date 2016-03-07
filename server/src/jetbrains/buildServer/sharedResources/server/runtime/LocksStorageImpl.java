@@ -16,11 +16,20 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TLongHashSet;
+import gnu.trove.TLongObjectHashMap;
+import jetbrains.buildServer.serverSide.BuildServerAdapter;
+import jetbrains.buildServer.serverSide.BuildServerListener;
 import jetbrains.buildServer.serverSide.SBuild;
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.util.EventDispatcher;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -58,10 +65,82 @@ public class LocksStorageImpl implements LocksStorage {
   private static final String MY_ENCODING = "UTF-8";
 
   /**
+   * Contains the set of build ids, that contain taken locks that are stored
+   * Added to avoid calling of {@code CacheLoader} for the items that were not stored
+   */
+  @NotNull
+  private final TLongHashSet existsSet = new TLongHashSet();
+
+  /**
+   * Stores last N entries of taken locks
+   * It is highly unlikely, that we will have more than 300 running builds at the same time
+   * Ff we do, data for at least 300 of them will be accessed without accessing artifacts storage
+   */
+  @NotNull
+  private LoadingCache<SBuild, Map<String, Lock>> myLocksCache;
+
+  public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
+    CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
+      @Override
+      public Map<String, Lock> load(@NotNull final SBuild build) throws Exception {
+        final Map<String, Lock> result;
+        final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+        if (artifact.exists()) {
+          result = new HashMap<String, Lock>();
+          try {
+            final String content = FileUtil.readText(artifact, MY_ENCODING);
+            final String[] lines = content.split("\\r?\\n");
+            for (String line: lines) {
+              final Lock lock = deserializeTakenLock(line);
+              if (lock != null) {
+                result.put(lock.getName(), lock);
+              } else {
+                if (log.isDebugEnabled()) {
+                  log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
+                }
+              }
+            }
+          } catch(IOException e) {
+            log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
+          }
+        } else {
+          result = Collections.emptyMap();
+        }
+        return result;
+      }
+    };
+    myLocksCache = CacheBuilder.<SBuild, Map<String, Lock>>newBuilder()
+            .maximumSize(300) // each entry corresponds to a running build
+            .build(loader);
+
+    dispatcher.addListener(new BuildServerAdapter() {
+
+      /**
+       * Evicts stored items from cache, as the build is finished and locks are no longer needed
+       */
+      @Override
+      public void buildFinished(@NotNull SRunningBuild build) {
+        final ReentrantLock l = myGuards.get(build.getBuildId());
+        try {
+          if (l != null) {
+            l.lock();
+          }
+          myLocksCache.invalidate(build);
+          existsSet.remove(build.getBuildId());
+        } finally {
+          if (l != null) {
+            l.unlock();
+          }
+        }
+      }
+    });
+  }
+
+  /**
    * Map with separate guarding lock for each build
    */
   @NotNull
-  private final ConcurrentMap<Long, ReentrantLock> myGuards = new ConcurrentHashMap<Long, ReentrantLock>();
+  private final TLongObjectHashMap<ReentrantLock> myGuards = new TLongObjectHashMap<ReentrantLock>();
 
   @Override
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
@@ -72,13 +151,17 @@ public class LocksStorageImpl implements LocksStorage {
         l.lock();
         myGuards.put(buildId, l);
         final Collection<String> serializedStrings = new ArrayList<String>();
+        Map<String, Lock> locksToStore = new HashMap<String, Lock>();
         for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
           serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
+          locksToStore.put(entry.getKey().getName(), Lock.createFrom(entry.getKey(), entry.getValue()));
         }
         try {
           final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
           if (FileUtil.createParentDirs(artifact)) {
             FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
+            myLocksCache.put(build, locksToStore);
+            existsSet.add(buildId);
           } else {
             log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
           }
@@ -100,27 +183,12 @@ public class LocksStorageImpl implements LocksStorage {
       if (l != null) {
         l.lock();
       }
-      final Map<String, Lock> result = new HashMap<String, Lock>();
-      final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-      if (artifact.exists()) {
-        try {
-          final String content = FileUtil.readText(artifact, MY_ENCODING);
-          final String[] lines = content.split("\\r?\\n");
-          for (String line: lines) {
-            final Lock lock = deserializeTakenLock(line);
-            if (lock != null) {
-              result.put(lock.getName(), lock);
-            } else {
-              if (log.isDebugEnabled()) {
-                log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
-              }
-            }
-          }
-        } catch(IOException e) {
-          log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
-        }
+      try {
+        return myLocksCache.get(build);
+      } catch (Exception e) {
+        log.warn(e);
+        return Collections.emptyMap();
       }
-      return result;
     } finally {
       if (l != null) {
         l.unlock();
@@ -130,13 +198,13 @@ public class LocksStorageImpl implements LocksStorage {
 
   @Override
   public boolean locksStored(@NotNull final SBuild build) {
-    final ReentrantLock l = myGuards.get(build.getBuildId());
+    final long id = build.getBuildId();
+    final ReentrantLock l = myGuards.get(id);
     try {
       if (l != null) {
         l.lock();
       }
-      final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-      return artifact.exists();
+      return existsSet.contains(id);
     } finally {
       if (l != null) {
         l.unlock();
@@ -162,4 +230,5 @@ public class LocksStorageImpl implements LocksStorage {
     }
     return result;
   }
+
 }
