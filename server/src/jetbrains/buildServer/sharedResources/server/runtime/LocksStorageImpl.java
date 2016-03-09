@@ -109,7 +109,7 @@ public class LocksStorageImpl implements LocksStorage {
         return result;
       }
     };
-    myLocksCache = CacheBuilder.<SBuild, Map<String, Lock>>newBuilder()
+    myLocksCache = CacheBuilder.newBuilder()
             .maximumSize(300) // each entry corresponds to a running build
             .build(loader);
 
