@@ -256,38 +256,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
     final Map<String, Lock> lockedResources = new HashMap<String, Lock>() {{
       put(lock.getName(), lock);
     }};
-
-    m.checking(new Expectations() {{
-      oneOf(myProject).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(myResources).asMap(myProjectId);
-      will(returnValue(resourceMap));
-
-      oneOf(myProject).getBuildTypes();
-      will(returnValue(Arrays.asList(bt, subBt)));
-
-      oneOf(myFeatures).searchForFeatures(bt);
-      will(returnValue(Collections.singletonList(feature)));
-
-      oneOf(bt).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(feature).getLockedResources();
-      will(returnValue(lockedResources));
-
-      oneOf(myFeatures).searchForFeatures(subBt);
-      will(returnValue(Collections.singletonList(subFeature)));
-
-      oneOf(subBt).getProjectId();
-      will(returnValue(subProjectId));
-
-      oneOf(myResources).asMap(subProjectId);
-      will(returnValue(subProjectResourceMap));
-
-      oneOf(subFeature).getLockedResources();
-      will(returnValue(lockedResources));
-    }});
+    setupResourcesForProject(resourceMap, subProjectId, subProjectResourceMap, bt, feature, subBt, subFeature, lockedResources);
 
     final Map<Resource, Map<SBuildType, List<Lock>>> result = myAnalyzer.collectResourceUsages(myProject);
     assertFalse(result.isEmpty());
@@ -338,6 +307,21 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       put(lock.getName(), lock);
     }};
 
+    setupResourcesForProject(resourceMap, subProjectId, subProjectResourceMap, bt, feature, subBt, subFeature, lockedResources);
+
+    final Map<Resource, Map<SBuildType, List<Lock>>> result = myAnalyzer.collectResourceUsages(myProject);
+    assertFalse(result.isEmpty());
+    assertEquals(1, result.size());
+    final Map<SBuildType, List<Lock>> btLocks = result.get(resource);
+    assertNotNull(btLocks);
+    assertEquals(1, btLocks.size());
+    final List<Lock> locksList = btLocks.get(bt);
+    assertNotNull(locksList);
+    assertEquals(1, locksList.size());
+    assertContains(locksList, lock);
+  }
+
+  private void setupResourcesForProject(final Map<String, Resource> resourceMap, final String subProjectId, final Map<String, Resource> subProjectResourceMap, final SBuildType bt, final SharedResourcesFeature feature, final SBuildType subBt, final SharedResourcesFeature subFeature, final Map<String, Lock> lockedResources) {
     m.checking(new Expectations() {{
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
@@ -369,16 +353,5 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(subFeature).getLockedResources();
       will(returnValue(lockedResources));
     }});
-
-    final Map<Resource, Map<SBuildType, List<Lock>>> result = myAnalyzer.collectResourceUsages(myProject);
-    assertFalse(result.isEmpty());
-    assertEquals(1, result.size());
-    final Map<SBuildType, List<Lock>> btLocks = result.get(resource);
-    assertNotNull(btLocks);
-    assertEquals(1, btLocks.size());
-    final List<Lock> locksList = btLocks.get(bt);
-    assertNotNull(locksList);
-    assertEquals(1, locksList.size());
-    assertContains(locksList, lock);
   }
 }

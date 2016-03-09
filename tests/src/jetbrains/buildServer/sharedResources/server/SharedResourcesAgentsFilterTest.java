@@ -55,7 +55,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private ConfigurationInspector myInspector;
 
-  private Set<String> fairSet = new HashSet<String>();
+  private Set<String> fairSet = new HashSet<>();
 
   private ResourceFactory myResourceFactory;
 
@@ -81,7 +81,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myTakenLocks = m.mock(TakenLocks.class);
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
-    myCustomData = new HashMap<String, Object>();
+    myCustomData = new HashMap<>();
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
     myResourceFactory = ResourceFactory.getFactory(myProjectId);
@@ -153,10 +153,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   public void testInvalidLocksPresent() throws Exception {
-    final Collection<SharedResourcesFeature> features = new ArrayList<SharedResourcesFeature>();
+    final Collection<SharedResourcesFeature> features = new ArrayList<>();
     features.add(m.mock(SharedResourcesFeature.class));
 
-    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> invalidLocks = new HashMap<>();
     invalidLocks.put(new Lock("lock1", LockType.READ), "");
 
     m.checking(new Expectations() {{
@@ -220,7 +220,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   public void testLocksPresentSingleBuild() throws Exception {
-    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("lock1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
@@ -232,45 +232,13 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = Collections.emptyMap();
 
-    m.checking(new Expectations() {{
-      oneOf(myQueuedBuild).getBuildPromotionInfo();
-      will(returnValue(myBuildPromotion));
-
-      oneOf(myBuildPromotion).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myBuildPromotion).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(features));
-
-      oneOf(myLocks).fromBuildFeaturesAsMap(features);
-      will(returnValue(locksToTake));
-
-      oneOf(myInspector).inspect(myBuildType);
-      will(returnValue(Collections.emptyMap()));
-
-      oneOf(myBuildDistributorInput).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myRunningBuildsManager).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
-      will(returnValue(takenLocks));
-
-      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(Collections.emptyMap()));
-
-    }});
+    setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, Collections.emptyMap());
 
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
     assertNull(result.getFilteredConnectedAgents());
   }
-
 
   @Test
   @SuppressWarnings("unchecked")
@@ -280,7 +248,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Resource resource2 = myResourceFactory.newInfiniteResource("resource2", true);
 
-    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
@@ -289,49 +257,19 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Lock lock2 = new Lock("resource2", LockType.READ);
 
-    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<>();
     final TakenLock tl = new TakenLock(resource2);
     tl.addLock(m.mock(BuildPromotionInfo.class), lock2);
     takenLocks.put(tl.getResource(), tl);
 
-    m.checking(new Expectations() {{
-      oneOf(myQueuedBuild).getBuildPromotionInfo();
-      will(returnValue(myBuildPromotion));
-
-      oneOf(myBuildPromotion).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myBuildPromotion).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(features));
-
-      oneOf(myLocks).fromBuildFeaturesAsMap(features);
-      will(returnValue(locksToTake));
-
-      oneOf(myInspector).inspect(myBuildType);
-      will(returnValue(Collections.emptyMap()));
-
-      oneOf(myRunningBuildsManager).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myBuildDistributorInput).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
-      will(returnValue(takenLocks));
-
-      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(Collections.emptyMap()));
-
-    }});
+    setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, Collections.emptyMap());
 
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
     assertNull(result.getWaitReason());
     assertNull(result.getFilteredConnectedAgents());
   }
+
 
   @Test
   public void testMultipleBuildsLocksCrossing() throws Exception {
@@ -340,7 +278,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", true);
 
-    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
@@ -350,7 +288,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final BuildPromotionEx bpex = m.mock(BuildPromotionEx.class, "bpex-lock1");
     final Lock takenLock1 = new Lock("resource1", LockType.WRITE);
 
-    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<>();
     final TakenLock tl = new TakenLock(resource1);
     tl.addLock(bpex, takenLock1);
     takenLocks.put(tl.getResource(), tl);
@@ -358,41 +296,14 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final BuildTypeEx buildTypeEx = m.mock(BuildTypeEx.class, "bpex-btex");
     final String name = "UNAVAILABLE";
 
-    final Map<Resource, Lock> expectedUnavailableLocks = new HashMap<Resource, Lock>() {{
+    final Map<Resource, Lock> unavailableLocks = new HashMap<Resource, Lock>() {{
       put(resource1, lock);
     }};
 
+
+    setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, unavailableLocks);
+
     m.checking(new Expectations() {{
-      oneOf(myQueuedBuild).getBuildPromotionInfo();
-      will(returnValue(myBuildPromotion));
-
-      oneOf(myBuildPromotion).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myBuildPromotion).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(features));
-
-      oneOf(myLocks).fromBuildFeaturesAsMap(features);
-      will(returnValue(locksToTake));
-
-      oneOf(myInspector).inspect(myBuildType);
-      will(returnValue(Collections.emptyMap()));
-
-      oneOf(myBuildDistributorInput).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myRunningBuildsManager).getRunningBuilds();
-      will(returnValue(runningBuilds));
-
-      oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
-      will(returnValue(takenLocks));
-
-      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
-      will(returnValue(expectedUnavailableLocks));
-
       oneOf(bpex).getBuildType();
       will(returnValue(buildTypeEx));
 
@@ -413,7 +324,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Test
   @TestFor(issues = "TW-27930")
   public void testNoLockedResources_ResourceDisabled() throws Exception {
-    final Map<String, Lock> locksToTake = new HashMap<String, Lock>();
+    final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
@@ -431,6 +342,21 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       put(resource1, lock);
     }};
 
+    setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, unavailableLocks);
+
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNotNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
+
+  }
+
+  private void setupLocks(final Map<String, Lock> locksToTake,
+                          final Collection<SharedResourcesFeature> features,
+                          final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
+                          final Collection<SRunningBuild> runningBuilds,
+                          final Map<Resource, TakenLock> takenLocks,
+                          final Map<Resource, Lock> unavailableLocks) {
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
@@ -457,18 +383,12 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(runningBuilds));
 
       oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
-      will(returnValue(Collections.emptyMap()));
+      will(returnValue(takenLocks));
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
       will(returnValue(unavailableLocks));
 
     }});
-
-    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
-    assertNotNull(result);
-    assertNotNull(result.getWaitReason());
-    assertNull(result.getFilteredConnectedAgents());
-
   }
 
   private AgentsFilterContext createContext() {

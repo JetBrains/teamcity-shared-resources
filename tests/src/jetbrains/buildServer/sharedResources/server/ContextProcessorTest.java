@@ -83,11 +83,11 @@ public class ContextProcessorTest extends BaseTestCase {
   @Test
   @TestFor(issues = "TW-29779")
   public void testWriteLockShouldProvideAllResourceValues() throws Exception {
-    final Map<String, Lock> myTakenLocks = new HashMap<String, Lock>();
+    final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.WRITE);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
+    final Map<String, Resource> myDefinedResources = new HashMap<>();
     final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
@@ -121,11 +121,11 @@ public class ContextProcessorTest extends BaseTestCase {
 
   @Test
   public void testProvideValueAny() throws Exception {
-    final Map<String, Lock> myTakenLocks = new HashMap<String, Lock>();
+    final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
+    final Map<String, Resource> myDefinedResources = new HashMap<>();
     final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
@@ -159,18 +159,18 @@ public class ContextProcessorTest extends BaseTestCase {
 
   @Test
   public void testProvideValueAny_SomeTaken() throws Exception {
-    final Map<String, Lock> myTakenLocks = new HashMap<String, Lock>();
+    final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
+    final Map<String, Resource> myDefinedResources = new HashMap<>();
     final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
     final SRunningBuild otherRunningBuild = m.mock(SRunningBuild.class, "other-running-build");
-    final Map<String, Lock> otherTakenLocks = new HashMap<String, Lock>();
+    final Map<String, Lock> otherTakenLocks = new HashMap<>();
     otherTakenLocks.put("CustomResource", new Lock("CustomResource", LockType.READ, "value1"));
 
     final SharedResourcesFeature currentFeature = m.mock(SharedResourcesFeature.class, "my-build-feature");
@@ -195,7 +195,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myLocks).asBuildParameter(lock);
       will(returnValue(lockParamName));
 
-      final Map<Lock, String> storedLocks = new HashMap<Lock, String>();
+      final Map<Lock, String> storedLocks = new HashMap<>();
       storedLocks.put(lock, "value2");
       oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
 
@@ -206,11 +206,11 @@ public class ContextProcessorTest extends BaseTestCase {
 
   @Test
   public void testProvideValueSpecific() throws Exception {
-    final Map<String, Lock> myTakenLocks = new HashMap<String, Lock>();
+    final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ, "value2");
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<String, Resource>();
+    final Map<String, Resource> myDefinedResources = new HashMap<>();
     final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 

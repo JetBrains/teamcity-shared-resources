@@ -39,7 +39,7 @@ public class TestUtils {
   public static final int RANDOM_UPPER_BOUNDARY = 20;
 
   /** Random provider for other tests */
-  public static int generateBoundedRandomInt(int max) {
+  private static int generateBoundedRandomInt(int max) {
     return 1 + R.nextInt(max);
   }
 

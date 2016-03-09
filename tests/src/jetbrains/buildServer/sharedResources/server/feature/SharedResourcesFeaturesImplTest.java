@@ -59,15 +59,15 @@ public class SharedResourcesFeaturesImplTest extends BaseTestCase {
 
     myBuildType = m.mock(SBuildType.class, "my-build-type");
 
-    myInvalidDescriptors = new ArrayList<SBuildFeatureDescriptor>(NUM);
-    myValidDescriptors = new ArrayList<SBuildFeatureDescriptor>(NUM);
+    myInvalidDescriptors = new ArrayList<>(NUM);
+    myValidDescriptors = new ArrayList<>(NUM);
 
     for (int i = 0; i < NUM; i++) {
       myInvalidDescriptors.add(m.mock(SBuildFeatureDescriptor.class, "invalid-descriptor-" + i));
       myValidDescriptors.add(m.mock(SBuildFeatureDescriptor.class, "valid-descriptor-" + i));
     }
 
-    myAllFeatureDescriptors = new ArrayList<SBuildFeatureDescriptor>();
+    myAllFeatureDescriptors = new ArrayList<>();
     myAllFeatureDescriptors.addAll(myInvalidDescriptors);
     myAllFeatureDescriptors.addAll(myValidDescriptors);
 

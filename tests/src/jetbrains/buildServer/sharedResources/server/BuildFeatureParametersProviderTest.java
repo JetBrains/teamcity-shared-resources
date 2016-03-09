@@ -42,7 +42,7 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
 @TestFor(testForClass = BuildFeatureParametersProvider.class)
 public class BuildFeatureParametersProviderTest extends BaseTestCase {
 
-  private Mockery myMockery;
+  private Mockery m;
 
   /** Build under test */
   private SBuild myBuild;
@@ -75,12 +75,12 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myMockery = new Mockery();
-    myBuild = myMockery.mock(SBuild.class);
-    myBuildType = myMockery.mock(SBuildType.class);
-    myFeature = myMockery.mock(SharedResourcesFeature.class);
-    myResolvedSettings = myMockery.mock(ResolvedSettings.class);
-    myFeatures = myMockery.mock(SharedResourcesFeatures.class);
+    m = new Mockery();
+    myBuild = m.mock(SBuild.class);
+    myBuildType = m.mock(SBuildType.class);
+    myFeature = m.mock(SharedResourcesFeature.class);
+    myResolvedSettings = m.mock(ResolvedSettings.class);
+    myFeatures = m.mock(SharedResourcesFeatures.class);
 
     myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
       put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
@@ -98,22 +98,19 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testNoFeaturePresent() throws Exception {
-    myMockery.checking(new Expectations() {{
+    m.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(Collections.emptyList()));
-
     }});
-
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
     assertEquals("Expected empty result. Actual size is [" + size + "]" ,0 , size);
-    myMockery.assertIsSatisfied();
+    m.assertIsSatisfied();
   }
-
 
   /**
    * Test parameters provider when none locks are taken
@@ -124,53 +121,13 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
       add(myFeature);
     }};
-    myMockery.checking(new Expectations() {{
-      oneOf(myBuild).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
-
-      oneOf(myFeature).getBuildParameters();
-      will(returnValue(myEmptyParamMap));
-
-    }});
-
+    setupFeatureParamsExpectations(descriptors, myEmptyParamMap);
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
     assertEquals("Expected empty result. Actual size is [" + size + "]" , 0, size);
-    myMockery.assertIsSatisfied();
+    m.assertIsSatisfied();
 
-  }
-
-  /**
-   * Test parameters provider when some params are present, though
-   * no locks are taken
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testNonEmptyParamsNoLocks() throws Exception {
-    final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
-      add(myFeature);
-    }};
-    myMockery.checking(new Expectations() {{
-      oneOf(myBuild).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
-
-      oneOf(myFeature).getBuildParameters();
-      will(returnValue(myEmptyParamMap));
-
-    }});
-
-    Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
-    assertNotNull(result);
-    int size = result.size();
-    assertEquals("Expected empty result. Actual size is [" + size + "]" , 0, size);
-    myMockery.assertIsSatisfied();
   }
 
 
@@ -183,17 +140,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
       add(myFeature);
     }};
-    myMockery.checking(new Expectations() {{
-      oneOf(myBuild).getBuildType();
-      will(returnValue(myBuildType));
-
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(descriptors));
-
-      oneOf(myFeature).getBuildParameters();
-      will(returnValue(myNonEmptyParamMapSomeLocks));
-
-    }});
+    setupFeatureParamsExpectations(descriptors, myNonEmptyParamMapSomeLocks);
 
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
@@ -201,6 +148,19 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     /* Number of locks in non empty param map */
     int numTakenLocks = 3;
     assertEquals("Wrong locks number. Expected [" + numTakenLocks + "]. Actual size is [" + size + "]" , numTakenLocks, size);
-    myMockery.assertIsSatisfied();
+    m.assertIsSatisfied();
+  }
+
+  private void setupFeatureParamsExpectations(final Collection<SharedResourcesFeature> descriptors, final Map<String, String> expectedParams) {
+    m.checking(new Expectations() {{
+      oneOf(myBuild).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(descriptors));
+
+      oneOf(myFeature).getBuildParameters();
+      will(returnValue(expectedParams));
+    }});
   }
 }

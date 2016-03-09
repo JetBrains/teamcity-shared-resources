@@ -285,7 +285,7 @@ public class ProjectSettingsTest extends BaseTestCase {
 
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
-    final Collection newResources = newSettings.getResources();
+    final Collection<Resource> newResources = newSettings.getResources();
     assertNotEmpty(newResources);
     assertContains(newResources, infinite);
     assertContains(newResources, quoted);
@@ -308,7 +308,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
-    Collection newResources = newSettings.getResources();
+    Collection<Resource> newResources = newSettings.getResources();
     assertNotEmpty(newResources);
     assertContains(newResources, infinite);
 
@@ -342,7 +342,7 @@ public class ProjectSettingsTest extends BaseTestCase {
     PluginProjectSettings newSettings = new PluginProjectSettings(PROJECT_ID);
     newSettings.readFrom(newSettingsRoot);
     assertNotNull(newSettings.getResources());
-    Collection newResources = newSettings.getResources();
+    Collection<Resource> newResources = newSettings.getResources();
     assertNotEmpty(newResources);
     assertContains(newResources, oldResource);
 

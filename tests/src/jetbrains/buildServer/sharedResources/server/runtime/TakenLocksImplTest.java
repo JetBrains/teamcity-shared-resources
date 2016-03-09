@@ -26,6 +26,7 @@ import java.util.*;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("Duplicates")
 @TestFor(testForClass = {TakenLocks.class, TakenLocksImpl.class})
 public class TakenLocksImplTest extends BaseTestCase {
 
@@ -64,7 +65,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   public void testCollectTakenLocks_EmptyInput() throws Exception {
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            myProjectId, Collections.<SRunningBuild>emptyList(), Collections.<QueuedBuildInfo>emptyList());
+            myProjectId, Collections.emptyList(), Collections.emptyList());
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -149,7 +150,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
 
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            myProjectId, runningBuilds, Collections.<QueuedBuildInfo>emptyList());
+            myProjectId, runningBuilds, Collections.emptyList());
     assertNotNull(result);
     assertEquals(2, result.size());
     final TakenLock tl1 = result.get(resource1);
@@ -181,7 +182,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
 
     final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            myProjectId, runningBuilds, Collections.<QueuedBuildInfo>emptyList());
+            myProjectId, runningBuilds, Collections.emptyList());
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -281,7 +282,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_Custom_All() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
     resources.put(myCustomResource.getName(), myCustomResource);
 
@@ -300,7 +301,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -309,7 +310,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_Custom_Specific() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
     resources.put(myCustomResource.getName(), myCustomResource);
 
@@ -328,7 +329,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -339,7 +340,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   public void testGetUnavailableLocks_Custom_Any() throws Exception {
     // case when write lock ALL is taken
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
     resources.put(myCustomResource.getName(), myCustomResource);
 
@@ -358,7 +359,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -367,7 +368,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_Custom_Any_NoValuesAvailable() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource myCustomResource = myResourceFactory.newCustomResource("custom_resource1", Arrays.asList("v1", "v2"), true);
     resources.put(myCustomResource.getName(), myCustomResource);
 
@@ -387,7 +388,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
@@ -395,7 +396,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_ReadRead_Quota() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -414,7 +415,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myResources).asMap(myProjectId);
       will(returnValue(resources));
     }});
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -424,7 +425,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_ReadWrite() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -443,7 +444,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -452,7 +453,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testGetUnavailableLocks_WriteRead() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 2, true);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -471,7 +472,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -495,7 +496,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_WritePrioritySet() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
 
     final Resource infiniteResource = myResourceFactory.newInfiniteResource("resource", true);
     resources.put(infiniteResource.getName(), infiniteResource);
@@ -514,7 +515,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(myResources).asMap(myProjectId);
       will(returnValue(resources));
     }});
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
@@ -541,7 +542,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_PreservePriority() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
 
     final Resource infiniteResource = myResourceFactory.newInfiniteResource("resource", true);
     resources.put(infiniteResource.getName(), infiniteResource);
@@ -566,7 +567,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
 
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     { // 1) Check that read-read locks are working
       final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
@@ -602,7 +603,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-28307")
   public void testGetUnavailableLocks_Custom_Fair() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource customResource = myResourceFactory.newCustomResource("custom_resource", Arrays.asList("val1", "val2", "val3"), true);
     resources.put(customResource.getName(), customResource);
 
@@ -631,7 +632,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
     { // Check that any-any locks are working
       final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
@@ -668,7 +669,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-27930")
   public void testGetUnavailableLocks_ResourceDisabled() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 1, false);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -682,9 +683,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.<Resource, TakenLock>emptyMap(), myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.emptyMap(), myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(1, result.size());
     assertEquals(lockToTake, result.get(quotedResource));
@@ -693,7 +694,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-34917")
   public void testGetUnavailableLocks_ZeroQuota_Read() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 0, true);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -706,9 +707,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -719,7 +720,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-34917")
   public void testGetUnavailableLocks_ZeroQuota_Write() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource quotedResource = myResourceFactory.newQuotedResource("quoted_resource1", 0, true);
     resources.put(quotedResource.getName(), quotedResource);
 
@@ -732,8 +733,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
-    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final Set<String> fairSet = new HashSet<>();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
@@ -753,7 +754,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Test
   @TestFor(issues = "TW-36042")
   public void testGetUnavailableLocks_MultipleBuilds_InfiniteLock() throws Exception {
-    final Map<String, Resource> resources = new HashMap<String, Resource>();
+    final Map<String, Resource> resources = new HashMap<>();
     final Resource infiniteResource = myResourceFactory.newInfiniteResource("infinite_resource", true);
     resources.put(infiniteResource.getName(), infiniteResource);
 
@@ -766,9 +767,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    final Set<String> fairSet = new HashSet<String>();
+    final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>();
+    final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);

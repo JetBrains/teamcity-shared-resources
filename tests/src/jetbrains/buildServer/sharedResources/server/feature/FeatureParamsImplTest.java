@@ -73,10 +73,10 @@ public class FeatureParamsImplTest extends BaseTestCase {
    */
   @Test
   public void testNonEmpty() throws Exception {
-    final Map<String, Lock> locks = new HashMap<String, Lock>();
+    final Map<String, Lock> locks = new HashMap<>();
     locks.put("lock1", new Lock("lock1", LockType.READ));
     locks.put("lock2", new Lock("lock2", LockType.WRITE));
-    final Map<String, String> params = new HashMap<String, String>();
+    final Map<String, String> params = new HashMap<>();
     params.put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock");
     m.checking(new Expectations() {{
       oneOf(myLocks).fromFeatureParameters(params);

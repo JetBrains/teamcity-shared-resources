@@ -125,7 +125,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
     addSingleArtifactsAccessExpectations(artifactsDir);
 
-    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> takenLocks = new HashMap<>();
     myLocksStorage.store(myBuild, takenLocks);
     final Map<String, Lock> result = myLocksStorage.load(myBuild);
     assertNotNull(result);
@@ -137,7 +137,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
     addSingleArtifactsAccessExpectations(artifactsDir);
 
-    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> takenLocks = new HashMap<>();
     final Lock lock1 = new Lock("lock1", LockType.READ);
     final Lock lock2 = new Lock("lock2", LockType.WRITE);
 
@@ -162,7 +162,7 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testStore_Values() throws Exception {
     final File artifactsDir = createTempDir();
     addSingleArtifactsAccessExpectations(artifactsDir);
-    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> takenLocks = new HashMap<>();
     final String value1 = "_value_1_";
     final String value2 = "_value_2_";
     final Lock lock1 = new Lock("lock1", LockType.READ);
@@ -194,7 +194,7 @@ public class LocksStorageImplTest extends BaseTestCase {
       will(returnValue(artifactsDir));
     }});
 
-    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> takenLocks = new HashMap<>();
     final Lock lock1 = new Lock("lock1", LockType.READ);
     final Lock lock2 = new Lock("lock2", LockType.WRITE);
     final Lock lock11 = new Lock("lock11", LockType.READ);
@@ -330,7 +330,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
     final CountDownLatch myLatch = new CountDownLatch(2);
 
-    final Map<Lock, String> takenLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> takenLocks = new HashMap<>();
     final Lock lock1 = new Lock("lock1", LockType.READ);
     final Lock lock2 = new Lock("lock2", LockType.WRITE);
     final Lock lock11 = new Lock("lock11", LockType.READ);
@@ -349,33 +349,27 @@ public class LocksStorageImplTest extends BaseTestCase {
     }});
 
 
-    final Runnable runReader = new Runnable() {
-      @Override
-      public void run() {
-        while (!myLocksStorage.locksStored(myBuild)) {
-          try {
-            Thread.sleep(10);
-          } catch (InterruptedException e) {
-            fail(e.getMessage());
-          }
+    final Runnable runReader = () -> {
+      while (!myLocksStorage.locksStored(myBuild)) {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          fail(e.getMessage());
         }
-        final Map<String, Lock> result = myLocksStorage.load(myBuild);
-        assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals("", result.get(lock1.getName()).getValue());
-        assertEquals("", result.get(lock2.getName()).getValue());
-        assertEquals(value, result.get(lock11.getName()).getValue());
-        myLatch.countDown();
       }
+      final Map<String, Lock> result = myLocksStorage.load(myBuild);
+      assertNotNull(result);
+      assertEquals(3, result.size());
+      assertEquals("", result.get(lock1.getName()).getValue());
+      assertEquals("", result.get(lock2.getName()).getValue());
+      assertEquals(value, result.get(lock11.getName()).getValue());
+      myLatch.countDown();
     };
     new Thread(runReader).start();
 
-    final Runnable runWriter = new Runnable() {
-      @Override
-      public void run() {
-        myLocksStorage.store(myBuild, takenLocks);
-        myLatch.countDown();
-      }
+    final Runnable runWriter = () -> {
+      myLocksStorage.store(myBuild, takenLocks);
+      myLatch.countDown();
     };
     new Thread(runWriter).start();
     myLatch.await(10, TimeUnit.SECONDS);

@@ -135,7 +135,7 @@ public class EditActionTest extends BaseTestCase {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
     final Resource rcNewName = myResourceFactory.newQuotedResource(NEW_RESOURCE_NAME, 111, true);
     final SProject subProject = m.mock(SProject.class,  "sub-project") ;
-    final List<SProject> projects = new ArrayList<SProject>();
+    final List<SProject> projects = new ArrayList<>();
     projects.add(subProject);
 
     final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");
@@ -196,7 +196,7 @@ public class EditActionTest extends BaseTestCase {
 
     final SProject childWithUsage = m.mock(SProject.class, "child-with-usage");
     final SProject childWithoutUsage = m.mock(SProject.class, "child-without-usage");
-    final List<SProject> projects = new ArrayList<SProject>();
+    final List<SProject> projects = new ArrayList<>();
     projects.addAll(Arrays.asList(childWithUsage, childWithoutUsage));
 
     final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");

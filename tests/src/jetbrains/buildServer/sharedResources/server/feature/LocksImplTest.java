@@ -40,25 +40,8 @@ public class LocksImplTest extends BaseTestCase {
 
   @Test
   public void testFromFeatureParameters_Empty() throws Exception {
-    final Map<String, String> params = new HashMap<String, String>();
-    { // pure params
-      final Map<String, Lock> result = myLocks.fromFeatureParameters(params);
-      assertNotNull(result);
-      assertEquals(0, result.size());
-    }
-
-    { // SBuildFeatureDescriptor
-      final SBuildFeatureDescriptor descriptor = m.mock(SBuildFeatureDescriptor.class);
-      m.checking(new Expectations() {{
-        oneOf(descriptor).getParameters();
-        will(returnValue(params));
-      }});
-      final Map<String, Lock> result = myLocks.fromFeatureParameters(descriptor);
-      assertNotNull(result);
-      assertEquals(0, result.size());
-    }
+    checkNoLocks(Collections.emptyMap());
   }
-
 
   @Test
   public void testFromFeatureParameters_NoLocks() throws Exception {
@@ -67,23 +50,24 @@ public class LocksImplTest extends BaseTestCase {
         put(TestUtils.generateRandomName(), TestUtils.generateRandomName());
       }
     }};
+    checkNoLocks(params);
+  }
 
-    {
-      final Map<String, Lock> result = myLocks.fromFeatureParameters(params);
-      assertNotNull(result);
-      assertEquals(0, result.size());
-    }
+  private void checkNoLocks(final Map<String, String> params) {
+    // read from feature parameters
+    Map<String, Lock> result = myLocks.fromFeatureParameters(params);
+    assertNotNull(result);
+    assertEquals(0, result.size());
 
-    {
-      final SBuildFeatureDescriptor descriptor = m.mock(SBuildFeatureDescriptor.class);
-      m.checking(new Expectations() {{
-        oneOf(descriptor).getParameters();
-        will(returnValue(params));
-      }});
-      final Map<String, Lock> result = myLocks.fromFeatureParameters(descriptor);
-      assertNotNull(result);
-      assertEquals(0, result.size());
-    }
+    // read from feature descriptor
+    final SBuildFeatureDescriptor descriptor = m.mock(SBuildFeatureDescriptor.class);
+    m.checking(new Expectations() {{
+      oneOf(descriptor).getParameters();
+      will(returnValue(params));
+    }});
+    result = myLocks.fromFeatureParameters(descriptor);
+    assertNotNull(result);
+    assertEquals(0, result.size());
   }
 
   @Test
@@ -148,13 +132,13 @@ public class LocksImplTest extends BaseTestCase {
   @Test
   public void testAsFeatureParameter() throws Exception {
     { // empty collection of locks
-      final String str = myLocks.asFeatureParameter(Collections.<Lock>emptyList());
+      final String str = myLocks.asFeatureParameter(Collections.emptyList());
       assertNotNull(str);
       assertEquals(0, str.length());
     }
     {
       int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-      final Collection<Lock> locks = new ArrayList<Lock>(N);
+      final Collection<Lock> locks = new ArrayList<>(N);
       for (int i = 0; i < N; i++) {
         locks.add(TestUtils.generateRandomLock());
       }
@@ -171,7 +155,7 @@ public class LocksImplTest extends BaseTestCase {
   @Test
   public void testAsBuildParameters() throws Exception {
     int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-    final Collection<Lock> locks = new ArrayList<Lock>(N);
+    final Collection<Lock> locks = new ArrayList<>(N);
     for (int i = 0; i < N; i++) {
       locks.add(TestUtils.generateRandomLock());
     }
@@ -262,7 +246,7 @@ public class LocksImplTest extends BaseTestCase {
   @Test
   public void testToFeatureParams_Values() throws Exception {
     int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-    final Collection<Lock> locks = new ArrayList<Lock>(N);
+    final Collection<Lock> locks = new ArrayList<>(N);
     for (int i = 0; i < N; i++) {
       locks.add(TestUtils.generateRandomLockWithValue());
     }
@@ -279,7 +263,7 @@ public class LocksImplTest extends BaseTestCase {
   @Test
   public void testAsBuildParams_Values() throws Exception {
     int N = TestUtils.RANDOM_UPPER_BOUNDARY;
-    final Collection<Lock> locks = new ArrayList<Lock>(N);
+    final Collection<Lock> locks = new ArrayList<>(N);
     for (int i = 0; i < N; i++) {
       locks.add(TestUtils.generateRandomLockWithValue());
     }

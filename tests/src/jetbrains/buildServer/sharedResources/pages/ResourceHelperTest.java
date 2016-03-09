@@ -27,7 +27,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -175,7 +175,7 @@ public class ResourceHelperTest extends BaseTestCase {
     }
 
     {
-      final Resource rc = myResourceFactory.newCustomResource(RESOURCE_NAME, Arrays.asList("value1"), true);
+      final Resource rc = myResourceFactory.newCustomResource(RESOURCE_NAME, Collections.singletonList("value1"), true);
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
