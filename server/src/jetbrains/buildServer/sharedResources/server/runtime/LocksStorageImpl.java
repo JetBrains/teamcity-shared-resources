@@ -21,7 +21,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TLongHashSet;
-import gnu.trove.TLongObjectHashMap;
+import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import jetbrains.buildServer.serverSide.BuildServerAdapter;
 import jetbrains.buildServer.serverSide.BuildServerListener;
 import jetbrains.buildServer.serverSide.SBuild;
@@ -79,6 +81,12 @@ public class LocksStorageImpl implements LocksStorage {
   @NotNull
   private LoadingCache<SBuild, Map<String, Lock>> myLocksCache;
 
+  /**
+   * Map with separate guarding lock for each build
+   */
+  @NotNull
+  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<ReentrantLock>(new TLongObjectHashMap<ReentrantLock>());
+
   public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
     CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
       @Override
@@ -135,12 +143,6 @@ public class LocksStorageImpl implements LocksStorage {
       }
     });
   }
-
-  /**
-   * Map with separate guarding lock for each build
-   */
-  @NotNull
-  private final TLongObjectHashMap<ReentrantLock> myGuards = new TLongObjectHashMap<ReentrantLock>();
 
   @Override
   public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
