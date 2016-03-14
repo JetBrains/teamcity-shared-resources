@@ -35,12 +35,15 @@
 
 <c:set var="type_quota" value="<%=ResourceType.QUOTED%>"/>
 <c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
-
-
 <c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
 
-<script type="text/javascript">
+<style type="text/css">
+  .resourcesDialog {
+    width: 49em;
+  }
+</style>
 
+<script type="text/javascript">
   BS.SharedResourcesActions = {
     getCommonParams: function () {
       // if quota checkbox in unchecked, send no quota info
@@ -139,10 +142,7 @@
       }
     }
   };
-
-
 </script>
-
 
 <script type="text/javascript">
   var myValues;
