@@ -149,6 +149,23 @@ public class ProjectSettingsTest extends BaseTestCase {
                   "  </JetBrains.SharedResources>\n" +
                   "</settings>\n";
 
+  @Language("XML")
+  private static final String xmlCustomDuplicate =
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                  "<settings>\n" +
+                  "  <JetBrains.SharedResources>\n" +
+                  "    <resource>\n" +
+                  "      <name>resource1</name>\n" +
+                  "      <values type=\"custom\">\n" +
+                  "        <value>value0</value>\n" +
+                  "        <value>value0</value>\n" +
+                  "        <value>value1</value>\n" +
+                  "      </values>\n" +
+                  "    </resource>\n" +
+                  "  </JetBrains.SharedResources>\n" +
+                  "</settings>\n" +
+                  "\n";
+
   private static final String PROJECT_ID = "PROJECT_ID";
 
   private ResourceFactory myResourceFactory;
@@ -161,7 +178,6 @@ public class ProjectSettingsTest extends BaseTestCase {
   }
 
   /**
-   *
    * @see PluginProjectSettings#readFrom(org.jdom.Element)
    * @throws Exception if something goes wrong
    */
@@ -194,13 +210,19 @@ public class ProjectSettingsTest extends BaseTestCase {
 
   /**
    * Tests reading of custom resource
-   *
    * @throws Exception if something goes wrong
    */
   @Test
   public void testReadFrom_Custom() throws Exception {
     final PluginProjectSettings settings = createProjectSettings(xmlCustom);
     validateSettingsCustom(settings);
+  }
+
+  @Test
+  @TestFor(issues = "TW-44929")
+  public void testReadFrom_Dup() throws Exception {
+    final PluginProjectSettings settings = createProjectSettings(xmlCustomDuplicate);
+    validateSettingsCustomDuplicate(settings);
   }
 
   /**
@@ -247,6 +269,12 @@ public class ProjectSettingsTest extends BaseTestCase {
   @Test
   public void testWriteTo_Disabled() throws Exception {
     validateSettingsDisabled(readWrite(xmlDisabled));
+  }
+
+  @Test
+  @TestFor(issues = "TW-44929")
+  public void testWriteTo_CustomDup() throws Exception {
+    validateSettingsCustomDuplicate(readWrite(xmlCustomDuplicate));
   }
 
   /**
@@ -456,6 +484,15 @@ public class ProjectSettingsTest extends BaseTestCase {
     final QuotedResource qr = (QuotedResource)r;
     assertFalse(qr.isInfinite());
     assertEquals(1, qr.getQuota());
+  }
+
+  private void validateSettingsCustomDuplicate(@NotNull final PluginProjectSettings settings) {
+    final Collection<Resource> resources = settings.getResources();
+    final Resource resource = resources.iterator().next();
+    assertNotNull(resource);
+    assertTrue(resource instanceof CustomResource);
+    CustomResource res = (CustomResource)resource;
+    assertEquals(3, res.getValues().size());
   }
 
   /**

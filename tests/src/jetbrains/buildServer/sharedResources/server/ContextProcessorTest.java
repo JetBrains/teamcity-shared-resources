@@ -244,6 +244,57 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
+  @Test
+  @TestFor(issues = "TW-44929")
+  public void testProvideDuplicateValue() throws Exception {
+    final String VALUE = "a";
+    final Map<String, Resource> definedResources = new HashMap<String, Resource>();
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList(VALUE, VALUE), true);
+    definedResources.put(resource.getName(), resource);
+
+    final Map<String, Lock> takenLocks = new HashMap<String, Lock>();
+    final Lock lock = new Lock("CustomResource", LockType.READ);
+    takenLocks.put(lock.getName(), lock);
+
+    final String lockParamName = "teamcity.locks.readLock." + lock.getName();
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
+    final SRunningBuild runningBuild = m.mock(SRunningBuild.class, "running-build");
+    final Map<String, Lock> runningBuildLocks = new HashMap<String, Lock>();
+    runningBuildLocks.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE));
+
+    m.checking(new Expectations() {{
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(feature).getLockedResources();
+      will(returnValue(takenLocks));
+
+      oneOf(myResources).asMap(PROJECT_ID);
+      will(returnValue(definedResources));
+
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.singletonList(runningBuild)));
+
+      oneOf(myLocksStorage).load(runningBuild);
+      will(returnValue(runningBuildLocks));
+
+      oneOf(myLocks).asBuildParameter(lock);
+      will(returnValue(lockParamName));
+
+      final Map<Lock, String> storedLocks = new HashMap<Lock, String>();
+      storedLocks.put(lock, VALUE);
+      oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
+
+      oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE);
+
+      allowing(myLocksStorage);
+    }});
+    myProcessor.updateParameters(myBuildStartContext);
+  }
+
   private Expectations createCommonExpectations() {
     return new Expectations() {{
       oneOf(myBuildStartContext).getBuild();

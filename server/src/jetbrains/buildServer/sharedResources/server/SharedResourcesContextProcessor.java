@@ -94,7 +94,9 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
             final List<String> values = new ArrayList<String>(entry.getValue().getValues());
             final String key = entry.getKey();
             // remove used values
-            values.removeAll(usedValues.get(key));
+            for (String val: usedValues.get(key)) {
+              values.remove(val);
+            }
             if (!values.isEmpty()) {
               final Lock currentLock = locks.get(key);
               final String paramName = myLocks.asBuildParameter(currentLock);
