@@ -87,7 +87,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     synchronized (o) {
       // decide whether we need to resolve values
       if (!myCustomResources.isEmpty()) {
-        final Map<String, Set<String>> usedValues = collectTakenValuesFromRuntime(locks);
+        final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks);
         for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
           if (entry.getValue().isEnabled()) {
             // get value space for current resources
@@ -125,11 +125,11 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
    * @return map of locks and taken values
    */
   @NotNull
-  private Map<String, Set<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks) {
+  private Map<String, List<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks) {
     final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
-    final Map<String, Set<String>> usedValues = new HashMap<String, Set<String>>();
+    final Map<String, List<String>> usedValues = new HashMap<String, List<String>>();
     for (String name: locks.keySet()) {
-      usedValues.put(name, new HashSet<String>());
+      usedValues.put(name, new ArrayList<String>());
     }
     // collect taken values from runtime
     for (SRunningBuild runningBuild: runningBuilds) {
