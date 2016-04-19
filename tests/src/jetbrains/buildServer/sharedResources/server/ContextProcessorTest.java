@@ -295,6 +295,71 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
+  /**
+   * 2 running builds hold same duplicate value
+   * tests that the build about to start gets the different one
+   *
+   * @throws Exception if anything goes wrong
+   */
+  @Test
+  @TestFor(issues = "TW-44929")
+  public void testDupValues_CollectLockedResources() throws Exception {
+    final String VALUE_HELD = "a";
+    final String VALUE_AVAILABLE = "b";
+
+    final Map<String, Resource> definedResources = new HashMap<String, Resource>();
+    final CustomResource resource = (CustomResource)myResourceFactory.newCustomResource("CustomResource", Arrays.asList(VALUE_HELD, VALUE_HELD, VALUE_AVAILABLE), true);
+    definedResources.put(resource.getName(), resource);
+
+    final Map<String, Lock> takenLocks = new HashMap<String, Lock>();
+    final Lock lock = new Lock("CustomResource", LockType.READ);
+    takenLocks.put(lock.getName(), lock);
+
+    final String lockParamName = "teamcity.locks.readLock." + lock.getName();
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
+    final SRunningBuild runningBuild1 = m.mock(SRunningBuild.class, "running-build-1");
+    final Map<String, Lock> runningBuildLocks1 = new HashMap<String, Lock>();
+    runningBuildLocks1.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE_HELD));
+
+    final SRunningBuild runningBuild2 = m.mock(SRunningBuild.class, "running-build-2");
+    final Map<String, Lock> runningBuildLocks2 = new HashMap<String, Lock>();
+    runningBuildLocks2.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE_HELD));
+
+    m.checking(new Expectations() {{
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(feature).getLockedResources();
+      will(returnValue(takenLocks));
+
+      oneOf(myResources).asMap(PROJECT_ID);
+      will(returnValue(definedResources));
+
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Arrays.asList(runningBuild1, runningBuild2)));
+
+      oneOf(myLocksStorage).load(runningBuild1);
+      will(returnValue(runningBuildLocks1));
+
+      oneOf(myLocksStorage).load(runningBuild2);
+      will(returnValue(runningBuildLocks2));
+
+      oneOf(myLocks).asBuildParameter(lock);
+      will(returnValue(lockParamName));
+
+      final Map<Lock, String> storedLocks = new HashMap<Lock, String>();
+      storedLocks.put(lock, VALUE_AVAILABLE);
+      oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
+
+      oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE_AVAILABLE);
+
+      allowing(myLocksStorage);
+    }});
+    myProcessor.updateParameters(myBuildStartContext);
+  }
+
   private Expectations createCommonExpectations() {
     return new Expectations() {{
       oneOf(myBuildStartContext).getBuild();
