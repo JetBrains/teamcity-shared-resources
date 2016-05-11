@@ -7,6 +7,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +30,9 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
                               @NotNull final Resources resources,
                               @NotNull final ResourceHelper resourceHelper,
                               @NotNull final Messages messages,
-                              @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+                              @NotNull final ConfigActionFactory configActionFactory,
+                              @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures);
   }
 
   @NotNull
@@ -48,6 +50,7 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
       myResources.deleteResource(projectId, resourceName);
+      myResourceProjectFeatures.deleteResource(project, resourceName);
       project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' shared resource was removed"));
       addMessage(request, "Resource " + resourceName + " was deleted");
     } else {

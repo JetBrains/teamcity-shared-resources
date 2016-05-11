@@ -27,6 +27,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -59,17 +60,22 @@ public class SharedResourcesPage extends EditProjectTab {
   @NotNull
   private final ResourceUsageAnalyzer myAnalyzer;
 
+  @NotNull
+  private final ResourceProjectFeatures myResourceProjectFeatures;
+
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
                              @NotNull final SecurityContext securityContext,
                              @NotNull final ConfigurationInspector inspector,
-                             @NotNull final ResourceUsageAnalyzer analyzer) {
+                             @NotNull final ResourceUsageAnalyzer analyzer,
+                             @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     mySecurityContext = securityContext;
     myInspector = inspector;
     myAnalyzer = analyzer;
+    myResourceProjectFeatures = resourceProjectFeatures;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -98,6 +104,7 @@ public class SharedResourcesPage extends EditProjectTab {
       bean = new SharedResourcesBean(project, myResources.asProjectResourceMap(projectId), configurationErrors);
       model.put("bean", bean);
       model.put("usages", usages);
+      model.put("resourceDescriptors", myResourceProjectFeatures.asProjectResourceMap(project));
     }
   }
 

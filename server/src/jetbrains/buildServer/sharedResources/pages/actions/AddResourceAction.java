@@ -9,6 +9,7 @@ import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,9 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
                            @NotNull final Resources resources,
                            @NotNull final ResourceHelper resourceHelper,
                            @NotNull final Messages messages,
-                           @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+                           @NotNull final ConfigActionFactory configActionFactory,
+                           @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures);
   }
 
   @Override
@@ -52,6 +54,7 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
       if (resource != null) {
         try {
           myResources.addResource(resource);
+          myResourceProjectFeatures.addResource(project, myResourceHelper.getResourceParameters(request));
           project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was created"));
           addMessage(request, "Resource " + resource.getName() + " was added");
         } catch (DuplicateResourceException e) {

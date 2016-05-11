@@ -9,6 +9,7 @@ import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResource
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
                             @NotNull final ResourceHelper resourceHelper,
                             @NotNull final SharedResourcesFeatures features,
                             @NotNull final Messages messages,
-                            @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+                            @NotNull final ConfigActionFactory configActionFactory,
+                            @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures);
     myFeatures = features;
   }
 
@@ -62,6 +64,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
         final String newName = resource.getName();
         try {
           myResources.editResource(projectId, oldName, resource);
+          myResourceProjectFeatures.editResource(project, oldName, myResourceHelper.getResourceParameters(request));
           ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree

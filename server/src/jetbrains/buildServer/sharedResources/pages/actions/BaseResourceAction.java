@@ -8,6 +8,7 @@ import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -49,16 +50,21 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   protected final ConfigActionFactory myConfigActionFactory;
 
+  @NotNull
+  protected final ResourceProjectFeatures myResourceProjectFeatures;
+
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
                                @NotNull final Resources resources,
                                @NotNull final ResourceHelper resourceHelper,
                                @NotNull final Messages messages,
-                               @NotNull final ConfigActionFactory configActionFactory) {
+                               @NotNull final ConfigActionFactory configActionFactory,
+                               @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
     myProjectManager = projectManager;
     myResources = resources;
     myResourceHelper = resourceHelper;
     myMessages = messages;
     myConfigActionFactory = configActionFactory;
+    myResourceProjectFeatures = resourceProjectFeatures;
   }
 
   @NotNull

@@ -25,6 +25,7 @@ import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
@@ -44,8 +45,9 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
                                      @NotNull final Resources resources,
                                      @NotNull final ResourceHelper resourceHelper,
                                      @NotNull final Messages messages,
-                                     @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+                                     @NotNull final ConfigActionFactory configActionFactory,
+                                     @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures);
   }
 
   @NotNull

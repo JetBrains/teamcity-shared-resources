@@ -26,6 +26,7 @@ import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +79,8 @@ public class EditActionTest extends BaseTestCase {
 
   private SharedResourcesFeatures myFeatures;
 
+  private ResourceProjectFeatures myResourceProjectFeatures;
+
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
@@ -95,8 +98,9 @@ public class EditActionTest extends BaseTestCase {
     myMessages = m.mock(Messages.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
+    myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
     final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory, myResourceProjectFeatures);
   }
 
   @Test

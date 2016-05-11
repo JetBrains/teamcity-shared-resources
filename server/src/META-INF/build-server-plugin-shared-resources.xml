@@ -17,6 +17,9 @@
 
   <!-- ===  INTERNALS  === -->
 
+
+  <bean class="jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl"/>
+
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>

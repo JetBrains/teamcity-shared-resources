@@ -18,8 +18,10 @@
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
 
+
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <%--@elvariable id="usages" type="java.util.Map<jetbrains.buildServer.sharedResources.model.resources.Resource, java.util.Map<jetbrains.buildServer.serverSide.SBuildType,java.util.List<jetbrains.buildServer.sharedResources.model.Lock>>"--%>
+<%--@elvariable id="resourceDescriptors" type="java.util.Map<jetbrains.buildServer.serverSide.SProject,java.util.Map<java.lang.String,jetbrains.buildServer.sharedResources.server.project.ResourceDescriptor>>"--%>
 
 <c:set var="project" value="${bean.project}"/>
 
@@ -250,4 +252,23 @@
       </c:if>
     </c:forEach>
   </div>
+</div>
+
+<div>
+  <table class="parametersTable">
+    <tr>
+      <th style="width: 20%">Project</th>
+      <th colspan="2">Resource Name</th>
+    </tr>
+    <c:forEach var="rditem" items="${resourceDescriptors}">
+      <c:set var="prr" value="${rditem.key}"/>
+      <c:set var="rds" value="${rditem.value}"/>
+      <c:forEach var="rrrd" items="${rds}"> <%--entry<String, RD>.--%>
+        <tr>
+          <td><bs:out value="${prr.name}"/> </td>
+          <td><bs:out value="${rrrd.key}"/></td>
+        </tr>
+      </c:forEach>
+    </c:forEach>
+  </table>
 </div>

@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -91,6 +93,32 @@ public class ResourceHelper {
         return lock.getName();
       }
     }, ", ");
+  }
+
+  public Map<String, String> getResourceParameters(@NotNull final HttpServletRequest request) {
+    final Map<String, String> result = new HashMap<>();
+    result.put("name", request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME));
+    result.put("type", request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
+    final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
+    if (ResourceType.QUOTED.equals(resourceType)) {
+      final String resourceQuota = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
+      if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
+        try {
+          int quota = Integer.parseInt(resourceQuota);
+          result.put("quota", Integer.toString(quota));
+        } catch (IllegalArgumentException e) {
+          LOG.warn("Illegal argument supplied in quota for resource [" + result.get("name") + "]");
+        }
+      } else {
+        result.put("quota", "-1");
+      }
+    } else if (ResourceType.CUSTOM.equals(resourceType)) {
+      final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
+//      final List<String> strings = StringUtil.split(values, true, '\r', '\n');
+      //todo: to json here
+      result.put("values", values);
+    }
+    return result;
   }
 }
 
