@@ -27,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,8 +39,7 @@ public class ResourceHelper {
   private final Logger LOG = Logger.getInstance(ResourceHelper.class.getName());
 
   @Nullable
-  public Resource getResourceFromRequest(@NotNull final String projectId, @NotNull final HttpServletRequest request) {
-    final ResourceFactory factory = ResourceFactory.getFactory(projectId);
+  public Resource getResourceFromRequest(@NotNull final HttpServletRequest request) {
     final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
     final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
     Resource resource = null;
@@ -51,36 +48,35 @@ public class ResourceHelper {
       if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
         try {
           int quota = Integer.parseInt(resourceQuota);
-          resource = factory.newQuotedResource(resourceName, quota, true);
+          resource = ResourceFactory.newQuotedResource(resourceName, quota, true);
         } catch (IllegalArgumentException e) {
           LOG.warn("Illegal argument supplied in quota for resource [" + resourceName + "]");
         }
       } else {
-        resource = factory.newInfiniteResource(resourceName, true);
+        resource = ResourceFactory.newInfiniteResource(resourceName, true);
       }
     } else if (ResourceType.CUSTOM.equals(resourceType)) {
       final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
       final List<String> strings = StringUtil.split(values, true, '\r', '\n');
-      resource = factory.newCustomResource(resourceName, strings, true);
+      resource = ResourceFactory.newCustomResource(resourceName, strings, true);
     }
     return resource;
   }
 
   @NotNull
-  public Resource getResourceInState(@NotNull final String projectId, @NotNull final Resource resource, final boolean state) {
-    final ResourceFactory factory = ResourceFactory.getFactory(projectId);
+  public Resource getResourceInState(@NotNull final Resource resource, final boolean state) {
     Resource result;
     final ResourceType resourceType = resource.getType();
     if (ResourceType.QUOTED.equals(resourceType)) {
       final QuotedResource qr = (QuotedResource) resource;
       if (qr.isInfinite()) {
-        result = factory.newInfiniteResource(resource.getName(), state);
+        result = ResourceFactory.newInfiniteResource(resource.getName(), state);
       } else {
-        result = factory.newQuotedResource(resource.getName(), qr.getQuota(), state);
+        result = ResourceFactory.newQuotedResource(resource.getName(), qr.getQuota(), state);
       }
     } else {
       final CustomResource cr = (CustomResource) resource;
-      result = factory.newCustomResource(resource.getName(), cr.getValues(), state);
+      result = ResourceFactory.newCustomResource(resource.getName(), cr.getValues(), state);
     }
     return result;
   }
@@ -93,32 +89,6 @@ public class ResourceHelper {
         return lock.getName();
       }
     }, ", ");
-  }
-
-  public Map<String, String> getResourceParameters(@NotNull final HttpServletRequest request) {
-    final Map<String, String> result = new HashMap<>();
-    result.put("name", request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME));
-    result.put("type", request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
-    final ResourceType resourceType = ResourceType.fromString(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE));
-    if (ResourceType.QUOTED.equals(resourceType)) {
-      final String resourceQuota = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
-      if (resourceQuota != null && !"".equals(resourceQuota)) { // we have quoted resource
-        try {
-          int quota = Integer.parseInt(resourceQuota);
-          result.put("quota", Integer.toString(quota));
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Illegal argument supplied in quota for resource [" + result.get("name") + "]");
-        }
-      } else {
-        result.put("quota", "-1");
-      }
-    } else if (ResourceType.CUSTOM.equals(resourceType)) {
-      final String values = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES);
-//      final List<String> strings = StringUtil.split(values, true, '\r', '\n');
-      //todo: to json here
-      result.put("values", values);
-    }
-    return result;
   }
 }
 

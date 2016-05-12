@@ -57,7 +57,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<>();
 
-  private ResourceFactory myResourceFactory;
+  private ResourceFactory ResourceFactory;
 
 
   /**
@@ -84,7 +84,6 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myCustomData = new HashMap<>();
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
-    myResourceFactory = ResourceFactory.getFactory(myProjectId);
     myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector);
   }
 
@@ -246,7 +245,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Resource resource2 = myResourceFactory.newInfiniteResource("resource2", true);
+    final Resource resource2 = ResourceFactory.newInfiniteResource("resource2", true);
 
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
@@ -276,7 +275,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", true);
+    final Resource resource1 = ResourceFactory.newInfiniteResource("resource1", true);
 
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
@@ -328,7 +327,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
-    final Resource resource1 = myResourceFactory.newInfiniteResource("resource1", false);
+    final Resource resource1 = ResourceFactory.newInfiniteResource("resource1", false);
 
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);

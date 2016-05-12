@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -103,8 +105,9 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   }
 
   @Override
+  @NotNull
   public Map<String, Resource> asMap(@NotNull SProject project) {
-    final Map<String, Resource> result = new TreeMap<>(SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR);
+    final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
     final List<SProject> path = project.getProjectPath();
     final ListIterator<SProject> it = path.listIterator(path.size());
     while (it.hasPrevious()) {
@@ -132,7 +135,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     });
     result.putAll(project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
             .stream()
-            .collect(Collectors.toMap(rd -> rd.getParameters().get("name"), rd -> ResourceFactory.getFactory(project.getProjectId()).createResource(rd.getParameters()))));
+            .collect(Collectors.toMap(rd -> rd.getParameters().get("name"), rd -> ResourceFactory.createResource(rd.getParameters()))));
     return result;
   }
 }

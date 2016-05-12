@@ -48,6 +48,7 @@ import java.util.List;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
+@SuppressWarnings("ALL")
 @TestFor(testForClass = EditResourceAction.class)
 public class EditActionTest extends BaseTestCase {
 
@@ -97,7 +98,6 @@ public class EditActionTest extends BaseTestCase {
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
-    myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
     myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
     final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
     myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
@@ -120,7 +120,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
       will(returnValue(rc));
 
       allowing(myResources);
@@ -160,7 +160,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
       will(returnValue(rcNewName));
 
       oneOf(myProject).getProjects();
@@ -223,7 +223,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
       will(returnValue(newResource));
 
       allowing(myResources);

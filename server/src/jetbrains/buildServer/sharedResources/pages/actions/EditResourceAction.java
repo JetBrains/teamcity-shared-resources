@@ -57,7 +57,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
     final SProject project = myProjectManager.findProjectById(projectId);
 
     if (project != null) {
-      final Resource resource = myResourceHelper.getResourceFromRequest(projectId, request);
+      final Resource resource = myResourceHelper.getResourceFromRequest(request);
       if (resource != null) {
         final String newName = resource.getName();
         boolean selfPersisted = false;

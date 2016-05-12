@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.server.feature;
 
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.settings.ProjectSettingsManager;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
@@ -37,24 +36,13 @@ public final class ResourcesImpl implements Resources {
   private final ResourceProjectFeatures myFeatures;
 
   @NotNull
-  private final ProjectSettingsManager myProjectSettingsManager;
-
-  @NotNull
   private final ProjectManager myProjectManager;
 
 
-  public ResourcesImpl(@NotNull final ProjectSettingsManager projectSettingsManager,
-                       @NotNull final ProjectManager projectManager,
+  public ResourcesImpl(@NotNull final ProjectManager projectManager,
                        @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
-    myProjectSettingsManager = projectSettingsManager;
     myProjectManager = projectManager;
     myFeatures = resourceProjectFeatures;
-  }
-
-  @Override
-  @Deprecated
-  public void addResource(@NotNull final Resource resource) throws DuplicateResourceException {
-
   }
 
   @Override
@@ -63,21 +51,8 @@ public final class ResourcesImpl implements Resources {
   }
 
   @Override
-  @Deprecated
-  public void deleteResource(@NotNull final String projectId, @NotNull final String resourceName) {
-
-  }
-
-  @Override
   public void deleteResource(@NotNull final SProject project, @NotNull final String resourceName) {
     myFeatures.deleteResource(project, resourceName);
-  }
-
-  @Override
-  @Deprecated
-  public void editResource(@NotNull final String projectId,
-                           @NotNull final String currentName,
-                           @NotNull final Resource newResource) throws DuplicateResourceException {
   }
 
   @Override
@@ -100,9 +75,7 @@ public final class ResourcesImpl implements Resources {
   }
 
   @Override
-  public int getCount(@NotNull final String projectId) {
-    return myFeatures.asMap(myProjectManager.findProjectById(projectId)).size();
+  public int getCount(@NotNull final SProject project) {
+    return myFeatures.asMap(project).size();
   }
-
-
 }

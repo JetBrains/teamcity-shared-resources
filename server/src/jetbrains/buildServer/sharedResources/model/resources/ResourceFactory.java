@@ -13,22 +13,6 @@ import java.util.Map;
  */
 public class ResourceFactory {
 
-  @NotNull
-  private final String myProjectId;
-
-  /**
-   * Returns {@code ResourceFactory} that constructs resources for priject with given {@code projectId}
-   * @param projectId internal id of the project
-   * @return {@code ResourceFactory} for project with given id
-   */
-  public static ResourceFactory getFactory(@NotNull final String projectId) {
-    return new ResourceFactory(projectId);
-  }
-
-  private ResourceFactory(@NotNull final String projectId) {
-    myProjectId = projectId;
-  }
-
   /**
    * Creates new quoted resource with infinite quota
    *
@@ -37,8 +21,8 @@ public class ResourceFactory {
    * @return new infinite quoted resource
    */
   @NotNull
-  public Resource newInfiniteResource(@NotNull final String name, boolean state) {
-    return QuotedResource.newInfiniteResource(myProjectId, name, state);
+  public static Resource newInfiniteResource(@NotNull final String name, boolean state) {
+    return QuotedResource.newInfiniteResource(name, state);
   }
 
   /**
@@ -50,8 +34,8 @@ public class ResourceFactory {
    * @return new quoted resource with limited quota
    */
   @NotNull
-  public Resource newQuotedResource(@NotNull final String name, final int quota, boolean state) {
-    return QuotedResource.newResource(myProjectId, name, quota, state);
+  public static Resource newQuotedResource(@NotNull final String name, final int quota, boolean state) {
+    return QuotedResource.newResource(name, quota, state);
   }
 
   /**
@@ -63,11 +47,11 @@ public class ResourceFactory {
    * @return new custom resource with specified value space
    */
   @NotNull
-  public Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
-    return CustomResource.newCustomResource(myProjectId, name, values, state);
+  public static Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
+    return CustomResource.newCustomResource(name, values, state);
   }
 
-  public Resource createResource(@NotNull final Map<String, String> parameters) {
+  public static Resource createResource(@NotNull final Map<String, String> parameters) {
     ResourceType type = ResourceType.fromString(parameters.get("type"));
     final String enabledStr = parameters.get("enabled");
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
@@ -75,13 +59,12 @@ public class ResourceFactory {
     if (type == ResourceType.QUOTED) {
       String quota = parameters.get("quota");
       if ("infinite".equals(quota)) {
-        return QuotedResource.newInfiniteResource(myProjectId, name, resourceState);
+        return QuotedResource.newInfiniteResource(name, resourceState);
       } else {
-        return QuotedResource.newResource(myProjectId, name, Integer.parseInt(parameters.get("quota")), resourceState);
+        return QuotedResource.newResource(name, Integer.parseInt(parameters.get("quota")), resourceState);
       }
     } else {
       return CustomResource.newCustomResource(
-              myProjectId,
               name,
               Arrays.asList(parameters.get("values").split("\r\n?")),
               resourceState

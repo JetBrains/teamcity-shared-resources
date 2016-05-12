@@ -33,6 +33,7 @@ public interface ResourceProjectFeatures {
   @NotNull
   Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project);
 
+  @NotNull
   Map<String, Resource> asMap(@NotNull final SProject project);
 
   void addResource(@NotNull final SProject project,

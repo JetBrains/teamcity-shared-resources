@@ -16,19 +16,14 @@ public abstract class AbstractResource implements Resource {
   private final String myName;
 
   @NotNull
-  private final String myProjectId;
-
-  @NotNull
   private final ResourceType myType;
 
   private final boolean myState;
 
-  protected AbstractResource(@NotNull final String projectId,
-                             @NotNull final String name,
+  protected AbstractResource(@NotNull final String name,
                              @NotNull final ResourceType type,
                              boolean state) {
     myName = name;
-    myProjectId = projectId;
     myType = type;
     myState = state;
   }
@@ -50,13 +45,6 @@ public abstract class AbstractResource implements Resource {
     return myState;
   }
 
-  @Override
-  @NotNull
-  public String getProjectId() {
-    return myProjectId;
-  }
-
-
   @NotNull
   @Override
   public Map<String, String> getParameters() {
@@ -72,14 +60,12 @@ public abstract class AbstractResource implements Resource {
     if (this == o) return true;
     if (!(o instanceof AbstractResource)) return false;
     AbstractResource that = (AbstractResource) o;
-    return myName.equals(that.myName) && myProjectId.equals(that.myProjectId);
+    return myName.equals(that.myName);
   }
 
   @Override
   public int hashCode() {
-    int result = myName.hashCode();
-    result = 31 * result + myProjectId.hashCode();
-    return result;
+    return myName.hashCode();
   }
 
 }

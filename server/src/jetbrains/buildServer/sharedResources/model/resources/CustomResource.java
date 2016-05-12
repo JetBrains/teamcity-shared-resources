@@ -20,19 +20,18 @@ public class CustomResource extends AbstractResource {
   @NotNull
   private final List<String> myValues;
 
-  private CustomResource(@NotNull final String projectId,
-                         @NotNull final String name,
-                         @NotNull final List<String> values, boolean state) {
-    super(projectId, name, ResourceType.CUSTOM, state);
+  private CustomResource(@NotNull final String name,
+                         @NotNull final List<String> values,
+                         boolean state) {
+    super(name, ResourceType.CUSTOM, state);
     myValues = new ArrayList<String>(values);
   }
 
   @NotNull
-  static CustomResource newCustomResource(@NotNull final String projectId,
-                                          @NotNull final String name,
+  static CustomResource newCustomResource(@NotNull final String name,
                                           @NotNull final List<String> values,
                                           boolean state) {
-    return new CustomResource(projectId, name, values, state);
+    return new CustomResource(name, values, state);
   }
 
   @NotNull

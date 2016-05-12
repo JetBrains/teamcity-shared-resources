@@ -107,7 +107,7 @@ public class SharedResourcesPage extends EditProjectTab {
     final SProject project = getProject(request);
     String result;
     if (project != null) {
-      int n = myResources.getCount(project.getProjectId());
+      int n = myResources.getCount(project);
       if (n > 0) {
         result = TITLE_PREFIX + " (" + n + ")";
       } else {

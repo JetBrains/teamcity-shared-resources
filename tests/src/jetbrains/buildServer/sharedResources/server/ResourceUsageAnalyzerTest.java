@@ -92,8 +92,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoBuildConfigurations() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
        put(resource.getName(), resource);
     }};
@@ -115,8 +114,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoFeatures() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -143,8 +141,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoLocks() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -183,8 +180,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
    */
   @Test
   public void testNoSubProjects() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -231,16 +227,14 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testSubProjectNoOverride() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
 
     final String subProjectId = "MY_SUB_PROJECT";
-    final ResourceFactory subProjectFactory = ResourceFactory.getFactory(subProjectId);
 
-    final Resource subResource = subProjectFactory.newInfiniteResource("resource2", true);
+    final Resource subResource = ResourceFactory.newInfiniteResource("resource2", true);
     final Map<String, Resource> subProjectResourceMap = new HashMap<String, Resource>() {{
       putAll(resourceMap);
       put(subResource.getName(), subResource);
@@ -281,16 +275,14 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
    */
   @Test
   public void testSubProjectOverride() throws Exception {
-    final ResourceFactory factory = ResourceFactory.getFactory(myProjectId);
-    final Resource resource = factory.newInfiniteResource("resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
 
     final String subProjectId = "MY_SUB_PROJECT";
-    final ResourceFactory subProjectFactory = ResourceFactory.getFactory(subProjectId);
 
-    final Resource subResource = subProjectFactory.newInfiniteResource("resource1", true);
+    final Resource subResource = ResourceFactory.newInfiniteResource("resource1", true);
     final Map<String, Resource> subProjectResourceMap = new HashMap<String, Resource>() {{
       putAll(resourceMap);
       put(subResource.getName(), subResource);

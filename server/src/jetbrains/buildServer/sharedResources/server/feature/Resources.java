@@ -33,40 +33,31 @@ public interface Resources {
   /**
    * Adds given resource to project resources
    *
+   * @param project project to add resource to
    * @param resource resource to add
    * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
    */
-  void addResource(@NotNull final Resource resource) throws DuplicateResourceException;
-
-  void addResource(@NotNull SProject project, @NotNull Resource resource) throws DuplicateResourceException;
+  void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException;
 
   /**
    * Deletes given resource from the project
    *
-   * @param projectId id of the project
-   * @param resourceName name of the resource
+   * @param project project to delete resource from
+   * @param resourceName name of the resource to delete
    */
-  void deleteResource(@NotNull final String projectId,
-                      @NotNull final String resourceName);
-
-  void deleteResource(@NotNull SProject project, @NotNull String resourceName);
+  void deleteResource(@NotNull final SProject project, @NotNull final String resourceName);
 
   /**
    * Edits given resource
    *
-   * @param projectId id of the project
+   * @param project to edit resource in
    * @param currentName currentName of the resource
-   * @param newResource resource to replace existing one
+   * @param resource resource to replace existing one
    * @throws DuplicateResourceException if resource with given name exists
    */
-  void editResource(@NotNull final String projectId,
+  void editResource(@NotNull final SProject project,
                     @NotNull final String currentName,
-                    @NotNull final Resource newResource) throws DuplicateResourceException;
-
-
-  void editResource(@NotNull SProject project,
-                    @NotNull String currentName,
-                    @NotNull Resource resource) throws DuplicateResourceException;
+                    @NotNull final Resource resource) throws DuplicateResourceException;
 
   /**
    * Gets all resources for project with given {@code projectId} and all its ancestors
@@ -90,8 +81,8 @@ public interface Resources {
   /**
    * Gets number of resources, visible for project with given project id
    *
-   * @param projectId id of the project
+   * @param project to count resources in
    * @return number of visible resources
    */
-  int getCount(@NotNull final String projectId);
+  int getCount(@NotNull final SProject project);
 }

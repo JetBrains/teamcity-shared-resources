@@ -31,7 +31,6 @@
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
-  <bean class="jetbrains.buildServer.sharedResources.settings.PluginSettingsManager"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.ResourceHelper"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.Messages"/>
 

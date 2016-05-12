@@ -48,25 +48,20 @@ public class SharedResourcesPluginConstants {
    */
   public interface WEB {
 
-    public static final String ACTIONS = "/sharedResourcesActions.html";
+    String ACTIONS = "/sharedResourcesActions.html";
 
-    public static final String PARAM_PROJECT_ID = "project_id";
-    public static final String PARAM_OLD_RESOURCE_NAME = "old_resource_name";
+    String PARAM_PROJECT_ID = "project_id";
+    String PARAM_OLD_RESOURCE_NAME = "old_resource_name";
 
-    public static final String PARAM_RESOURCE_NAME = "resource_name";
-    public static final String PARAM_RESOURCE_TYPE = "resource_type";
-    public static final String PARAM_RESOURCE_STATE = "resource_state";
+    String PARAM_RESOURCE_NAME = "resource_name";
+    String PARAM_RESOURCE_TYPE = "resource_type";
+    String PARAM_RESOURCE_STATE = "resource_state";
 
-    public static final String PARAM_RESOURCE_VALUES = "resource_values";
-    public static final String PARAM_RESOURCE_QUOTA = "resource_quota";
+    String PARAM_RESOURCE_VALUES = "resource_values";
+    String PARAM_RESOURCE_QUOTA = "resource_quota";
 
-    public static final String ACTION_MESSAGE_KEY = "resourceActionResultMessage";
+    String ACTION_MESSAGE_KEY = "resourceActionResultMessage";
   }
 
-  public static Comparator<String> RESOURCE_NAMES_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return o1.compareToIgnoreCase(o2);
-    }
-  };
+  public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
 }

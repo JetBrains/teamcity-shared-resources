@@ -30,7 +30,7 @@
   <test name="Settings tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.feature.ResourcesImplTest"/>
-      <class name="jetbrains.buildServer.sharedResources.settings.ProjectSettingsTest"/>
+
     </classes>
   </test>
   <test name="Web tests">
