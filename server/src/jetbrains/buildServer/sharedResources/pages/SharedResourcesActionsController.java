@@ -31,9 +31,9 @@ public class SharedResourcesActionsController extends BaseAjaxActionController {
                                           @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
     super(controllerManager);
     controllerManager.registerController(SharedResourcesPluginConstants.WEB.ACTIONS, this);
-    registerAction(new AddResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures));
-    registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures));
-    registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features, messages, configActionFactory, resourceProjectFeatures));
-    registerAction(new EnableDisableResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures));
+    registerAction(new AddResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
+    registerAction(new DeleteResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
+    registerAction(new EditResourceAction(projectManager, resources, resourceHelper, features, messages, configActionFactory));
+    registerAction(new EnableDisableResourceAction(projectManager, resources, resourceHelper, messages, configActionFactory));
   }
 }

@@ -18,6 +18,8 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -50,5 +52,17 @@ public class QuotedResource extends AbstractResource {
 
   public int getQuota() {
     return myQuota;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getParameters() {
+    final Map<String, String> result =  super.getParameters();
+    if (myQuota < 0) {
+      result.put("quota", "infinite");
+    } else {
+      result.put("quota", Integer.toString(myQuota));
+    }
+    return result;
   }
 }

@@ -19,6 +19,8 @@ package jetbrains.buildServer.sharedResources.server.project;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,21 +83,34 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @NotNull
   @Override
-  public Map<SProject, Map<String, ResourceDescriptor>> asProjectResourceMap(@NotNull final SProject project) {
-    final Map<SProject, Map<String, ResourceDescriptor>> result = new LinkedHashMap<>();
+  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project) {
+    final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<>();
     // we need only names here
-    final Map<String, ResourceDescriptor> treeResources = new HashMap<>();
+    final Map<String, Resource> treeResources = new HashMap<>();
 
     final List<SProject> path = project.getProjectPath();
     final ListIterator<SProject> it = path.listIterator(path.size());
     while (it.hasPrevious()) {
       SProject p = it.previous();
-      Map<String, ResourceDescriptor> currentResources = getResourcesForProject(p);
-      final Map<String, ResourceDescriptor> value = CollectionsUtil.filterMapByKeys(
+      Map<String, Resource> currentResources = getResourcesForProject(p);
+      final Map<String, Resource> value = CollectionsUtil.filterMapByKeys(
               currentResources, data -> !treeResources.containsKey(data)
       );
       treeResources.putAll(value);
       result.put(p, value);
+    }
+    return result;
+  }
+
+  @Override
+  public Map<String, Resource> asMap(@NotNull SProject project) {
+    final Map<String, Resource> result = new TreeMap<>(SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR);
+    final List<SProject> path = project.getProjectPath();
+    final ListIterator<SProject> it = path.listIterator(path.size());
+    while (it.hasPrevious()) {
+      SProject p = it.previous();
+      Map<String, Resource> currentResources = getResourcesForProject(p);
+      result.putAll(CollectionsUtil.filterMapByKeys(currentResources, data -> !result.containsKey(data)));
     }
     return result;
   }
@@ -105,12 +120,11 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
             .stream()
             .map(fd -> fd.getParameters().get("name"))
             .collect(Collectors.toSet());
-
   }
 
   @NotNull
-  private Map<String, ResourceDescriptor> getResourcesForProject(@NotNull final SProject project) {
-    final Map<String, ResourceDescriptor> result = new TreeMap<>(new Comparator<String>() {
+  private Map<String, Resource> getResourcesForProject(@NotNull final SProject project) {
+    final Map<String, Resource> result = new TreeMap<>(new Comparator<String>() {
       @Override
       public int compare(String o1, String o2) {
         return o1.compareToIgnoreCase(o2);
@@ -118,8 +132,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     });
     result.putAll(project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
             .stream()
-            .map(featureDescriptor -> new ResourceDescriptor(project, featureDescriptor))
-            .collect(Collectors.toMap(rd -> rd.getParameters().get("name"), rd -> rd)));
+            .collect(Collectors.toMap(rd -> rd.getParameters().get("name"), rd -> ResourceFactory.getFactory(project.getProjectId()).createResource(rd.getParameters()))));
     return result;
   }
 }

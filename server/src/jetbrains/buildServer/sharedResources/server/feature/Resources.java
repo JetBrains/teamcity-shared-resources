@@ -38,6 +38,8 @@ public interface Resources {
    */
   void addResource(@NotNull final Resource resource) throws DuplicateResourceException;
 
+  void addResource(@NotNull SProject project, @NotNull Resource resource) throws DuplicateResourceException;
+
   /**
    * Deletes given resource from the project
    *
@@ -46,6 +48,8 @@ public interface Resources {
    */
   void deleteResource(@NotNull final String projectId,
                       @NotNull final String resourceName);
+
+  void deleteResource(@NotNull SProject project, @NotNull String resourceName);
 
   /**
    * Edits given resource
@@ -59,6 +63,10 @@ public interface Resources {
                     @NotNull final String currentName,
                     @NotNull final Resource newResource) throws DuplicateResourceException;
 
+
+  void editResource(@NotNull SProject project,
+                    @NotNull String currentName,
+                    @NotNull Resource resource) throws DuplicateResourceException;
 
   /**
    * Gets all resources for project with given {@code projectId} and all its ancestors

@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.server.project;
 
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,9 @@ import java.util.Map;
 public interface ResourceProjectFeatures {
 
   @NotNull
-  Map<SProject, Map<String, ResourceDescriptor>> asProjectResourceMap(@NotNull final SProject project);
+  Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project);
+
+  Map<String, Resource> asMap(@NotNull final SProject project);
 
   void addResource(@NotNull final SProject project,
                    @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException;

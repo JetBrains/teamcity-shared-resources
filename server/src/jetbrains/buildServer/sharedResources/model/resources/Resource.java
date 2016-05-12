@@ -2,6 +2,8 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 /**
  * Interface {@code Resource}
  *
@@ -40,4 +42,13 @@ public interface Resource {
    */
   @NotNull
   String getProjectId();
+
+
+  /**
+   * Converts resource to the set of project feature parameters
+   *
+   * @return resource as properties
+   */
+  @NotNull
+  Map<String, String> getParameters();
 }

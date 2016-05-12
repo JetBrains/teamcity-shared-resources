@@ -2,7 +2,9 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -63,6 +65,28 @@ public class ResourceFactory {
   @NotNull
   public Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
     return CustomResource.newCustomResource(myProjectId, name, values, state);
+  }
+
+  public Resource createResource(@NotNull final Map<String, String> parameters) {
+    ResourceType type = ResourceType.fromString(parameters.get("type"));
+    final String enabledStr = parameters.get("enabled");
+    final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
+    final String name = parameters.get("name");
+    if (type == ResourceType.QUOTED) {
+      String quota = parameters.get("quota");
+      if ("infinite".equals(quota)) {
+        return QuotedResource.newInfiniteResource(myProjectId, name, resourceState);
+      } else {
+        return QuotedResource.newResource(myProjectId, name, Integer.parseInt(parameters.get("quota")), resourceState);
+      }
+    } else {
+      return CustomResource.newCustomResource(
+              myProjectId,
+              name,
+              Arrays.asList(parameters.get("values").split("\r\n?")),
+              resourceState
+      );
+    }
   }
 
 }

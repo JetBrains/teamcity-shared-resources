@@ -9,7 +9,6 @@ import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResource
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +36,8 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
                             @NotNull final ResourceHelper resourceHelper,
                             @NotNull final SharedResourcesFeatures features,
                             @NotNull final Messages messages,
-                            @NotNull final ConfigActionFactory configActionFactory,
-                            @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory, resourceProjectFeatures);
+                            @NotNull final ConfigActionFactory configActionFactory) {
+    super(projectManager, resources, resourceHelper, messages, configActionFactory);
     myFeatures = features;
   }
 
@@ -62,9 +60,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
       final Resource resource = myResourceHelper.getResourceFromRequest(projectId, request);
       if (resource != null) {
         final String newName = resource.getName();
+        boolean selfPersisted = false;
         try {
-          myResources.editResource(projectId, oldName, resource);
-          myResourceProjectFeatures.editResource(project, oldName, myResourceHelper.getResourceParameters(request));
+          myResources.editResource(project, oldName, resource);
           ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree
@@ -81,7 +79,14 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
               }
               if (updated) {
                 p.persist(cause);
+                // make sure we persist current project even if no resource usages were detected
+                if (!selfPersisted && p.equals(project)) {
+                  selfPersisted = true;
+                }
               }
+            }
+            if (!selfPersisted) {
+              project.persist();
             }
           } else { // just persist project so that settings will be saved
             project.persist(cause);

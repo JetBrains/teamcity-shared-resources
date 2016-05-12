@@ -8,6 +8,7 @@ import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.sharedResources.settings.PluginProjectSettings;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
@@ -34,6 +35,8 @@ public class ResourcesImplTest extends BaseTestCase {
   private ProjectSettingsManager myProjectSettingsManager;
 
   private PluginProjectSettings myProjectSettings;
+
+  private ResourceProjectFeatures myResourceProjectFeatures;
 
   private ProjectManager myProjectManager;
 
@@ -72,6 +75,7 @@ public class ResourcesImplTest extends BaseTestCase {
 
     myProjectSettingsManager = m.mock(ProjectSettingsManager.class);
     myProjectManager = m.mock(ProjectManager.class);
+    myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
 
     myProjectSettings = m.mock(PluginProjectSettings.class, "ProjectSettings");
     myRootSettings = m.mock(PluginProjectSettings.class, "RootSettings");
@@ -79,7 +83,7 @@ public class ResourcesImplTest extends BaseTestCase {
     myProject = m.mock(SProject.class, "currentProject");
     myRootProject = m.mock(SProject.class, "rootProject");
 
-    resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager);
+    resources = new ResourcesImpl(myProjectSettingsManager, myProjectManager, myResourceProjectFeatures);
 
     myRootResourceFactory = ResourceFactory.getFactory(myRootProjectId);
     myProjectResourceFactory = ResourceFactory.getFactory(myProjectId);

@@ -100,7 +100,7 @@ public class EditActionTest extends BaseTestCase {
     myResourceFactory = ResourceFactory.getFactory(PROJECT_ID);
     myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
     final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory, myResourceProjectFeatures);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
   }
 
   @Test

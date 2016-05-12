@@ -1,6 +1,9 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,6 +56,17 @@ public abstract class AbstractResource implements Resource {
     return myProjectId;
   }
 
+
+  @NotNull
+  @Override
+  public Map<String, String> getParameters() {
+    return CollectionsUtil.asMap(
+            "type", myType.name(),
+            "name", myName,
+            "enabled", Boolean.toString(myState)
+    );
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -67,4 +81,5 @@ public abstract class AbstractResource implements Resource {
     result = 31 * result + myProjectId.hashCode();
     return result;
   }
+
 }
