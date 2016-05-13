@@ -57,9 +57,6 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<>();
 
-  private ResourceFactory ResourceFactory;
-
-
   /**
    * Class under test
    */
@@ -245,7 +242,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Resource resource2 = ResourceFactory.newInfiniteResource("resource2", true);
+    final Resource resource2 = ResourceFactory.newInfiniteResource(myProjectId, "resource2", true);
 
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
@@ -275,7 +272,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
-    final Resource resource1 = ResourceFactory.newInfiniteResource("resource1", true);
+    final Resource resource1 = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
 
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
@@ -327,7 +324,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
 
-    final Resource resource1 = ResourceFactory.newInfiniteResource("resource1", false);
+    final Resource resource1 = ResourceFactory.newInfiniteResource(myProjectId, "resource1", false);
 
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);

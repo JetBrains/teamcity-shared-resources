@@ -48,7 +48,6 @@ import java.util.List;
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
-@SuppressWarnings("ALL")
 @TestFor(testForClass = EditResourceAction.class)
 public class EditActionTest extends BaseTestCase {
 
@@ -75,8 +74,6 @@ public class EditActionTest extends BaseTestCase {
   private SProject myProject;
 
   private Messages myMessages;
-
-  private ResourceFactory myResourceFactory;
 
   private SharedResourcesFeatures myFeatures;
 
@@ -106,7 +103,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-29355")
   public void testPersistNameNotChanged() {
-    final Resource rc = myResourceFactory.newQuotedResource(RESOURCE_NAME, 111, true);
+    final Resource rc = ResourceFactory.newQuotedResource(PROJECT_ID, RESOURCE_NAME, 111, true);
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -120,7 +117,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(rc));
 
       allowing(myResources);
@@ -137,7 +134,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   public void testUpdateLockNameInTree() {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
-    final Resource rcNewName = myResourceFactory.newQuotedResource(NEW_RESOURCE_NAME, 111, true);
+    final Resource rcNewName = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
     final SProject subProject = m.mock(SProject.class,  "sub-project") ;
     final List<SProject> projects = new ArrayList<>();
     projects.add(subProject);
@@ -160,7 +157,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(rcNewName));
 
       oneOf(myProject).getProjects();
@@ -196,7 +193,7 @@ public class EditActionTest extends BaseTestCase {
   public void testUpdateAffectsOnlyProjectsWithUsages() throws Exception {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
 
-    final Resource newResource = myResourceFactory.newQuotedResource(NEW_RESOURCE_NAME, 111, true);
+    final Resource newResource = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
 
     final SProject childWithUsage = m.mock(SProject.class, "child-with-usage");
     final SProject childWithoutUsage = m.mock(SProject.class, "child-without-usage");
@@ -223,7 +220,7 @@ public class EditActionTest extends BaseTestCase {
 
       allowing(myRequest);
 
-      oneOf(myResourceHelper).getResourceFromRequest(myRequest);
+      oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(newResource));
 
       allowing(myResources);

@@ -133,9 +133,14 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
         return o1.compareToIgnoreCase(o2);
       }
     });
+    final String projectId = project.getProjectId();
     result.putAll(project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
             .stream()
-            .collect(Collectors.toMap(rd -> rd.getParameters().get("name"), rd -> ResourceFactory.createResource(rd.getParameters()))));
+            .collect(
+                    Collectors.toMap(
+                            rd -> rd.getParameters().get("name"),
+                            rd -> ResourceFactory.createResource(projectId, rd.getParameters()))
+            ));
     return result;
   }
 }

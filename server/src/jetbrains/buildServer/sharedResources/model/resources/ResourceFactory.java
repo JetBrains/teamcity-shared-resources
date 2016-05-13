@@ -21,8 +21,8 @@ public class ResourceFactory {
    * @return new infinite quoted resource
    */
   @NotNull
-  public static Resource newInfiniteResource(@NotNull final String name, boolean state) {
-    return QuotedResource.newInfiniteResource(name, state);
+  public static Resource newInfiniteResource(@NotNull final String projectId, @NotNull final String name, boolean state) {
+    return QuotedResource.newInfiniteResource(projectId, name, state);
   }
 
   /**
@@ -34,8 +34,8 @@ public class ResourceFactory {
    * @return new quoted resource with limited quota
    */
   @NotNull
-  public static Resource newQuotedResource(@NotNull final String name, final int quota, boolean state) {
-    return QuotedResource.newResource(name, quota, state);
+  public static Resource newQuotedResource(@NotNull final String projectId, @NotNull final String name, final int quota, boolean state) {
+    return QuotedResource.newResource(projectId, name, quota, state);
   }
 
   /**
@@ -47,11 +47,11 @@ public class ResourceFactory {
    * @return new custom resource with specified value space
    */
   @NotNull
-  public static Resource newCustomResource(@NotNull final String name, @NotNull final List<String> values, boolean state) {
-    return CustomResource.newCustomResource(name, values, state);
+  public static Resource newCustomResource(@NotNull final String projectId, @NotNull final String name, @NotNull final List<String> values, boolean state) {
+    return CustomResource.newCustomResource(projectId, name, values, state);
   }
 
-  public static Resource createResource(@NotNull final Map<String, String> parameters) {
+  public static Resource createResource(@NotNull final String projectId, @NotNull final Map<String, String> parameters) {
     ResourceType type = ResourceType.fromString(parameters.get("type"));
     final String enabledStr = parameters.get("enabled");
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
@@ -59,12 +59,13 @@ public class ResourceFactory {
     if (type == ResourceType.QUOTED) {
       String quota = parameters.get("quota");
       if ("infinite".equals(quota)) {
-        return QuotedResource.newInfiniteResource(name, resourceState);
+        return QuotedResource.newInfiniteResource(projectId, name, resourceState);
       } else {
-        return QuotedResource.newResource(name, Integer.parseInt(parameters.get("quota")), resourceState);
+        return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get("quota")), resourceState);
       }
     } else {
       return CustomResource.newCustomResource(
+              projectId,
               name,
               Arrays.asList(parameters.get("values").split("\r\n?")),
               resourceState

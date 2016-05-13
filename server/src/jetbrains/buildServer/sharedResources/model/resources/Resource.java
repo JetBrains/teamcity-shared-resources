@@ -34,6 +34,16 @@ public interface Resource {
   boolean isEnabled();
 
   /**
+   * Returns internal id of the project, where
+   * current resource is defined
+   *
+   * @since 9.0
+   * @return internal id of the project
+   */
+  @NotNull
+  String getProjectId();
+
+  /**
    * Converts resource to the set of project feature parameters
    *
    * @return resource as properties
@@ -41,4 +51,5 @@ public interface Resource {
    */
   @NotNull
   Map<String, String> getParameters();
+
 }
