@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 
 /**
@@ -40,11 +41,11 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @Override
   public void addResource(@NotNull SProject project, @NotNull Map<String, String> resourceParameters) throws DuplicateResourceException {
-    final String name = resourceParameters.get("name");
+    final String name = resourceParameters.get(NAME);
     if (getResourceNamesInProject(project).contains(name)) {
       throw new DuplicateResourceException(name);
     }
-    project.addFeature(SharedResourcesPluginConstants.SERVICE_NAME, resourceParameters);
+    project.addFeature(SharedResourcesPluginConstants.FEATURE_TYPE, resourceParameters);
   }
 
   @Override
@@ -59,13 +60,13 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   public void editResource(@NotNull final SProject project, @NotNull final String name, @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException {
     final SProjectFeatureDescriptor descriptor = findDescriptorByResourceName(project, name);
     if (descriptor != null) {
-      final String newName = resourceParameters.get("name");
+      final String newName = resourceParameters.get(NAME);
       if (!name.equals(newName)) {
         if (getResourceNamesInProject(project).contains(newName)) {
           throw new DuplicateResourceException(newName);
         }
       }
-      project.updateFeature(descriptor.getId(), SharedResourcesPluginConstants.SERVICE_NAME, resourceParameters);
+      project.updateFeature(descriptor.getId(), SharedResourcesPluginConstants.FEATURE_TYPE, resourceParameters);
     }
   }
 
@@ -73,9 +74,9 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @Nullable
   private SProjectFeatureDescriptor findDescriptorByResourceName(@NotNull final SProject project,
                                                                  @NotNull final String name) {
-    final Optional<SProjectFeatureDescriptor> descriptor = project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
+    final Optional<SProjectFeatureDescriptor> descriptor = project.getFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE)
             .stream()
-            .filter(fd -> name.equals(fd.getParameters().get("name")))
+            .filter(fd -> name.equals(fd.getParameters().get(NAME)))
             .findFirst();
     if (descriptor.isPresent()) {
       return descriptor.get();
@@ -87,9 +88,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @Override
   public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project) {
     final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<>();
-    // we need only names here
-    final Map<String, Resource> treeResources = new HashMap<>();
-
+    final Map<String, Resource> treeResources = new HashMap<>(); // todo: we need only names here
     final List<SProject> path = project.getProjectPath();
     final ListIterator<SProject> it = path.listIterator(path.size());
     while (it.hasPrevious()) {
@@ -119,9 +118,9 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   }
 
   private Set<String> getResourceNamesInProject(@NotNull final SProject project) {
-    return project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
+    return project.getFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE)
             .stream()
-            .map(fd -> fd.getParameters().get("name"))
+            .map(fd -> fd.getParameters().get(NAME))
             .collect(Collectors.toSet());
   }
 
@@ -134,11 +133,11 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       }
     });
     final String projectId = project.getProjectId();
-    result.putAll(project.getFeaturesOfType(SharedResourcesPluginConstants.SERVICE_NAME)
+    result.putAll(project.getFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE)
             .stream()
             .collect(
                     Collectors.toMap(
-                            rd -> rd.getParameters().get("name"),
+                            rd -> rd.getParameters().get(NAME),
                             rd -> ResourceFactory.createResource(projectId, rd.getParameters()))
             ));
     return result;

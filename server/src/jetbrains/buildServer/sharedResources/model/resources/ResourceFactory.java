@@ -2,9 +2,11 @@ package jetbrains.buildServer.sharedResources.model.resources;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.*;
+import static jetbrains.buildServer.util.StringUtil.split;
 
 /**
  * Created with IntelliJ IDEA.
@@ -52,22 +54,22 @@ public class ResourceFactory {
   }
 
   public static Resource createResource(@NotNull final String projectId, @NotNull final Map<String, String> parameters) {
-    ResourceType type = ResourceType.fromString(parameters.get("type"));
-    final String enabledStr = parameters.get("enabled");
+    ResourceType type = ResourceType.fromString(parameters.get(TYPE));
+    final String enabledStr = parameters.get(ENABLED);
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
-    final String name = parameters.get("name");
+    final String name = parameters.get(NAME);
     if (type == ResourceType.QUOTED) {
-      String quota = parameters.get("quota");
-      if ("infinite".equals(quota)) {
+      String quota = parameters.get(QUOTA);
+      if (QUOTA_INFINITE.equals(quota)) {
         return QuotedResource.newInfiniteResource(projectId, name, resourceState);
       } else {
-        return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get("quota")), resourceState);
+        return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
       }
     } else {
       return CustomResource.newCustomResource(
               projectId,
               name,
-              Arrays.asList(parameters.get("values").split("\r\n?")),
+              split(parameters.get(VALUES), true, '\r', '\n'),
               resourceState
       );
     }

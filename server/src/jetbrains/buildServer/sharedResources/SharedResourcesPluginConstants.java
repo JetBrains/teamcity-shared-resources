@@ -41,7 +41,7 @@ public class SharedResourcesPluginConstants {
   /**
    * Name of the service. Used in project settings factory
    */
-  public static final String SERVICE_NAME = "JetBrains.SharedResources";
+  public static final String FEATURE_TYPE = "JetBrains.SharedResources";
 
   /**
    * Contains constants for web page - controller interaction
@@ -61,6 +61,15 @@ public class SharedResourcesPluginConstants {
     String PARAM_RESOURCE_QUOTA = "resource_quota";
 
     String ACTION_MESSAGE_KEY = "resourceActionResultMessage";
+  }
+
+  public interface ProjectFeatureParameters {
+    String NAME = "name";
+    String TYPE = "type";
+    String QUOTA = "quota";
+    String VALUES = "values";
+    String ENABLED = "enabled";
+    String QUOTA_INFINITE = "infinite"; // todo: replace with -1?
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
