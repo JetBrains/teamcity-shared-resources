@@ -69,7 +69,6 @@ public class SharedResourcesPluginConstants {
     String QUOTA = "quota";
     String VALUES = "values";
     String ENABLED = "enabled";
-    String QUOTA_INFINITE = "infinite"; // todo: replace with -1?
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;

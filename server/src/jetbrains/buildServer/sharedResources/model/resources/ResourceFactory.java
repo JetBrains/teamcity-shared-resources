@@ -59,12 +59,7 @@ public class ResourceFactory {
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
     final String name = parameters.get(NAME);
     if (type == ResourceType.QUOTED) {
-      String quota = parameters.get(QUOTA);
-      if (QUOTA_INFINITE.equals(quota)) {
-        return QuotedResource.newInfiniteResource(projectId, name, resourceState);
-      } else {
-        return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
-      }
+      return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
     } else {
       return CustomResource.newCustomResource(
               projectId,

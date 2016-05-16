@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class QuotedResource extends AbstractResource {
 
-  static final int QUOTA_INFINITE = -1;
+  private static final int QUOTA_INFINITE = -1;
 
   private final int myQuota;
 
@@ -58,11 +58,7 @@ public class QuotedResource extends AbstractResource {
   @Override
   public Map<String, String> getParameters() {
     final Map<String, String> result =  super.getParameters();
-    if (myQuota < 0) {
-      result.put("quota", "infinite");
-    } else {
-      result.put("quota", Integer.toString(myQuota));
-    }
+    result.put("quota", Integer.toString(myQuota));
     return result;
   }
 }
