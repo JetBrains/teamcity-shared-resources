@@ -61,7 +61,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
   public void testAddResource_toEmpty_Success() throws Exception {
     final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource", true);
     m.checking(new Expectations() {{
-      oneOf(myProject).getFeaturesOfType(FEATURE_TYPE);
+      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.emptyList()));
 
       oneOf(myProject).addFeature(FEATURE_TYPE, resource.getParameters());
@@ -75,7 +75,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     final SProjectFeatureDescriptor existing = createExistingResource("existing_resource").getSecond();
     final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource", true);
     m.checking(new Expectations() {{
-      oneOf(myProject).getFeaturesOfType(FEATURE_TYPE);
+      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing)));
 
       oneOf(myProject).addFeature(FEATURE_TYPE, resource.getParameters());
@@ -91,7 +91,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
 
     final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, name, true);
     m.checking(new Expectations() {{
-      oneOf(myProject).getFeaturesOfType(FEATURE_TYPE);
+      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing)));
     }});
 
@@ -105,7 +105,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
 
     final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "NewName", true);
     m.checking(new Expectations() {{
-      allowing(myProject).getFeaturesOfType(FEATURE_TYPE);
+      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing.getSecond())));
 
       oneOf(myProject).updateFeature(existing.getFirst(), FEATURE_TYPE, resource.getParameters());
@@ -121,7 +121,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "Existing2", true);
     final List<SProjectFeatureDescriptor> projectResources = Arrays.asList(existing1.getSecond(), existing2.getSecond());
     m.checking(new Expectations() {{
-      allowing(myProject).getFeaturesOfType(FEATURE_TYPE);
+      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(projectResources));
     }});
     myFeatures.editResource(myProject, "Existing1", resource.getParameters());
@@ -132,7 +132,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     final String name = "OldResource";
     final Pair<String, SProjectFeatureDescriptor> existingResource = createExistingResource(name);
     m.checking(new Expectations() {{
-      allowing(myProject).getFeaturesOfType(FEATURE_TYPE);
+      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existingResource.getSecond())));
 
       oneOf(myProject).removeFeature(existingResource.getFirst());

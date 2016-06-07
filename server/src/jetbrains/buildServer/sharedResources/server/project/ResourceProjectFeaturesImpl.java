@@ -141,6 +141,6 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @NotNull
   private Collection<SProjectFeatureDescriptor> getResourceFeatures(@NotNull SProject project) {
-    return project.getFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE);
+    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE);
   }
 }
