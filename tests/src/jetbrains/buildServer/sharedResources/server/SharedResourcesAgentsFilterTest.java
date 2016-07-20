@@ -4,6 +4,7 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -47,6 +48,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private final String myProjectId = "PROJECT_ID";
 
+  private final String PROJECT_NAME = "My Project";
+
+  private SProject myProject;
+
   private TakenLocks myTakenLocks;
 
   private RunningBuildsManager myRunningBuildsManager;
@@ -81,6 +86,15 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myCustomData = new HashMap<>();
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
+    myProject = m.mock(ProjectEx.class);
+    m.checking(new Expectations() {{
+      allowing(myProject).getProjectId();
+      will(returnValue(myProjectId));
+
+      allowing(myProject).getExtendedFullName();
+      will(returnValue(PROJECT_NAME));
+
+    }});
     myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector);
   }
 
@@ -177,6 +191,12 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       atMost(2).of(myBuildType).getFullName();
       will(returnValue("My Build Type"));
 
+      oneOf(myBuildType).getProject();
+      will(returnValue(myProject));
+
+      oneOf(myInspector).checkDuplicateResources(myProject);
+      will(returnValue(Collections.emptyMap()));
+
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -207,6 +227,13 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myLocks).fromBuildFeaturesAsMap(features);
       will(returnValue(Collections.emptyMap()));
+
+      oneOf(myBuildType).getProject();
+      will(returnValue(myProject));
+
+      oneOf(myInspector).checkDuplicateResources(myProject);
+      will(returnValue(Collections.emptyMap()));
+
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -344,6 +371,47 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     assertNotNull(result);
     assertNotNull(result.getWaitReason());
     assertNull(result.getFilteredConnectedAgents());
+  }
+
+  @Test
+  @TestFor(issues = "TW-45949")
+  public void testDuplicateResources() throws Exception {
+    final Collection<SharedResourcesFeature> features = new ArrayList<>();
+    features.add(m.mock(SharedResourcesFeature.class));
+
+    final Map<Lock, String> invalidLocks = new HashMap<>();
+    invalidLocks.put(new Lock("lock1", LockType.READ), "");
+
+    final Map<String, List<String>> duplicates = new HashMap<>();
+    duplicates.put(myProjectId, Arrays.asList("Resource1", "Resource2"));
+
+    m.checking(new Expectations() {{
+      oneOf(myQueuedBuild).getBuildPromotionInfo();
+      will(returnValue(myBuildPromotion));
+
+      oneOf(myBuildPromotion).getBuildType();
+      will(returnValue(myBuildType));
+
+      oneOf(myBuildPromotion).getProjectId();
+      will(returnValue(myProjectId));
+
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(myInspector).checkDuplicateResources(myProject);
+      will(returnValue(duplicates));
+
+      oneOf(myInspector).inspect(myBuildType);
+      will(returnValue(invalidLocks));
+
+      oneOf(myBuildType).getProject();
+      will(returnValue(myProject));
+
+    }});
+    final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
+    assertNotNull(result);
+    assertNotNull(result.getWaitReason());
+    assertNull(result.getFilteredConnectedAgents());
 
   }
 
@@ -383,6 +451,12 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
       will(returnValue(unavailableLocks));
+
+      oneOf(myBuildType).getProject();
+      will(returnValue(myProject));
+
+      oneOf(myInspector).checkDuplicateResources(myProject);
+      will(returnValue(Collections.emptyMap()));
 
     }});
   }

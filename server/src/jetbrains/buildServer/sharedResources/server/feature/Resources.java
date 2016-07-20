@@ -21,6 +21,7 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -77,6 +78,23 @@ public interface Resources {
    */
   @NotNull
   Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
+
+
+  /**
+   * Gets project own resources
+   * @param project project to get resources for
+   * @return own resources of the project
+   */
+  @NotNull
+  List<Resource> getOwnResources(@NotNull final SProject project);
+
+  /**
+   * Gets resources for project with inheritance
+   * @param project project to get resources for
+   * @return project's resources with inheritance
+   */
+  @NotNull
+  List<Resource> getResources(@NotNull final SProject project);
 
   /**
    * Gets number of resources, visible for project with given project id

@@ -15,10 +15,8 @@ import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -75,7 +73,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
-        reason = checkForInvalidLocks(buildType); // typecheck here
+        reason = checkForInvalidResources(buildType.getProject());
+        if (reason == null) {
+          reason = checkForInvalidLocks(buildType);
+        }
         if (reason == null) {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
@@ -105,10 +106,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final StringBuilder builder = new StringBuilder("Build is waiting for the following ");
     builder.append(unavailableLocks.size() > 1 ? "resources " : "resource ");
     builder.append("to become available: ");
-    final Set<String> lockDescriptions = new HashSet<String>();
+    final Set<String> lockDescriptions = new HashSet<>();
     for (Map.Entry<Resource, Lock> entry : unavailableLocks.entrySet()) {
       final StringBuilder descr = new StringBuilder();
-      final Set<String> buildTypeNames = new HashSet<String>();
+      final Set<String> buildTypeNames = new HashSet<>();
       final TakenLock takenLock = takenLocks.get(entry.getKey());
       if (takenLock != null) {
         for (BuildPromotionInfo promotion : takenLock.getReadLocks().keySet()) {
@@ -147,6 +148,24 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       builder.append(buildType.getExtendedName()).append(" has shared resources configuration error");
       builder.append(invalidLocks.size() > 1 ? "s: " : ": ");
       builder.append(StringUtil.join(invalidLocks.values(), " "));
+      result = new SimpleWaitReason(builder.toString());
+    }
+    return result;
+  }
+
+  @Nullable
+  private WaitReason checkForInvalidResources(@NotNull final SProject project) {
+    WaitReason result = null;
+    final Map<String, List<String>> duplicates = myInspector.checkDuplicateResources(project);
+    if (!duplicates.isEmpty()) {
+      StringBuilder builder = new StringBuilder("Shared resources configuration is not valid. ");
+      duplicates.entrySet().forEach(
+              entry -> {
+                builder.append("Project ").append(entry.getKey()).append(" has invalid resource");
+                builder.append(entry.getValue().size() > 1 ? "s: " : ": ");
+                builder.append(entry.getValue().stream().collect(Collectors.joining(", ")));
+              }
+      );
       result = new SimpleWaitReason(builder.toString());
     }
     return result;

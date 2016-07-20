@@ -121,6 +121,28 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   }
 
   @NotNull
+  @Override
+  public List<Resource> getOwnResources(@NotNull final SProject project) {
+    return getResourceFeatures(project).stream()
+            .map(rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()))
+            .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
+  public List<Resource> getResources(@NotNull final SProject project) {
+    final Set<Resource> resources = new HashSet<>();
+    final List<SProject> path = project.getProjectPath();
+    final ListIterator<SProject> it = path.listIterator(path.size());
+    while (it.hasPrevious()) {
+      SProject p = it.previous();
+      resources.addAll(CollectionsUtil.filterCollection(getOwnResources(p), data -> !resources.contains(data)));
+    }
+    final List<Resource> result = new ArrayList<>(resources);
+    return result;
+  }
+
+  @NotNull
   private Set<String> getResourceNamesInProject(@NotNull final SProject project) {
     return getResourceFeatures(project).stream()
             .map(fd -> fd.getParameters().get(NAME))
@@ -130,11 +152,10 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @NotNull
   private Map<String, Resource> getResourcesForProject(@NotNull final SProject project) {
     final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
-    final String projectId = project.getProjectId();
     result.putAll(getResourceFeatures(project).stream().collect(
             Collectors.toMap(
                     rd -> rd.getParameters().get(NAME),
-                    rd -> ResourceFactory.createResource(projectId, rd.getParameters()))
+                    rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()))
     ));
     return result;
   }

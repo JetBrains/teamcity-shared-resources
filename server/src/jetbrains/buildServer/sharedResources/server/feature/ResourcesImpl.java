@@ -23,6 +23,7 @@ import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResource
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,8 +75,20 @@ public final class ResourcesImpl implements Resources {
     return myFeatures.asProjectResourceMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
   }
 
+  @NotNull
+  @Override
+  public List<Resource> getOwnResources(@NotNull SProject project) {
+    return myFeatures.getOwnResources(project);
+  }
+
+  @NotNull
+  @Override
+  public List<Resource> getResources(@NotNull SProject project) {
+    return myFeatures.getResources(project);
+  }
+
   @Override
   public int getCount(@NotNull final SProject project) {
-    return myFeatures.asMap(project).size();
+    return myFeatures.getResources(project).size();
   }
 }
