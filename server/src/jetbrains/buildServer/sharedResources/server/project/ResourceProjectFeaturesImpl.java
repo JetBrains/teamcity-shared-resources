@@ -138,8 +138,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       SProject p = it.previous();
       resources.addAll(CollectionsUtil.filterCollection(getOwnResources(p), data -> !resources.contains(data)));
     }
-    final List<Resource> result = new ArrayList<>(resources);
-    return result;
+    return new ArrayList<>(resources);
   }
 
   @NotNull
@@ -155,7 +154,8 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     result.putAll(getResourceFeatures(project).stream().collect(
             Collectors.toMap(
                     rd -> rd.getParameters().get(NAME),
-                    rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()))
+                    rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()),
+                    (r1, r2) -> r1)
     ));
     return result;
   }
