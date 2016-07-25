@@ -194,7 +194,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildType).getProject();
       will(returnValue(myProject));
 
-      oneOf(myInspector).checkDuplicateResources(myProject);
+      oneOf(myInspector).getDuplicateResources(myProject);
       will(returnValue(Collections.emptyMap()));
 
     }});
@@ -231,7 +231,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildType).getProject();
       will(returnValue(myProject));
 
-      oneOf(myInspector).checkDuplicateResources(myProject);
+      oneOf(myInspector).getDuplicateResources(myProject);
       will(returnValue(Collections.emptyMap()));
 
     }});
@@ -382,8 +382,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Map<Lock, String> invalidLocks = new HashMap<>();
     invalidLocks.put(new Lock("lock1", LockType.READ), "");
 
-    final Map<String, List<String>> duplicates = new HashMap<>();
-    duplicates.put(myProjectId, Arrays.asList("Resource1", "Resource2"));
+    final Map<SProject, List<String>> duplicates = new HashMap<>();
+    duplicates.put(myProject, Arrays.asList("Resource1", "Resource2"));
 
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
@@ -398,7 +398,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
-      oneOf(myInspector).checkDuplicateResources(myProject);
+      oneOf(myInspector).getDuplicateResources(myProject);
       will(returnValue(duplicates));
 
       oneOf(myInspector).inspect(myBuildType);
@@ -406,6 +406,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myBuildType).getProject();
       will(returnValue(myProject));
+
+      oneOf(myProject).getExtendedName();
+      will(returnValue("Parent :: Project"));
 
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
@@ -455,7 +458,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildType).getProject();
       will(returnValue(myProject));
 
-      oneOf(myInspector).checkDuplicateResources(myProject);
+      oneOf(myInspector).getDuplicateResources(myProject);
       will(returnValue(Collections.emptyMap()));
 
     }});
