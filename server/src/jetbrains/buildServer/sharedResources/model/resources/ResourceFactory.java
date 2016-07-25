@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -53,21 +54,21 @@ public class ResourceFactory {
     return CustomResource.newCustomResource(projectId, name, values, state);
   }
 
-  public static Resource createResource(@NotNull final String projectId, @NotNull final Map<String, String> parameters) {
+  public static Resource fromProjectFeatureDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
+    final Map<String, String> parameters = descriptor.getParameters();
     ResourceType type = ResourceType.fromString(parameters.get(TYPE));
     final String enabledStr = parameters.get(ENABLED);
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
     final String name = parameters.get(NAME);
     if (type == ResourceType.QUOTED) {
-      return QuotedResource.newResource(projectId, name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
+      return QuotedResource.newResource(descriptor.getProjectId(), name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
     } else {
       return CustomResource.newCustomResource(
-              projectId,
+              descriptor.getProjectId(),
               name,
               split(parameters.get(VALUES), true, '\r', '\n'),
               resourceState
       );
     }
   }
-
 }

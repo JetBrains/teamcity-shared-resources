@@ -156,12 +156,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @Nullable
   private WaitReason checkForInvalidResources(@NotNull final SProject project) {
     WaitReason result = null;
-    final Map<String, List<String>> duplicates = myInspector.checkDuplicateResources(project);
+    // project name -> list of duplicate resources
+    final Map<SProject, List<String>> duplicates = myInspector.getDuplicateResources(project);
     if (!duplicates.isEmpty()) {
       StringBuilder builder = new StringBuilder("Shared resources configuration is not valid. ");
       duplicates.entrySet().forEach(
               entry -> {
-                builder.append("Project ").append(entry.getKey()).append(" has invalid resource");
+                builder.append("Project ").append(entry.getKey().getExtendedName()).append(" has invalid resource");
                 builder.append(entry.getValue().size() > 1 ? "s: " : ": ");
                 builder.append(entry.getValue().stream().collect(Collectors.joining(", ")));
               }

@@ -9,7 +9,6 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,20 +44,25 @@ public class ConfigurationInspector {
     return result;
   }
 
+  /**
+   * Checks project path for duplicate resource definitions
+   * @param project project to check path for
+   * @return map of projects to the list of duplicate resources in the project
+   */
   @NotNull
-  public Map<String, List<String>> checkDuplicateResources(@NotNull final SProject project) {
-    final Map<String, List<String>> result = new HashMap<>();
-    final List<SProject> projects = project.getProjectPath();
-    projects.forEach(p -> {
-      Map<String, List<Resource>> res = myResources.getOwnResources(p).stream().collect(Collectors.groupingBy(Resource::getName));
-      List<List<Resource>> dups = res.values().stream().filter(list -> list.size() > 1).collect(Collectors.toList());
-      if (!dups.isEmpty()) {
-        List<String> dupNames = new ArrayList<>();
-        dups.forEach(dup -> dupNames.add(dup.get(0).getName()));
-        result.put(project.getExtendedName(), dupNames);
+  public Map<SProject, List<String>> getDuplicateResources(@NotNull final SProject project) {
+    final Map<SProject, List<String>> result = new HashMap<>();
+    project.getProjectPath().forEach(p -> {
+      final Map<String, List<Resource>> res = myResources.getOwnResources(p).stream()
+              .collect(Collectors.groupingBy(Resource::getName));
+      final List<String> duplicateNames = res.values().stream()
+              .filter(list -> list.size() > 1)
+              .map(dup -> dup.get(0).getName())
+              .collect(Collectors.toList());
+      if (!duplicateNames.isEmpty()) {
+        result.put(p, duplicateNames);
       }
     });
     return result;
   }
-
 }

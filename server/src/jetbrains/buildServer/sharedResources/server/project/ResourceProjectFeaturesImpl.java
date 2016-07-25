@@ -124,7 +124,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @Override
   public List<Resource> getOwnResources(@NotNull final SProject project) {
     return getResourceFeatures(project).stream()
-            .map(rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()))
+            .map(ResourceFactory::fromProjectFeatureDescriptor)
             .collect(Collectors.toList());
   }
 
@@ -154,7 +154,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     result.putAll(getResourceFeatures(project).stream().collect(
             Collectors.toMap(
                     rd -> rd.getParameters().get(NAME),
-                    rd -> ResourceFactory.createResource(project.getProjectId(), rd.getParameters()),
+                    ResourceFactory::fromProjectFeatureDescriptor,
                     (r1, r2) -> r1)
     ));
     return result;
