@@ -49,7 +49,7 @@ public class InvalidLocksReport extends HealthStatusReport {
   private final ItemCategory myCategory;
 
   @NotNull
-  final ConfigurationInspector myInspector;
+  private final ConfigurationInspector myInspector;
 
   public InvalidLocksReport(@NotNull final PluginDescriptor pluginDescriptor,
                             @NotNull final PagePlaces pagePlaces,
@@ -82,7 +82,7 @@ public class InvalidLocksReport extends HealthStatusReport {
   }
 
   @Override
-  public boolean canReportItemsFor(HealthStatusScope scope) {
+  public boolean canReportItemsFor(@NotNull final HealthStatusScope scope) {
     return scope.isItemWithSeverityAccepted(myCategory.getSeverity());
   }
 

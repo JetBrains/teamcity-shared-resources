@@ -1,5 +1,8 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,4 +37,7 @@ public enum ResourceType {
     return null;
   }
 
+  public static List<String> getCorrectValues() {
+    return Arrays.stream(ResourceType.values()).map(Enum::name).collect(Collectors.toList());
+  }
 }
