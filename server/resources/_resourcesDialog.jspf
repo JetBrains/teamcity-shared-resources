@@ -43,7 +43,8 @@
       <th style="white-space: nowrap">Resource type:<bs:help file="Shared+Resources" anchor="TypesofSharedResources"/></th>
       <td>
         <forms:select name="resoruce_type" id="resource_type" style="width: 90%"
-                      onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;">
+                      onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;"
+                      enableFilter="true">
           <forms:option value="infinite">Infinite resource</forms:option>
           <forms:option value="quoted">Resource with quota</forms:option>
           <forms:option value="custom">Resource with custom values</forms:option>
