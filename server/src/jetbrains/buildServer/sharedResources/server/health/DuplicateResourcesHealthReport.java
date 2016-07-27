@@ -84,13 +84,12 @@ public class DuplicateResourcesHealthReport extends HealthStatusReport {
     });
   }
 
-
   @NotNull
-  private HealthStatusItem createDupsHealthItem(@NotNull final SProject p,
+  private HealthStatusItem createDupsHealthItem(@NotNull final SProject project,
                                                 @NotNull final List<String> dups) {
     final Map<String, Object> data = new HashMap<>();
+    data.put("project", project);
     data.put("duplicates", dups);
-    return  new HealthStatusItem(CATEGORY.getName() + p.getProjectId(), CATEGORY, data);
+    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getProjectId(), CATEGORY, data);
   }
-
 }

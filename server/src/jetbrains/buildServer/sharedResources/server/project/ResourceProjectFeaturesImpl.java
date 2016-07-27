@@ -16,6 +16,9 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -25,9 +28,6 @@ import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResource
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
@@ -78,9 +78,9 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   private SProjectFeatureDescriptor findDescriptorByResourceName(@NotNull final SProject project,
                                                                  @NotNull final String name) {
     final Optional<SProjectFeatureDescriptor> descriptor = getResourceFeatures(project)
-            .stream()
-            .filter(fd -> name.equals(fd.getParameters().get(NAME)))
-            .findFirst();
+      .stream()
+      .filter(fd -> name.equals(fd.getParameters().get(NAME)))
+      .findFirst();
     if (descriptor.isPresent()) {
       return descriptor.get();
     }
@@ -98,7 +98,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       SProject p = it.previous();
       Map<String, Resource> currentResources = getResourcesForProject(p);
       final Map<String, Resource> value = CollectionsUtil.filterMapByKeys(
-              currentResources, data -> !treeResources.containsKey(data)
+        currentResources, data -> !treeResources.containsKey(data)
       );
       treeResources.putAll(value);
       result.put(p, value);
@@ -124,8 +124,9 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @Override
   public List<Resource> getOwnResources(@NotNull final SProject project) {
     return getResourceFeatures(project).stream()
-            .map(ResourceFactory::fromProjectFeatureDescriptor)
-            .collect(Collectors.toList());
+                                       .map(ResourceFactory::fromProjectFeatureDescriptor)
+                                       .filter(Objects::nonNull)
+                                       .collect(Collectors.toList());
   }
 
   @NotNull
@@ -144,19 +145,22 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @NotNull
   private Set<String> getResourceNamesInProject(@NotNull final SProject project) {
     return getResourceFeatures(project).stream()
-            .map(fd -> fd.getParameters().get(NAME))
-            .collect(Collectors.toSet());
+                                       .map(fd -> fd.getParameters().get(NAME))
+                                       .collect(Collectors.toSet());
   }
 
   @NotNull
   private Map<String, Resource> getResourcesForProject(@NotNull final SProject project) {
     final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
-    result.putAll(getResourceFeatures(project).stream().collect(
-            Collectors.toMap(
-                    rd -> rd.getParameters().get(NAME),
-                    ResourceFactory::fromProjectFeatureDescriptor,
-                    (r1, r2) -> r1)
-    ));
+    result.putAll(getResourceFeatures(project).stream()
+                                              .map(ResourceFactory::fromProjectFeatureDescriptor)
+                                              .filter(Objects::nonNull)
+                                              .collect(
+                                                  Collectors.toMap(
+                                                    Resource::getName,
+                                                    Function.identity(),
+                                                    (r1, r2) -> r1)
+                                                ));
     return result;
   }
 

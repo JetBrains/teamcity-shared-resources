@@ -120,7 +120,7 @@ public class ConfigurationInspector {
                     errors.add("Value of parameter 'quota' must be either positive, or -1 for infinite quota. Got + " + quota);
                   }
                 } catch (NumberFormatException e) {
-                  errors.add("Value of parameter 'quota' must be a valid integer. Got " + quota);
+                  errors.add("Value of parameter 'quota' must be a valid integer. Got '" + quota + "'");
                 }
               }
             } else {

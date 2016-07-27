@@ -1,11 +1,12 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
-import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.*;
 import static jetbrains.buildServer.util.StringUtil.split;
 
@@ -54,21 +55,34 @@ public class ResourceFactory {
     return CustomResource.newCustomResource(projectId, name, values, state);
   }
 
+  @Nullable
   public static Resource fromProjectFeatureDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
+    Resource result = null;
     final Map<String, String> parameters = descriptor.getParameters();
     ResourceType type = ResourceType.fromString(parameters.get(TYPE));
     final String enabledStr = parameters.get(ENABLED);
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
     final String name = parameters.get(NAME);
-    if (type == ResourceType.QUOTED) {
-      return QuotedResource.newResource(descriptor.getProjectId(), name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
-    } else {
-      return CustomResource.newCustomResource(
-              descriptor.getProjectId(),
-              name,
-              split(parameters.get(VALUES), true, '\r', '\n'),
-              resourceState
-      );
+    if (isEmptyOrSpaces(name)) {
+      return null;
     }
+    if (type == ResourceType.QUOTED) {
+      final String quotaStr = parameters.get(QUOTA);
+      if (!isEmptyOrSpaces(quotaStr)) {
+        try {
+          int quota = Integer.parseInt(quotaStr);
+          result = QuotedResource.newResource(descriptor.getProjectId(), name, quota, resourceState);
+        } catch (NumberFormatException ignored) {}
+      }
+    } else {
+      final String valuesStr = parameters.get(VALUES);
+      if (!isEmptyOrSpaces(valuesStr)) {
+        List<String> values = split(valuesStr, true, '\r', '\n');
+        if (!values.isEmpty()) {
+          result = CustomResource.newCustomResource(descriptor.getProjectId(), name, values, resourceState);
+        }
+      }
+    }
+    return result;
   }
 }

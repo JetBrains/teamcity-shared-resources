@@ -35,7 +35,7 @@ public class InvalidResourcesHealthReport extends HealthStatusReport {
 
   @NotNull
   private final ItemCategory CATEGORY = new ItemCategory("invalid_shared_resources_definitions",
-                                                         "Invalid Shared Resources Definitions",
+                                                         "Invalid shared resources definitions",
                                                          ItemSeverity.ERROR);
 
   @NotNull
@@ -84,10 +84,11 @@ public class InvalidResourcesHealthReport extends HealthStatusReport {
     });
   }
 
-  private HealthStatusItem createDefinitionErrorsItem(@NotNull final SProject p,
+  private HealthStatusItem createDefinitionErrorsItem(@NotNull final SProject project,
                                                       @NotNull final Map<String, List<String>> definitionErrors) {
     final Map<String, Object> data = new HashMap<>();
-    data.put("definitionErrors", definitionErrors);
-    return new HealthStatusItem(CATEGORY.getName() + p.getProjectId(), CATEGORY, data);
+    data.put("invalidResources", definitionErrors);
+    data.put("project", project);
+    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getProjectId(), CATEGORY, data);
   }
 }

@@ -47,7 +47,7 @@ public class InvalidLocksReport extends HealthStatusReport {
   private static final String CATEGORY_ID = "invalid_locks_on_shared_resources";
 
   @NotNull
-  private static final String CATEGORY_NAME = "Invalid Locks on Shared Resources";
+  private static final String CATEGORY_NAME = "Invalid locks on shared resources";
 
   @NotNull
   private final ItemCategory myCategory;
