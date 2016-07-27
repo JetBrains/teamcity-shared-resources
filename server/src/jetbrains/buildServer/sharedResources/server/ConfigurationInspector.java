@@ -90,56 +90,57 @@ public class ConfigurationInspector {
   @NotNull
   public Map<String, List<String>> getOwnResourceDefinitionErrors(@NotNull final SProject project) {
     final Map<String, List<String>> result = new HashMap<>();
-    project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).forEach(fd -> {
-      final List<String> errors = new ArrayList<>();
-      final Map<String, String> parameters = fd.getParameters();
-      final String name = parameters.get(NAME);
-      if (isEmptyOrSpaces(name)) {
-        errors.add("Required parameter 'name' is missing");
-      }
-      final String type = parameters.get(TYPE);
-      if (isEmptyOrSpaces(type)) {
-        errors.add("Required parameter 'type' is missing");
-      } else {
-        ResourceType resourceType = ResourceType.fromString(type);
-        if (resourceType == null) {
-          errors.add("Value of parameter 'type' (" + type + ") is incorrect. Correct values are: " +
-                                 ResourceType.getCorrectValues().stream().collect(Collectors.joining(", ")));
+    project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).forEach(
+      fd -> {
+        final List<String> errors = new ArrayList<>();
+        final Map<String, String> parameters = fd.getParameters();
+        final String name = parameters.get(NAME);
+        if (isEmptyOrSpaces(name)) {
+          errors.add("Required parameter 'name' is missing");
+        }
+        final String type = parameters.get(TYPE);
+        if (isEmptyOrSpaces(type)) {
+          errors.add("Required parameter 'type' is missing");
         } else {
-          // we have correct type
-          // check the parameters that this type requires
-          if (resourceType == ResourceType.QUOTED) {
-            String quota = parameters.get(QUOTA);
-            if (isEmptyOrSpaces(quota)) {
-              errors.add("Required parameter 'quota' is missing");
-            } else {
-              try {
-                int q = Integer.parseInt(quota);
-                if (q < -1) {
-                  errors.add("Value of parameter 'quota' must be either positive, or -1 for infinite quota. Got + " + quota);
-                }
-              } catch (NumberFormatException e) {
-                errors.add("Value of parameter 'quota' must be a valid integer. Got " + quota);
-              }
-            }
+          ResourceType resourceType = ResourceType.fromString(type);
+          if (resourceType == null) {
+            errors.add("Value of parameter 'type' (" + type + ") is incorrect. Correct values are: " +
+                       ResourceType.getCorrectValues().stream().collect(Collectors.joining(", ")));
           } else {
-            // resource with custom values
-            final String values = parameters.get(VALUES);
-            if (isEmptyOrSpaces(values)) {
-              errors.add("Required parameter 'values' is missing");
+            // we have correct type
+            // check the parameters that this type requires
+            if (resourceType == ResourceType.QUOTED) {
+              String quota = parameters.get(QUOTA);
+              if (isEmptyOrSpaces(quota)) {
+                errors.add("Required parameter 'quota' is missing");
+              } else {
+                try {
+                  int q = Integer.parseInt(quota);
+                  if (q < -1) {
+                    errors.add("Value of parameter 'quota' must be either positive, or -1 for infinite quota. Got + " + quota);
+                  }
+                } catch (NumberFormatException e) {
+                  errors.add("Value of parameter 'quota' must be a valid integer. Got " + quota);
+                }
+              }
             } else {
-              final List<String> vals = StringUtil.split(parameters.get(VALUES), true, '\r', '\n');
-              if (vals.isEmpty()) {
-                errors.add("At least one value for the resource with custom values must be defined");
+              // resource with custom values
+              final String values = parameters.get(VALUES);
+              if (isEmptyOrSpaces(values)) {
+                errors.add("Required parameter 'values' is missing");
+              } else {
+                final List<String> vals = StringUtil.split(parameters.get(VALUES), true, '\r', '\n');
+                if (vals.isEmpty()) {
+                  errors.add("At least one value for the resource with custom values must be defined");
+                }
               }
             }
           }
         }
-      }
-      if (!errors.isEmpty()) {
-        result.put(fd.getId(), errors);
-      }
-    });
+        if (!errors.isEmpty()) {
+          result.put(fd.getId(), errors);
+        }
+      });
     return result;
   }
 

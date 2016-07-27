@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.sharedResources.server;
+package jetbrains.buildServer.sharedResources.server.health;
 
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.healthStatus.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
@@ -40,10 +41,13 @@ import java.util.Map;
 public class InvalidLocksReport extends HealthStatusReport {
 
   @NotNull
-  private static final String CATEGORY_ID = "sharedResources";
+  private static final String TYPE = "InvalidLocksReport";
 
   @NotNull
-  private static final String CATEGORY_NAME = "Shared resources";
+  private static final String CATEGORY_ID = "invalid_locks_on_shared_resources";
+
+  @NotNull
+  private static final String CATEGORY_NAME = "Invalid Locks on Shared Resources";
 
   @NotNull
   private final ItemCategory myCategory;
@@ -56,8 +60,8 @@ public class InvalidLocksReport extends HealthStatusReport {
                             @NotNull final ConfigurationInspector inspector) {
     myInspector = inspector;
     myCategory = new ItemCategory(CATEGORY_ID, CATEGORY_NAME, ItemSeverity.WARN);
-    final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(CATEGORY_ID, pagePlaces);
-    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("invalidLocksReport.jsp"));
+    final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/invalidLocksReport.jsp"));
     myPEx.addCssFile("/css/admin/buildTypeForm.css");
     myPEx.setVisibleOutsideAdminArea(true);
     myPEx.register();
@@ -66,7 +70,7 @@ public class InvalidLocksReport extends HealthStatusReport {
   @Override
   @NotNull
   public String getType() {
-    return CATEGORY_ID;
+    return TYPE;
   }
 
   @Override

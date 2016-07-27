@@ -15,11 +15,9 @@
 
   <!-- === HEALTH === -->
   <bean class="jetbrains.buildServer.sharedResources.server.ConfigurationInspector"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.InvalidLocksReport"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidLocksReport"/>
   <bean class="jetbrains.buildServer.sharedResources.server.health.DuplicateResourcesHealthReport"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.health.DuplicateResourcesHealthReportExtension"/>
   <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidResourcesHealthReport"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidResourcesHealthReportExtension"/>
 
   <!-- ===  INTERNALS  === -->
 

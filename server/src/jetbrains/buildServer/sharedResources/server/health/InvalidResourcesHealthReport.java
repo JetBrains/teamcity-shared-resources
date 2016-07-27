@@ -20,6 +20,9 @@ import java.util.*;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.healthStatus.*;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
+import jetbrains.buildServer.web.openapi.PagePlaces;
+import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,18 +31,24 @@ import org.jetbrains.annotations.NotNull;
 public class InvalidResourcesHealthReport extends HealthStatusReport {
 
   @NotNull
-  static final String TYPE = "InvalidResourcesReport";
+  private static final String TYPE = "InvalidResourcesReport";
 
   @NotNull
-  private final ItemCategory CATEGORY = new ItemCategory("invalid_resource",
-                                                         "Invalid resource definitions",
+  private final ItemCategory CATEGORY = new ItemCategory("invalid_shared_resources_definitions",
+                                                         "Invalid Shared Resources Definitions",
                                                          ItemSeverity.ERROR);
 
   @NotNull
   private final ConfigurationInspector myInspector;
 
-  public InvalidResourcesHealthReport(@NotNull final ConfigurationInspector inspector) {
+  public InvalidResourcesHealthReport(@NotNull final PluginDescriptor pluginDescriptor,
+                                      @NotNull final PagePlaces pagePlaces,
+                                      @NotNull final ConfigurationInspector inspector) {
     myInspector = inspector;
+    final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/invalidResourcesReport.jsp"));
+    myPEx.setVisibleOutsideAdminArea(true);
+    myPEx.register();
   }
 
   @NotNull

@@ -20,6 +20,9 @@ import java.util.*;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.healthStatus.*;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
+import jetbrains.buildServer.web.openapi.PagePlaces;
+import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,18 +31,24 @@ import org.jetbrains.annotations.NotNull;
 public class DuplicateResourcesHealthReport extends HealthStatusReport {
 
   @NotNull
-  static final String TYPE = "DuplicateResourcesReport";
+  private static final String TYPE = "DuplicateResourcesReport";
 
   @NotNull
-  private final ItemCategory CATEGORY = new ItemCategory("duplicate_resource",
+  private final ItemCategory CATEGORY = new ItemCategory("duplicate__shared_resources",
                                                          "Resources with duplicate names",
                                                          ItemSeverity.ERROR);
 
   @NotNull
   private final ConfigurationInspector myInspector;
 
-  public DuplicateResourcesHealthReport(@NotNull final ConfigurationInspector inspector) {
+  public DuplicateResourcesHealthReport(@NotNull final PluginDescriptor pluginDescriptor,
+                                        @NotNull final PagePlaces pagePlaces,
+                                        @NotNull final ConfigurationInspector inspector) {
     myInspector = inspector;
+    final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/duplicateResourcesReport.jsp"));
+    myPEx.setVisibleOutsideAdminArea(true);
+    myPEx.register();
   }
 
   @NotNull
