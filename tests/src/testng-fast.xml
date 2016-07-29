@@ -13,6 +13,7 @@
   <test name="Inspection tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzerTest" />
+      <class name="jetbrains.buildServer.sharedResources.server.ConfigurationInspectorTest"/>
     </classes>
   </test>
   <test name="Decision making tests">

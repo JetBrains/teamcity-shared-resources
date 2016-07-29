@@ -56,7 +56,7 @@ public class ResourceFactory {
   }
 
   @Nullable
-  public static Resource fromProjectFeatureDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
+  public static Resource fromDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
     Resource result = null;
     final Map<String, String> parameters = descriptor.getParameters();
     ResourceType type = ResourceType.fromString(parameters.get(TYPE));

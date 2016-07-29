@@ -16,6 +16,12 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.controllers.BaseController;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeatureBean;
 import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
@@ -26,6 +32,7 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
@@ -35,13 +42,6 @@ import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.servlet.ModelAndView;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
@@ -63,16 +63,21 @@ public class EditFeatureController extends BaseController {
   @NotNull
   private final SharedResourcesFeatureFactory myFactory;
 
+  @NotNull
+  private final ConfigurationInspector myInspector;
+
 
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
-                               @NotNull final SharedResourcesFeatureFactory factory) {
+                               @NotNull final SharedResourcesFeatureFactory factory,
+                               @NotNull final ConfigurationInspector inspector) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
     myFactory = factory;
+    myInspector = inspector;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
 
   }
@@ -89,12 +94,12 @@ public class EditFeatureController extends BaseController {
     final SProject project = form.getProject();
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
-    final Map<String, Lock> locks = new HashMap<String, Lock>();
+    final Map<String, Lock> locks = new HashMap<>();
     final String projectId = project.getProjectId();
     // map of all visible resources from this project and its subtree
-    final Map<String, Resource> resources = new HashMap<String, Resource>(myResources.asMap(projectId));
+    final Map<String, Resource> resources = new HashMap<>(myResources.asMap(projectId));
     final Map<String, Object> model = result.getModel();
-    final Collection<Lock> invalidLocks = new ArrayList<Lock>();
+    final Collection<Lock> invalidLocks = new ArrayList<>();
     boolean inherited = false;
     for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
@@ -117,9 +122,7 @@ public class EditFeatureController extends BaseController {
         }
       }
     }
-    final Map<SProject, Map<String, Resource>> rcs = new HashMap<SProject, Map<String, Resource>>();
-    rcs.put(project, resources);
-    final SharedResourcesBean bean = new SharedResourcesBean(project, rcs);
+    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, myInspector);
     final Map<String, Lock> invalidLocksMap = new HashMap<String, Lock>();
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);

@@ -17,6 +17,8 @@
 package jetbrains.buildServer.sharedResources;
 
 import java.util.Comparator;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 
 /**
  * @author Oleg Rybak
@@ -72,4 +74,7 @@ public class SharedResourcesPluginConstants {
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
+  public static Comparator<Resource> RESOURCES_COMPARATOR = (r1, r2) -> r1.getName().compareTo(r2.getName());
+  public static Comparator<ResourceProjectFeature> RESOURCE_FEATURE_COMPARATOR = (o1, o2) -> o1.getParameters().get(ProjectFeatureParameters.NAME)
+                                                                                           .compareTo(o2.getParameters().get(ProjectFeatureParameters.NAME));
 }

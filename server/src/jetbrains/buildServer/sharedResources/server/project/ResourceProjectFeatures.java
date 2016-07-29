@@ -32,28 +32,15 @@ import java.util.Map;
 public interface ResourceProjectFeatures {
 
   @NotNull
+  List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project);
+
+  @NotNull
+  @Deprecated
   Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project);
 
   @NotNull
+  @Deprecated
   Map<String, Resource> asMap(@NotNull final SProject project);
-
-  /**
-   * Returns resources defined in given project
-   * @param project project to look for resource in
-   * @return resources defined in current project
-   */
-  @NotNull
-  List<Resource> getOwnResources(@NotNull final SProject project);
-
-  /**
-   * Returns resources defined in project and its ancestors
-   * taking inheritance into account
-   *
-   * @param project leaf of project subtree to gather resources in
-   * @return resources with inheritance / overriding
-   */
-  @NotNull
-  List<Resource> getResources(@NotNull final SProject project);
 
   void addResource(@NotNull final SProject project,
                    @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException;

@@ -2,7 +2,7 @@
 
   <c:choose>
     <c:when test="${allowChange}">
-      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.value.name}');"/>
+      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}');"/>
       <c:set var="highlight" value="highlight"/>
     </c:when>
     <c:otherwise>
@@ -13,7 +13,7 @@
 
   <c:set var="cellStyle">
     <c:choose>
-      <c:when test="${not resource.value.enabled}">
+      <c:when test="${not resource.enabled}">
         color: #888
       </c:when>
       <c:otherwise>
@@ -22,26 +22,26 @@
     </c:choose>
   </c:set>
 
-  <c:set var="resourceName" value="${resource.value.name}"/>
-  <c:set var="usage" value="${usages[resource.value]}"/> <%--Map<SBuildType -> List<Lock>>--%>
+  <c:set var="resourceName" value="${resource.name}"/>
+  <c:set var="usage" value="${usages[resource]}"/> <%--Map<SBuildType -> List<Lock>>--%>
   <tr>
     <td class="${highlight}" onclick="${onclick}">
       <div style="${cellStyle}">
-        <c:out value="${resourceName}"/><c:if test="${not resource.value.enabled}"><bs:out value=" (disabled)"/></c:if>
+        <c:out value="${resourceName}"/><c:if test="${not resource.enabled}"><bs:out value=" (disabled)"/></c:if>
       </div>
     </td>
     <c:choose>
-      <c:when test="${resource.value.type == type_quota}">
+      <c:when test="${resource.type == type_quota}">
         <c:choose>
-          <c:when test="${resource.value.infinite}">
+          <c:when test="${resource.infinite}">
             <c:set var="typeValue" value="Quota: Infinite"/>
           </c:when>
           <c:otherwise>
-            <c:set var="typeValue" value="Quota: ${resource.value.quota}"/>
+            <c:set var="typeValue" value="Quota: ${resource.quota}"/>
           </c:otherwise>
         </c:choose>
       </c:when>
-      <c:when test="${resource.value.type == type_custom}">
+      <c:when test="${resource.type == type_custom}">
         <c:set var="typeValue" value="Custom values"/>
       </c:when>
     </c:choose>
@@ -58,22 +58,22 @@
     <c:if test="${allowChange}">
       <td class="edit ${highlight}" onclick="${onclick}"><a href="#">Edit</a></td>
       <td class="edit">
-        <bs:actionsPopup controlId="${util:forJSIdentifier(resource.value.name)}_actions"
+        <bs:actionsPopup controlId="${util:forJSIdentifier(resource.name)}_actions"
                         popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
               <jsp:attribute name="content">
                 <div>
                   <ul class="menuList">
                     <l:li>
-                      <a href="#" onclick="BS.SharedResourcesActions.enableDisableResource('${resource.value.name}', ${not resource.value.enabled})">
-                        <bs:out value="${resource.value.enabled ? 'Disable' : 'Enable'} "/> shared resource</a>
+                      <a href="#" onclick="BS.SharedResourcesActions.enableDisableResource('${resource.name}', ${not resource.enabled})">
+                        <bs:out value="${resource.enabled ? 'Disable' : 'Enable'} "/> shared resource</a>
                     </l:li>
                     <l:li>
                       <c:choose>
                         <c:when test="${used}">
-                          <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.value.name}')"/>
+                          <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
                         </c:when>
                         <c:otherwise>
-                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.value.name}')"/>
+                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.name}')"/>
                         </c:otherwise>
                       </c:choose>
                       <a href="#" onclick="${onclick}">Delete...</a>

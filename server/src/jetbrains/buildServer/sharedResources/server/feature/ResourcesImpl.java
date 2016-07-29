@@ -16,15 +16,15 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.*;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -77,18 +77,27 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
-  public List<Resource> getOwnResources(@NotNull SProject project) {
-    return myFeatures.getOwnResources(project);
+  public List<Resource> getOwnResources(@NotNull final SProject project) {
+    return myFeatures.getOwnFeatures(project).stream()
+                     .map(ResourceProjectFeature::getResource)
+                     .filter(Objects::nonNull)
+                     .collect(Collectors.toList());
   }
 
   @NotNull
   @Override
-  public List<Resource> getResources(@NotNull SProject project) {
-    return myFeatures.getResources(project);
+  public List<Resource> getResources(@NotNull final SProject project) {
+    final Set<Resource> result = new HashSet<>();
+    final List<SProject> path = project.getProjectPath();
+    final ListIterator<SProject> it = path.listIterator(path.size());
+    while (it.hasPrevious()) {
+      result.addAll(getOwnResources(it.previous()).stream().filter(data -> !result.contains(data)).collect(Collectors.toSet()));
+    }
+    return new ArrayList<>(result);
   }
 
   @Override
   public int getCount(@NotNull final SProject project) {
-    return myFeatures.getResources(project).size();
+    return getResources(project).size();
   }
 }

@@ -190,8 +190,8 @@
   <bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
 
   <c:if test="${not project.readOnly}">
-  <forms:addButton id="addNewResource"
-                   onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+    <forms:addButton id="addNewResource"
+                     onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
   </c:if>
 
   <div>
@@ -199,7 +199,7 @@
     <%@ include file="_displayErrors.jspf" %>
 
     <c:choose>
-      <c:when test="${not empty bean.myResources}">
+      <c:when test="${not empty bean.ownResources}">
         <p style="margin-top: 2em">Resources defined in the current project</p>
         <l:tableWithHighlighting id="resourcesTable"
                                  className="parametersTable"
@@ -209,7 +209,7 @@
             <th style="width: 45%">Resource Name</th>
             <th colspan="4">Description</th>
           </tr>
-          <c:set var="resourcesToDisplay" value="${bean.myResources}"/>
+          <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
           <c:set var="allowChange" value="${not project.readOnly}"/>
           <%@ include file="_displayResources.jspf" %>
         </l:tableWithHighlighting>
@@ -221,20 +221,19 @@
       </c:otherwise>
     </c:choose>
 
-    <c:forEach var="ir" items="${bean.inheritedResources}">
-      <c:set var="p" value="${ir.key}"/> <%-- project --%>
-      <c:set var="pr" value="${ir.value}"/> <%--Map<String, Resource>--%>
-      <c:if test="${not empty pr}">
+    <c:forEach var="pathElement" items="${bean.project.projectPath}">
+      <c:set var="projectResources" value="${bean.inheritedResources[pathElement.projectId]}"/>
+      <c:if test="${not empty projectResources}">
         <p style="margin-top: 2em">
           Resources inherited from
-          <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
-            <jsp:attribute name="ifAccessGranted">
-              <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
-              <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
-            </jsp:attribute>
-            <jsp:attribute name="ifAccessDenied">
-              <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
-            </jsp:attribute>
+          <authz:authorize projectId="${pathElement.externalId}" allPermissions="EDIT_PROJECT" >
+          <jsp:attribute name="ifAccessGranted">
+            <c:url var="editUrl" value="/admin/editProject.html?projectId=${pathElement.externalId}&tab=JetBrains.SharedResources"/>
+          <a href="${editUrl}"><c:out value="${pathElement.extendedFullName}"/></a>
+          </jsp:attribute>
+          <jsp:attribute name="ifAccessDenied">
+            <bs:projectLink project="${pathElement}"><c:out value="${pathElement.extendedFullName}"/></bs:projectLink>
+          </jsp:attribute>
           </authz:authorize>
         </p>
         <table class="parametersTable">
@@ -242,7 +241,7 @@
             <th style="width: 45%">Resource Name</th>
             <th colspan="2">Description</th>
           </tr>
-          <c:set var="resourcesToDisplay" value="${pr}"/>
+          <c:set var="resourcesToDisplay" value="${projectResources}"/>
           <c:set var="allowChange" value="${false}"/>
           <%@ include file="_displayResources.jspf" %>
         </table>

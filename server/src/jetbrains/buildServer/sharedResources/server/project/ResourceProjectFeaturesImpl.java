@@ -77,14 +77,10 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   @Nullable
   private SProjectFeatureDescriptor findDescriptorByResourceName(@NotNull final SProject project,
                                                                  @NotNull final String name) {
-    final Optional<SProjectFeatureDescriptor> descriptor = getResourceFeatures(project)
-      .stream()
-      .filter(fd -> name.equals(fd.getParameters().get(NAME)))
-      .findFirst();
-    if (descriptor.isPresent()) {
-      return descriptor.get();
-    }
-    return null;
+    return getResourceFeatures(project).stream()
+                                       .filter(fd -> name.equals(fd.getParameters().get(NAME)))
+                                       .findFirst()
+                                       .orElse(null);
   }
 
   @NotNull
@@ -120,16 +116,16 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     return result;
   }
 
-  @NotNull
-  @Override
-  public List<Resource> getOwnResources(@NotNull final SProject project) {
-    return getResourceFeatures(project).stream()
-                                       .map(ResourceFactory::fromProjectFeatureDescriptor)
-                                       .filter(Objects::nonNull)
-                                       .collect(Collectors.toList());
-  }
+  //@NotNull
+  //@Override
+  //public List<Resource> getOwnResources(@NotNull final SProject project) {
+  //  return getResourceFeatures(project).stream()
+  //                                     .map(ResourceFactory::fromDescriptor)
+  //                                     .filter(Objects::nonNull)
+  //                                     .collect(Collectors.toList());
+  //}
 
-  @NotNull
+  /*@NotNull
   @Override
   public List<Resource> getResources(@NotNull final SProject project) {
     final Set<Resource> resources = new HashSet<>();
@@ -140,7 +136,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       resources.addAll(CollectionsUtil.filterCollection(getOwnResources(p), data -> !resources.contains(data)));
     }
     return new ArrayList<>(resources);
-  }
+  }*/
 
   @NotNull
   private Set<String> getResourceNamesInProject(@NotNull final SProject project) {
@@ -153,15 +149,23 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   private Map<String, Resource> getResourcesForProject(@NotNull final SProject project) {
     final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
     result.putAll(getResourceFeatures(project).stream()
-                                              .map(ResourceFactory::fromProjectFeatureDescriptor)
+                                              .map(ResourceFactory::fromDescriptor)
                                               .filter(Objects::nonNull)
                                               .collect(
-                                                  Collectors.toMap(
-                                                    Resource::getName,
-                                                    Function.identity(),
-                                                    (r1, r2) -> r1)
-                                                ));
+                                                Collectors.toMap(
+                                                  Resource::getName,
+                                                  Function.identity(),
+                                                  (r1, r2) -> r1)
+                                              ));
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project) {
+    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).stream()
+                  .map(ResourceProjectFeatureImpl::new)
+                  .collect(Collectors.toList());
   }
 
   @NotNull
