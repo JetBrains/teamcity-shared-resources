@@ -67,18 +67,8 @@ public interface Resources {
    * @return map of resources in format {@code resource_name -> resource}
    */
   @NotNull
+  @Deprecated
   Map<String, Resource> asMap(@NotNull final String projectId);
-
-  /**
-   * Gets all resources for project with given {@code projectId} and
-   * all its ancestors
-   *
-   * @param projectId id of the current project
-   * @return map of projects and resources in format {@code project -> {resource_name -> resource}}
-   */
-  @NotNull
-  Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
-
 
   /**
    * Gets project own resources

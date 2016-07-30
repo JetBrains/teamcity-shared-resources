@@ -16,15 +16,11 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
-import com.intellij.openapi.util.Pair;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,25 +35,16 @@ public class SharedResourcesBean {
   private final SProject myProject;
 
   @NotNull
-  private final ConfigurationInspector myInspector;
-
-  @NotNull
   private final List<Resource> myOwnResources;
 
   @NotNull
   private Map<String, List<Resource>> myResourceMap;
 
-  @NotNull
-  private final Map<SBuildType, Map<Lock, String>> myConfigurationErrors;
-
   public SharedResourcesBean(@NotNull final SProject project,
-                             @NotNull final Resources resources,
-                             @NotNull final ConfigurationInspector inspector) {
+                             @NotNull final Resources resources) {
     myProject = project;
-    myInspector = inspector;
     myResourceMap = resources.getResources(project).stream().collect(Collectors.groupingBy(Resource::getProjectId));
     myOwnResources = resources.getOwnResources(project);
-    myConfigurationErrors = getConfigurationErrors(project);
   }
 
   @NotNull
@@ -77,25 +64,17 @@ public class SharedResourcesBean {
   }
 
   @NotNull
+  public List<SProject> getProjectPath() {
+    List<SProject> result = myProject.getProjectPath();
+    Collections.reverse(result);
+    return result;
+  }
+
+  @NotNull
   public Collection<Resource> getAllResources() {
     return myResourceMap.values().stream()
                         .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
                         .collect(Collectors.toList());
   }
 
-  @NotNull
-  public Map<SBuildType, Map<Lock, String>> getConfigurationErrors() {
-    return Collections.unmodifiableMap(myConfigurationErrors);
-  }
-
-  @NotNull
-  private Map<SBuildType, Map<Lock, String>> getConfigurationErrors(@NotNull final SProject project) {
-    return project.getBuildTypes().stream()
-                  .map(bt -> new Pair<>(bt, myInspector.inspect(bt)))
-                  .filter(it -> !it.second.isEmpty())
-                  .collect(Collectors.toMap(
-                    p -> p.first,
-                    p -> p.second
-                  ));
-  }
 }

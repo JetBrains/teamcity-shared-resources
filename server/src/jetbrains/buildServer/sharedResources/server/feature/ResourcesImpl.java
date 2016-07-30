@@ -71,12 +71,6 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
-  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull String projectId) {
-    return myFeatures.asProjectResourceMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
-  }
-
-  @NotNull
-  @Override
   public List<Resource> getOwnResources(@NotNull final SProject project) {
     return myFeatures.getOwnFeatures(project).stream()
                      .map(ResourceProjectFeature::getResource)

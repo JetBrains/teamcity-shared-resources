@@ -174,33 +174,33 @@ public class ResourcesImplTest extends BaseTestCase {
     assertEquals(myProjectResourceMap.size(), result.size());
   }
 
-  @Test (enabled = false) // todo: move to project resource features test
-  @TestFor(issues = "TW-37406")
-  public void testAsProjectResourceMap_PreserveOrder() {
-    m.checking(new Expectations() {{
-      oneOf(myProjectManager).findProjectById(myProjectId);
-      will(returnValue(myProject));
-
-      allowing(myProject).getProjectId();
-      will(returnValue(myProjectId));
-
-      oneOf(myProject).getProjectPath();
-      will(returnValue(Arrays.asList(myRootProject, myProject)));
-
-      allowing(myRootProject).getProjectId();
-      will(returnValue(myRootProjectId));
-    }});
-
-    final Map<SProject, Map<String, Resource>> result = resources.asProjectResourceMap(myProjectId);
-    assertEquals(2, result.size());
-    Iterator<SProject> it = result.keySet().iterator();
-    assertTrue(it.hasNext());
-    SProject p = it.next();
-    assertEquals(myProjectId, p.getProjectId());
-    assertTrue(it.hasNext());
-    p = it.next();
-    assertEquals(myRootProjectId, p.getProjectId());
-  }
+  //@Test (enabled = false) // todo: move to project resource features test
+  //@TestFor(issues = "TW-37406")
+  //public void testAsProjectResourceMap_PreserveOrder() {
+  //  m.checking(new Expectations() {{
+  //    oneOf(myProjectManager).findProjectById(myProjectId);
+  //    will(returnValue(myProject));
+  //
+  //    allowing(myProject).getProjectId();
+  //    will(returnValue(myProjectId));
+  //
+  //    oneOf(myProject).getProjectPath();
+  //    will(returnValue(Arrays.asList(myRootProject, myProject)));
+  //
+  //    allowing(myRootProject).getProjectId();
+  //    will(returnValue(myRootProjectId));
+  //  }});
+  //
+  //  final Map<SProject, Map<String, Resource>> result = resources.asProjectResourceMap(myProjectId);
+  //  assertEquals(2, result.size());
+  //  Iterator<SProject> it = result.keySet().iterator();
+  //  assertTrue(it.hasNext());
+  //  SProject p = it.next();
+  //  assertEquals(myProjectId, p.getProjectId());
+  //  assertTrue(it.hasNext());
+  //  p = it.next();
+  //  assertEquals(myRootProjectId, p.getProjectId());
+  //}
 
   @Test (enabled = false) // todo: move
   public void testGetCount_SingleProject() {

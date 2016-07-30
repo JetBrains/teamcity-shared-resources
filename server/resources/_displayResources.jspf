@@ -27,6 +27,9 @@
   <tr>
     <td class="${highlight}" onclick="${onclick}">
       <div style="${cellStyle}">
+        <c:if test="${not empty duplicates[resourceName]}">
+          <i class="itemSeverity icon-warning-sign error" title="Resource <bs:out value="${resourceName}"/> has duplicate name"></i>
+        </c:if>
         <c:out value="${resourceName}"/><c:if test="${not resource.enabled}"><bs:out value=" (disabled)"/></c:if>
       </div>
     </td>

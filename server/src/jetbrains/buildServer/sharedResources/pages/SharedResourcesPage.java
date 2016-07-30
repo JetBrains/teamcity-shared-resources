@@ -16,8 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
-import java.util.List;
+import com.intellij.openapi.util.Pair;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
 import jetbrains.buildServer.serverSide.SBuildType;
@@ -26,11 +28,9 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
-import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -45,9 +45,6 @@ public class SharedResourcesPage extends EditProjectTab {
 
   @NotNull
   private static final String TITLE_PREFIX = "Shared Resources";
-
-  @NotNull
-  private final ResourceProjectFeatures myProjectFeatures;
 
   @NotNull
   private final Resources myResources;
@@ -66,14 +63,12 @@ public class SharedResourcesPage extends EditProjectTab {
                              @NotNull final Resources resources,
                              @NotNull final SecurityContext securityContext,
                              @NotNull final ConfigurationInspector inspector,
-                             @NotNull final ResourceUsageAnalyzer analyzer,
-                             @NotNull final ResourceProjectFeatures projectFeatures) {
+                             @NotNull final ResourceUsageAnalyzer analyzer) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     mySecurityContext = securityContext;
     myInspector = inspector;
     myAnalyzer = analyzer;
-    myProjectFeatures = projectFeatures;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -83,11 +78,10 @@ public class SharedResourcesPage extends EditProjectTab {
     super.fillModel(model, request);
     final SProject project = getProject(request);
     if (project != null) {
-      // collect usages of resources defined in current project (for this project and its subtree)
-      final Map<Resource, Map<SBuildType, List<Lock>>> usages = myAnalyzer.collectResourceUsages(project);
-      final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, myInspector);
-      model.put("bean", bean);
-      model.put("usages", usages);
+      model.put("bean", new SharedResourcesBean(project, myResources));
+      model.put("configurationErrors", getConfigurationErrors(project));
+      model.put("usages", myAnalyzer.collectResourceUsages(project));
+      model.put("duplicates", prepareDuplicates(project));
     }
   }
 
@@ -116,5 +110,22 @@ public class SharedResourcesPage extends EditProjectTab {
     return  user != null
             && project != null
             && user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT);
+  }
+
+  @NotNull
+  private Map<SBuildType, Map<Lock, String>> getConfigurationErrors(@NotNull final SProject project) {
+    return project.getBuildTypes().stream()
+                  .map(bt -> new Pair<>(bt, myInspector.inspect(bt)))
+                  .filter(it -> !it.second.isEmpty())
+                  .collect(Collectors.toMap(
+                    p -> p.first,
+                    p -> p.second
+                  ));
+  }
+
+  private Map<String, Boolean> prepareDuplicates(@NotNull final SProject project) {
+    final Map<String, Boolean> result = new HashMap<>();
+    myInspector.getOwnDuplicateResources(project).forEach(dup -> result.put(dup, true));
+    return result;
   }
 }

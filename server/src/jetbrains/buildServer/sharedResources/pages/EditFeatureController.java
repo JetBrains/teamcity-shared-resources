@@ -32,7 +32,6 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
@@ -63,23 +62,16 @@ public class EditFeatureController extends BaseController {
   @NotNull
   private final SharedResourcesFeatureFactory myFactory;
 
-  @NotNull
-  private final ConfigurationInspector myInspector;
-
-
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
-                               @NotNull final SharedResourcesFeatureFactory factory,
-                               @NotNull final ConfigurationInspector inspector) {
+                               @NotNull final SharedResourcesFeatureFactory factory) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
     myFactory = factory;
-    myInspector = inspector;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
-
   }
 
   @Nullable
@@ -116,14 +108,12 @@ public class EditFeatureController extends BaseController {
           }
         } else {
           // we have feature, that is not current feature under edit. must remove resources used by other features
-          for (String name : f.getLockedResources().keySet()) {
-            resources.remove(name);
-          }
+          f.getLockedResources().keySet().forEach(resources::remove);
         }
       }
     }
-    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, myInspector);
-    final Map<String, Lock> invalidLocksMap = new HashMap<String, Lock>();
+    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources);
+    final Map<String, Lock> invalidLocksMap = new HashMap<>();
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);
     }

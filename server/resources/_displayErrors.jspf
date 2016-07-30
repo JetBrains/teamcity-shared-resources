@@ -1,6 +1,7 @@
-<c:set var="configurationErrors" value="${bean.configurationErrors}"/>
+<%--@elvariable id="configurationErrors" type="java.util.Map<jetbrains.buildServer.serverSide.SBuildType, java.util.Map<jetbrains.buildServer.sharedResources.model.Lock, java.lang.String>>"--%>
+<c:set var="configurationErrors" value="${configurationErrors}"/>
 <c:set var="errorsCount" value="${fn:length(configurationErrors)}"/>
-
+<c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
 <%-- TODO: check permissions to view projects--%>
 
 <script type="text/javascript">
@@ -46,5 +47,4 @@
       </ul>
     </div>
   </div>
-  </p>
 </c:if>
