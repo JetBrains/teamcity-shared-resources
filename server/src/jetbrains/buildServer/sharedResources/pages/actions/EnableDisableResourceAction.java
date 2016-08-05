@@ -58,21 +58,22 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
   protected void doProcess(@NotNull final HttpServletRequest request,
                            @NotNull final HttpServletResponse response,
                            @NotNull final Element ajaxResponse) {
-    final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
+    final String resourceId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final boolean newState = StringUtil.isTrue(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE));
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      final Resource resource = myResources.asMap(projectId).get(resourceName);
-      final Resource resourceInState = myResourceHelper.getResourceInState(projectId, resource, newState);
-      try {
-        myResources.editResource(project, resourceName, resourceInState);
-      } catch (DuplicateResourceException e) {
-        createNameError(ajaxResponse, resourceName);
+      final Resource resource = myResources.getOwnResources(project).stream()
+                                           .filter(r -> resourceId.equals(r.getId()))
+                                           .findFirst()
+                                           .orElse(null);
+      if (resource != null) {
+        final Resource resourceInState = myResourceHelper.getResourceInState(projectId, resource, newState);
+        myResources.editResource(project, resourceInState.getId(), resourceInState.getParameters());
+        String changed = newState ? "enabled" : "disabled";
+        project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
+        addMessage(request, "Resource " + resource.getName() + " was " + changed);
       }
-      String changed = newState ? "enabled" : "disabled";
-      project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
-      addMessage(request, "Resource " + resourceName + " was " + changed);
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }

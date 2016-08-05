@@ -103,7 +103,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   @TestFor (issues = "TW-29355")
   public void testPersistNameNotChanged() {
-    final Resource rc = ResourceFactory.newQuotedResource(PROJECT_ID, RESOURCE_NAME, 111, true);
+    final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, 111, true);
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -134,7 +134,7 @@ public class EditActionTest extends BaseTestCase {
   @Test
   public void testUpdateLockNameInTree() {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
-    final Resource rcNewName = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
+    final Resource rcNewName = ResourceFactory.newQuotedResource(NEW_RESOURCE_NAME + "id", PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
     final SProject subProject = m.mock(SProject.class,  "sub-project") ;
     final List<SProject> projects = new ArrayList<>();
     projects.add(subProject);
@@ -193,7 +193,7 @@ public class EditActionTest extends BaseTestCase {
   public void testUpdateAffectsOnlyProjectsWithUsages() throws Exception {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
 
-    final Resource newResource = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
+    final Resource newResource = ResourceFactory.newQuotedResource(RESOURCE_NAME + "id", PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
 
     final SProject childWithUsage = m.mock(SProject.class, "child-with-usage");
     final SProject childWithoutUsage = m.mock(SProject.class, "child-without-usage");

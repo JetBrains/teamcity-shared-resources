@@ -59,7 +59,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
 
   @Test
   public void testAddResource_toEmpty_Success() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource", myProjectId, "resource", true);
     m.checking(new Expectations() {{
       oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.emptyList()));
@@ -73,7 +73,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
   @Test
   public void testAddResource_toExisting_Success() throws Exception {
     final SProjectFeatureDescriptor existing = createExistingResource("existing_resource").getSecond();
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource", myProjectId, "resource", true);
     m.checking(new Expectations() {{
       oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing)));
@@ -89,7 +89,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     final String name = "<NAME>";
     final SProjectFeatureDescriptor existing = createExistingResource(name).getSecond();
 
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, name, true);
+    final Resource resource = ResourceFactory.newInfiniteResource(name + "_id", myProjectId, name, true);
     m.checking(new Expectations() {{
       oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing)));
@@ -103,7 +103,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     final String oldName = "OldName";
     final Pair<String, SProjectFeatureDescriptor> existing = createExistingResource(oldName);
 
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "NewName", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("NewName", myProjectId, "NewName", true);
     m.checking(new Expectations() {{
       allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existing.getSecond())));
@@ -118,7 +118,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
   public void testEditResource_NameConflict_Fail() throws Exception {
     final Pair<String, SProjectFeatureDescriptor> existing1 = createExistingResource("Existing1");
     final Pair<String, SProjectFeatureDescriptor> existing2 = createExistingResource("Existing2");
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "Existing2", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("Existing2", myProjectId, "Existing2", true);
     final List<SProjectFeatureDescriptor> projectResources = Arrays.asList(existing1.getSecond(), existing2.getSecond());
     m.checking(new Expectations() {{
       allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);

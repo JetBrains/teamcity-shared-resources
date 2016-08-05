@@ -31,15 +31,19 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     $j('#resource_quota').val(1);
     $j('#customValues').val('');
     $j('#resource_name').val('');
+    $j('#resource_id').val('');
     this.showCommon();
   },
 
-  showEdit: function (resource_name) {
+  showEdit: function (resource_id) {
     this.editMode = true;
+    this.id = resource_id;
     this.clearErrors();
+    $j('#resource_id').val(resource_id);
+    var r = this.myData[resource_id]; // current resource contents
     this.currentResourceName = resource_name;
-    $j('#resource_name').val(resource_name);
-    var r = this.myData[resource_name]; // current resource contents
+    $j('#resource_name').val(r['name']);
+    this.currentResourceName = r['name'];
     var type = r['type'];
     if (r['infinite']) {
       type = "infinite"
@@ -94,7 +98,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     Form.disable(this.formElement());
     this.setSaving(true);
     if (this.editMode) {
-      BS.SharedResourcesActions.editResource(this.currentResourceName);
+      BS.SharedResourcesActions.editResource(this.id, this.currentResourceName);
     } else {
       BS.SharedResourcesActions.addResource();
     }

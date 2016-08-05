@@ -158,21 +158,21 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceInState() throws Exception {
     {
-      final Resource rc = ResourceFactory.newInfiniteResource(PROJECT_ID, RESOURCE_NAME, true);
+      final Resource rc = ResourceFactory.newInfiniteResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, true);
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
 
     {
-      final Resource rc = ResourceFactory.newQuotedResource(PROJECT_ID, RESOURCE_NAME, 1, true);
+      final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, 1, true);
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
     }
 
     {
-      final Resource rc = ResourceFactory.newCustomResource(PROJECT_ID, RESOURCE_NAME, Collections.singletonList("value1"), true);
+      final Resource rc = ResourceFactory.newCustomResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, Collections.singletonList("value1"), true);
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());

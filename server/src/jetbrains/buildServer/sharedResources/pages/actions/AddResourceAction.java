@@ -1,13 +1,12 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import java.util.Map;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
@@ -48,15 +47,13 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      final Resource resource = myResourceHelper.getResourceFromRequest(projectId, request);
-      if (resource != null) {
-        try {
-          myResources.addResource(project, resource);
-          project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was created"));
-          addMessage(request, "Resource " + resource.getName() + " was added");
-        } catch (DuplicateResourceException e) {
-          createNameError(ajaxResponse, resource.getName());
-        }
+      final Map<String, String> newResource = myResourceHelper.getNewResourceFromRequest(request);
+      if (newResource != null) {
+        myResources.addResource(project, newResource);
+        project.persist(myConfigActionFactory.createAction(project, "'" + newResource.get(SharedResourcesPluginConstants.ProjectFeatureParameters.NAME) + "' shared resource was created"));
+        addMessage(request, "Resource " + newResource.get(SharedResourcesPluginConstants.ProjectFeatureParameters.NAME) + " was added");
+      } else {
+        LOG.error("Failed to create new resource"); // todo: proper logging
       }
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");

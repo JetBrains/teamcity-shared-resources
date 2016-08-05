@@ -2,7 +2,7 @@
 
   <c:choose>
     <c:when test="${allowChange}">
-      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.name}');"/>
+      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.id}');"/>
       <c:set var="highlight" value="highlight"/>
     </c:when>
     <c:otherwise>
@@ -67,7 +67,7 @@
                 <div>
                   <ul class="menuList">
                     <l:li>
-                      <a href="#" onclick="BS.SharedResourcesActions.enableDisableResource('${resource.name}', ${not resource.enabled})">
+                      <a href="#" onclick="BS.SharedResourcesActions.enableDisableResource('${resource.id}', ${not resource.enabled})">
                         <bs:out value="${resource.enabled ? 'Disable' : 'Enable'} "/> shared resource</a>
                     </l:li>
                     <l:li>
@@ -76,7 +76,7 @@
                           <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
                         </c:when>
                         <c:otherwise>
-                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.name}')"/>
+                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.id}')"/>
                         </c:otherwise>
                       </c:choose>
                       <a href="#" onclick="${onclick}">Delete...</a>

@@ -52,8 +52,13 @@ public final class ResourcesImpl implements Resources {
   }
 
   @Override
-  public void deleteResource(@NotNull final SProject project, @NotNull final String resourceName) {
-    myFeatures.deleteResource(project, resourceName);
+  public void addResource(@NotNull final SProject project, @NotNull final Map<String, String> params) {
+    myFeatures.addResource(project, params);
+  }
+
+  @Override
+  public void deleteResource(@NotNull final SProject project, @NotNull final String resourceId) {
+    myFeatures.deleteResource(project, resourceId);
   }
 
   @Override
@@ -61,6 +66,11 @@ public final class ResourcesImpl implements Resources {
                            @NotNull final String currentName,
                            @NotNull final Resource resource) throws DuplicateResourceException {
     myFeatures.editResource(project, currentName, resource.getParameters());
+  }
+
+  @Override
+  public void editResource(@NotNull final SProject project, @NotNull final String id, @NotNull final Map<String, String> params) {
+    myFeatures.editResource(project, id, params);
   }
 
   @NotNull

@@ -58,6 +58,7 @@ public class SharedResourcesPluginConstants {
     String PARAM_RESOURCE_NAME = "resource_name";
     String PARAM_RESOURCE_TYPE = "resource_type";
     String PARAM_RESOURCE_STATE = "resource_state";
+    String PARAM_RESOURCE_ID = "resource_id";
 
     String PARAM_RESOURCE_VALUES = "resource_values";
     String PARAM_RESOURCE_QUOTA = "resource_quota";
@@ -74,7 +75,4 @@ public class SharedResourcesPluginConstants {
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
-  public static Comparator<Resource> RESOURCES_COMPARATOR = (r1, r2) -> r1.getName().compareTo(r2.getName());
-  public static Comparator<ResourceProjectFeature> RESOURCE_FEATURE_COMPARATOR = (o1, o2) -> o1.getParameters().get(ProjectFeatureParameters.NAME)
-                                                                                           .compareTo(o2.getParameters().get(ProjectFeatureParameters.NAME));
 }

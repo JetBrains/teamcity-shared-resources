@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.server.project;
 
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,11 +42,11 @@ public interface ResourceProjectFeatures {
   Map<String, Resource> asMap(@NotNull final SProject project);
 
   void addResource(@NotNull final SProject project,
-                   @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException;
+                   @NotNull final Map<String, String> resourceParameters);
 
   void editResource(@NotNull final SProject project,
                     @NotNull final String name,
-                    @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException;
+                    @NotNull final Map<String, String> resourceParameters);
 
-  void deleteResource(@NotNull final SProject project, @NotNull final String name);
+  void deleteResource(@NotNull final SProject project, @NotNull final String id);
 }

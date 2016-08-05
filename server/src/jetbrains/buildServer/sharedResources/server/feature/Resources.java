@@ -38,16 +38,23 @@ public interface Resources {
    * @param resource resource to add
    * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
    */
+  @Deprecated
   void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException;
+
+  void addResource(@NotNull final SProject project, @NotNull final Map<String, String> params);
 
   /**
    * Deletes given resource from the project
    *
    * @param project project to delete resource from
-   * @param resourceName name of the resource to delete
+   * @param resourceId id of the resource to delete
    */
-  void deleteResource(@NotNull final SProject project, @NotNull final String resourceName);
+  void deleteResource(@NotNull final SProject project, @NotNull final String resourceId);
 
+
+  void editResource(@NotNull final SProject project,
+                    @NotNull final String id,
+                    @NotNull final Map<String, String> params);
   /**
    * Edits given resource
    *
@@ -56,6 +63,7 @@ public interface Resources {
    * @param resource resource to replace existing one
    * @throws DuplicateResourceException if resource with given name exists
    */
+  @Deprecated
   void editResource(@NotNull final SProject project,
                     @NotNull final String currentName,
                     @NotNull final Resource resource) throws DuplicateResourceException;

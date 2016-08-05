@@ -31,6 +31,7 @@
 <c:set var="PARAM_RESOURCE_VALUES" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES%>"/>
 <c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
 <c:set var="PARAM_RESOURCE_STATE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE%>"/>
+<c:set var="PARAM_RESOURCE_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID%>"/>
 
 <c:set var="ACTIONS" value="<%=SharedResourcesPluginConstants.WEB.ACTIONS%>"/>
 
@@ -52,6 +53,7 @@
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
       params['${PARAM_RESOURCE_NAME}'] = $j('#resource_name').val();
       params['${PARAM_RESOURCE_STATE}'] = $j('#resource_enabled').prop('checked');
+      params['${PARAM_RESOURCE_ID}'] = $j('#resource_id').val();
 
       // infinite
       if (type === 'infinite') {
@@ -88,9 +90,10 @@
       });
     },
 
-    editResource: function (old_resource_name) {
+    editResource: function (resource_id, old_resource_name) {
       var params = this.getCommonParams();
       params['${PARAM_OLD_RESOURCE_NAME}'] = old_resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['action'] = 'editResource';
       BS.ajaxRequest(this.actionsUrl, {
         parameters: params,
@@ -106,10 +109,10 @@
       });
     },
 
-    deleteResource: function (resource_name) {
+    deleteResource: function (resource_id) {
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
-      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['action'] = 'deleteResource';
 
       if (confirm('Are you sure you want to delete this resource? It may result in errors if the name is used as a parameter reference.')) {
@@ -126,10 +129,10 @@
       alert('Resource ' + resource_name + " can't be deleted because it is in use");
     },
 
-    enableDisableResource: function (resource_name, new_state) {
+    enableDisableResource: function (resource_id, new_state) {
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
-      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['${PARAM_RESOURCE_STATE}'] = new_state;
       params['action'] = 'enableDisableResource';
       if (confirm('Are you sure you want to ' + (new_state ? 'enable' : 'disable') + ' this resource?')) {
@@ -153,7 +156,8 @@
   r = {
     name: '<bs:escapeForJs text="${item.name}"/>',
     type: '${item.type}',
-    enabled: ${item.enabled}
+    enabled: ${item.enabled},
+    id: '${item.id}'
   };
   <c:choose>
 
@@ -161,7 +165,7 @@
   <c:when test="${type == type_quota}">
   r['quota'] = '${item.quota}';
   r['infinite'] = ${item.infinite};
-  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.id}"/>'] = r;
   </c:when>
 
   <%-- custom resource--%>
@@ -171,7 +175,7 @@
   myValues.push('<bs:escapeForJs text="${val}"/>');
   </c:forEach>
   r['customValues'] = myValues;
-  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.id}"/>'] = r;
   </c:when>
 
   <c:otherwise>

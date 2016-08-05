@@ -24,11 +24,11 @@ import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.FEATURE_TYPE;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 
@@ -41,46 +41,33 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @Override
   public void addResource(@NotNull final SProject project,
-                          @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException {
-    final String name = resourceParameters.get(NAME);
-    if (getResourceNamesInProject(project).contains(name)) {
-      throw new DuplicateResourceException(name);
-    }
+                          @NotNull final Map<String, String> resourceParameters) {
     project.addFeature(SharedResourcesPluginConstants.FEATURE_TYPE, resourceParameters);
   }
 
   @Override
-  public void deleteResource(@NotNull final SProject project, @NotNull final String name) {
-    final SProjectFeatureDescriptor descriptor = findDescriptorByResourceName(project, name);
+  public void deleteResource(@NotNull final SProject project, @NotNull final String id) {
+    final SProjectFeatureDescriptor descriptor = getFeatureById(project, id);
     if (descriptor != null) {
       project.removeFeature(descriptor.getId());
     }
   }
 
-  @Override
   public void editResource(@NotNull final SProject project,
-                           @NotNull final String name,
-                           @NotNull final Map<String, String> resourceParameters) throws DuplicateResourceException {
-    final SProjectFeatureDescriptor descriptor = findDescriptorByResourceName(project, name);
+                           @NotNull final String id,
+                           @NotNull final Map<String, String> parameters) {
+    final SProjectFeatureDescriptor descriptor = getFeatureById(project, id);
     if (descriptor != null) {
-      final String newName = resourceParameters.get(NAME);
-      if (!name.equals(newName)) {
-        if (getResourceNamesInProject(project).contains(newName)) {
-          throw new DuplicateResourceException(newName);
-        }
-      }
-      project.updateFeature(descriptor.getId(), SharedResourcesPluginConstants.FEATURE_TYPE, resourceParameters);
+      project.updateFeature(id, FEATURE_TYPE, parameters);
     }
   }
 
-
   @Nullable
-  private SProjectFeatureDescriptor findDescriptorByResourceName(@NotNull final SProject project,
-                                                                 @NotNull final String name) {
-    return getResourceFeatures(project).stream()
-                                       .filter(fd -> name.equals(fd.getParameters().get(NAME)))
-                                       .findFirst()
-                                       .orElse(null);
+  private SProjectFeatureDescriptor getFeatureById(final @NotNull SProject project, final @NotNull String id) {
+    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).stream()
+                  .filter(fd -> id.equals(fd.getId()))
+                  .findFirst()
+                  .orElse(null);
   }
 
   @NotNull
@@ -114,35 +101,6 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       result.putAll(CollectionsUtil.filterMapByKeys(currentResources, data -> !result.containsKey(data)));
     }
     return result;
-  }
-
-  //@NotNull
-  //@Override
-  //public List<Resource> getOwnResources(@NotNull final SProject project) {
-  //  return getResourceFeatures(project).stream()
-  //                                     .map(ResourceFactory::fromDescriptor)
-  //                                     .filter(Objects::nonNull)
-  //                                     .collect(Collectors.toList());
-  //}
-
-  /*@NotNull
-  @Override
-  public List<Resource> getResources(@NotNull final SProject project) {
-    final Set<Resource> resources = new HashSet<>();
-    final List<SProject> path = project.getProjectPath();
-    final ListIterator<SProject> it = path.listIterator(path.size());
-    while (it.hasPrevious()) {
-      SProject p = it.previous();
-      resources.addAll(CollectionsUtil.filterCollection(getOwnResources(p), data -> !resources.contains(data)));
-    }
-    return new ArrayList<>(resources);
-  }*/
-
-  @NotNull
-  private Set<String> getResourceNamesInProject(@NotNull final SProject project) {
-    return getResourceFeatures(project).stream()
-                                       .map(fd -> fd.getParameters().get(NAME))
-                                       .collect(Collectors.toSet());
   }
 
   @NotNull

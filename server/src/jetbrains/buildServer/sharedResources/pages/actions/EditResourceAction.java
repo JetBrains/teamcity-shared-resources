@@ -61,8 +61,8 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
       if (resource != null) {
         final String newName = resource.getName();
         boolean selfPersisted = false;
-        try {
-          myResources.editResource(project, oldName, resource);
+        //try {
+          myResources.editResource(project, resource.getId(), resource.getParameters()); // todo: remove resource here
           ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
           if (!newName.equals(oldName)) {
             // my resource can be used only in my build configurations or in build configurations in my subtree
@@ -92,9 +92,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
             project.persist(cause);
           }
           addMessage(request, "Resource " + newName + " was updated");
-        } catch (DuplicateResourceException e) {
-          createNameError(ajaxResponse, newName);
-        }
+        //} catch (DuplicateResourceException e) {
+        //  createNameError(ajaxResponse, newName);
+        //}
       }
     }
   }

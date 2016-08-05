@@ -65,13 +65,13 @@ public class ResourcesImplTest extends BaseTestCase {
     resources = new ResourcesImpl(myProjectManager, myResourceProjectFeatures);
 
     myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource(myProjectId, "resource1", 1, true));
-      put("resource2", ResourceFactory.newInfiniteResource(myProjectId, "resource2", true));
-      put("resource3", ResourceFactory.newCustomResource(myProjectId, "resource3", Arrays.asList("value1", "value2", "value3"), true));
+      put("resource1", ResourceFactory.newQuotedResource("resource1", myProjectId, "resource1", 1, true));
+      put("resource2", ResourceFactory.newInfiniteResource("resource2", myProjectId, "resource2", true));
+      put("resource3", ResourceFactory.newCustomResource("resource3", myProjectId, "resource3", Arrays.asList("value1", "value2", "value3"), true));
     }};
 
     myRootResourceMap = new HashMap<String, Resource>() {{
-      put("root_resource", ResourceFactory.newInfiniteResource(myRootProjectId, "root_resource", true));
+      put("root_resource", ResourceFactory.newInfiniteResource("root_resource", myRootProjectId, "root_resource", true));
     }};
   }
 
@@ -88,7 +88,7 @@ public class ResourcesImplTest extends BaseTestCase {
    */
   @Test
   public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource(myRootProjectId, "new_resource1", 1, true);
+    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", myRootProjectId, "new_resource1", 1, true);
     m.checking(new Expectations() {{
       oneOf(myResourceProjectFeatures).addResource(myRootProject, resource.getParameters());
     }});
@@ -101,7 +101,7 @@ public class ResourcesImplTest extends BaseTestCase {
    */
   @Test
   public void testAddResourceToSubproject_Success() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "infinite_resource", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("infinite_resource", myProjectId, "infinite_resource", true);
     m.checking(new Expectations() {{
       oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
     }});
@@ -117,7 +117,7 @@ public class ResourcesImplTest extends BaseTestCase {
    */
   @Test (expectedExceptions = DuplicateResourceException.class)
   public void testAddResource_NameConflict_Fail() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "root_resource", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("root_resource", myProjectId, "root_resource", true);
     m.checking(new Expectations() {{
       oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
       will(throwException(new DuplicateResourceException("root_resource")));
@@ -132,7 +132,7 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test (enabled = false) // todo: move
   public void testEditResource_Success() throws Exception {
     final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource(myProjectId, "resource1_newName", 1, true);
+    final Resource resource = ResourceFactory.newQuotedResource("resource1", myProjectId, "resource1_newName", 1, true);
     resources.editResource(myProject, name, resource);
   }
 
@@ -147,7 +147,7 @@ public class ResourcesImplTest extends BaseTestCase {
   public void testEditResource_Fail() throws Exception {
     final String oldName = "resource1";
     final String newName = "resource2";
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, newName, true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, newName, true);
     resources.editResource(myProject, oldName, resource);
   }
 
@@ -230,11 +230,11 @@ public class ResourcesImplTest extends BaseTestCase {
   @Test (enabled = false) // todo: move
   public void testGetCount_HierarchyOverriding() throws Exception {
     final Map<String, Resource> baseMap = new HashMap<String, Resource>() {{
-      put("RESOURCE", ResourceFactory.newInfiniteResource(myRootProjectId, "RESOURCE", true));
+      put("RESOURCE", ResourceFactory.newInfiniteResource("RESOURCE_root", myRootProjectId, "RESOURCE", true));
     }};
 
     final Map<String, Resource> inheritedMap = new HashMap<String, Resource>() {{
-      put("RESOURCE", ResourceFactory.newInfiniteResource(myProjectId, "RESOURCE", true));
+      put("RESOURCE", ResourceFactory.newInfiniteResource("RESOURCE_project", myProjectId, "RESOURCE", true));
     }};
     //setupGetCountHierarchy(baseMap, inheritedMap);
     final int count = resources.getCount(myProject);

@@ -25,8 +25,8 @@ public class ResourceFactory {
    * @return new infinite quoted resource
    */
   @NotNull
-  public static Resource newInfiniteResource(@NotNull final String projectId, @NotNull final String name, boolean state) {
-    return QuotedResource.newInfiniteResource(projectId, name, state);
+  public static Resource newInfiniteResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, boolean state) {
+    return QuotedResource.newInfiniteResource(id, projectId, name, state);
   }
 
   /**
@@ -38,8 +38,8 @@ public class ResourceFactory {
    * @return new quoted resource with limited quota
    */
   @NotNull
-  public static Resource newQuotedResource(@NotNull final String projectId, @NotNull final String name, final int quota, boolean state) {
-    return QuotedResource.newResource(projectId, name, quota, state);
+  public static Resource newQuotedResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, final int quota, boolean state) {
+    return QuotedResource.newResource(id, projectId, name, quota, state);
   }
 
   /**
@@ -51,8 +51,8 @@ public class ResourceFactory {
    * @return new custom resource with specified value space
    */
   @NotNull
-  public static Resource newCustomResource(@NotNull final String projectId, @NotNull final String name, @NotNull final List<String> values, boolean state) {
-    return CustomResource.newCustomResource(projectId, name, values, state);
+  public static Resource newCustomResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, @NotNull final List<String> values, boolean state) {
+    return CustomResource.newCustomResource(id, projectId, name, values, state);
   }
 
   @Nullable
@@ -71,7 +71,7 @@ public class ResourceFactory {
       if (!isEmptyOrSpaces(quotaStr)) {
         try {
           int quota = Integer.parseInt(quotaStr);
-          result = QuotedResource.newResource(descriptor.getProjectId(), name, quota, resourceState);
+          result = QuotedResource.newResource(descriptor.getId(), descriptor.getProjectId(), name, quota, resourceState);
         } catch (NumberFormatException ignored) {}
       }
     } else {
@@ -79,7 +79,7 @@ public class ResourceFactory {
       if (!isEmptyOrSpaces(valuesStr)) {
         List<String> values = split(valuesStr, true, '\r', '\n');
         if (!values.isEmpty()) {
-          result = CustomResource.newCustomResource(descriptor.getProjectId(), name, values, resourceState);
+          result = CustomResource.newCustomResource(descriptor.getId(), descriptor.getProjectId(), name, values, resourceState);
         }
       }
     }

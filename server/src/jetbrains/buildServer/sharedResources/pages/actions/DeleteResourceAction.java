@@ -43,13 +43,14 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
   protected void doProcess(@NotNull final HttpServletRequest request,
                            @NotNull final HttpServletResponse response,
                            @NotNull final Element ajaxResponse) {
-    final String resourceName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
+    final String resourceId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      myResources.deleteResource(project, resourceName);
-      project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' shared resource was removed"));
-      addMessage(request, "Resource " + resourceName + " was deleted");
+      myResources.deleteResource(project, resourceId);
+      // todo: resource name
+      project.persist(myConfigActionFactory.createAction(project, "'" + resourceId + "' shared resource was removed"));
+      addMessage(request, "Resource " + resourceId + " was deleted");
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }

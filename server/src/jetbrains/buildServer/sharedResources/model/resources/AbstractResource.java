@@ -21,12 +21,17 @@ public abstract class AbstractResource implements Resource {
   @NotNull
   private final ResourceType myType;
 
+  @NotNull
+  private final String myId;
+
   private final boolean myState;
 
-  protected AbstractResource(@NotNull final String projectId,
+  protected AbstractResource(@NotNull final String id,
+                             @NotNull final String projectId,
                              @NotNull final String name,
                              @NotNull final ResourceType type,
                              boolean state) {
+    myId = id;
     myName = name;
     myProjectId = projectId;
     myType = type;
@@ -56,11 +61,17 @@ public abstract class AbstractResource implements Resource {
     return myProjectId;
   }
 
+  @Override
+  @NotNull
+  public String getId() {
+    return myId;
+  }
 
   @NotNull
   @Override
   public Map<String, String> getParameters() {
     return CollectionsUtil.asMap(
+            "id", myId,
             "type", myType.name().toLowerCase(),
             "name", myName,
             "enabled", Boolean.toString(myState)
@@ -68,17 +79,15 @@ public abstract class AbstractResource implements Resource {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof AbstractResource)) return false;
-    AbstractResource that = (AbstractResource) o;
-    return myName.equals(that.myName) && myProjectId.equals(that.myProjectId);
+    final AbstractResource that = (AbstractResource)o;
+    return myId.equals(that.myId);
   }
 
   @Override
   public int hashCode() {
-    int result = myName.hashCode();
-    result = 31 * result + myProjectId.hashCode();
-    return result;
+    return myId.hashCode();
   }
 }
