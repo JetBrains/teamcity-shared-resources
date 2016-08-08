@@ -275,13 +275,13 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
    */
   @Test
   public void testSubProjectOverride() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1_my", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
 
     final String subProjectId = "MY_SUB_PROJECT";
-    final Resource subResource = ResourceFactory.newInfiniteResource("resource1", subProjectId, "resource1", true);
+    final Resource subResource = ResourceFactory.newInfiniteResource("resource1_sub", subProjectId, "resource1", true);
     final Map<String, Resource> subProjectResourceMap = new HashMap<String, Resource>() {{
       putAll(resourceMap);
       put(subResource.getName(), subResource);
