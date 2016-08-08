@@ -67,6 +67,9 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceFromRequest_Infinite() throws Exception {
     m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
+      will(returnValue("my_id"));
+
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
       will(returnValue(RESOURCE_NAME));
 
@@ -86,6 +89,9 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceFromRequest_Quoted() throws Exception {
     m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
+      will(returnValue("my_id"));
+
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
       will(returnValue(RESOURCE_NAME));
 
@@ -106,6 +112,9 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceFromRequest_Custom() throws Exception {
     m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
+      will(returnValue("my_id"));
+
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
       will(returnValue(RESOURCE_NAME));
 
@@ -129,15 +138,18 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceFromRequest_Invalid_Quota() throws Exception {
     m.checking(new Expectations() {{
-        oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
-        will(returnValue(RESOURCE_NAME));
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
+      will(returnValue("my_id"));
 
-        oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE);
-        will(returnValue(ResourceType.QUOTED.name()));
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
+      will(returnValue(RESOURCE_NAME));
 
-        oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
-        will(returnValue("some value"));
-      }});
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE);
+      will(returnValue(ResourceType.QUOTED.name()));
+
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA);
+      will(returnValue("some value"));
+    }});
     final Resource rc = myHelper.getResourceFromRequest(PROJECT_ID, myRequest);
     assertNull(rc);
   }
@@ -145,6 +157,9 @@ public class ResourceHelperTest extends BaseTestCase {
   @Test
   public void testGetResourceFromRequest_Invalid_Type() throws Exception {
     m.checking(new Expectations() {{
+      oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
+      will(returnValue("my_id"));
+
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME);
       will(returnValue(RESOURCE_NAME));
 

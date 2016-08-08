@@ -33,20 +33,16 @@ public interface ResourceProjectFeatures {
   @NotNull
   List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project);
 
-  @NotNull
-  @Deprecated
-  Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project);
+  void addFeature(@NotNull final SProject project,
+                  @NotNull final Map<String, String> featureParameters);
+
+  void updateFeature(@NotNull final SProject project,
+                     @NotNull final String id,
+                     @NotNull final Map<String, String> featureParameters);
+
+  void removeFeature(@NotNull final SProject project, @NotNull final String id);
 
   @NotNull
   @Deprecated
   Map<String, Resource> asMap(@NotNull final SProject project);
-
-  void addResource(@NotNull final SProject project,
-                   @NotNull final Map<String, String> resourceParameters);
-
-  void editResource(@NotNull final SProject project,
-                    @NotNull final String name,
-                    @NotNull final Map<String, String> resourceParameters);
-
-  void deleteResource(@NotNull final SProject project, @NotNull final String id);
 }

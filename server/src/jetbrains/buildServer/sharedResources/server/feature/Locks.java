@@ -36,7 +36,7 @@ import java.util.Map;
 public interface Locks {
 
   /** Lock prefix, used in build parameters */
-  public static final String LOCK_PREFIX = "teamcity.locks.";
+  String LOCK_PREFIX = "teamcity.locks.";
 
   /**
    * Parses build feature descriptor for parameters containing locks

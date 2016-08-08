@@ -48,35 +48,42 @@ public final class ResourcesImpl implements Resources {
 
   @Override
   public void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.addResource(project, resource.getParameters());
+    myFeatures.addFeature(project, resource.getParameters());
   }
 
   @Override
   public void addResource(@NotNull final SProject project, @NotNull final Map<String, String> params) {
-    myFeatures.addResource(project, params);
+    myFeatures.addFeature(project, params);
   }
 
   @Override
   public void deleteResource(@NotNull final SProject project, @NotNull final String resourceId) {
-    myFeatures.deleteResource(project, resourceId);
+    myFeatures.removeFeature(project, resourceId);
   }
 
   @Override
   public void editResource(@NotNull final SProject project,
                            @NotNull final String currentName,
                            @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.editResource(project, currentName, resource.getParameters());
+    myFeatures.updateFeature(project, currentName, resource.getParameters());
   }
 
   @Override
   public void editResource(@NotNull final SProject project, @NotNull final String id, @NotNull final Map<String, String> params) {
-    myFeatures.editResource(project, id, params);
+    myFeatures.updateFeature(project, id, params);
   }
 
   @NotNull
   @Override
+  @Deprecated
   public Map<String, Resource> asMap(@NotNull final String projectId) {
     return myFeatures.asMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
+  }
+
+  @NotNull
+  @Override
+  public Map<String, Resource> getAvailableResources(@NotNull final SProject project) {
+    return myFeatures.asMap(project);
   }
 
   @NotNull

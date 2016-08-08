@@ -78,6 +78,18 @@ public interface Resources {
   @Deprecated
   Map<String, Resource> asMap(@NotNull final String projectId);
 
+
+  /**
+   * Returns map of available resources.
+   * Takes inheritance into account.
+   * Each level excludes duplicate resources
+   *
+   * @param project project to get resources for
+   * @return map of available resources
+   */
+  @NotNull
+  Map<String, Resource> getAvailableResources(@NotNull final SProject project);
+
   /**
    * Gets project own resources
    * @param project project to get resources for

@@ -90,7 +90,7 @@ public class ResourcesImplTest extends BaseTestCase {
   public void testAddResource_Success() throws Exception {
     final Resource resource = ResourceFactory.newQuotedResource("new_resource1", myRootProjectId, "new_resource1", 1, true);
     m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myRootProject, resource.getParameters());
+      oneOf(myResourceProjectFeatures).addFeature(myRootProject, resource.getParameters());
     }});
     resources.addResource(myRootProject, resource);
   }
@@ -103,24 +103,7 @@ public class ResourcesImplTest extends BaseTestCase {
   public void testAddResourceToSubproject_Success() throws Exception {
     final Resource resource = ResourceFactory.newInfiniteResource("infinite_resource", myProjectId, "infinite_resource", true);
     m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
-    }});
-    resources.addResource(myProject, resource);
-  }
-
-  /**
-   * Tries to add resource with the same name as existing to {@code Root} project.
-   * {@code DuplicateResourceException} is expected to be thrown.
-   *
-   * @see jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException
-   * @throws Exception if something goes wrong
-   */
-  @Test (expectedExceptions = DuplicateResourceException.class)
-  public void testAddResource_NameConflict_Fail() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource("root_resource", myProjectId, "root_resource", true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
-      will(throwException(new DuplicateResourceException("root_resource")));
+      oneOf(myResourceProjectFeatures).addFeature(myProject, resource.getParameters());
     }});
     resources.addResource(myProject, resource);
   }

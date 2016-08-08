@@ -21,7 +21,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.util.CollectionsUtil;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.FEATURE_TYPE;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.NAME;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 
 /**
@@ -40,57 +38,31 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @Override
-  public void addResource(@NotNull final SProject project,
-                          @NotNull final Map<String, String> resourceParameters) {
-    project.addFeature(SharedResourcesPluginConstants.FEATURE_TYPE, resourceParameters);
+  public void addFeature(@NotNull final SProject project,
+                         @NotNull final Map<String, String> featureParameters) {
+    project.addFeature(FEATURE_TYPE, featureParameters);
   }
 
   @Override
-  public void deleteResource(@NotNull final SProject project, @NotNull final String id) {
+  public void removeFeature(@NotNull final SProject project, @NotNull final String id) {
     final SProjectFeatureDescriptor descriptor = getFeatureById(project, id);
     if (descriptor != null) {
       project.removeFeature(descriptor.getId());
     }
   }
 
-  public void editResource(@NotNull final SProject project,
-                           @NotNull final String id,
-                           @NotNull final Map<String, String> parameters) {
+  public void updateFeature(@NotNull final SProject project,
+                            @NotNull final String id,
+                            @NotNull final Map<String, String> featureParameters) {
     final SProjectFeatureDescriptor descriptor = getFeatureById(project, id);
     if (descriptor != null) {
-      project.updateFeature(id, FEATURE_TYPE, parameters);
+      project.updateFeature(id, FEATURE_TYPE, featureParameters);
     }
-  }
-
-  @Nullable
-  private SProjectFeatureDescriptor getFeatureById(final @NotNull SProject project, final @NotNull String id) {
-    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).stream()
-                  .filter(fd -> id.equals(fd.getId()))
-                  .findFirst()
-                  .orElse(null);
-  }
-
-  @NotNull
-  @Override
-  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final SProject project) {
-    final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<>();
-    final Map<String, Resource> treeResources = new HashMap<>(); // todo: we need only names here
-    final List<SProject> path = project.getProjectPath();
-    final ListIterator<SProject> it = path.listIterator(path.size());
-    while (it.hasPrevious()) {
-      SProject p = it.previous();
-      Map<String, Resource> currentResources = getResourcesForProject(p);
-      final Map<String, Resource> value = CollectionsUtil.filterMapByKeys(
-        currentResources, data -> !treeResources.containsKey(data)
-      );
-      treeResources.putAll(value);
-      result.put(p, value);
-    }
-    return result;
   }
 
   @Override
   @NotNull
+  @Deprecated
   public Map<String, Resource> asMap(@NotNull final SProject project) {
     final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
     final List<SProject> path = project.getProjectPath();
@@ -101,6 +73,22 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
       result.putAll(CollectionsUtil.filterMapByKeys(currentResources, data -> !result.containsKey(data)));
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project) {
+    return getResourceFeatures(project).stream()
+                                       .map(ResourceProjectFeatureImpl::new)
+                                       .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private SProjectFeatureDescriptor getFeatureById(@NotNull final SProject project, @NotNull final String id) {
+    return getResourceFeatures(project).stream()
+                                       .filter(fd -> id.equals(fd.getId()))
+                                       .findFirst()
+                                       .orElse(null);
   }
 
   @NotNull
@@ -119,15 +107,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   }
 
   @NotNull
-  @Override
-  public List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project) {
-    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE).stream()
-                  .map(ResourceProjectFeatureImpl::new)
-                  .collect(Collectors.toList());
-  }
-
-  @NotNull
-  private Collection<SProjectFeatureDescriptor> getResourceFeatures(@NotNull SProject project) {
-    return project.getOwnFeaturesOfType(SharedResourcesPluginConstants.FEATURE_TYPE);
+  private Collection<SProjectFeatureDescriptor> getResourceFeatures(@NotNull final SProject project) {
+    return project.getOwnFeaturesOfType(FEATURE_TYPE);
   }
 }

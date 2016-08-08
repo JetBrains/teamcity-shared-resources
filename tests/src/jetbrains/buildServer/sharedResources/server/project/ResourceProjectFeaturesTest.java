@@ -17,20 +17,21 @@
 package jetbrains.buildServer.sharedResources.server.project;
 
 import com.intellij.openapi.util.Pair;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature.FEATURE_TYPE;
 
@@ -40,6 +41,8 @@ import static jetbrains.buildServer.sharedResources.server.SharedResourcesBuildF
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class ResourceProjectFeaturesTest extends BaseTestCase {
+
+  private final AtomicInteger mockCounter = new AtomicInteger(0);
 
   private final String myProjectId = "PROJECT_ID";
 
@@ -61,41 +64,10 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
   public void testAddResource_toEmpty_Success() throws Exception {
     final Resource resource = ResourceFactory.newInfiniteResource("resource", myProjectId, "resource", true);
     m.checking(new Expectations() {{
-      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
-      will(returnValue(Collections.emptyList()));
-
       oneOf(myProject).addFeature(FEATURE_TYPE, resource.getParameters());
     }});
 
-    myFeatures.addResource(myProject, resource.getParameters());
-  }
-
-  @Test
-  public void testAddResource_toExisting_Success() throws Exception {
-    final SProjectFeatureDescriptor existing = createExistingResource("existing_resource").getSecond();
-    final Resource resource = ResourceFactory.newInfiniteResource("resource", myProjectId, "resource", true);
-    m.checking(new Expectations() {{
-      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
-      will(returnValue(Collections.singletonList(existing)));
-
-      oneOf(myProject).addFeature(FEATURE_TYPE, resource.getParameters());
-    }});
-
-    myFeatures.addResource(myProject, resource.getParameters());
-  }
-
-  @Test(expectedExceptions = DuplicateResourceException.class)
-  public void testAddResource_NameConflict_Fail() throws Exception {
-    final String name = "<NAME>";
-    final SProjectFeatureDescriptor existing = createExistingResource(name).getSecond();
-
-    final Resource resource = ResourceFactory.newInfiniteResource(name + "_id", myProjectId, name, true);
-    m.checking(new Expectations() {{
-      oneOf(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
-      will(returnValue(Collections.singletonList(existing)));
-    }});
-
-    myFeatures.addResource(myProject, resource.getParameters());
+    myFeatures.addFeature(myProject, resource.getParameters());
   }
 
   @Test
@@ -111,26 +83,12 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
       oneOf(myProject).updateFeature(existing.getFirst(), FEATURE_TYPE, resource.getParameters());
     }});
 
-    myFeatures.editResource(myProject, oldName, resource.getParameters());
-  }
-
-  @Test(expectedExceptions = DuplicateResourceException.class)
-  public void testEditResource_NameConflict_Fail() throws Exception {
-    final Pair<String, SProjectFeatureDescriptor> existing1 = createExistingResource("Existing1");
-    final Pair<String, SProjectFeatureDescriptor> existing2 = createExistingResource("Existing2");
-    final Resource resource = ResourceFactory.newInfiniteResource("Existing2", myProjectId, "Existing2", true);
-    final List<SProjectFeatureDescriptor> projectResources = Arrays.asList(existing1.getSecond(), existing2.getSecond());
-    m.checking(new Expectations() {{
-      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
-      will(returnValue(projectResources));
-    }});
-    myFeatures.editResource(myProject, "Existing1", resource.getParameters());
+    myFeatures.updateFeature(myProject, existing.getFirst(), resource.getParameters());
   }
 
   @Test
   public void testDeleteResource() throws Exception {
-    final String name = "OldResource";
-    final Pair<String, SProjectFeatureDescriptor> existingResource = createExistingResource(name);
+    final Pair<String, SProjectFeatureDescriptor> existingResource = createExistingResource("MyResource");
     m.checking(new Expectations() {{
       allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
       will(returnValue(Collections.singletonList(existingResource.getSecond())));
@@ -138,7 +96,27 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
       oneOf(myProject).removeFeature(existingResource.getFirst());
     }});
 
-    myFeatures.deleteResource(myProject, name);
+    myFeatures.removeFeature(myProject, existingResource.getFirst());
+  }
+
+  @Test
+  public void testAsMap_invalidState() {
+    final List<SProjectFeatureDescriptor> descriptors = new ArrayList<>();
+    descriptors.add(createExistingResource("resource").second);
+    descriptors.add(createExistingResource("resource").second);
+    m.checking(new Expectations() {{
+      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
+      will(returnValue(descriptors));
+
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Collections.singletonList(myProject)));
+
+      for (SProjectFeatureDescriptor d: descriptors) {
+        oneOf(d).getProjectId();
+        will(returnValue(myProjectId));
+      }
+    }});
+    myFeatures.asMap(myProject);
   }
 
   /**
@@ -149,10 +127,12 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
    * @return mocked feature descriptor with generated feature id
    */
   private Pair<String, SProjectFeatureDescriptor> createExistingResource(@NotNull final String name) {
-    final String id = "ExistingResource:<" + name + ">";
+    final String id = "ExistingResource:<" + name + "> #" + mockCounter.incrementAndGet();
     final SProjectFeatureDescriptor result = m.mock(SProjectFeatureDescriptor.class, id);
     final Map<String, String> resultParams = new HashMap<>();
-    resultParams.put("name", name);
+    resultParams.put(ProjectFeatureParameters.NAME, name);
+    resultParams.put(ProjectFeatureParameters.TYPE, ResourceType.QUOTED.name());
+    resultParams.put(ProjectFeatureParameters.QUOTA, "1");
     m.checking(new Expectations() {{
       allowing(result).getParameters();
       will(returnValue(resultParams));
