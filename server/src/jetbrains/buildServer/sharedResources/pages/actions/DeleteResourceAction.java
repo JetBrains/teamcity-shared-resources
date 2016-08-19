@@ -1,18 +1,17 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
-import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Class {@code DeleteResourceAction}
@@ -26,11 +25,11 @@ import javax.servlet.http.HttpServletResponse;
 public final class DeleteResourceAction extends BaseResourceAction implements ControllerAction {
 
   public DeleteResourceAction(@NotNull final ProjectManager projectManager,
-                              @NotNull final Resources resources,
+                              @NotNull final ResourceProjectFeatures projectFeatures,
                               @NotNull final ResourceHelper resourceHelper,
                               @NotNull final Messages messages,
                               @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory);
   }
 
   @NotNull
@@ -47,7 +46,7 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      myResources.deleteResource(project, resourceId);
+      myProjectFeatures.removeFeature(project, resourceId);
       // todo: resource name
       project.persist(myConfigActionFactory.createAction(project, "'" + resourceId + "' shared resource was removed"));
       addMessage(request, "Resource " + resourceId + " was deleted");

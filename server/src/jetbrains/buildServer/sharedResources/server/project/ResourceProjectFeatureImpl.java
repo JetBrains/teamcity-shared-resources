@@ -50,4 +50,10 @@ public class ResourceProjectFeatureImpl implements ResourceProjectFeature {
   public Resource getResource() {
     return myResource;
   }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myDescriptor.getId();
+  }
 }

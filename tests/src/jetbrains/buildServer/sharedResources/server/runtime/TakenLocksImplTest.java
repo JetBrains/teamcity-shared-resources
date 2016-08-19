@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
@@ -18,8 +19,6 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -159,6 +158,8 @@ public class TakenLocksImplTest extends BaseTestCase {
     assertTrue(tl2.hasWriteLocks());
     m.assertIsSatisfied();
   }
+
+
 
   @Test
   @TestFor(issues = "TW-33790")

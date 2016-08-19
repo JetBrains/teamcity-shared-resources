@@ -16,13 +16,11 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,43 +28,6 @@ import java.util.Map;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public interface Resources {
-
-  /**
-   * Adds given resource to project resources
-   *
-   * @param project project to add resource to
-   * @param resource resource to add
-   * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
-   */
-  @Deprecated
-  void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException;
-
-  void addResource(@NotNull final SProject project, @NotNull final Map<String, String> params);
-
-  /**
-   * Deletes given resource from the project
-   *
-   * @param project project to delete resource from
-   * @param resourceId id of the resource to delete
-   */
-  void deleteResource(@NotNull final SProject project, @NotNull final String resourceId);
-
-
-  void editResource(@NotNull final SProject project,
-                    @NotNull final String id,
-                    @NotNull final Map<String, String> params);
-  /**
-   * Edits given resource
-   *
-   * @param project to edit resource in
-   * @param currentName currentName of the resource
-   * @param resource resource to replace existing one
-   * @throws DuplicateResourceException if resource with given name exists
-   */
-  @Deprecated
-  void editResource(@NotNull final SProject project,
-                    @NotNull final String currentName,
-                    @NotNull final Resource resource) throws DuplicateResourceException;
 
   /**
    * Gets all resources for project with given {@code projectId} and all its ancestors

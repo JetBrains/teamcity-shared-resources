@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import org.jetbrains.annotations.NotNull;
@@ -44,33 +43,6 @@ public final class ResourcesImpl implements Resources {
                        @NotNull final ResourceProjectFeatures resourceProjectFeatures) {
     myProjectManager = projectManager;
     myFeatures = resourceProjectFeatures;
-  }
-
-  @Override
-  public void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.addFeature(project, resource.getParameters());
-  }
-
-  @Override
-  public void addResource(@NotNull final SProject project, @NotNull final Map<String, String> params) {
-    myFeatures.addFeature(project, params);
-  }
-
-  @Override
-  public void deleteResource(@NotNull final SProject project, @NotNull final String resourceId) {
-    myFeatures.removeFeature(project, resourceId);
-  }
-
-  @Override
-  public void editResource(@NotNull final SProject project,
-                           @NotNull final String currentName,
-                           @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.updateFeature(project, currentName, resource.getParameters());
-  }
-
-  @Override
-  public void editResource(@NotNull final SProject project, @NotNull final String id, @NotNull final Map<String, String> params) {
-    myFeatures.updateFeature(project, id, params);
   }
 
   @NotNull

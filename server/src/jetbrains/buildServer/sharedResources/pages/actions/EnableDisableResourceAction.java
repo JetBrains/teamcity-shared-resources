@@ -16,6 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
@@ -23,15 +25,12 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
-import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,11 +40,11 @@ import javax.servlet.http.HttpServletResponse;
 public class EnableDisableResourceAction extends BaseResourceAction implements ControllerAction {
 
   public EnableDisableResourceAction(@NotNull final ProjectManager projectManager,
-                                     @NotNull final Resources resources,
+                                     @NotNull final ResourceProjectFeatures projectFeatures,
                                      @NotNull final ResourceHelper resourceHelper,
                                      @NotNull final Messages messages,
                                      @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, resources, resourceHelper, messages, configActionFactory);
+    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory);
   }
 
   @NotNull
@@ -63,14 +62,15 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
     final boolean newState = StringUtil.isTrue(request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE));
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      final Resource resource = myResources.getOwnResources(project).stream()
-                                           .filter(r -> resourceId.equals(r.getId()))
-                                           .findFirst()
-                                           .orElse(null);
-      if (resource != null) {
+      ResourceProjectFeature feature = myProjectFeatures.getOwnFeatures(project).stream()
+                                                        .filter(rf -> rf.getId().equals(resourceId))
+                                                        .findFirst()
+                                                        .orElse(null);
+      if (feature != null && feature.getResource() != null) {
+        final Resource resource = feature.getResource();
         final Resource resourceInState = myResourceHelper.getResourceInState(projectId, resource, newState);
-        myResources.editResource(project, resourceInState.getId(), resourceInState.getParameters());
-        String changed = newState ? "enabled" : "disabled";
+        myProjectFeatures.updateFeature(project, resourceInState.getId(), resourceInState.getParameters());
+        final String changed = newState ? "enabled" : "disabled";
         project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
         addMessage(request, "Resource " + resource.getName() + " was " + changed);
       }

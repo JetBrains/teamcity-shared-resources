@@ -1,12 +1,15 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
@@ -15,8 +18,6 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -80,66 +81,6 @@ public class ResourcesImplTest extends BaseTestCase {
   public void tearDown() throws Exception {
     super.tearDown();
     m.assertIsSatisfied();
-  }
-
-  /**
-   * Adds new resource to root project
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource("new_resource1", myRootProjectId, "new_resource1", 1, true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addFeature(myRootProject, resource.getParameters());
-    }});
-    resources.addResource(myRootProject, resource);
-  }
-
-  /**
-   * Adds resource to subproject
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testAddResourceToSubproject_Success() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource("infinite_resource", myProjectId, "infinite_resource", true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addFeature(myProject, resource.getParameters());
-    }});
-    resources.addResource(myProject, resource);
-  }
-
-  /**
-   * Tests name change for existing resource
-   * @throws Exception if something goes wrong
-   */
-  @Test (enabled = false) // todo: move
-  public void testEditResource_Success() throws Exception {
-    final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource("resource1", myProjectId, "resource1_newName", 1, true);
-    resources.editResource(myProject, name, resource);
-  }
-
-  /**
-   * Tries to change the name of the existing resource to the name of
-   * another existing resource.
-   * {@code DuplicateResourceException} is expected to be thrown.
-   *
-   * @throws Exception if something goes wrong
-   */
-  @Test (expectedExceptions = DuplicateResourceException.class, enabled = false) // todo move
-  public void testEditResource_Fail() throws Exception {
-    final String oldName = "resource1";
-    final String newName = "resource2";
-    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, newName, true);
-    resources.editResource(myProject, oldName, resource);
-  }
-
-
-  @Test (enabled = false) //todo move
-  public void testDeleteResource() {
-    final Resource resource = myProjectResourceMap.get("resource1");
-    assertNotNull(resource);
-    resources.deleteResource(myProject, resource.getName());
   }
 
   @Test

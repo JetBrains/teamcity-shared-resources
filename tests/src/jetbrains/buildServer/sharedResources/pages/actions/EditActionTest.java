@@ -77,7 +77,7 @@ public class EditActionTest extends BaseTestCase {
 
   private SharedResourcesFeatures myFeatures;
 
-  private ResourceProjectFeatures myResourceProjectFeatures;
+  private ResourceProjectFeatures myProjectFeatures;
 
   @BeforeMethod
   @Override
@@ -95,9 +95,9 @@ public class EditActionTest extends BaseTestCase {
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
-    myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
+    myProjectFeatures = m.mock(ResourceProjectFeatures.class);
     final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myProjectFeatures, myFeatures, myResourceHelper, myMessages, configActionFactory);
   }
 
   @Test
@@ -120,7 +120,7 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(rc));
 
-      allowing(myResources);
+      allowing(myProjectFeatures);
 
       // key part - resource is persisted even if name is not changed
       oneOf(myProject).persist(with(any(ConfigAction.class)));
@@ -163,6 +163,8 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myProject).getProjects();
       will(returnValue(projects));
 
+      allowing(myProjectFeatures);
+
       // update locks in subprojects
       oneOf(subProject).getOwnBuildTypes();
       will(returnValue(Collections.singletonList(subProjectBuildType)));
@@ -182,7 +184,6 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myProject).persist(with(any(ConfigAction.class)));
 
       // update resource
-      allowing(myResources);
       oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
@@ -252,7 +253,7 @@ public class EditActionTest extends BaseTestCase {
       will(returnValue(true));
       oneOf(myProject).persist(with(any(ConfigAction.class)));
       // update resource
-      allowing(myResources);
+      allowing(myProjectFeatures);
       oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);

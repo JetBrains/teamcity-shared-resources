@@ -27,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 public interface ResourceProjectFeature {
 
   @NotNull
+  String getId();
+
+  @NotNull
   Map<String, String> getParameters();
 
   @Nullable
