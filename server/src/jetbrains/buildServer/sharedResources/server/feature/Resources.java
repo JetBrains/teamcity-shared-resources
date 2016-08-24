@@ -39,20 +39,22 @@ public interface Resources {
   @Deprecated
   Map<String, Resource> asMap(@NotNull final String projectId);
 
-
   /**
-   * Returns map of available resources.
-   * Takes inheritance into account.
-   * Each level excludes duplicate resources
+   * Returns all valid resources, defined in current project
+   * Duplicates are not excluded.
+   * Not to be used in runtime for resource locking
    *
+   * @since 10.1
    * @param project project to get resources for
-   * @return map of available resources
+   * @return all valid resources, defined in current project
    */
   @NotNull
-  Map<String, Resource> getAvailableResources(@NotNull final SProject project);
+  List<Resource> getAllOwnResources(@NotNull final SProject project);
 
   /**
    * Gets project own resources
+   * Excludes duplicates
+   *
    * @param project project to get resources for
    * @return own resources of the project
    */
@@ -61,6 +63,8 @@ public interface Resources {
 
   /**
    * Gets resources for project with inheritance
+   * Duplicates are excluded on every level of project hierarchy
+   *
    * @param project project to get resources for
    * @return project's resources with inheritance
    */
@@ -69,6 +73,7 @@ public interface Resources {
 
   /**
    * Gets number of resources, visible for project with given project id
+   * Counts only resources available at runtime. Ignores duplicates
    *
    * @param project to count resources in
    * @return number of visible resources

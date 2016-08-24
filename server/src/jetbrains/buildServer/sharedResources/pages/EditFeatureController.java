@@ -112,7 +112,7 @@ public class EditFeatureController extends BaseController {
         }
       }
     }
-    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources);
+    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, false);
     final Map<String, Lock> invalidLocksMap = new HashMap<>();
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);

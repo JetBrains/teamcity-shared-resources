@@ -54,8 +54,12 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
-  public Map<String, Resource> getAvailableResources(@NotNull final SProject project) {
-    return myFeatures.asMap(project);
+  public List<Resource> getAllOwnResources(@NotNull final SProject project) {
+    return myFeatures.getOwnFeatures(project).stream()
+                     .map(ResourceProjectFeature::getResource)
+                     .filter(Objects::nonNull)
+                     .collect(Collectors.toList());
+
   }
 
   @NotNull
@@ -64,17 +68,24 @@ public final class ResourcesImpl implements Resources {
     return myFeatures.getOwnFeatures(project).stream()
                      .map(ResourceProjectFeature::getResource)
                      .filter(Objects::nonNull)
+                     .collect(Collectors.groupingBy(Resource::getName)).values().stream() // collect by name
+                     .filter(list -> list.size() == 1) // exclude duplicates
+                     .map(list -> list.get(0))
                      .collect(Collectors.toList());
+
   }
 
   @NotNull
   @Override
   public List<Resource> getResources(@NotNull final SProject project) {
+    final Set<String> names = new HashSet<>();
     final Set<Resource> result = new HashSet<>();
     final List<SProject> path = project.getProjectPath();
     final ListIterator<SProject> it = path.listIterator(path.size());
     while (it.hasPrevious()) {
-      result.addAll(getOwnResources(it.previous()).stream().filter(data -> !result.contains(data)).collect(Collectors.toSet()));
+      final Set<Resource> filtered = getOwnResources(it.previous()).stream().filter(data -> !names.contains(data.getName())).collect(Collectors.toSet());
+      result.addAll(filtered);
+      names.addAll(filtered.stream().map(Resource::getName).collect(Collectors.toSet()));
     }
     return new ArrayList<>(result);
   }

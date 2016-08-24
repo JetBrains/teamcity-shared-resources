@@ -78,7 +78,7 @@ public class SharedResourcesPage extends EditProjectTab {
     super.fillModel(model, request);
     final SProject project = getProject(request);
     if (project != null) {
-      model.put("bean", new SharedResourcesBean(project, myResources));
+      model.put("bean", new SharedResourcesBean(project, myResources, true));
       model.put("configurationErrors", getConfigurationErrors(project));
       model.put("usages", myAnalyzer.collectResourceUsages(project));
       model.put("duplicates", prepareDuplicates(project));
@@ -125,7 +125,7 @@ public class SharedResourcesPage extends EditProjectTab {
 
   private Map<String, Boolean> prepareDuplicates(@NotNull final SProject project) {
     final Map<String, Boolean> result = new HashMap<>();
-    myInspector.getOwnDuplicateResources(project).forEach(dup -> result.put(dup, true));
+    myInspector.getOwnDuplicateNames(project).forEach(dup -> result.put(dup, true));
     return result;
   }
 }

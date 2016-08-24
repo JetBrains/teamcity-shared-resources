@@ -41,10 +41,15 @@ public class SharedResourcesBean {
   private Map<String, List<Resource>> myResourceMap;
 
   public SharedResourcesBean(@NotNull final SProject project,
-                             @NotNull final Resources resources) {
+                             @NotNull final Resources resources,
+                             boolean forProjectPage) {
     myProject = project;
     myResourceMap = resources.getResources(project).stream().collect(Collectors.groupingBy(Resource::getProjectId));
-    myOwnResources = resources.getOwnResources(project);
+    if (forProjectPage) {
+      myOwnResources = resources.getAllOwnResources(project);
+    } else {
+      myOwnResources = resources.getOwnResources(project);
+    }
   }
 
   @NotNull

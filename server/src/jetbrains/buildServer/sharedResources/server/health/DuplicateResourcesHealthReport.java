@@ -77,7 +77,7 @@ public class DuplicateResourcesHealthReport extends HealthStatusReport {
   @Override
   public void report(@NotNull HealthStatusScope scope, @NotNull HealthStatusItemConsumer resultConsumer) {
     scope.getProjects().forEach(p -> {
-      final List<String> dups = myInspector.getOwnDuplicateResources(p);
+      final List<String> dups = myInspector.getOwnDuplicateNames(p);
       if (!dups.isEmpty()) {
         resultConsumer.consumeForProject(p, createDupsHealthItem(p, dups));
       }

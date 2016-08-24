@@ -59,7 +59,7 @@ public class ConfigurationInspector {
   public Map<SProject, List<String>> getDuplicateResources(@NotNull final SProject project) {
     final Map<SProject, List<String>> result = new HashMap<>();
     project.getProjectPath().forEach(p -> {
-      final List<String> duplicateNames = getOwnDuplicateResources(p);
+      final List<String> duplicateNames = getOwnDuplicateNames(p);
       if (!duplicateNames.isEmpty()) {
         result.put(p, duplicateNames);
       }
@@ -73,8 +73,8 @@ public class ConfigurationInspector {
    * @return list of duplicate resource names
    */
   @NotNull
-  public List<String> getOwnDuplicateResources(@NotNull final SProject project) {
-    return myResources.getOwnResources(project).stream()
+  public List<String> getOwnDuplicateNames(@NotNull final SProject project) {
+    return myResources.getAllOwnResources(project).stream()
                       .collect(Collectors.groupingBy(Resource::getName))
                       .values().stream()
                       .filter(list -> list.size() > 1)
