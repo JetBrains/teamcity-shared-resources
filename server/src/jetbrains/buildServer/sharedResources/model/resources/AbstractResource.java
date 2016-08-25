@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import java.util.stream.Collectors;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,5 +90,17 @@ public abstract class AbstractResource implements Resource {
   @Override
   public int hashCode() {
     return myId.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "Resource{" +
+           "name='" + myName + '\'' +
+           ", projectId='" + myProjectId + '\'' +
+           ", type=" + myType +
+           ", id='" + myId + '\'' +
+           ", state=" + myState +
+           ", parameters=[" + getParameters().entrySet().stream().map(p -> p.getKey() + "=" + p.getValue()).collect(Collectors.joining(", ")) +
+           "]}";
   }
 }
