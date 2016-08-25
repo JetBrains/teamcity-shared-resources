@@ -39,16 +39,11 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private SProject myRootProject;
 
-  private Map<String, Resource> myProjectResourceMap;
-
-  /**
-   * Class under test
-   */
-  private ResourcesImpl resources;
-
   private final String myProjectId = TestUtils.generateRandomName();
 
   private final String myRootProjectId = "<ROOT>";
+
+  private ResourcesImpl resources;
 
   @BeforeMethod
   @Override
@@ -57,20 +52,11 @@ public class ResourcesImplTest extends BaseTestCase {
     m = new Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};
-
     myProjectManager = m.mock(ProjectManager.class);
     myProject = m.mock(SProject.class, "currentProject");
     myRootProject = m.mock(SProject.class, "rootProject");
-
     myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
     resources = new ResourcesImpl(myProjectManager, myResourceProjectFeatures);
-
-    myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource("resource1", myProjectId, "resource1", 1, true));
-      put("resource2", ResourceFactory.newInfiniteResource("resource2", myProjectId, "resource2", true));
-      put("resource3", ResourceFactory.newCustomResource("resource3", myProjectId, "resource3", Arrays.asList("value1", "value2", "value3"), true));
-    }};
-
   }
 
   @Override
@@ -81,47 +67,70 @@ public class ResourcesImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testAsMap() {
+  @SuppressWarnings("Duplicates")
+  public void testGetResourcesMap() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_2", true))
+    );
+
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_4", true))
+    );
+
     m.checking(new Expectations() {{
       oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
 
-      oneOf(myResourceProjectFeatures).asMap(myProject);
-      will(returnValue(myProjectResourceMap));
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
     }});
 
-    final Map<String, Resource> result = resources.asMap(myProjectId);
+    final Map<String, Resource> result = resources.getResourcesMap(myProjectId);
     assertNotNull(result);
-    assertEquals(myProjectResourceMap.size(), result.size());
+    assertEquals(projectFeatures.size() + rootFeatures.size(), result.size());
   }
 
-  //@Test (enabled = false) // todo: move to project resource features test
-  //@TestFor(issues = "TW-37406")
-  //public void testAsProjectResourceMap_PreserveOrder() {
-  //  m.checking(new Expectations() {{
-  //    oneOf(myProjectManager).findProjectById(myProjectId);
-  //    will(returnValue(myProject));
-  //
-  //    allowing(myProject).getProjectId();
-  //    will(returnValue(myProjectId));
-  //
-  //    oneOf(myProject).getProjectPath();
-  //    will(returnValue(Arrays.asList(myRootProject, myProject)));
-  //
-  //    allowing(myRootProject).getProjectId();
-  //    will(returnValue(myRootProjectId));
-  //  }});
-  //
-  //  final Map<SProject, Map<String, Resource>> result = resources.asProjectResourceMap(myProjectId);
-  //  assertEquals(2, result.size());
-  //  Iterator<SProject> it = result.keySet().iterator();
-  //  assertTrue(it.hasNext());
-  //  SProject p = it.next();
-  //  assertEquals(myProjectId, p.getProjectId());
-  //  assertTrue(it.hasNext());
-  //  p = it.next();
-  //  assertEquals(myRootProjectId, p.getProjectId());
-  //}
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetResourcesMap_WithDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_2", true))
+    );
+
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_4", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
+
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
+    }});
+
+    final Map<String, Resource> result = resources.getResourcesMap(myProjectId);
+    assertNotNull(result);
+    assertEquals(3, result.size());
+  }
+
 
   @Test
   public void testGetOwnResources_NoDuplicates() {
@@ -319,5 +328,4 @@ public class ResourcesImplTest extends BaseTestCase {
     }});
     return new ResourceProjectFeatureImpl(descriptor);
   }
-
 }

@@ -41,8 +41,4 @@ public interface ResourceProjectFeatures {
                      @NotNull final Map<String, String> featureParameters);
 
   void removeFeature(@NotNull final SProject project, @NotNull final String id);
-
-  @NotNull
-  @Deprecated
-  Map<String, Resource> asMap(@NotNull final SProject project);
 }

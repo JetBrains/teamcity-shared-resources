@@ -122,7 +122,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1_bt).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
 
       oneOf(rb2).getBuildType();
@@ -244,7 +244,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1_bt).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
 
       oneOf(qb1).getBuildPromotionInfo();
@@ -295,7 +295,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -323,7 +323,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -353,7 +353,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -382,7 +382,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -410,7 +410,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
     final Set<String> fairSet = new HashSet<>();
@@ -438,7 +438,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -466,7 +466,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -510,7 +510,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
     final Set<String> fairSet = new HashSet<>();
@@ -560,7 +560,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      allowing(myResources).asMap(myProjectId);
+      allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -626,7 +626,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      allowing(myResources).asMap(myProjectId);
+      allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -677,7 +677,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -701,7 +701,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -727,7 +727,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
@@ -761,7 +761,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 

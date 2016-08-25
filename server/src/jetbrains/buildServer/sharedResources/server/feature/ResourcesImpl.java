@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
@@ -47,9 +48,13 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
-  @Deprecated
-  public Map<String, Resource> asMap(@NotNull final String projectId) {
-    return myFeatures.asMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
+  public Map<String, Resource> getResourcesMap(@NotNull final String projectId) {
+    final SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      return getResources(project).stream().collect(Collectors.toMap(Resource::getName, Function.identity()));
+    } else {
+      return Collections.emptyMap();
+    }
   }
 
   @NotNull

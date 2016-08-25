@@ -32,19 +32,20 @@ public interface Resources {
   /**
    * Gets all resources for project with given {@code projectId} and all its ancestors
    *
+   * {@link #getResources(SProject)} cannot be used in runtime, as it requires project to be present,
+   * which makes this method a convenient single point, where we acquire project by project id
+   *
    * @param projectId id oof the current project
    * @return map of resources in format {@code resource_name -> resource}
    */
   @NotNull
-  @Deprecated
-  Map<String, Resource> asMap(@NotNull final String projectId);
+  Map<String, Resource> getResourcesMap(@NotNull final String projectId);
 
   /**
    * Returns all valid resources, defined in current project
    * Duplicates are not excluded.
    * Not to be used in runtime for resource locking
    *
-   * @since 10.1
    * @param project project to get resources for
    * @return all valid resources, defined in current project
    */

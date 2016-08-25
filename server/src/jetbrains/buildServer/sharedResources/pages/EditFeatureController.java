@@ -89,7 +89,7 @@ public class EditFeatureController extends BaseController {
     final Map<String, Lock> locks = new HashMap<>();
     final String projectId = project.getProjectId();
     // map of all visible resources from this project and its subtree
-    final Map<String, Resource> resources = new HashMap<>(myResources.asMap(projectId));
+    final Map<String, Resource> resources = new HashMap<>(myResources.getResourcesMap(projectId));
     final Map<String, Object> model = result.getModel();
     final Collection<Lock> invalidLocks = new ArrayList<>();
     boolean inherited = false;

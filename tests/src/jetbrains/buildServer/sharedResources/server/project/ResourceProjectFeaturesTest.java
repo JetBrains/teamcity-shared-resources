@@ -99,26 +99,6 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
     myFeatures.removeFeature(myProject, existingResource.getFirst());
   }
 
-  @Test
-  public void testAsMap_invalidState() {
-    final List<SProjectFeatureDescriptor> descriptors = new ArrayList<>();
-    descriptors.add(createExistingResource("resource").second);
-    descriptors.add(createExistingResource("resource").second);
-    m.checking(new Expectations() {{
-      allowing(myProject).getOwnFeaturesOfType(FEATURE_TYPE);
-      will(returnValue(descriptors));
-
-      oneOf(myProject).getProjectPath();
-      will(returnValue(Collections.singletonList(myProject)));
-
-      for (SProjectFeatureDescriptor d: descriptors) {
-        oneOf(d).getProjectId();
-        will(returnValue(myProjectId));
-      }
-    }});
-    myFeatures.asMap(myProject);
-  }
-
   /**
    * Creates existing resource as a project feature
    * Adds expectations of the type 'allowing' for resource parameters access

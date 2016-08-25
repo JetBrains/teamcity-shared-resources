@@ -308,7 +308,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
       will(returnValue(lockedResources));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
   }

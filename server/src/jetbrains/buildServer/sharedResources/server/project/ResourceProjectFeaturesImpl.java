@@ -16,19 +16,16 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.FEATURE_TYPE;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 
 /**
  * Created with IntelliJ IDEA.
@@ -60,21 +57,6 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
     }
   }
 
-  @Override
-  @NotNull
-  @Deprecated
-  public Map<String, Resource> asMap(@NotNull final SProject project) {
-    final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
-    final List<SProject> path = project.getProjectPath();
-    final ListIterator<SProject> it = path.listIterator(path.size());
-    while (it.hasPrevious()) {
-      SProject p = it.previous();
-      Map<String, Resource> currentResources = getResourcesForProject(p);
-      result.putAll(CollectionsUtil.filterMapByKeys(currentResources, data -> !result.containsKey(data)));
-    }
-    return result;
-  }
-
   @NotNull
   @Override
   public List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project) {
@@ -89,21 +71,6 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
                                        .filter(fd -> id.equals(fd.getId()))
                                        .findFirst()
                                        .orElse(null);
-  }
-
-  @NotNull
-  private Map<String, Resource> getResourcesForProject(@NotNull final SProject project) {
-    final Map<String, Resource> result = new TreeMap<>(RESOURCE_NAMES_COMPARATOR);
-    result.putAll(getResourceFeatures(project).stream()
-                                              .map(ResourceFactory::fromDescriptor)
-                                              .filter(Objects::nonNull)
-                                              .collect(
-                                                Collectors.toMap(
-                                                  Resource::getName,
-                                                  Function.identity(),
-                                                  (r1, r2) -> r1)
-                                              ));
-    return result;
   }
 
   @NotNull

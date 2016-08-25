@@ -81,7 +81,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(Collections.emptyMap()));
     }});
 
@@ -101,7 +101,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -125,7 +125,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -153,7 +153,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -197,7 +197,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -317,7 +317,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -338,7 +338,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(subBt).getProjectId();
       will(returnValue(subProjectId));
 
-      oneOf(myResources).asMap(subProjectId);
+      oneOf(myResources).getResourcesMap(subProjectId);
       will(returnValue(subProjectResourceMap));
 
       oneOf(subFeature).getLockedResources();

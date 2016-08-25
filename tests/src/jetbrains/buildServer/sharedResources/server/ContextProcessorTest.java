@@ -101,7 +101,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -139,7 +139,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -181,7 +181,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(currentFeature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -226,7 +226,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -270,7 +270,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -332,7 +332,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
