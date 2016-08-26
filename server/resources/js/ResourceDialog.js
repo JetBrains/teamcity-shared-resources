@@ -9,7 +9,6 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   attachedToRoot: false,
   editMode: false,
   currentResourceName: "",
-  existingResources: {},
   myData: {},
 
   getContainer: function () {
@@ -41,9 +40,8 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.clearErrors();
     $j('#resource_id').val(resource_id);
     var r = this.myData[resource_id]; // current resource contents
-    this.currentResourceName = resource_name;
-    $j('#resource_name').val(r['name']);
     this.currentResourceName = r['name'];
+    $j('#resource_name').val(this.currentResourceName);
     var type = r['type'];
     if (r['infinite']) {
       type = "infinite"

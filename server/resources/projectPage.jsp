@@ -151,7 +151,7 @@
   var myValues;
   var r;
   var v;
-  <c:forEach var="item" items="${bean.allResources}">
+  <c:forEach var="item" items="${bean.ownResources}">
   <c:set var="type" value="${item.type}"/>
   r = {
     name: '<bs:escapeForJs text="${item.name}"/>',
@@ -182,7 +182,6 @@
   console.log('Resource [<bs:escapeForJs text="${item.name}"/>] was not recognized');
   </c:otherwise>
   </c:choose>
-  BS.ResourceDialog.existingResources['<bs:escapeForJs text="${item.name}"/>'] = true;
   </c:forEach>
 </script>
 
