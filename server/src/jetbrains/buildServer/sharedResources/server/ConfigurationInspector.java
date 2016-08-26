@@ -117,7 +117,7 @@ public class ConfigurationInspector {
                 try {
                   int q = Integer.parseInt(quota);
                   if (q < -1) {
-                    errors.add("Value of parameter 'quota' must be either positive, or -1 for infinite quota. Got + " + quota);
+                    errors.add("Value of parameter 'quota' must be either positive, or -1 for infinite quota. Got '" + quota + "'");
                   }
                 } catch (NumberFormatException e) {
                   errors.add("Value of parameter 'quota' must be a valid integer. Got '" + quota + "'");
@@ -143,6 +143,4 @@ public class ConfigurationInspector {
       });
     return result;
   }
-
-
 }
