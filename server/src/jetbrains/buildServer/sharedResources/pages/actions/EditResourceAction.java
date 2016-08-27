@@ -71,7 +71,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
             for (SBuildType type: buildTypes) {
               // todo: do we need resolved features here? Using unresolved for now
               for (SharedResourcesFeature feature: myBuildFeatures.searchForFeatures(type)) {
-                updated = updated || feature.updateLock(type, oldName, newName);
+                updated = feature.updateLock(type, oldName, newName) || updated;
               }
             }
             if (updated) {
