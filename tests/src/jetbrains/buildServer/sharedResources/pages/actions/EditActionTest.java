@@ -141,9 +141,11 @@ public class EditActionTest extends BaseTestCase {
 
     final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");
     final SBuildType subProjectBuildType = m.mock(SBuildType.class, "subproject-build-type");
+    final SBuildType secondSubProjectBuildType = m.mock(SBuildType.class, "second-subproject-build-type");
 
     final SharedResourcesFeature projectFeature = m.mock(SharedResourcesFeature.class, "project-feature");
     final SharedResourcesFeature subProjectFeature = m.mock(SharedResourcesFeature.class, "sub-project-feature");
+    final SharedResourcesFeature secondSubProjectFeature = m.mock(SharedResourcesFeature.class, "second-sub-project-feature");
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -167,11 +169,20 @@ public class EditActionTest extends BaseTestCase {
 
       // update locks in subprojects
       oneOf(subProject).getOwnBuildTypes();
-      will(returnValue(Collections.singletonList(subProjectBuildType)));
+      will(returnValue(Arrays.asList(subProjectBuildType, secondSubProjectBuildType)));
+
       oneOf(myFeatures).searchForFeatures(subProjectBuildType);
       will(returnValue(Collections.singletonList(subProjectFeature)));
+
       oneOf(subProjectFeature).updateLock(subProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
       will(returnValue(true));
+
+      oneOf(myFeatures).searchForFeatures(secondSubProjectBuildType);
+      will(returnValue(Collections.singletonList(secondSubProjectFeature)));
+
+      oneOf(secondSubProjectFeature).updateLock(secondSubProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
+
       oneOf(subProject).persist(with(any(ConfigAction.class)));
 
       // update lock in project itself
