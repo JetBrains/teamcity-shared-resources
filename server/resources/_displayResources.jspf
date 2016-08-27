@@ -61,7 +61,7 @@
     <c:if test="${allowChange}">
       <td class="edit ${highlight}" onclick="${onclick}"><a href="#">Edit</a></td>
       <td class="edit">
-        <bs:actionsPopup controlId="${util:forJSIdentifier(resource.name)}_actions"
+        <bs:actionsPopup controlId="${util:forJSIdentifier(resource.id)}_actions"
                         popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
               <jsp:attribute name="content">
                 <div>
