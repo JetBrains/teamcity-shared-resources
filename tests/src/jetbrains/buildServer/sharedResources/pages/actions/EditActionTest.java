@@ -77,7 +77,7 @@ public class EditActionTest extends BaseTestCase {
 
   private SharedResourcesFeatures myFeatures;
 
-  private ResourceProjectFeatures myResourceProjectFeatures;
+  private ResourceProjectFeatures myProjectFeatures;
 
   @BeforeMethod
   @Override
@@ -95,15 +95,15 @@ public class EditActionTest extends BaseTestCase {
     myProject = m.mock(SProject.class);
     myMessages = m.mock(Messages.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
-    myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
+    myProjectFeatures = m.mock(ResourceProjectFeatures.class);
     final ConfigActionFactory configActionFactory = mockConfigActionFactory(m);
-    myEditResourceAction = new EditResourceAction(myProjectManager, myResources, myResourceHelper, myFeatures, myMessages, configActionFactory);
+    myEditResourceAction = new EditResourceAction(myProjectManager, myProjectFeatures, myFeatures, myResourceHelper, myMessages, configActionFactory);
   }
 
   @Test
   @TestFor (issues = "TW-29355")
   public void testPersistNameNotChanged() {
-    final Resource rc = ResourceFactory.newQuotedResource(PROJECT_ID, RESOURCE_NAME, 111, true);
+    final Resource rc = ResourceFactory.newQuotedResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, 111, true);
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -120,7 +120,7 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myResourceHelper).getResourceFromRequest(PROJECT_ID, myRequest);
       will(returnValue(rc));
 
-      allowing(myResources);
+      allowing(myProjectFeatures);
 
       // key part - resource is persisted even if name is not changed
       oneOf(myProject).persist(with(any(ConfigAction.class)));
@@ -134,16 +134,18 @@ public class EditActionTest extends BaseTestCase {
   @Test
   public void testUpdateLockNameInTree() {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
-    final Resource rcNewName = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
+    final Resource rcNewName = ResourceFactory.newQuotedResource(NEW_RESOURCE_NAME + "id", PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
     final SProject subProject = m.mock(SProject.class,  "sub-project") ;
     final List<SProject> projects = new ArrayList<>();
     projects.add(subProject);
 
     final SBuildType projectBuildType = m.mock(SBuildType.class, "project-build-type");
     final SBuildType subProjectBuildType = m.mock(SBuildType.class, "subproject-build-type");
+    final SBuildType secondSubProjectBuildType = m.mock(SBuildType.class, "second-subproject-build-type");
 
     final SharedResourcesFeature projectFeature = m.mock(SharedResourcesFeature.class, "project-feature");
     final SharedResourcesFeature subProjectFeature = m.mock(SharedResourcesFeature.class, "sub-project-feature");
+    final SharedResourcesFeature secondSubProjectFeature = m.mock(SharedResourcesFeature.class, "second-sub-project-feature");
 
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
@@ -163,13 +165,24 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myProject).getProjects();
       will(returnValue(projects));
 
+      allowing(myProjectFeatures);
+
       // update locks in subprojects
       oneOf(subProject).getOwnBuildTypes();
-      will(returnValue(Collections.singletonList(subProjectBuildType)));
+      will(returnValue(Arrays.asList(subProjectBuildType, secondSubProjectBuildType)));
+
       oneOf(myFeatures).searchForFeatures(subProjectBuildType);
       will(returnValue(Collections.singletonList(subProjectFeature)));
+
       oneOf(subProjectFeature).updateLock(subProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
       will(returnValue(true));
+
+      oneOf(myFeatures).searchForFeatures(secondSubProjectBuildType);
+      will(returnValue(Collections.singletonList(secondSubProjectFeature)));
+
+      oneOf(secondSubProjectFeature).updateLock(secondSubProjectBuildType, RESOURCE_NAME, NEW_RESOURCE_NAME);
+      will(returnValue(true));
+
       oneOf(subProject).persist(with(any(ConfigAction.class)));
 
       // update lock in project itself
@@ -182,7 +195,6 @@ public class EditActionTest extends BaseTestCase {
       oneOf(myProject).persist(with(any(ConfigAction.class)));
 
       // update resource
-      allowing(myResources);
       oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);
@@ -193,7 +205,7 @@ public class EditActionTest extends BaseTestCase {
   public void testUpdateAffectsOnlyProjectsWithUsages() throws Exception {
     final String NEW_RESOURCE_NAME = "NEW_NAME";
 
-    final Resource newResource = ResourceFactory.newQuotedResource(PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
+    final Resource newResource = ResourceFactory.newQuotedResource(RESOURCE_NAME + "id", PROJECT_ID, NEW_RESOURCE_NAME, 111, true);
 
     final SProject childWithUsage = m.mock(SProject.class, "child-with-usage");
     final SProject childWithoutUsage = m.mock(SProject.class, "child-without-usage");
@@ -252,7 +264,7 @@ public class EditActionTest extends BaseTestCase {
       will(returnValue(true));
       oneOf(myProject).persist(with(any(ConfigAction.class)));
       // update resource
-      allowing(myResources);
+      allowing(myProjectFeatures);
       oneOf(myMessages).addMessage(myRequest, "Resource " + NEW_RESOURCE_NAME + " was updated");
     }});
     myEditResourceAction.doProcess(myRequest, myResponse, myAjaxResponse);

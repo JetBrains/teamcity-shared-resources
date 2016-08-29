@@ -215,9 +215,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource(myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource(myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource(myProjectId, "lock3", Collections.singletonList("value1"), true));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value1"), true));
     }};
 
     setupLockedResources(lockedResources, resources);
@@ -238,8 +238,8 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock2", ResourceFactory.newQuotedResource(myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource(myProjectId, "lock3", Collections.singletonList("value1"), true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value1"), true));
     }};
 
     setupLockedResources(lockedResources, resources);
@@ -262,10 +262,10 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource(myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource(myProjectId, "lock2", 123, true));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
       // wrong type here
-      put("lock3", ResourceFactory.newInfiniteResource(myProjectId, "lock3", true));
+      put("lock3", ResourceFactory.newInfiniteResource("lock3", myProjectId, "lock3", true));
     }};
 
     setupLockedResources(lockedResources, resources);
@@ -288,9 +288,9 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     }};
 
     final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource(myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource(myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource(myProjectId, "lock3", Collections.singletonList("value2"), true));
+      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
+      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
+      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value2"), true));
     }};
 
     setupLockedResources(lockedResources, resources);
@@ -308,7 +308,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
       will(returnValue(lockedResources));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
   }

@@ -31,19 +31,23 @@ public class QuotedResource extends AbstractResource {
 
   private final int myQuota;
 
-  private QuotedResource(@NotNull final String projectId, @NotNull String name, int quota, boolean state) {
-    super(projectId, name, ResourceType.QUOTED, state);
+  private QuotedResource(@NotNull final String id,
+                         @NotNull final String projectId,
+                         @NotNull String name,
+                         int quota,
+                         boolean state) {
+    super(id, projectId, name, ResourceType.QUOTED, state);
     myQuota = quota;
   }
 
   @NotNull
-  static QuotedResource newResource(@NotNull final String projectId, @NotNull String name, int quota, boolean state) {
-    return new QuotedResource(projectId, name, quota, state);
+  static QuotedResource newResource(@NotNull final String id, @NotNull final String projectId, @NotNull String name, int quota, boolean state) {
+    return new QuotedResource(id, projectId, name, quota, state);
   }
 
   @NotNull
-  static QuotedResource newInfiniteResource(@NotNull final String projectId, @NotNull String name, boolean state) {
-    return new QuotedResource(projectId, name, QUOTA_INFINITE, state);
+  static QuotedResource newInfiniteResource(@NotNull final String id, @NotNull final String projectId, @NotNull String name, boolean state) {
+    return new QuotedResource(id, projectId, name, QUOTA_INFINITE, state);
   }
 
   public boolean isInfinite() {

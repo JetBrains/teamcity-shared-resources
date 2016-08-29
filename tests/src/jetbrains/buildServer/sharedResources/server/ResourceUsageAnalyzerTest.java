@@ -81,7 +81,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(Collections.emptyMap()));
     }});
 
@@ -92,7 +92,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoBuildConfigurations() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
        put(resource.getName(), resource);
     }};
@@ -101,7 +101,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -114,7 +114,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoFeatures() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -125,7 +125,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -141,7 +141,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testNoLocks() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -153,7 +153,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -180,7 +180,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
    */
   @Test
   public void testNoSubProjects() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
@@ -197,7 +197,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -227,14 +227,14 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
 
   @Test
   public void testSubProjectNoOverride() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
 
     final String subProjectId = "MY_SUB_PROJECT";
 
-    final Resource subResource = ResourceFactory.newInfiniteResource(subProjectId, "resource2", true);
+    final Resource subResource = ResourceFactory.newInfiniteResource("resource2", subProjectId, "resource2", true);
     final Map<String, Resource> subProjectResourceMap = new HashMap<String, Resource>() {{
       putAll(resourceMap);
       put(subResource.getName(), subResource);
@@ -275,13 +275,13 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
    */
   @Test
   public void testSubProjectOverride() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "resource1", true);
+    final Resource resource = ResourceFactory.newInfiniteResource("resource1_my", myProjectId, "resource1", true);
     final Map<String, Resource> resourceMap = new HashMap<String, Resource>() {{
       put(resource.getName(), resource);
     }};
 
     final String subProjectId = "MY_SUB_PROJECT";
-    final Resource subResource = ResourceFactory.newInfiniteResource(subProjectId, "resource1", true);
+    final Resource subResource = ResourceFactory.newInfiniteResource("resource1_sub", subProjectId, "resource1", true);
     final Map<String, Resource> subProjectResourceMap = new HashMap<String, Resource>() {{
       putAll(resourceMap);
       put(subResource.getName(), subResource);
@@ -317,7 +317,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(myProject).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myResources).asMap(myProjectId);
+      oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
 
       oneOf(myProject).getBuildTypes();
@@ -338,7 +338,7 @@ public class ResourceUsageAnalyzerTest extends BaseTestCase {
       oneOf(subBt).getProjectId();
       will(returnValue(subProjectId));
 
-      oneOf(myResources).asMap(subProjectId);
+      oneOf(myResources).getResourcesMap(subProjectId);
       will(returnValue(subProjectResourceMap));
 
       oneOf(subFeature).getLockedResources();

@@ -16,29 +16,23 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
-import jetbrains.buildServer.serverSide.SProject;
+import java.util.Map;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created with IntelliJ IDEA.
- *
- * @author Oleg Rybak (oleg.rybak@jetbrains.com)
+ * @author Oleg Rybak <oleg.rybak@jetbrains.com>
  */
-public interface ResourceProjectFeatures {
+public interface ResourceProjectFeature {
 
   @NotNull
-  List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project);
+  String getId();
 
-  void addFeature(@NotNull final SProject project,
-                  @NotNull final Map<String, String> featureParameters);
+  @NotNull
+  Map<String, String> getParameters();
 
-  void updateFeature(@NotNull final SProject project,
-                     @NotNull final String id,
-                     @NotNull final Map<String, String> featureParameters);
+  @Nullable
+  Resource getResource();
 
-  void removeFeature(@NotNull final SProject project, @NotNull final String id);
 }

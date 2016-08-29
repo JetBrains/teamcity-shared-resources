@@ -1,20 +1,19 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
-import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Class {@code BaseResourceAction}
@@ -38,9 +37,6 @@ public abstract class BaseResourceAction implements ControllerAction {
   protected final ProjectManager myProjectManager;
 
   @NotNull
-  protected final Resources myResources;
-
-  @NotNull
   protected final ResourceHelper myResourceHelper;
 
   @NotNull
@@ -49,13 +45,17 @@ public abstract class BaseResourceAction implements ControllerAction {
   @NotNull
   protected final ConfigActionFactory myConfigActionFactory;
 
+  @NotNull
+  protected final ResourceProjectFeatures myProjectFeatures;
+
+
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
-                               @NotNull final Resources resources,
+                               @NotNull final ResourceProjectFeatures projectFeatures,
                                @NotNull final ResourceHelper resourceHelper,
                                @NotNull final Messages messages,
                                @NotNull final ConfigActionFactory configActionFactory) {
     myProjectManager = projectManager;
-    myResources = resources;
+    myProjectFeatures = projectFeatures;
     myResourceHelper = resourceHelper;
     myMessages = messages;
     myConfigActionFactory = configActionFactory;

@@ -1,11 +1,12 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
-import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.*;
 import static jetbrains.buildServer.util.StringUtil.split;
 
@@ -24,8 +25,8 @@ public class ResourceFactory {
    * @return new infinite quoted resource
    */
   @NotNull
-  public static Resource newInfiniteResource(@NotNull final String projectId, @NotNull final String name, boolean state) {
-    return QuotedResource.newInfiniteResource(projectId, name, state);
+  public static Resource newInfiniteResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, boolean state) {
+    return QuotedResource.newInfiniteResource(id, projectId, name, state);
   }
 
   /**
@@ -37,8 +38,8 @@ public class ResourceFactory {
    * @return new quoted resource with limited quota
    */
   @NotNull
-  public static Resource newQuotedResource(@NotNull final String projectId, @NotNull final String name, final int quota, boolean state) {
-    return QuotedResource.newResource(projectId, name, quota, state);
+  public static Resource newQuotedResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, final int quota, boolean state) {
+    return QuotedResource.newResource(id, projectId, name, quota, state);
   }
 
   /**
@@ -50,25 +51,39 @@ public class ResourceFactory {
    * @return new custom resource with specified value space
    */
   @NotNull
-  public static Resource newCustomResource(@NotNull final String projectId, @NotNull final String name, @NotNull final List<String> values, boolean state) {
-    return CustomResource.newCustomResource(projectId, name, values, state);
+  public static Resource newCustomResource(@NotNull final String id, @NotNull final String projectId, @NotNull final String name, @NotNull final List<String> values, boolean state) {
+    return CustomResource.newCustomResource(id, projectId, name, values, state);
   }
 
-  public static Resource fromProjectFeatureDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
+  @Nullable
+  public static Resource fromDescriptor(@NotNull final SProjectFeatureDescriptor descriptor) {
+    Resource result = null;
     final Map<String, String> parameters = descriptor.getParameters();
     ResourceType type = ResourceType.fromString(parameters.get(TYPE));
     final String enabledStr = parameters.get(ENABLED);
     final boolean resourceState = enabledStr == null || Boolean.parseBoolean(enabledStr);
     final String name = parameters.get(NAME);
-    if (type == ResourceType.QUOTED) {
-      return QuotedResource.newResource(descriptor.getProjectId(), name, Integer.parseInt(parameters.get(QUOTA)), resourceState);
-    } else {
-      return CustomResource.newCustomResource(
-              descriptor.getProjectId(),
-              name,
-              split(parameters.get(VALUES), true, '\r', '\n'),
-              resourceState
-      );
+    if (isEmptyOrSpaces(name)) {
+      return null;
     }
+    if (type == ResourceType.QUOTED) {
+      final String quotaStr = parameters.get(QUOTA);
+      if (!isEmptyOrSpaces(quotaStr)) {
+        try {
+          int quota = Integer.parseInt(quotaStr);
+          result = QuotedResource.newResource(descriptor.getId(), descriptor.getProjectId(), name, quota, resourceState);
+        } catch (NumberFormatException ignored) {}
+      }
+    } else {
+      final String valuesStr = parameters.get(VALUES);
+      if (!isEmptyOrSpaces(valuesStr)) {
+        List<String> values = split(valuesStr, true, '\r', '\n');
+        if (!values.isEmpty()) {
+          result = CustomResource.newCustomResource(descriptor.getId(), descriptor.getProjectId(), name, values, resourceState);
+        }
+      }
+    }
+    return result;
   }
+
 }

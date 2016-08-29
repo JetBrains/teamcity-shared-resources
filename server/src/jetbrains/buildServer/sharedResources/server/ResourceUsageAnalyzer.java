@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server;
 
+import java.util.*;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -24,10 +25,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.CollectionsUtil;
-import jetbrains.buildServer.util.filters.Filter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * Class {@code ResourceUsageAnalyzer}
@@ -59,9 +57,9 @@ public class ResourceUsageAnalyzer {
    */
   @NotNull
   public Map<Resource, Map<SBuildType, List<Lock>>> collectResourceUsages(@NotNull final SProject project) {
-    final Map<Resource, Map<SBuildType, List<Lock>>> result = new HashMap<Resource, Map<SBuildType, List<Lock>>>();
+    final Map<Resource, Map<SBuildType, List<Lock>>> result = new HashMap<>();
     final String projectId = project.getProjectId();
-    final Map<String, Resource> availableToMeResources = myResources.asMap(projectId);
+    final Map<String, Resource> availableToMeResources = myResources.getResourcesMap(projectId);
     if (!availableToMeResources.isEmpty()) {
       for (final SBuildType bt : project.getBuildTypes()) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bt);
@@ -74,12 +72,7 @@ public class ResourceUsageAnalyzer {
             currentBtResources = availableToMeResources;
           } else {
             currentBtResources = CollectionsUtil.filterMapByValues(
-                    myResources.asMap(btProjectId), new Filter<Resource>() {
-                      @Override
-                      public boolean accept(@NotNull Resource data) {
-                        return availableToMeResources.containsValue(data);
-                      }
-                    });
+              myResources.getResourcesMap(btProjectId), availableToMeResources::containsValue);
           }
           final Map<String, Lock> lockedResources = feature.getLockedResources();
           if (!lockedResources.isEmpty()) {
@@ -87,12 +80,12 @@ public class ResourceUsageAnalyzer {
             for (Map.Entry<Resource, List<Lock>> matched : matchResult.entrySet()) {
               Map<SBuildType, List<Lock>> resultMatch = result.get(matched.getKey());
               if (resultMatch == null) {
-                resultMatch = new HashMap<SBuildType, List<Lock>>();
+                resultMatch = new HashMap<>();
                 result.put(matched.getKey(), resultMatch);
               }
               List<Lock> locksList = resultMatch.get(bt);
               if (locksList == null) {
-                locksList = new ArrayList<Lock>();
+                locksList = new ArrayList<>();
                 resultMatch.put(bt, locksList);
               }
               locksList.addAll(matched.getValue());
@@ -114,13 +107,13 @@ public class ResourceUsageAnalyzer {
   @NotNull
   private Map<Resource, List<Lock>> findResourcesUsages(@NotNull final Map<String, Lock> locks,
                                                         @NotNull final Map<String, Resource> resources) {
-    final Map<Resource, List<Lock>> result = new HashMap<Resource, List<Lock>>();
+    final Map<Resource, List<Lock>> result = new HashMap<>();
     for (Map.Entry<String, Lock> e: locks.entrySet()) {
       final Resource r = resources.get(e.getKey());
       if (r != null) {
         List<Lock> matchedList = result.get(r);
         if (matchedList == null) {
-          matchedList = new ArrayList<Lock>();
+          matchedList = new ArrayList<>();
           result.put(r, matchedList);
         }
         matchedList.add(e.getValue());

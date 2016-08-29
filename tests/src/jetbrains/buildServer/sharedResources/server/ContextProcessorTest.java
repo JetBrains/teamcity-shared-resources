@@ -86,7 +86,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.writeLock." + lock.getName();
@@ -101,7 +101,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -124,7 +124,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
@@ -139,7 +139,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -162,7 +162,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
@@ -181,7 +181,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(currentFeature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -209,7 +209,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myTakenLocks.put(lock.getName(), lock);
 
     final Map<String, Resource> myDefinedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
     myDefinedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
@@ -226,7 +226,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(myDefinedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -247,7 +247,7 @@ public class ContextProcessorTest extends BaseTestCase {
   public void testProvideDuplicateValue() throws Exception {
     final String VALUE = "a";
     final Map<String, Resource> definedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList(VALUE, VALUE), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList(VALUE, VALUE), true);
     definedResources.put(resource.getName(), resource);
 
     final Map<String, Lock> takenLocks = new HashMap<>();
@@ -270,7 +270,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
@@ -306,7 +306,7 @@ public class ContextProcessorTest extends BaseTestCase {
     final String VALUE_AVAILABLE = "b";
 
     final Map<String, Resource> definedResources = new HashMap<>();
-    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource(PROJECT_ID, "CustomResource", Arrays.asList(VALUE_HELD, VALUE_HELD, VALUE_AVAILABLE), true);
+    final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList(VALUE_HELD, VALUE_HELD, VALUE_AVAILABLE), true);
     definedResources.put(resource.getName(), resource);
 
     final Map<String, Lock> takenLocks = new HashMap<>();
@@ -332,7 +332,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).asMap(PROJECT_ID);
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
       will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();

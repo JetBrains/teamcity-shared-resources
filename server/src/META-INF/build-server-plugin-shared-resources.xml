@@ -12,14 +12,16 @@
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilter"/>
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
+
+  <!-- === HEALTH === -->
   <bean class="jetbrains.buildServer.sharedResources.server.ConfigurationInspector"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.InvalidLocksReport"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidLocksReport"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.health.DuplicateResourcesHealthReport"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidResourcesHealthReport"/>
 
   <!-- ===  INTERNALS  === -->
 
-
   <bean class="jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl"/>
-
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>

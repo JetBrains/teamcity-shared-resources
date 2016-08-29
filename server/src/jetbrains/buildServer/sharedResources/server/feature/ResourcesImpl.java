@@ -16,15 +16,15 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,49 +46,57 @@ public final class ResourcesImpl implements Resources {
     myFeatures = resourceProjectFeatures;
   }
 
+  @NotNull
   @Override
-  public void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.addResource(project, resource.getParameters());
-  }
-
-  @Override
-  public void deleteResource(@NotNull final SProject project, @NotNull final String resourceName) {
-    myFeatures.deleteResource(project, resourceName);
-  }
-
-  @Override
-  public void editResource(@NotNull final SProject project,
-                           @NotNull final String currentName,
-                           @NotNull final Resource resource) throws DuplicateResourceException {
-    myFeatures.editResource(project, currentName, resource.getParameters());
+  public Map<String, Resource> getResourcesMap(@NotNull final String projectId) {
+    final SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      return getResources(project).stream().collect(Collectors.toMap(Resource::getName, Function.identity()));
+    } else {
+      return Collections.emptyMap();
+    }
   }
 
   @NotNull
   @Override
-  public Map<String, Resource> asMap(@NotNull final String projectId) {
-    return myFeatures.asMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
+  public List<Resource> getAllOwnResources(@NotNull final SProject project) {
+    return myFeatures.getOwnFeatures(project).stream()
+                     .map(ResourceProjectFeature::getResource)
+                     .filter(Objects::nonNull)
+                     .collect(Collectors.toList());
+
   }
 
   @NotNull
   @Override
-  public Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull String projectId) {
-    return myFeatures.asProjectResourceMap(myProjectManager.findProjectById(projectId)); //todo: projectId -> project
+  public List<Resource> getOwnResources(@NotNull final SProject project) {
+    return myFeatures.getOwnFeatures(project).stream()
+                     .map(ResourceProjectFeature::getResource)
+                     .filter(Objects::nonNull)
+                     .collect(Collectors.groupingBy(Resource::getName)).values().stream() // collect by name
+                     .filter(list -> list.size() == 1) // exclude duplicates
+                     .map(list -> list.get(0))
+                     .collect(Collectors.toList());
+
   }
 
   @NotNull
   @Override
-  public List<Resource> getOwnResources(@NotNull SProject project) {
-    return myFeatures.getOwnResources(project);
-  }
-
-  @NotNull
-  @Override
-  public List<Resource> getResources(@NotNull SProject project) {
-    return myFeatures.getResources(project);
+  public List<Resource> getResources(@NotNull final SProject project) {
+    final Set<String> names = new HashSet<>();
+    final Set<Resource> result = new HashSet<>();
+    final List<SProject> path = project.getProjectPath();
+    final ListIterator<SProject> it = path.listIterator(path.size());
+    while (it.hasPrevious()) {
+      final Set<Resource> filtered = getOwnResources(it.previous()).stream().filter(data -> !names.contains(data.getName())).collect(Collectors.toSet());
+      result.addAll(filtered);
+      names.addAll(filtered.stream().map(Resource::getName).collect(Collectors.toSet()));
+    }
+    return new ArrayList<>(result);
   }
 
   @Override
   public int getCount(@NotNull final SProject project) {
-    return myFeatures.getResources(project).size();
+    return getResources(project).size();
   }
 }

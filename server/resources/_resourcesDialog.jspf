@@ -70,6 +70,7 @@
       </td>
     </tr>
   </table>
+  <input type="hidden" id="resource_name" name="resource_name"/>
   <div class="popupSaveButtonsBlock">
     <forms:submit id="resourceDialogSubmit" label="Save"/>
     <forms:cancel onclick="BS.ResourceDialog.close()" showdiscardchangesmessage="false"/>
