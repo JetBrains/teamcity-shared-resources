@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2000-2013 JetBrains s.r.o.
+  ~ Copyright 2000-2016 JetBrains s.r.o.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@
 
 <jsp:useBean id="healthStatusItem" type="jetbrains.buildServer.serverSide.healthStatus.HealthStatusItem" scope="request"/>
 <jsp:useBean id="showMode" type="jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemDisplayMode" scope="request"/>
+<c:set var="inplaceMode" value="<%=HealthStatusItemDisplayMode.IN_PLACE%>"/>
 
 <c:set var="invalidLocks" value="${healthStatusItem.additionalData['invalid_locks']}"/>
 <c:set var="buildType" value="${healthStatusItem.additionalData['build_type']}"/>
-<c:set var="inplaceMode" value="<%=HealthStatusItemDisplayMode.IN_PLACE%>"/>
 
 <c:if test="${not empty invalidLocks}">
   <div>

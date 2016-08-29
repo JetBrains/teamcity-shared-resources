@@ -1,22 +1,25 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatureImpl;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.TestFor;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,18 +39,11 @@ public class ResourcesImplTest extends BaseTestCase {
 
   private SProject myRootProject;
 
-  private Map<String, Resource> myProjectResourceMap;
-
-  private Map<String, Resource> myRootResourceMap;
-
-  /**
-   * Class under test
-   */
-  private ResourcesImpl resources;
-
   private final String myProjectId = TestUtils.generateRandomName();
 
   private final String myRootProjectId = "<ROOT>";
+
+  private ResourcesImpl resources;
 
   @BeforeMethod
   @Override
@@ -56,23 +52,11 @@ public class ResourcesImplTest extends BaseTestCase {
     m = new Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};
-
     myProjectManager = m.mock(ProjectManager.class);
     myProject = m.mock(SProject.class, "currentProject");
     myRootProject = m.mock(SProject.class, "rootProject");
-
     myResourceProjectFeatures = m.mock(ResourceProjectFeatures.class);
     resources = new ResourcesImpl(myProjectManager, myResourceProjectFeatures);
-
-    myProjectResourceMap = new HashMap<String, Resource>() {{
-      put("resource1", ResourceFactory.newQuotedResource(myProjectId, "resource1", 1, true));
-      put("resource2", ResourceFactory.newInfiniteResource(myProjectId, "resource2", true));
-      put("resource3", ResourceFactory.newCustomResource(myProjectId, "resource3", Arrays.asList("value1", "value2", "value3"), true));
-    }};
-
-    myRootResourceMap = new HashMap<String, Resource>() {{
-      put("root_resource", ResourceFactory.newInfiniteResource(myRootProjectId, "root_resource", true));
-    }};
   }
 
   @Override
@@ -82,162 +66,266 @@ public class ResourcesImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  /**
-   * Adds new resource to root project
-   * @throws Exception if something goes wrong
-   */
   @Test
-  public void testAddResource_Success() throws Exception {
-    final Resource resource = ResourceFactory.newQuotedResource(myRootProjectId, "new_resource1", 1, true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myRootProject, resource.getParameters());
-    }});
-    resources.addResource(myRootProject, resource);
-  }
+  @SuppressWarnings("Duplicates")
+  public void testGetResourcesMap() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_2", true))
+    );
 
-  /**
-   * Adds resource to subproject
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testAddResourceToSubproject_Success() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "infinite_resource", true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
-    }});
-    resources.addResource(myProject, resource);
-  }
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_4", true))
+    );
 
-  /**
-   * Tries to add resource with the same name as existing to {@code Root} project.
-   * {@code DuplicateResourceException} is expected to be thrown.
-   *
-   * @see jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException
-   * @throws Exception if something goes wrong
-   */
-  @Test (expectedExceptions = DuplicateResourceException.class)
-  public void testAddResource_NameConflict_Fail() throws Exception {
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, "root_resource", true);
-    m.checking(new Expectations() {{
-      oneOf(myResourceProjectFeatures).addResource(myProject, resource.getParameters());
-      will(throwException(new DuplicateResourceException("root_resource")));
-    }});
-    resources.addResource(myProject, resource);
-  }
-
-  /**
-   * Tests name change for existing resource
-   * @throws Exception if something goes wrong
-   */
-  @Test (enabled = false) // todo: move
-  public void testEditResource_Success() throws Exception {
-    final String name = "resource1";
-    final Resource resource = ResourceFactory.newQuotedResource(myProjectId, "resource1_newName", 1, true);
-    resources.editResource(myProject, name, resource);
-  }
-
-  /**
-   * Tries to change the name of the existing resource to the name of
-   * another existing resource.
-   * {@code DuplicateResourceException} is expected to be thrown.
-   *
-   * @throws Exception if something goes wrong
-   */
-  @Test (expectedExceptions = DuplicateResourceException.class, enabled = false) // todo move
-  public void testEditResource_Fail() throws Exception {
-    final String oldName = "resource1";
-    final String newName = "resource2";
-    final Resource resource = ResourceFactory.newInfiniteResource(myProjectId, newName, true);
-    resources.editResource(myProject, oldName, resource);
-  }
-
-
-  @Test (enabled = false) //todo move
-  public void testDeleteResource() {
-    final Resource resource = myProjectResourceMap.get("resource1");
-    assertNotNull(resource);
-    resources.deleteResource(myProject, resource.getName());
-  }
-
-  @Test
-  public void testAsMap() {
     m.checking(new Expectations() {{
       oneOf(myProjectManager).findProjectById(myProjectId);
       will(returnValue(myProject));
-
-      oneOf(myResourceProjectFeatures).asMap(myProject);
-      will(returnValue(myProjectResourceMap));
-    }});
-
-    final Map<String, Resource> result = resources.asMap(myProjectId);
-    assertNotNull(result);
-    assertEquals(myProjectResourceMap.size(), result.size());
-  }
-
-  @Test (enabled = false) // todo: move to project resource features test
-  @TestFor(issues = "TW-37406")
-  public void testAsProjectResourceMap_PreserveOrder() {
-    m.checking(new Expectations() {{
-      oneOf(myProjectManager).findProjectById(myProjectId);
-      will(returnValue(myProject));
-
-      allowing(myProject).getProjectId();
-      will(returnValue(myProjectId));
 
       oneOf(myProject).getProjectPath();
       will(returnValue(Arrays.asList(myRootProject, myProject)));
 
-      allowing(myRootProject).getProjectId();
-      will(returnValue(myRootProjectId));
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
     }});
 
-    final Map<SProject, Map<String, Resource>> result = resources.asProjectResourceMap(myProjectId);
-    assertEquals(2, result.size());
-    Iterator<SProject> it = result.keySet().iterator();
-    assertTrue(it.hasNext());
-    SProject p = it.next();
-    assertEquals(myProjectId, p.getProjectId());
-    assertTrue(it.hasNext());
-    p = it.next();
-    assertEquals(myRootProjectId, p.getProjectId());
+    final Map<String, Resource> result = resources.getResourcesMap(myProjectId);
+    assertNotNull(result);
+    assertEquals(projectFeatures.size() + rootFeatures.size(), result.size());
   }
 
-  @Test (enabled = false) // todo: move
-  public void testGetCount_SingleProject() {
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetResourcesMap_WithDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_2", true))
+    );
+
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_4", true))
+    );
+
     m.checking(new Expectations() {{
-      oneOf(myProjectManager).findProjectById(myRootProjectId);
-      will(returnValue(myRootProject));
+      oneOf(myProjectManager).findProjectById(myProjectId);
+      will(returnValue(myProject));
 
-      oneOf(myRootProject).getProjectPath();
-      will(returnValue(Collections.singletonList(myRootProject)));
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
 
-      oneOf(myRootProject).getProjectId();
-      will(returnValue(myRootProjectId));
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
+    }});
+
+    final Map<String, Resource> result = resources.getResourcesMap(myProjectId);
+    assertNotNull(result);
+    assertEquals(3, result.size());
+  }
+
+
+  @Test
+  public void testGetOwnResources_NoDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_2", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_3", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+    }});
+
+    final List<Resource> result = resources.getOwnResources(myProject);
+    assertEquals(3, result.size());
+  }
+
+  @Test
+  public void testGetOwnResources_IgnoreDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_3", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+    }});
+
+    final List<Resource> result = resources.getOwnResources(myProject);
+    assertEquals(1, result.size());
+  }
+
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetResources_NoDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_2", true))
+    );
+
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_4", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
 
     }});
 
-    final int count = resources.getCount(myRootProject);
-    assertEquals(myRootResourceMap.size(), count);
+    final List<Resource> result = resources.getResources(myProject);
+    assertEquals(4, result.size());
   }
 
-  @Test (enabled = false) // todo: move
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetResources_IgnoreDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_2", true))
+    );
+
+    final List<ResourceProjectFeature> rootFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root2", myProjectId, "RESOURCE_3", true)),
+      createFeature(ResourceFactory.newInfiniteResource("root3", myProjectId, "RESOURCE_4", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
+
+    }});
+
+    final List<Resource> result = resources.getResources(myProject);
+    assertEquals(2, result.size());
+  }
+
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetAllOwnResources_IncludeDuplicates() {
+    final List<ResourceProjectFeature> projectFeatures = Arrays.asList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project2", myProjectId, "RESOURCE_1", true)),
+      createFeature(ResourceFactory.newInfiniteResource("project3", myProjectId, "RESOURCE_3", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+    }});
+
+    final List<Resource> result = resources.getAllOwnResources(myProject);
+    assertEquals(3, result.size());
+  }
+
+
+  @Test
+  public void testGetCount_SingleProject() {
+    final List<ResourceProjectFeature> projectFeatures = Collections.singletonList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_2", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Collections.singletonList(myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+    }});
+    assertEquals(1, resources.getCount(myProject));
+  }
+
+  @Test
+  @SuppressWarnings("Duplicates")
   public void testGetCount_Hierarchy() {
-    //setupGetCountHierarchy(myRootResourceMap, myProjectResourceMap);
-    final int count = resources.getCount(myProject);
-    assertEquals(myRootResourceMap.size() + myProjectResourceMap.size(), count);
+    final List<ResourceProjectFeature> rootFeatures = Collections.singletonList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myRootProjectId, "RESOURCE_1", true))
+    );
+
+    final List<ResourceProjectFeature> projectFeatures = Collections.singletonList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE_2", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
+    }});
+    assertEquals(2, resources.getCount(myProject));
   }
 
-  @Test (enabled = false) // todo: move
-  public void testGetCount_HierarchyOverriding() throws Exception {
-    final Map<String, Resource> baseMap = new HashMap<String, Resource>() {{
-      put("RESOURCE", ResourceFactory.newInfiniteResource(myRootProjectId, "RESOURCE", true));
-    }};
 
-    final Map<String, Resource> inheritedMap = new HashMap<String, Resource>() {{
-      put("RESOURCE", ResourceFactory.newInfiniteResource(myProjectId, "RESOURCE", true));
-    }};
-    //setupGetCountHierarchy(baseMap, inheritedMap);
-    final int count = resources.getCount(myProject);
-    assertEquals(1, count);
+  @Test
+  @SuppressWarnings("Duplicates")
+  public void testGetCount_HierarchyOverriding() throws Exception {
+    final List<ResourceProjectFeature> rootFeatures = Collections.singletonList(
+      createFeature(ResourceFactory.newInfiniteResource("root1", myRootProjectId, "RESOURCE", true))
+    );
+
+    final List<ResourceProjectFeature> projectFeatures = Collections.singletonList(
+      createFeature(ResourceFactory.newInfiniteResource("project1", myProjectId, "RESOURCE", true))
+    );
+
+    m.checking(new Expectations() {{
+      oneOf(myProject).getProjectPath();
+      will(returnValue(Arrays.asList(myRootProject, myProject)));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myProject);
+      will(returnValue(projectFeatures));
+
+      oneOf(myResourceProjectFeatures).getOwnFeatures(myRootProject);
+      will(returnValue(rootFeatures));
+    }});
+    assertEquals(1, resources.getCount(myProject));
+  }
+
+  private ResourceProjectFeature createFeature(@NotNull final Resource resource) {
+    final SProjectFeatureDescriptor descriptor = m.mock(SProjectFeatureDescriptor.class, "descriptor" + resource.getProjectId() + "_" + resource.getId());
+    m.checking(new Expectations() {{
+      allowing(descriptor).getId();
+      will(returnValue(resource.getId()));
+
+      allowing(descriptor).getParameters();
+      will(returnValue(resource.getParameters()));
+
+      allowing(descriptor).getProjectId();
+      will(returnValue(resource.getProjectId()));
+
+      allowing(descriptor).getType();
+      will(returnValue(SharedResourcesPluginConstants.FEATURE_TYPE));
+    }});
+    return new ResourceProjectFeatureImpl(descriptor);
   }
 }

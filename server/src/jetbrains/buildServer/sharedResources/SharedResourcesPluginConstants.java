@@ -17,6 +17,8 @@
 package jetbrains.buildServer.sharedResources;
 
 import java.util.Comparator;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 
 /**
  * @author Oleg Rybak
@@ -56,6 +58,7 @@ public class SharedResourcesPluginConstants {
     String PARAM_RESOURCE_NAME = "resource_name";
     String PARAM_RESOURCE_TYPE = "resource_type";
     String PARAM_RESOURCE_STATE = "resource_state";
+    String PARAM_RESOURCE_ID = "resource_id";
 
     String PARAM_RESOURCE_VALUES = "resource_values";
     String PARAM_RESOURCE_QUOTA = "resource_quota";

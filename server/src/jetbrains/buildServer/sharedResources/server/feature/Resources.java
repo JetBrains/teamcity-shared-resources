@@ -16,13 +16,11 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.exceptions.DuplicateResourceException;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,56 +30,32 @@ import java.util.Map;
 public interface Resources {
 
   /**
-   * Adds given resource to project resources
-   *
-   * @param project project to add resource to
-   * @param resource resource to add
-   * @throws DuplicateResourceException if resource with the same name as {@code resource} in parameters exists
-   */
-  void addResource(@NotNull final SProject project, @NotNull final Resource resource) throws DuplicateResourceException;
-
-  /**
-   * Deletes given resource from the project
-   *
-   * @param project project to delete resource from
-   * @param resourceName name of the resource to delete
-   */
-  void deleteResource(@NotNull final SProject project, @NotNull final String resourceName);
-
-  /**
-   * Edits given resource
-   *
-   * @param project to edit resource in
-   * @param currentName currentName of the resource
-   * @param resource resource to replace existing one
-   * @throws DuplicateResourceException if resource with given name exists
-   */
-  void editResource(@NotNull final SProject project,
-                    @NotNull final String currentName,
-                    @NotNull final Resource resource) throws DuplicateResourceException;
-
-  /**
    * Gets all resources for project with given {@code projectId} and all its ancestors
+   *
+   * {@link #getResources(SProject)} cannot be used in runtime, as it requires project to be present,
+   * which makes this method a convenient single point, where we acquire project by project id
    *
    * @param projectId id oof the current project
    * @return map of resources in format {@code resource_name -> resource}
    */
   @NotNull
-  Map<String, Resource> asMap(@NotNull final String projectId);
+  Map<String, Resource> getResourcesMap(@NotNull final String projectId);
 
   /**
-   * Gets all resources for project with given {@code projectId} and
-   * all its ancestors
+   * Returns all valid resources, defined in current project
+   * Duplicates are not excluded.
+   * Not to be used in runtime for resource locking
    *
-   * @param projectId id of the current project
-   * @return map of projects and resources in format {@code project -> {resource_name -> resource}}
+   * @param project project to get resources for
+   * @return all valid resources, defined in current project
    */
   @NotNull
-  Map<SProject, Map<String, Resource>> asProjectResourceMap(@NotNull final String projectId);
-
+  List<Resource> getAllOwnResources(@NotNull final SProject project);
 
   /**
    * Gets project own resources
+   * Excludes duplicates
+   *
    * @param project project to get resources for
    * @return own resources of the project
    */
@@ -90,6 +64,8 @@ public interface Resources {
 
   /**
    * Gets resources for project with inheritance
+   * Duplicates are excluded on every level of project hierarchy
+   *
    * @param project project to get resources for
    * @return project's resources with inheritance
    */
@@ -98,6 +74,7 @@ public interface Resources {
 
   /**
    * Gets number of resources, visible for project with given project id
+   * Counts only resources available at runtime. Ignores duplicates
    *
    * @param project to count resources in
    * @return number of visible resources

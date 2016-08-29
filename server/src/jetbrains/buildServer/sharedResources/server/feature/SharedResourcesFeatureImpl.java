@@ -84,7 +84,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
       // serialize locks
       final String locksAsString = myLocks.asFeatureParameter(myLockedResources.values());
       // update build feature parameters
-      final Map<String, String> newParams = new HashMap<String, String>(myDescriptor.getParameters());
+      final Map<String, String> newParams = new HashMap<>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
       // update build feature
       boolean updated = buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
@@ -110,10 +110,10 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   @Override
   public Map<Lock, String> getInvalidLocks(@NotNull final String projectId) {
     // Lock is mapped to description of its invalid state
-    final Map<Lock, String> invalidLocks = new HashMap<Lock, String>();
+    final Map<Lock, String> invalidLocks = new HashMap<>();
     // get visible resources
     if (!myLockedResources.isEmpty()) {
-      final Map<String, Resource> resources = myResources.asMap(projectId);
+      final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
       for (Map.Entry<String, Lock> entry : myLockedResources.entrySet()) {
         // check that resource exists
         Resource r = resources.get(entry.getKey());

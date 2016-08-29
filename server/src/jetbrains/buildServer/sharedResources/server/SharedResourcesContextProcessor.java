@@ -66,7 +66,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     if (projectId != null && myType != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myType);
       if (!features.isEmpty()) {
-        final Map<String, Lock> locks = new HashMap<String, Lock>();
+        final Map<String, Lock> locks = new HashMap<>();
         for (SharedResourcesFeature f: features) {
           locks.putAll(f.getLockedResources());
         }
@@ -91,7 +91,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
         for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
           if (entry.getValue().isEnabled()) {
             // get value space for current resources
-            final List<String> values = new ArrayList<String>(entry.getValue().getValues());
+            final List<String> values = new ArrayList<>(entry.getValue().getValues());
             final String key = entry.getKey();
             // remove used values
             usedValues.get(key).forEach(values::remove);
@@ -127,9 +127,9 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   @NotNull
   private Map<String, List<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks) {
     final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
-    final Map<String, List<String>> usedValues = new HashMap<String, List<String>>();
+    final Map<String, List<String>> usedValues = new HashMap<>();
     for (String name: locks.keySet()) {
-      usedValues.put(name, new ArrayList<String>());
+      usedValues.put(name, new ArrayList<>());
     }
     // collect taken values from runtime
     for (SRunningBuild runningBuild: runningBuilds) {
@@ -157,8 +157,8 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   @NotNull
   private Map<String, CustomResource> getCustomResources(@NotNull final String projectId,
                                                          @NotNull final Map<String, Lock> locks) {
-    final Map<String, CustomResource> myCustomResources = new HashMap<String, CustomResource>();
-    final Map<String, Resource> resourceMap = myResources.asMap(projectId);
+    final Map<String, CustomResource> myCustomResources = new HashMap<>();
+    final Map<String, Resource> resourceMap = myResources.getResourcesMap(projectId);
     for (Map.Entry<String, Lock> entry: locks.entrySet()) {
       final Resource r = resourceMap.get(entry.getKey());
       if (ResourceType.CUSTOM.equals(r.getType())) {
@@ -170,7 +170,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   @NotNull
   private Map<Lock, String> initTakenValues(@NotNull final Collection<Lock> myLocks) {
-    final Map<Lock, String> result = new HashMap<Lock, String>();
+    final Map<Lock, String> result = new HashMap<>();
     for (Lock lock: myLocks) {
       result.put(lock, "");
     }

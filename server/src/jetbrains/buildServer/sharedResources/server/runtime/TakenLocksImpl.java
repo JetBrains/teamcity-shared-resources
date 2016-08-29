@@ -64,8 +64,8 @@ public class TakenLocksImpl implements TakenLocks {
   public Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
                                                     @NotNull final Collection<SRunningBuild> runningBuilds,
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
-    final Map<Resource, TakenLock> result = new HashMap<Resource, TakenLock>();
-    final Map<String, Map<String, Resource>> cachedResources = new HashMap<String, Map<String, Resource>>();
+    final Map<Resource, TakenLock> result = new HashMap<>();
+    final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
     for (SRunningBuild build: runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
@@ -115,7 +115,7 @@ public class TakenLocksImpl implements TakenLocks {
                                              @NotNull final Map<String, Map<String, Resource>> cachedResources) {
     Map<String, Resource> result = cachedResources.get(btProjectId);
     if (result == null) {
-      result = myResources.asMap(btProjectId);
+      result = myResources.getResourcesMap(btProjectId);
       cachedResources.put(btProjectId, result);
     }
     return result;
@@ -127,8 +127,8 @@ public class TakenLocksImpl implements TakenLocks {
                                                  @NotNull Map<Resource, TakenLock> takenLocks,
                                                  @NotNull String projectId,
                                                  @NotNull final Set<String> fairSet) {
-    final Map<String, Resource> resources = myResources.asMap(projectId);
-    final Map<Resource, Lock> result = new HashMap<Resource, Lock>();
+    final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
+    final Map<Resource, Lock> result = new HashMap<>();
     for (Lock lock : locksToTake) {
       final Resource resource = resources.get(lock.getName());
       if (resource != null) {
@@ -203,7 +203,7 @@ public class TakenLocksImpl implements TakenLocks {
         // 3) SPECIFIC case
         if (!"".equals(lock.getValue())) { // we have custom lock
           final String requiredValue = lock.getValue();
-          final Set<String> takenValues = new HashSet<String>();
+          final Set<String> takenValues = new HashSet<>();
           takenValues.addAll(takenLock.getReadLocks().values());
           takenValues.addAll(takenLock.getWriteLocks().values());
           if (takenValues.contains(requiredValue)) {

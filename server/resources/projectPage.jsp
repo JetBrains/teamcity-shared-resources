@@ -20,6 +20,7 @@
 
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <%--@elvariable id="usages" type="java.util.Map<jetbrains.buildServer.sharedResources.model.resources.Resource, java.util.Map<jetbrains.buildServer.serverSide.SBuildType,java.util.List<jetbrains.buildServer.sharedResources.model.Lock>>"--%>
+<%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
 
 <c:set var="project" value="${bean.project}"/>
 
@@ -30,6 +31,7 @@
 <c:set var="PARAM_RESOURCE_VALUES" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_VALUES%>"/>
 <c:set var="PARAM_OLD_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME%>"/>
 <c:set var="PARAM_RESOURCE_STATE" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_STATE%>"/>
+<c:set var="PARAM_RESOURCE_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID%>"/>
 
 <c:set var="ACTIONS" value="<%=SharedResourcesPluginConstants.WEB.ACTIONS%>"/>
 
@@ -51,6 +53,7 @@
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
       params['${PARAM_RESOURCE_NAME}'] = $j('#resource_name').val();
       params['${PARAM_RESOURCE_STATE}'] = $j('#resource_enabled').prop('checked');
+      params['${PARAM_RESOURCE_ID}'] = $j('#resource_id').val();
 
       // infinite
       if (type === 'infinite') {
@@ -87,9 +90,10 @@
       });
     },
 
-    editResource: function (old_resource_name) {
+    editResource: function (resource_id, old_resource_name) {
       var params = this.getCommonParams();
       params['${PARAM_OLD_RESOURCE_NAME}'] = old_resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['action'] = 'editResource';
       BS.ajaxRequest(this.actionsUrl, {
         parameters: params,
@@ -105,10 +109,10 @@
       });
     },
 
-    deleteResource: function (resource_name) {
+    deleteResource: function (resource_id) {
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
-      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['action'] = 'deleteResource';
 
       if (confirm('Are you sure you want to delete this resource? It may result in errors if the name is used as a parameter reference.')) {
@@ -125,10 +129,10 @@
       alert('Resource ' + resource_name + " can't be deleted because it is in use");
     },
 
-    enableDisableResource: function (resource_name, new_state) {
+    enableDisableResource: function (resource_id, new_state) {
       var params = {};
       params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
-      params['${PARAM_RESOURCE_NAME}'] = resource_name;
+      params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['${PARAM_RESOURCE_STATE}'] = new_state;
       params['action'] = 'enableDisableResource';
       if (confirm('Are you sure you want to ' + (new_state ? 'enable' : 'disable') + ' this resource?')) {
@@ -147,12 +151,13 @@
   var myValues;
   var r;
   var v;
-  <c:forEach var="item" items="${bean.allResources}">
+  <c:forEach var="item" items="${bean.ownResources}">
   <c:set var="type" value="${item.type}"/>
   r = {
     name: '<bs:escapeForJs text="${item.name}"/>',
     type: '${item.type}',
-    enabled: ${item.enabled}
+    enabled: ${item.enabled},
+    id: '${item.id}'
   };
   <c:choose>
 
@@ -160,7 +165,7 @@
   <c:when test="${type == type_quota}">
   r['quota'] = '${item.quota}';
   r['infinite'] = ${item.infinite};
-  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.id}"/>'] = r;
   </c:when>
 
   <%-- custom resource--%>
@@ -170,14 +175,13 @@
   myValues.push('<bs:escapeForJs text="${val}"/>');
   </c:forEach>
   r['customValues'] = myValues;
-  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.name}"/>'] = r;
+  BS.ResourceDialog.myData['<bs:escapeForJs text="${item.id}"/>'] = r;
   </c:when>
 
   <c:otherwise>
   console.log('Resource [<bs:escapeForJs text="${item.name}"/>] was not recognized');
   </c:otherwise>
   </c:choose>
-  BS.ResourceDialog.existingResources['<bs:escapeForJs text="${item.name}"/>'] = true;
   </c:forEach>
 </script>
 
@@ -190,8 +194,8 @@
   <bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
 
   <c:if test="${not project.readOnly}">
-  <forms:addButton id="addNewResource"
-                   onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
+    <forms:addButton id="addNewResource"
+                     onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
   </c:if>
 
   <div>
@@ -199,7 +203,7 @@
     <%@ include file="_displayErrors.jspf" %>
 
     <c:choose>
-      <c:when test="${not empty bean.myResources}">
+      <c:when test="${not empty bean.ownResources}">
         <p style="margin-top: 2em">Resources defined in the current project</p>
         <l:tableWithHighlighting id="resourcesTable"
                                  className="parametersTable"
@@ -209,7 +213,7 @@
             <th style="width: 45%">Resource Name</th>
             <th colspan="4">Description</th>
           </tr>
-          <c:set var="resourcesToDisplay" value="${bean.myResources}"/>
+          <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
           <c:set var="allowChange" value="${not project.readOnly}"/>
           <%@ include file="_displayResources.jspf" %>
         </l:tableWithHighlighting>
@@ -221,20 +225,19 @@
       </c:otherwise>
     </c:choose>
 
-    <c:forEach var="ir" items="${bean.inheritedResources}">
-      <c:set var="p" value="${ir.key}"/> <%-- project --%>
-      <c:set var="pr" value="${ir.value}"/> <%--Map<String, Resource>--%>
-      <c:if test="${not empty pr}">
+    <c:forEach var="pathElement" items="${bean.projectPath}">
+      <c:set var="projectResources" value="${bean.inheritedResources[pathElement.projectId]}"/>
+      <c:if test="${not empty projectResources}">
         <p style="margin-top: 2em">
           Resources inherited from
-          <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
-            <jsp:attribute name="ifAccessGranted">
-              <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
-              <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
-            </jsp:attribute>
-            <jsp:attribute name="ifAccessDenied">
-              <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
-            </jsp:attribute>
+          <authz:authorize projectId="${pathElement.externalId}" allPermissions="EDIT_PROJECT" >
+          <jsp:attribute name="ifAccessGranted">
+            <c:url var="editUrl" value="/admin/editProject.html?projectId=${pathElement.externalId}&tab=JetBrains.SharedResources"/>
+          <a href="${editUrl}"><c:out value="${pathElement.extendedFullName}"/></a>
+          </jsp:attribute>
+          <jsp:attribute name="ifAccessDenied">
+            <bs:projectLink project="${pathElement}"><c:out value="${pathElement.extendedFullName}"/></bs:projectLink>
+          </jsp:attribute>
           </authz:authorize>
         </p>
         <table class="parametersTable">
@@ -242,7 +245,7 @@
             <th style="width: 45%">Resource Name</th>
             <th colspan="2">Description</th>
           </tr>
-          <c:set var="resourcesToDisplay" value="${pr}"/>
+          <c:set var="resourcesToDisplay" value="${projectResources}"/>
           <c:set var="allowChange" value="${false}"/>
           <%@ include file="_displayResources.jspf" %>
         </table>

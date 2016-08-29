@@ -14,6 +14,13 @@ import java.util.Map;
 public interface Resource {
 
   /**
+   * Returns generated id of the resource
+   * @return id of the resource
+   */
+  @NotNull
+  String getId();
+
+  /**
    * Returns unique name of the resource
    * @return name of the resource
    */

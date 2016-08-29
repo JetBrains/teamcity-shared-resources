@@ -16,13 +16,13 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
-import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,21 +35,32 @@ public class SharedResourcesBean {
   private final SProject myProject;
 
   @NotNull
-  private Map<SProject, Map<String, Resource>> myProjectResources = new HashMap<SProject, Map<String, Resource>>();
+  private final List<Resource> myOwnResources;
 
   @NotNull
-  private final Map<SBuildType, Map<Lock, String>> myConfigurationErrors;
+  private Map<String, List<Resource>> myResourceMap;
 
   public SharedResourcesBean(@NotNull final SProject project,
-                             @NotNull final Map<SProject, Map<String, Resource>> projectResources,
-                             @NotNull final Map<SBuildType, Map<Lock, String>> configurationErrors) {
+                             @NotNull final Resources resources,
+                             boolean forProjectPage) {
     myProject = project;
-    myProjectResources = projectResources;
-    myConfigurationErrors = configurationErrors;
+    myResourceMap = resources.getResources(project).stream().collect(Collectors.groupingBy(Resource::getProjectId));
+    if (forProjectPage) {
+      myOwnResources = resources.getAllOwnResources(project);
+    } else {
+      myOwnResources = resources.getOwnResources(project);
+    }
   }
 
-  public SharedResourcesBean(@NotNull final SProject project, @NotNull final Map<SProject, Map<String, Resource>> projectResources) {
-    this(project, projectResources, Collections.<SBuildType, Map<Lock, String>>emptyMap());
+  @NotNull
+  public List<Resource> getOwnResources() {
+    return myOwnResources;
+  }
+
+  public Map<String, List<Resource>> getInheritedResources() {
+    final Map<String, List<Resource>> result = new LinkedHashMap<>(myResourceMap);
+    result.remove(myProject.getProjectId());
+    return result;
   }
 
   @NotNull
@@ -58,32 +69,17 @@ public class SharedResourcesBean {
   }
 
   @NotNull
-  public Map<String, Resource> getMyResources() {
-    Map<String, Resource> result = myProjectResources.get(myProject);
-    if (result == null) {
-      result = Collections.emptyMap();
-    }
-    return result;
-  }
-
-  @NotNull
-  public Map<SProject, Map<String, Resource>> getInheritedResources() {
-    final Map<SProject, Map<String, Resource>> result = new LinkedHashMap<SProject, Map<String, Resource>>(myProjectResources);
-    result.remove(myProject);
+  public List<SProject> getProjectPath() {
+    List<SProject> result = myProject.getProjectPath();
+    Collections.reverse(result);
     return result;
   }
 
   @NotNull
   public Collection<Resource> getAllResources() {
-    final Collection<Resource> result = new HashSet<Resource>();
-    for (Map<String, Resource> map : myProjectResources.values()) {
-      result.addAll(map.values());
-    }
-    return result;
+    return myResourceMap.values().stream()
+                        .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
+                        .collect(Collectors.toList());
   }
 
-  @NotNull
-  public Map<SBuildType, Map<Lock, String>> getConfigurationErrors() {
-    return Collections.unmodifiableMap(myConfigurationErrors);
-  }
 }
