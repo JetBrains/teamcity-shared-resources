@@ -2,6 +2,8 @@
   <library name="testng">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/testng/testng-6.9.12.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/testng/bsh-2.0b4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/testng/jcommander-1.48.jar!/" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$PROJECT_DIR$/lib/testng/testng-6.9.12-javadoc.jar!/" />
