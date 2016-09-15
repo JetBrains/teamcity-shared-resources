@@ -410,6 +410,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myProject).getExtendedName();
       will(returnValue("Parent :: Project"));
 
+      oneOf(myBuildType).getExtendedName();
+      will(returnValue("Project :: BuildType"));
+
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);

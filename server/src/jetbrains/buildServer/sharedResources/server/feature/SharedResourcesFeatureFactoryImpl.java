@@ -29,17 +29,13 @@ public final class SharedResourcesFeatureFactoryImpl implements SharedResourcesF
   @NotNull
   private final Locks myLocks;
 
-  @NotNull
-  private final Resources myResources;
-
-  public SharedResourcesFeatureFactoryImpl(@NotNull final Locks locks, @NotNull Resources resources) {
+  public SharedResourcesFeatureFactoryImpl(@NotNull final Locks locks) {
     myLocks = locks;
-    myResources = resources;
   }
 
   @NotNull
   @Override
   public SharedResourcesFeature createFeature(@NotNull final SBuildFeatureDescriptor descriptor) {
-    return new SharedResourcesFeatureImpl(myLocks, myResources, descriptor);
+    return new SharedResourcesFeatureImpl(myLocks, descriptor);
   }
 }

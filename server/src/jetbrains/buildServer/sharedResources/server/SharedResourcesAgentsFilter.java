@@ -2,6 +2,10 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -14,9 +18,6 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -73,10 +74,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
-        reason = checkForInvalidResources(buildType.getProject());
-        if (reason == null) {
-          reason = checkForInvalidLocks(buildType);
-        }
+        reason = checkForInvalidLocks(buildType);
         if (reason == null) {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
@@ -148,25 +146,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       builder.append(buildType.getExtendedName()).append(" has shared resources configuration error");
       builder.append(invalidLocks.size() > 1 ? "s: " : ": ");
       builder.append(StringUtil.join(invalidLocks.values(), " "));
-      result = new SimpleWaitReason(builder.toString());
-    }
-    return result;
-  }
-
-  @Nullable
-  private WaitReason checkForInvalidResources(@NotNull final SProject project) {
-    WaitReason result = null;
-    // project name -> list of duplicate resources
-    final Map<SProject, List<String>> duplicates = myInspector.getDuplicateResources(project);
-    if (!duplicates.isEmpty()) {
-      StringBuilder builder = new StringBuilder("Shared resources configuration is not valid. ");
-      duplicates.entrySet().forEach(
-              entry -> {
-                builder.append("Project ").append(entry.getKey().getExtendedName()).append(" has invalid resource");
-                builder.append(entry.getValue().size() > 1 ? "s: " : ": ");
-                builder.append(entry.getValue().stream().collect(Collectors.joining(", ")));
-              }
-      );
       result = new SimpleWaitReason(builder.toString());
     }
     return result;

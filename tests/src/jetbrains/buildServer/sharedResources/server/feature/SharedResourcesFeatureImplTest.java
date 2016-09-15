@@ -1,5 +1,7 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.HashMap;
+import java.util.Map;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildTypeTemplate;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
@@ -7,17 +9,11 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -31,8 +27,6 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private Locks myLocks;
 
-  private Resources myResources;
-
   private SBuildFeatureDescriptor myBuildFeatureDescriptor;
 
   private SBuildType myBuildType;
@@ -45,15 +39,12 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private Map<String, String> expectedBuildParameters;
 
-  private final String myProjectId = "PROJECT_ID";
-
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     m = new Mockery();
     myLocks = m.mock(Locks.class);
-    myResources = m.mock(Resources.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
     myBuildType = m.mock(SBuildType.class);
     myBuildTypeTemplate = m.mock(BuildTypeTemplate.class);
@@ -77,7 +68,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(myLockedResources));
     }});
 
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     Map<String, Lock> lockedResources = feature.getLockedResources();
     assertNotNull(lockedResources);
     assertEquals(myLockedResources.size(), lockedResources.size());
@@ -96,7 +87,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myLocks).asBuildParameters(myLockedResources.values());
       will(returnValue(expectedBuildParameters));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     final Map<String, String> params = feature.getBuildParameters();
     assertNotNull(params);
     assertEquals(expectedBuildParameters.size(), params.size());
@@ -136,7 +127,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(true));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     assertTrue("Resource was not updated from " + oldName + " to " + newName, feature.updateLock(myBuildType, oldName, newName));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);
@@ -153,7 +144,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       oneOf(myBuildType).updateBuildFeature("", "", params);
       will(returnValue(true));
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     assertTrue("Resource was not updated from lock_with_value1 to lock_with_value2", feature.updateLock(myBuildType, "lock_with_value1", "lock_with_value2"));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get("lock_with_value1");
@@ -183,134 +174,13 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       will(returnValue(true));
 
     }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
+    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
     assertTrue("Resource was not updated from " + oldName + " to " + newName, feature.updateLock(myBuildType, oldName, newName));
     final Map<String, Lock> locks = feature.getLockedResources();
     Lock lock = locks.get(oldName);
     assertNull(lock);
     lock = locks.get(newName);
     assertNotNull(lock);
-  }
-
-  @Test
-  public void testGetInvalidLocks_Empty() throws Exception {
-    m.checking(new Expectations() {{
-      oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
-      will(returnValue(Collections.emptyMap()));
-    }});
-
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
-    assertNotNull(invalidLocks);
-    assertEmpty(invalidLocks.entrySet());
-  }
-
-  @Test
-  public void testGetInvalidLocks_AllRight() throws Exception {
-
-    final Map<String, Lock> lockedResources = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ));
-      put("lock2", new Lock("lock2", LockType.WRITE));
-      put("lock3", new Lock("lock2", LockType.WRITE, "value1"));
-    }};
-
-    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value1"), true));
-    }};
-
-    setupLockedResources(lockedResources, resources);
-
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
-    assertNotNull(invalidLocks);
-    assertEmpty(invalidLocks.entrySet());
-  }
-
-  @Test
-  public void testGetInvalidLocks_NoResource() throws Exception {
-    final Lock lock1 = new Lock("lock1", LockType.READ);
-    final Map<String, Lock> lockedResources = new HashMap<String, Lock>() {{
-      put(lock1.getName(), lock1);
-      put("lock2", new Lock("lock2", LockType.WRITE));
-      put("lock3", new Lock("lock2", LockType.WRITE, "value1"));
-    }};
-
-    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value1"), true));
-    }};
-
-    setupLockedResources(lockedResources, resources);
-
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
-    assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks.entrySet());
-    assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks.keySet(), lock1);
-  }
-
-  @Test
-  public void testGetInvalidLocks_WrongType() throws Exception {
-    final Lock lock3 = new Lock("lock3", LockType.WRITE, "value1");
-    final Map<String, Lock> lockedResources = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ));
-      put("lock2", new Lock("lock2", LockType.WRITE));
-      put("lock3", lock3);
-    }};
-
-    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
-      // wrong type here
-      put("lock3", ResourceFactory.newInfiniteResource("lock3", myProjectId, "lock3", true));
-    }};
-
-    setupLockedResources(lockedResources, resources);
-
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
-    assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks.entrySet());
-    assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks.keySet(), lock3);
-  }
-
-  @Test
-  public void testGetInvalidLocks_MissingValue() throws Exception {
-    final Lock lock3 = new Lock("lock3", LockType.WRITE, "value1");
-    final Map<String, Lock> lockedResources = new HashMap<String, Lock>() {{
-      put("lock1", new Lock("lock1", LockType.READ));
-      put("lock2", new Lock("lock2", LockType.WRITE));
-      put("lock3", lock3);
-    }};
-
-    final Map<String, Resource> resources = new HashMap<String, Resource>() {{
-      put("lock1", ResourceFactory.newInfiniteResource("lock1", myProjectId, "lock1", true));
-      put("lock2", ResourceFactory.newQuotedResource("lock2", myProjectId, "lock2", 123, true));
-      put("lock3", ResourceFactory.newCustomResource("lock3", myProjectId, "lock3", Collections.singletonList("value2"), true));
-    }};
-
-    setupLockedResources(lockedResources, resources);
-
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myResources, myBuildFeatureDescriptor);
-    final Map<Lock, String> invalidLocks = feature.getInvalidLocks(myProjectId);
-    assertNotNull(invalidLocks);
-    assertNotEmpty(invalidLocks.entrySet());
-    assertEquals(1, invalidLocks.size());
-    assertContains(invalidLocks.keySet(), lock3);
-  }
-
-  private void setupLockedResources(final Map<String, Lock> lockedResources, final Map<String, Resource> resources) {
-    m.checking(new Expectations() {{
-      oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
-      will(returnValue(lockedResources));
-
-      oneOf(myResources).getResourcesMap(myProjectId);
-      will(returnValue(resources));
-    }});
   }
 }
 

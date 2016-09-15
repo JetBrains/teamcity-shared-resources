@@ -34,8 +34,7 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
     m = new Mockery();
     myLocks = m.mock(Locks.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
-    final Resources resources = m.mock(Resources.class);
-    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks, resources);
+    myFactory = new SharedResourcesFeatureFactoryImpl(myLocks);
   }
 
   @Test

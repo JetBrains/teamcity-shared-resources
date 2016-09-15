@@ -57,15 +57,4 @@ public interface SharedResourcesFeature {
    */
   @NotNull
   Map<String, String> getBuildParameters();
-
-  /**
-   * Checks that build feature is in valid state, i.e. can acquire all of its locks.
-   * Main concern here are resources inherited from ancestor projects
-   *
-   * @param projectId project id to check feature in
-   * @return Collection of invalid locks, i.e. locks that have either no resource or
-   *         wrong type of resource (in case of custom valued lock backed by quoted resource)
-   */
-  @NotNull
-  Map<Lock, String> getInvalidLocks(@NotNull final String projectId);
 }

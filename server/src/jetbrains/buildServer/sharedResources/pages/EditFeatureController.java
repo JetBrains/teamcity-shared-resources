@@ -32,6 +32,7 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
@@ -62,15 +63,20 @@ public class EditFeatureController extends BaseController {
   @NotNull
   private final SharedResourcesFeatureFactory myFactory;
 
+  @NotNull
+  private final ConfigurationInspector myInspector;
+
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
-                               @NotNull final SharedResourcesFeatureFactory factory) {
+                               @NotNull final SharedResourcesFeatureFactory factory,
+                               @NotNull final ConfigurationInspector inspector) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
     myFactory = factory;
+    myInspector = inspector;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
   }
 
@@ -101,7 +107,7 @@ public class EditFeatureController extends BaseController {
         if (buildFeatureId.equals(descriptor.getId())) {
           // we have feature that we need to edit
           locks.putAll(f.getLockedResources());
-          invalidLocks.addAll(f.getInvalidLocks(projectId).keySet());
+          invalidLocks.addAll(myInspector.inspect(project, f).keySet());
           inherited =  bfb.isInherited();
           if (inherited) {
             model.put("template", buildTypeSettings.getTemplate());

@@ -1,14 +1,13 @@
 package jetbrains.buildServer.sharedResources.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
+import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -43,11 +42,12 @@ public class ConfigurationInspector {
 
   @NotNull
   public Map<Lock, String> inspect(@NotNull final SBuildType type) {
-    final Map<Lock, String> result = new HashMap<>();
-    for (SharedResourcesFeature feature: myFeatures.searchForFeatures(type)) {
-      result.putAll(feature.getInvalidLocks(type.getProjectId()));
-    }
-    return result;
+    return getInvalidLocks(type.getProject(), myFeatures.searchForFeatures(type));
+  }
+
+  @NotNull
+  public Map<Lock, String> inspect(@NotNull final SProject project, @NotNull final SharedResourcesFeature feature) {
+    return getInvalidLocks(project, Collections.singleton(feature));
   }
 
   /**
@@ -56,7 +56,7 @@ public class ConfigurationInspector {
    * @return map of projects to the list of duplicate resources in the project
    */
   @NotNull
-  public Map<SProject, List<String>> getDuplicateResources(@NotNull final SProject project) {
+  Map<SProject, List<String>> getDuplicateResources(@NotNull final SProject project) {
     final Map<SProject, List<String>> result = new HashMap<>();
     project.getProjectPath().forEach(p -> {
       final List<String> duplicateNames = getOwnDuplicateNames(p);
@@ -144,4 +144,79 @@ public class ConfigurationInspector {
     return result;
   }
 
+  private static final String OK = "OK";
+
+  private Map<Lock, String> getInvalidLocks(@NotNull final SProject project,
+                                            @NotNull final Collection<SharedResourcesFeature> features) {
+    final Map<Lock, String> result = new HashMap<>();
+    final Map<String, Lock> locks = new HashMap<>();
+    features.stream().map(SharedResourcesFeature::getLockedResources).forEach(locks::putAll);
+    if (locks.isEmpty()) {
+      return result;
+    }
+    final List<SProject> path = project.getProjectPath();
+    final ListIterator<SProject> iterator = path.listIterator(path.size());
+    while (iterator.hasPrevious() && !locks.isEmpty()) {
+      SProject p = iterator.previous();
+      // try to resolve against current project.
+      // 1) if any of unresolved locks hit duplicates - add error
+      Set<String> duplicates = new HashSet<>(getOwnDuplicateNames(p));
+      if (!duplicates.isEmpty()) {
+        // intersect
+        duplicates.retainAll(locks.keySet());
+        if (!duplicates.isEmpty()) {
+          duplicates.forEach(dup -> {
+            Lock lock = locks.remove(dup);
+            if (lock != null) {
+              result.put(lock, "Resource '" + lock.getName() + "' cannot be resolved due to duplicate name");
+            }
+          });
+        }
+      }
+      if (locks.isEmpty()) {
+        break;
+      }
+      // 2) resolve rest of the locks
+      Map<String, String> resolutionResult = resolveStep(myResources.getOwnResources(p), locks);
+      resolutionResult.entrySet().forEach(entry -> {
+        Lock lock = locks.remove(entry.getKey());
+        if (!OK.equals(entry.getValue()) && lock != null) { // we have error.
+          result.put(lock, entry.getValue());
+        }
+      });
+    }
+    // 3) after all iterations, only locks left are those without resources
+    locks.values().forEach(lock -> result.put(lock, "Resource '" + lock.getName() + "' does not exist"));
+    return result;
+  }
+
+  @NotNull
+  private Map<String, String> resolveStep(@NotNull final List<Resource> resources,
+                                          @NotNull final Map<String, Lock> locks) {
+    Map<String, String> result = new HashMap<>();
+    resources.forEach(rc -> {
+      Lock lock = locks.get(rc.getName());
+      if (lock != null) {
+        // some lock is requesting this resource
+        result.put(lock.getName(), tryMatch(rc, lock));
+      }
+    });
+    return result;
+  }
+
+  @NotNull
+  private String tryMatch(@NotNull final Resource r, @NotNull final Lock lock) {
+    if (!"".equals(lock.getValue())) {
+      if (ResourceType.CUSTOM == r.getType()) {
+        if (!((CustomResource) r).getValues().contains(lock.getValue())) {
+          // values domain does not contain required value
+          return "Resource '" + lock.getName() + "' does not contain required value '" + lock.getValue() + "'";
+        }
+      } else {
+        // wrong resource type. Expected quoted / infinite, got custom
+        return "Resource '" + lock.getName() + "' has wrong type: expected 'custom' got " + (((QuotedResource) r).isInfinite() ? "'infinite'" : "'quoted'");
+      }
+    }
+    return OK;
+  }
 }
