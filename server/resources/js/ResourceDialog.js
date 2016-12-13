@@ -27,6 +27,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       var self = $j(this);
       self.prop("selected", self.val() == 'infinite');
     });
+    $j('#resource_type').trigger('change');
     $j('#resource_quota').val(1);
     $j('#customValues').val('');
     $j('#resource_name').val('');
@@ -52,6 +53,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       var self = $j(this);
       self.prop("selected", self.val() == type);
     });
+    $j('#resource_type').trigger('change');
 
     $j('#resource_enabled').prop('checked', r['enabled']);
 
