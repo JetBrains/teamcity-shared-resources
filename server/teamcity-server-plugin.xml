@@ -5,7 +5,7 @@
     <name>TeamCity.SharedResources</name>
     <display-name>Shared Resources</display-name>
     <version>@Plugin_Version@</version> <!-- will be replaced from script -->
-    <description>Allows to define resources and limit concurrently running builds that use the defined resources </description>
+    <description>Allows defining resources and limiting concurrently running builds that use these resources </description>
     <vendor>
       <name>@Plugin_Vendor@</name>  <!-- will be replaced from script -->
       <url>@Plugin_Vendor_Url@</url> <!-- will be replaced from script -->
