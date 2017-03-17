@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import com.intellij.openapi.util.Trinity;
 import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
@@ -15,10 +16,13 @@ import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.TestFor;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName;
 
 /**
  * Created with IntelliJ IDEA.
@@ -158,8 +162,6 @@ public class TakenLocksImplTest extends BaseTestCase {
     assertTrue(tl2.hasWriteLocks());
     m.assertIsSatisfied();
   }
-
-
 
   @Test
   @TestFor(issues = "TW-33790")
@@ -772,5 +774,145 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
     assertNotNull(result);
     assertEquals(0, result.size());
+  }
+
+  /**
+   * While build is running, resource can be deleted from the build type.
+   * In this case the exception is thrown during queue processing that can cause builds to remain in queue
+   * and build estimates are not computed either
+   *
+   * Setup: 2 running builds, 2 queued builds,
+   * 1st running build and 1st queued build contain only the locks on existing resources
+   * 2nd running build and 2nd queued build contain the lock on deleted resources along with existing one
+   *
+   * Expected: non-existing resources are ignored in taken locks computation
+   *
+   * @throws Exception if something goes wrong
+   */
+  @Test
+  @TestFor(issues = "TW-48931")
+  public void testShouldProcessLocksOnDeletedResource() throws Exception {
+    final Map<String, Resource> resources = new HashMap<>();
+    final Resource existingResource = ResourceFactory.newInfiniteResource("existing_1", myProjectId, "existing", true);
+    resources.put(existingResource.getName(), existingResource);
+
+    final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
+    final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
+
+    final SharedResourcesFeature featureWithAllResources = m.mock(SharedResourcesFeature.class, "feature-with-all-resources");
+    final Collection<SharedResourcesFeature> featuresWithAllResources = Collections.singleton(featureWithAllResources);
+
+    final SharedResourcesFeature featureWithDeletedResources = m.mock(SharedResourcesFeature.class, "feature-with-deleted-resources");
+    final Collection<SharedResourcesFeature> featuresWithDeletedResources = Collections.singleton(featureWithDeletedResources);
+
+    final Map<String, Lock> allExistingLocks = new HashMap<String, Lock>() {{
+      put(existingResource.getName(), new Lock(existingResource.getName(), LockType.READ, ""));
+    }};
+
+    final Map<String, Lock> withDeletedLocks = new HashMap<String, Lock>() {{
+      put(existingResource.getName(), new Lock(existingResource.getName(), LockType.READ, ""));
+      put("deleted", new Lock("deleted", LockType.READ, ""));
+    }};
+
+    final Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> rb1 = createMockRunningBuild(myProjectId);
+    final Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> rb2 = createMockRunningBuild(myProjectId);
+
+    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+      add(rb1.getFirst());
+      add(rb2.getFirst());
+    }};
+
+    final Trinity<QueuedBuildInfo, BuildTypeEx, BuildPromotionEx> qb1 = createMockQueuedBuild(myProjectId);
+    final Trinity<QueuedBuildInfo, BuildTypeEx, BuildPromotionEx> qb2 = createMockQueuedBuild(myProjectId);
+
+    final Collection<QueuedBuildInfo> queuedBuilds = new ArrayList<QueuedBuildInfo>() {{
+      add(qb1.getFirst());
+      add(qb2.getFirst());
+    }};
+
+    m.checking(new Expectations() {{
+      allowing(myFeatures).searchForFeatures(rb1.getSecond());
+      will(returnValue(features));
+
+      allowing(myFeatures).searchForFeatures(rb2.getSecond());
+      will(returnValue(features));
+
+      allowing(myLocksStorage).locksStored(with(any(SBuild.class)));
+      will(returnValue(true));
+
+      oneOf(myLocksStorage).load(rb1.getFirst());
+      will(returnValue(allExistingLocks));
+
+      oneOf(myLocksStorage).load(rb2.getFirst());
+      will(returnValue(withDeletedLocks));
+
+      allowing(myResources).getResourcesMap(myProjectId);
+      will(returnValue(resources));
+
+      allowing(myFeatures).searchForFeatures(qb1.getSecond());
+      will(returnValue(featuresWithAllResources));
+
+      oneOf(myLocks).fromBuildFeaturesAsMap(featuresWithAllResources);
+      will(returnValue(allExistingLocks));
+
+      allowing(myFeatures).searchForFeatures(qb2.getSecond());
+      will(returnValue(featuresWithDeletedResources));
+
+      oneOf(myLocks).fromBuildFeaturesAsMap(featuresWithDeletedResources);
+      will(returnValue(withDeletedLocks));
+    }});
+
+
+    final Map<Resource, TakenLock> takenLocksMap = myTakenLocks.collectTakenLocks(myProjectId, runningBuilds, queuedBuilds);
+    assertFalse(takenLocksMap.isEmpty());
+    assertEquals(1, takenLocksMap.size());
+    TakenLock takenLock = takenLocksMap.get(existingResource);
+    assertNotNull(takenLock);
+    assertEquals(4, takenLock.getLocksCount());
+    final Map<BuildPromotionInfo, String> readLocks = takenLock.getReadLocks();
+    assertEquals(4, readLocks.size());
+    assertEquals(0, takenLock.getWriteLocks().size());
+    final Set<BuildPromotionInfo> readLockPromotions = readLocks.keySet();
+    assertContains(readLockPromotions, rb1.getThird());
+    assertContains(readLockPromotions, rb2.getThird());
+    assertContains(readLockPromotions, qb1.getThird());
+    assertContains(readLockPromotions, qb2.getThird());
+  }
+
+
+  private Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> createMockRunningBuild(@NotNull final String projectId) {
+    final String name = generateRandomName();
+    final RunningBuildEx build = m.mock(RunningBuildEx.class, "runningBuild_" + name);
+    final BuildTypeEx buildType = m.mock(BuildTypeEx.class, "runningBuild_ " + name + "-buildType");
+    final BuildPromotionEx buildPromotion = m.mock(BuildPromotionEx.class, "runningBuild_" + name + "-buildPromotion");
+    m.checking(new Expectations() {{
+      allowing(build).getBuildType();
+      will(returnValue(buildType));
+
+      allowing(build).getBuildPromotionInfo();
+      will(returnValue(buildPromotion));
+
+      allowing(buildType).getProjectId();
+      will(returnValue(projectId));
+    }});
+    return new Trinity<>(build, buildType, buildPromotion);
+  }
+
+  private Trinity<QueuedBuildInfo, BuildTypeEx, BuildPromotionEx> createMockQueuedBuild(@NotNull final String projectId) {
+    final String name = generateRandomName();
+    final QueuedBuildInfo build = m.mock(QueuedBuildInfo.class, "queuedBuildInfo" + name);
+    final BuildTypeEx buildType = m.mock(BuildTypeEx.class, "runningBuild_ " + name + "-buildType");
+    final BuildPromotionEx buildPromotion = m.mock(BuildPromotionEx.class, "runningBuild_" + name + "-buildPromotion");
+    m.checking(new Expectations() {{
+      allowing(build).getBuildPromotionInfo();
+      will(returnValue(buildPromotion));
+
+      allowing(buildPromotion).getBuildType();
+      will(returnValue(buildType));
+
+      allowing(buildType).getProjectId();
+      will(returnValue(projectId));
+    }});
+    return new Trinity<>(build, buildType, buildPromotion);
   }
 }
