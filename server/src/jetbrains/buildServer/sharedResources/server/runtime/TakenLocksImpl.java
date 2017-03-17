@@ -86,7 +86,10 @@ public class TakenLocksImpl implements TakenLocks {
         // resolve locks against resources defined in project tree
         for (Map.Entry<String, Lock> entry: locks.entrySet()) {
           // collection, promotion, resource, lock
-          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
+          final Resource resource = resources.get(entry.getKey());
+          if (resource != null) {
+            addLockToTaken(result, bpEx, resource, entry.getValue());
+          }
         }
       }
     }
@@ -103,7 +106,10 @@ public class TakenLocksImpl implements TakenLocks {
         final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
         for (Map.Entry<String, Lock> entry: locks.entrySet()) {
           // collection, promotion, resource, lock
-          addLockToTaken(result, bpEx, resources.get(entry.getKey()), entry.getValue());
+          final Resource resource = resources.get(entry.getKey());
+          if (resource != null) {
+            addLockToTaken(result, bpEx, resource, entry.getValue());
+          }
         }
       }
     }
@@ -113,12 +119,7 @@ public class TakenLocksImpl implements TakenLocks {
   @NotNull
   private Map<String, Resource> getResources(@NotNull final String btProjectId,
                                              @NotNull final Map<String, Map<String, Resource>> cachedResources) {
-    Map<String, Resource> result = cachedResources.get(btProjectId);
-    if (result == null) {
-      result = myResources.getResourcesMap(btProjectId);
-      cachedResources.put(btProjectId, result);
-    }
-    return result;
+    return cachedResources.computeIfAbsent(btProjectId, myResources::getResourcesMap);
   }
 
   @NotNull
@@ -150,12 +151,7 @@ public class TakenLocksImpl implements TakenLocks {
 
   private TakenLock getOrCreateTakenLock(@NotNull final Map<Resource, TakenLock> takenLocks,
                                          @NotNull final Resource resource) {
-    TakenLock takenLock = takenLocks.get(resource);
-    if (takenLock == null) {
-      takenLock = new TakenLock(resource);
-      takenLocks.put(resource, takenLock);
-    }
-    return takenLock;
+    return takenLocks.computeIfAbsent(resource, TakenLock::new);
   }
 
   private boolean checkAgainstResource(@NotNull final Lock lock,
