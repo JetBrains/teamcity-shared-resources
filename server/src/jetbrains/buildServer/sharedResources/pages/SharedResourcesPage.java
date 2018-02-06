@@ -85,22 +85,9 @@ public class SharedResourcesPage extends EditProjectTab {
     }
   }
 
-  @NotNull
   @Override
-  public String getTabTitle(@NotNull final HttpServletRequest request) {
-    final SProject project = getProject(request);
-    String result;
-    if (project != null) {
-      int n = myResources.getCount(project);
-      if (n > 0) {
-        result = TITLE_PREFIX + " (" + n + ")";
-      } else {
-        result = TITLE_PREFIX;
-      }
-    } else {
-      result = TITLE_PREFIX;
-    }
-    return result;
+  public boolean hasOwnSettings(@NotNull final SProject project) {
+    return !myResources.getOwnResources(project).isEmpty();
   }
 
   @Override
