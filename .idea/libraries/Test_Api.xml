@@ -3,6 +3,8 @@
     <CLASSES>
       <root url="jar://$TeamCityDistribution$/devPackage/tests/tests-support.jar!/" />
       <root url="jar://$TeamCityDistribution$/devPackage/tests/junit-4.12.jar!/" />
+      <root url="jar://$TeamCityDistribution$/devPackage/tests/tests-integration.jar!/" />
+      <root url="jar://$TeamCityDistribution$/devPackage/tests/spring-test.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
