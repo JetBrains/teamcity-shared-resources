@@ -79,4 +79,9 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   public Map<String, String> getDefaultParameters() {
     return myFeatureParams.getDefault();
   }
+
+  @Override
+  public boolean isRequiresAgent() {
+    return false;
+  }
 }

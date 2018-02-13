@@ -41,6 +41,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private QueuedBuildInfo myQueuedBuild;
 
+  private QueuedBuildEx myQueuedBuildEx;
+
   private BuildPromotionEx myBuildPromotion;
 
   private BuildDistributorInput myBuildDistributorInput;
@@ -80,6 +82,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myBuildType = m.mock(BuildTypeEx.class);
     myQueuedBuild = m.mock(QueuedBuildInfo.class);
+    myQueuedBuildEx = m.mock(QueuedBuildEx.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class);
     myTakenLocks = m.mock(TakenLocks.class);
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
@@ -107,7 +110,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testNullBuildType() throws Exception {
+  public void testNullBuildType() {
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
@@ -117,6 +120,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
+
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
     }});
 
 
@@ -127,7 +133,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testNullProjectId() throws Exception {
+  public void testNullProjectId() {
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
@@ -138,6 +144,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(null));
 
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
+
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -146,7 +155,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testNoFeaturesPresent() throws Exception {
+  public void testNoFeaturesPresent() {
     final Collection<SharedResourcesFeature> features = Collections.emptyList();
 
     m.checking(new Expectations() {{
@@ -159,6 +168,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
+
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
@@ -170,7 +182,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testInvalidLocksPresent() throws Exception {
+  public void testInvalidLocksPresent() {
     final Collection<SharedResourcesFeature> features = new ArrayList<>();
     features.add(m.mock(SharedResourcesFeature.class));
 
@@ -198,6 +210,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       atMost(2).of(myBuildType).getFullName();
       will(returnValue("My Build Type"));
+
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -206,7 +221,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testNoLocksInFeatures() throws Exception {
+  public void testNoLocksInFeatures() {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
@@ -229,6 +244,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myLocks).fromBuildFeaturesAsMap(features);
       will(returnValue(Collections.emptyMap()));
 
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
+
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
     assertNotNull(result);
@@ -237,7 +255,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   }
 
   @Test
-  public void testLocksPresentSingleBuild() throws Exception {
+  public void testLocksPresentSingleBuild() {
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("lock1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
@@ -260,7 +278,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testMultipleBuildsLocksNotCrossing() throws Exception {
+  public void testMultipleBuildsLocksNotCrossing() {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
@@ -290,7 +308,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
 
   @Test
-  public void testMultipleBuildsLocksCrossing() throws Exception {
+  public void testMultipleBuildsLocksCrossing() {
     final SharedResourcesFeature feature = m.mock(SharedResourcesFeature.class);
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
@@ -337,11 +355,10 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   /**
    * Tests case when no locks are taken on the resource, but resource is anyway unavailable
-   * @throws Exception if something goes wrong
    */
   @Test
   @TestFor(issues = "TW-27930")
-  public void testNoLockedResources_ResourceDisabled() throws Exception {
+  public void testNoLockedResources_ResourceDisabled() {
     final Map<String, Lock> locksToTake = new HashMap<>();
     final Lock lock = new Lock("resource1", LockType.READ);
     locksToTake.put(lock.getName(), lock);
@@ -370,7 +387,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   @Test
   @TestFor(issues = "TW-45949")
-  public void testDuplicateResources() throws Exception {
+  public void testDuplicateResources() {
     final Collection<SharedResourcesFeature> features = new ArrayList<>();
     features.add(m.mock(SharedResourcesFeature.class));
 
@@ -395,6 +412,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myBuildType).getExtendedName();
       will(returnValue("Project :: BuildType"));
+
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
 
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
@@ -436,6 +456,12 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
       will(returnValue(unavailableLocks));
+
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
+
+      allowing(myBuildPromotion).getQueuedBuild();
+      will(returnValue(myQueuedBuildEx));
 
     }});
   }

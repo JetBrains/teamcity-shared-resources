@@ -2,10 +2,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -21,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Created with IntelliJ IDEA.
- *
+ *                                              
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
@@ -69,8 +66,38 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
-    final String projectId = myPromotion.getProjectId();
-    final SBuildType buildType = myPromotion.getBuildType();
+    if (myPromotion.isPartOfBuildChain()) {
+      LOG.info("Queued build is part of build chain");
+      BuildPromotionEx top = myPromotion.getTopDependencyGraph().getTop();
+      if (top.isCompositeBuild()) {
+        // top is composite build and top is not us
+        // check if top is running
+        SBuild topBuild = top.getAssociatedBuild();
+        if (topBuild != null && topBuild instanceof SRunningBuild) {
+          LOG.info("Top composite build is running, need to resolve only our locks");
+        }
+
+        SQueuedBuild queuedTopBuild = top.getQueuedBuild();
+        if (queuedTopBuild != null) {
+          reason = getWaitReason(top, Collections.emptySet(), canBeStarted);
+          LOG.info("Composite build is queued. Need to make sure it can be started");
+        }
+      }
+    }
+    if (reason == null) {
+      reason = getWaitReason(myPromotion, featureContext, canBeStarted);
+    }
+    final AgentsFilterResult result = new AgentsFilterResult();
+    result.setWaitReason(reason);
+    return result;
+  }
+
+  private WaitReason getWaitReason(final BuildPromotionEx buildPromotion,
+                                   final Set<String> featureContext,
+                                   final Map<QueuedBuildInfo, SBuildAgent> canBeStarted) {
+    final String projectId = buildPromotion.getProjectId();
+    final SBuildType buildType = buildPromotion.getBuildType();
+    WaitReason reason = null;
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
       if (!features.isEmpty()) {
@@ -86,16 +113,14 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(takenLocks, unavailableLocks);
               if (LOG.isDebugEnabled()) {
-                LOG.debug("Firing precondition for queued build [" + queuedBuild + "] with reason: [" + reason.getDescription() + "]");
+                LOG.debug("Firing precondition for queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
             }
           }
         }
       }
     }
-    final AgentsFilterResult result = new AgentsFilterResult();
-    result.setWaitReason(reason);
-    return result;
+    return reason;
   }
 
   @NotNull
