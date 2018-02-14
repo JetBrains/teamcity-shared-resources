@@ -98,4 +98,9 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   protected Map<String, String> createReadLock(@NotNull final String resourceName) {
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + "\treadLock");
   }
+
+  @SuppressWarnings("SameParameterValue")
+  protected Map<String, String> createWriteLock(@NotNull final String resourceName) {
+    return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + "\twriteLock");
+  }
 }

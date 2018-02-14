@@ -66,6 +66,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
+
     if (myPromotion.isPartOfBuildChain()) {
       LOG.info("Queued build is part of build chain");
       BuildPromotionEx top = myPromotion.getTopDependencyGraph().getTop();
@@ -79,7 +80,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
         SQueuedBuild queuedTopBuild = top.getQueuedBuild();
         if (queuedTopBuild != null) {
-          reason = getWaitReason(top, Collections.emptySet(), canBeStarted);
+          reason = getWaitReason(top, new HashSet<>(), canBeStarted);
           LOG.info("Composite build is queued. Need to make sure it can be started");
         }
       }
@@ -92,7 +93,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return result;
   }
 
-  private WaitReason getWaitReason(final BuildPromotionEx buildPromotion,
+  private WaitReason  getWaitReason(final BuildPromotionEx buildPromotion,
                                    final Set<String> featureContext,
                                    final Map<QueuedBuildInfo, SBuildAgent> canBeStarted) {
     final String projectId = buildPromotion.getProjectId();
