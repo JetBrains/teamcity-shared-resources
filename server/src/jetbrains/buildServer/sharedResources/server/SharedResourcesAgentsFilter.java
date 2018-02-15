@@ -69,19 +69,24 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
     if (myPromotion.isPartOfBuildChain()) {
       LOG.info("Queued build is part of build chain");
-      BuildPromotionEx top = myPromotion.getTopDependencyGraph().getTop();
-      if (top.isCompositeBuild()) {
+      final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
+      for (BuildPromotionEx bp: depPromos) {
         // top is composite build and top is not us
         // check if top is running
-        SBuild topBuild = top.getAssociatedBuild();
+        SBuild topBuild = bp.getAssociatedBuild();
         if (topBuild != null && topBuild instanceof SRunningBuild) {
-          LOG.info("Top composite build is running, need to resolve only our locks");
-        }
-
-        SQueuedBuild queuedTopBuild = top.getQueuedBuild();
-        if (queuedTopBuild != null) {
-          reason = getWaitReason(top, new HashSet<>(), canBeStarted);
-          LOG.info("Composite build is queued. Need to make sure it can be started");
+          LOG.info("Found composite that is already running -> reached top of queued subtree of build chain");
+          break;
+        } else {
+          SQueuedBuild queuedTopBuild = bp.getQueuedBuild();
+          if (queuedTopBuild != null) {
+            LOG.info("Composite build is queued. Need to make sure it can be started");
+            reason = getWaitReason(bp, new HashSet<>(), canBeStarted);
+            if (reason != null) {
+              LOG.info("Found blocked composite build on the path: " + bp);
+              break;
+            }
+          }
         }
       }
     }

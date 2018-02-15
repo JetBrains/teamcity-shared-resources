@@ -17,9 +17,7 @@
 package jetbrains.buildServer.sharedResources.tests;
 
 import java.util.Map;
-import jetbrains.buildServer.serverSide.MockServerPluginDescriptior;
-import jetbrains.buildServer.serverSide.RunningBuildsManager;
-import jetbrains.buildServer.serverSide.SBuild;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
@@ -85,6 +83,21 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     myFixture.addService(processor);
     myFixture.addService(feature);
   }
+
+  protected void addResource(@NotNull final SProject project, @NotNull final Map<String, String> resource) {
+    myProjectFeatures.addFeature(project, resource);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  protected void addWriteLock(@NotNull final SBuildType buildType, @NotNull final String resourceName) {
+    buildType.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createWriteLock(resourceName));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  protected void addReadLock(@NotNull final SBuildType buildType, @NotNull final String resourceName) {
+    buildType.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock(resourceName));
+  }
+
 
   @SuppressWarnings("SameParameterValue")
   protected Map<String, String> createInfiniteResource(final String name) {
