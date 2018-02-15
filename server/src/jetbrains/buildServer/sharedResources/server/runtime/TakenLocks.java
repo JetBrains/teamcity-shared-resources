@@ -41,15 +41,13 @@ public interface TakenLocks {
    *
    * For queued builds looking only in promotion+buildType
    *
-   * @param projectId id of the project to filter by
    * @param runningBuilds running builds
    * @param queuedBuilds queued builds
    *
    * @return map of taken locks in format {@code <Resource, TakenLock>}
    */
   @NotNull
-  Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                             @NotNull final Collection<SRunningBuild> runningBuilds,
+  Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<SRunningBuild> runningBuilds,
                                              @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**

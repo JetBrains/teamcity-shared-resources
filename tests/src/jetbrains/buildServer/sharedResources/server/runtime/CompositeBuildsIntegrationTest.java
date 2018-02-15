@@ -19,6 +19,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
+import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.WaitFor;
@@ -81,16 +82,6 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     assertTrue(associatedBuild.isFinished());
   }
 
-  private void waitForAllBuildsToFinish() {
-    new WaitForAssert() {
-      @Override
-      protected boolean condition() {
-        return myFixture.getBuildsManager().getRunningBuilds().size() == 0;
-      }
-    };
-  }
-
-
   /**
    * Test setup:
    *
@@ -104,7 +95,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    * Composite builds each hold write lock on same resource
    *
    * First chain is run and blocks execution of the second chain
-   *  
+   *
    */
   @Test
   public void testSimpleChain_WriteLock_OtherChain() {
@@ -184,7 +175,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   public void testCompositeInsideComposite() {
     // register second agent
     myFixture.createEnabledAgent("Ant");
-    BuildTypeEx btComposite1 = createCompositeBuildType(myProject, "coposite1", null);
+    BuildTypeEx btComposite1 = createCompositeBuildType(myProject, "composite1", null);
     // create complex composite chain
     BuildTypeEx btComposite2 = createCompositeBuildType(myProject, "composite2", null);
     SBuildType btDep = myProject.createBuildType("btDep", "btDep");
@@ -233,20 +224,27 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     assertTrue(depRunningBuild instanceof RunningBuildEx);
   }
 
-
-
-  private void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
+  private void waitForAllBuildsToFinish() {
     new WaitForAssert() {
       @Override
       protected boolean condition() {
+        return myFixture.getBuildsManager().getRunningBuilds().size() == 0;
+      }
+    };
+  }
+
+  private void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
+    CachingBuildEstimator estimator = myFixture.getSingletonService(CachingBuildEstimator.class);
+
+    new WaitForAssert() {
+      @Override
+      protected boolean condition() {
+        estimator.invalidate(false);
         final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
         if (buildEstimates != null) {
           final WaitReason waitReason = buildEstimates.getWaitReason();
-          if (waitReason != null && waitReason.getDescription().equals(expectedReason)) {
-            return true;
-          }
+          return waitReason != null && waitReason.getDescription().equals(expectedReason);
         }
-        myServer.flushQueue();
         return false;
       }
     };

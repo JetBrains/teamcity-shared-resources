@@ -451,7 +451,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(runningBuilds));
 
-      oneOf(myTakenLocks).collectTakenLocks(myProjectId, runningBuilds, canBeStarted.keySet());
+      oneOf(myTakenLocks).collectTakenLocks(runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);

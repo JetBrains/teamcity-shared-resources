@@ -3,6 +3,7 @@ package jetbrains.buildServer.sharedResources.server;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Created with IntelliJ IDEA.
- *                                              
+ *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
@@ -61,6 +62,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   public AgentsFilterResult filterAgents(@NotNull final AgentsFilterContext context) {
     // get custom data
     final Set<String> featureContext = getOrCreateFeatureData(context);
+    AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
+    AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
     QueuedBuildInfo queuedBuild = context.getStartingBuild();
@@ -68,22 +71,22 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
 
     if (myPromotion.isPartOfBuildChain()) {
-      LOG.info("Queued build is part of build chain");
+      LOG.debug("Queued build is part of build chain");
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
       for (BuildPromotionEx bp: depPromos) {
         // top is composite build and top is not us
         // check if top is running
         SBuild topBuild = bp.getAssociatedBuild();
         if (topBuild != null && topBuild instanceof SRunningBuild) {
-          LOG.info("Found composite that is already running -> reached top of queued subtree of build chain");
+          LOG.debug("Found composite that is already running -> reached top of queued subtree of build chain");
           break;
         } else {
           SQueuedBuild queuedTopBuild = bp.getQueuedBuild();
           if (queuedTopBuild != null) {
-            LOG.info("Composite build is queued. Need to make sure it can be started");
-            reason = getWaitReason(bp, new HashSet<>(), canBeStarted);
+            LOG.debug("Composite build is queued. Need to make sure it can be started");
+            reason = getWaitReason(bp, featureContext, runningBuilds, canBeStarted, takenLocks);
             if (reason != null) {
-              LOG.info("Found blocked composite build on the path: " + bp);
+              LOG.debug("Found blocked composite build on the path: " + bp);
               break;
             }
           }
@@ -91,16 +94,18 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       }
     }
     if (reason == null) {
-      reason = getWaitReason(myPromotion, featureContext, canBeStarted);
+      reason = getWaitReason(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
     }
     final AgentsFilterResult result = new AgentsFilterResult();
     result.setWaitReason(reason);
     return result;
   }
 
-  private WaitReason  getWaitReason(final BuildPromotionEx buildPromotion,
-                                   final Set<String> featureContext,
-                                   final Map<QueuedBuildInfo, SBuildAgent> canBeStarted) {
+  private WaitReason  getWaitReason(@NotNull final BuildPromotionEx buildPromotion,
+                                    @NotNull final Set<String> featureContext,
+                                    @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                    @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                    @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
     final String projectId = buildPromotion.getProjectId();
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
@@ -112,12 +117,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
-            // Resolved locks as multi-valued taken locks (for custom - multiple custom values, for quoted - number of quotes to take)
-            final Map<Resource, TakenLock> takenLocks = myTakenLocks.collectTakenLocks(projectId, myRunningBuildsManager.getRunningBuilds(), canBeStarted.keySet());
+            if (runningBuilds.get() == null) {
+              runningBuilds.set(myRunningBuildsManager.getRunningBuilds());
+            }
+            if (takenLocks.get() == null) {
+              takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
+            }
             // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
-            final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, projectId, featureContext);
+            final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, featureContext);
             if (!unavailableLocks.isEmpty()) {
-              reason = createWaitReason(takenLocks, unavailableLocks);
+              reason = createWaitReason(takenLocks.get(), unavailableLocks);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Firing precondition for queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
