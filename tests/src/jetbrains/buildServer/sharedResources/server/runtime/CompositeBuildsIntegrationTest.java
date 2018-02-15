@@ -53,9 +53,9 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // add dependency
     addDependency(btComposite, btDep);
     // add resource
-    myProjectFeatures.addFeature(myProject, createInfiniteResource("resource"));
+    addResource(myProject, createInfiniteResource("resource"));
     // add lock on resource to composite build
-    btComposite.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock("resource"));
+    addReadLock(btComposite, "resource");
     // start composite build
     QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
     assertNotNull(qbComposite);
@@ -91,16 +91,31 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   }
 
 
+  /**
+   * Test setup:
+   *
+   * 2 agents
+   *
+   * (C1)['resource', write lock] <-- dep1
+   *
+   * (C2)['resource', write lock] <-- dep2
+   *
+   * Two simple chains of one composite and one dependent build
+   * Composite builds each hold write lock on same resource
+   *
+   * First chain is run and blocks execution of the second chain
+   *  
+   */
   @Test
-  public void testSimpleChain_NonIntersecting() {
+  public void testSimpleChain_WriteLock_OtherChain() {
     // create one simple chain
     BuildTypeEx btCompositeFirst = createCompositeBuildType(myProject, "composite1", null);
     SBuildType btDepFirst = myProject.createBuildType("btDep1", "btDep1");
     addDependency(btCompositeFirst, btDepFirst);
     // create resource
-    myProjectFeatures.addFeature(myProject, createInfiniteResource("resource"));
+    addResource(myProject, createInfiniteResource("resource"));
     // create lock in composite build
-    btCompositeFirst.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createWriteLock("resource"));
+    addWriteLock(btCompositeFirst, "resource");
     // create second simple chain
     BuildTypeEx btCompositeSecond = createCompositeBuildType(myProject, "composite2", null);
     SBuildType btDepSecond = myProject.createBuildType("btDep2", "btDep2");
@@ -136,21 +151,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     BuildPromotion qbDepSecond = depSecond.getBuildPromotion();
 
     final String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project :: composite1)";
-
-    new WaitForAssert() {
-      @Override
-      protected boolean condition() {
-        final BuildEstimates buildEstimates = depSecond.getBuildEstimates();
-        if (buildEstimates != null) {
-          final WaitReason waitReason = buildEstimates.getWaitReason();
-          if (waitReason != null && waitReason.getDescription().equals(expectedWaitReason)) {
-            return true;
-          }
-        }
-        myServer.flushQueue();
-        return false;
-      }
-    };
+    waitForReason(depSecond, expectedWaitReason);
 
     // finish current builds
     finishBuild((SRunningBuild)depBuildFirst, false);
@@ -167,6 +168,88 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
 
     final SBuild depBuildSecond = qbDepSecond.getAssociatedBuild();
     assertTrue(depBuildSecond instanceof RunningBuildEx);
+  }
+
+  /**
+   * Test setup:
+   *
+   * 2 agents
+   *
+   * (C1) <--- (C2)[resource, write lock] <--- dep
+   *
+   * other_build[resource, write lock]
+   *
+   */
+  @Test
+  public void testCompositeInsideComposite() {
+    // register second agent
+    myFixture.createEnabledAgent("Ant");
+    BuildTypeEx btComposite1 = createCompositeBuildType(myProject, "coposite1", null);
+    // create complex composite chain
+    BuildTypeEx btComposite2 = createCompositeBuildType(myProject, "composite2", null);
+    SBuildType btDep = myProject.createBuildType("btDep", "btDep");
+    addDependency(btComposite2, btDep);
+    addDependency(btComposite1, btComposite2);
+    // create other build
+    SBuildType btOther = myProject.createBuildType("btOther", "Other Build Type");
+    // add resources and locks
+    addResource(myProject, createInfiniteResource("resource"));
+    addWriteLock(btComposite2, "resource");
+    addWriteLock(btOther, "resource");
+    // run other build
+    QueuedBuildEx qbOther = (QueuedBuildEx)btOther.addToQueue("");
+    assertNotNull(qbOther);
+    BuildPromotion bpOther = qbOther.getBuildPromotion();
+    // dep should not start until chain finished
+    myFixture.flushQueueAndWait();
+    // we are running exactly one build
+    assertEquals(1, myFixture.getBuildsManager().getRunningBuilds().size());
+    final SBuild otherBuild = bpOther.getAssociatedBuild();
+    assertTrue(otherBuild instanceof RunningBuildEx);
+    // put head of the chain in queue
+    QueuedBuildEx qbComposite1 = (QueuedBuildEx)btComposite1.addToQueue("");
+    assertNotNull(qbComposite1);
+    // all chain is in the queue
+    assertEquals(3, myFixture.getBuildQueue().getNumberOfItems());
+    // get top build from queue. Should be dep
+    final SQueuedBuild depBuild = myFixture.getBuildQueue().getFirst();
+    assertNotNull(depBuild);
+    final BuildPromotionEx depPromo = (BuildPromotionEx)depBuild.getBuildPromotion();
+    String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project :: Other Build Type)";
+    waitForReason(depBuild, expectedWaitReason);
+    // finish build
+    finishBuild((SRunningBuild)otherBuild, false);
+    new WaitFor() {
+      @Override
+      protected boolean condition() {
+        final SBuild associatedBuild = bpOther.getAssociatedBuild();
+        return associatedBuild != null && associatedBuild instanceof SFinishedBuild;
+      }
+    };
+    // check that chain started
+    myFixture.flushQueueAndWaitN(3);
+
+    final SBuild depRunningBuild = depPromo.getAssociatedBuild();
+    assertTrue(depRunningBuild instanceof RunningBuildEx);
+  }
+
+
+
+  private void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
+    new WaitForAssert() {
+      @Override
+      protected boolean condition() {
+        final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
+        if (buildEstimates != null) {
+          final WaitReason waitReason = buildEstimates.getWaitReason();
+          if (waitReason != null && waitReason.getDescription().equals(expectedReason)) {
+            return true;
+          }
+        }
+        myServer.flushQueue();
+        return false;
+      }
+    };
   }
 
   @SuppressWarnings("SameParameterValue")
