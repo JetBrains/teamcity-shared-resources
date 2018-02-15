@@ -61,8 +61,7 @@ public class TakenLocksImpl implements TakenLocks {
 
   @NotNull
   @Override
-  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final String projectId,
-                                                    @NotNull final Collection<SRunningBuild> runningBuilds,
+  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<SRunningBuild> runningBuilds,
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<Resource, TakenLock> result = new HashMap<>();
     final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
@@ -238,14 +237,14 @@ public class TakenLocksImpl implements TakenLocks {
           result = false;
           break;
         }
-        if (!isQuotaEnough(takenLock, resource)) {
+        if (isOverQuota(takenLock, resource)) {
           result = false;
           break;
         }
         break;
       case WRITE:
         // if anyone is accessing the resource
-        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks() || !isQuotaEnough(takenLock, resource)) {
+        if (takenLock.hasReadLocks() || takenLock.hasWriteLocks() || isOverQuota(takenLock, resource)) {
           fairSet.add(lock.getName()); // remember write access request
           result = false;
         }
@@ -253,7 +252,7 @@ public class TakenLocksImpl implements TakenLocks {
     return result;
   }
 
-  private boolean isQuotaEnough(@NotNull final TakenLock takenLock, @NotNull final QuotedResource resource) {
-    return resource.isInfinite() || takenLock.getLocksCount() < resource.getQuota();
+  private boolean isOverQuota(@NotNull final TakenLock takenLock, @NotNull final QuotedResource resource) {
+    return !resource.isInfinite() && takenLock.getLocksCount() >= resource.getQuota();
   }
 }
