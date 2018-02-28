@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.*;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -28,9 +29,8 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -139,6 +139,44 @@ public class TakenLocksImpl implements TakenLocks {
     }
     return result;
   }
+
+  @NotNull
+  @Override
+  public Map<Resource, Lock> getUnavailableLocks(@NotNull final Map<String, Lock> locksToTake,
+                                                 @NotNull final Map<Resource, TakenLock> takenLocks,
+                                                 @NotNull final Set<String> fairSet,
+                                                 @NotNull final Map<String, Resource> chainNodeResources,
+                                                 @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks) {
+    final Map<Resource, Lock> result = new HashMap<>();
+    Map<Resource, TakenLock> chainTakenLocks = purifyTakenLocks(takenLocks, chainLocks);
+    locksToTake.forEach((name, lock) -> {
+      final Resource resource = chainNodeResources.get(name);
+      if (resource != null) {
+        if (!resource.isEnabled() || !checkAgainstResource(lock, chainTakenLocks, resource, fairSet)) {
+          result.put(resource, lock);
+        }
+      }
+    });
+
+    return result;
+  }
+
+  private Map<Resource, TakenLock> purifyTakenLocks(final Map<Resource, TakenLock> takenLocks,
+                                                    final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks) {
+    Map<Resource, TakenLock> result = new HashMap<>();
+    takenLocks.forEach((rc, tl) -> {
+      Map<BuildPromotionEx, Lock> chainTakenLock = chainLocks.get(rc);
+      if (chainTakenLock != null) {
+        result.put(rc, new TakenLock(rc,
+                                     CollectionsUtil.filterMapByKeys(tl.getReadLocks(), key -> !chainTakenLock.containsKey(key)),
+                                     CollectionsUtil.filterMapByKeys(tl.getWriteLocks(), key -> !chainTakenLock.containsKey(key))));
+      } else {
+        result.put(rc, tl);
+      }
+    });
+    return result;
+  }
+
 
   private void addLockToTaken(@NotNull final Map<Resource, TakenLock> takenLocks,
                               @NotNull final BuildPromotionEx bpEx,

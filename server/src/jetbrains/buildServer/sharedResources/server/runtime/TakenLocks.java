@@ -16,16 +16,16 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -64,4 +64,9 @@ public interface TakenLocks {
                                           @NotNull final String projectId,
                                           @NotNull final Set<String> fairSet);
 
+  Map<Resource, Lock> getUnavailableLocks(@NotNull Map<String, Lock> locksToTake,
+                                          @NotNull Map<Resource, TakenLock> takenLocks,
+                                          @NotNull Set<String> fairSet,
+                                          @NotNull Map<String, Resource> chainNodeResources,
+                                          @NotNull Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks);
 }

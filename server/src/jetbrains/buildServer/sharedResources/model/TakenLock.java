@@ -37,34 +37,42 @@ public class TakenLock {
   private final Resource myResource;
 
   @NotNull
-  private final Map<BuildPromotionInfo, String> readLocks = new HashMap<BuildPromotionInfo, String>();
+  private final Map<BuildPromotionInfo, String> myReadLocks = new HashMap<>();
 
   @NotNull
-  private final Map<BuildPromotionInfo, String> writeLocks = new HashMap<BuildPromotionInfo, String>();
+  private final Map<BuildPromotionInfo, String> myWriteLocks = new HashMap<>();
 
   public TakenLock(@NotNull final Resource resource) {
     myResource = resource;
   }
 
+  public TakenLock(@NotNull final Resource resource,
+                   @NotNull final Map<BuildPromotionInfo, String> readLocks,
+                   @NotNull final Map<BuildPromotionInfo, String> writeLocks) {
+    myResource = resource;
+    myReadLocks.putAll(readLocks);
+    myWriteLocks.putAll(writeLocks);
+  }
+
   public void addLock(@NotNull final BuildPromotionInfo info, @NotNull final Lock lock) {
     switch (lock.getType()) {
       case READ:
-        readLocks.put(info, lock.getValue());
+        myReadLocks.put(info, lock.getValue());
         break;
       case WRITE:
-        writeLocks.put(info, lock.getValue());
+        myWriteLocks.put(info, lock.getValue());
         break;
     }
   }
 
   @NotNull
   public Map<BuildPromotionInfo, String> getReadLocks() {
-    return Collections.unmodifiableMap(readLocks);
+    return Collections.unmodifiableMap(myReadLocks);
   }
 
   @NotNull
   public Map<BuildPromotionInfo, String> getWriteLocks() {
-    return Collections.unmodifiableMap(writeLocks);
+    return Collections.unmodifiableMap(myWriteLocks);
   }
 
   /**
@@ -83,15 +91,15 @@ public class TakenLock {
    * @return overall locks count
    */
   public int getLocksCount() {
-    return readLocks.size() + writeLocks.size();
+    return myReadLocks.size() + myWriteLocks.size();
   }
 
   public boolean hasReadLocks() {
-    return !readLocks.isEmpty();
+    return !myReadLocks.isEmpty();
   }
 
   public boolean hasWriteLocks() {
-    return !writeLocks.isEmpty();
+    return !myWriteLocks.isEmpty();
   }
 
 }

@@ -80,7 +80,7 @@ public class ContextProcessorTest extends BaseTestCase {
 
   @Test
   @TestFor(issues = "TW-29779")
-  public void testWriteLockShouldProvideAllResourceValues() throws Exception {
+  public void testWriteLockShouldProvideAllResourceValues() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.WRITE);
     myTakenLocks.put(lock.getName(), lock);
@@ -118,7 +118,7 @@ public class ContextProcessorTest extends BaseTestCase {
   }
 
   @Test
-  public void testProvideValueAny() throws Exception {
+  public void testProvideValueAny() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
@@ -156,7 +156,7 @@ public class ContextProcessorTest extends BaseTestCase {
   }
 
   @Test
-  public void testProvideValueAny_SomeTaken() throws Exception {
+  public void testProvideValueAny_SomeTaken() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
@@ -203,7 +203,7 @@ public class ContextProcessorTest extends BaseTestCase {
   }
 
   @Test
-  public void testProvideValueSpecific() throws Exception {
+  public void testProvideValueSpecific() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ, "value2");
     myTakenLocks.put(lock.getName(), lock);
@@ -244,7 +244,7 @@ public class ContextProcessorTest extends BaseTestCase {
 
   @Test
   @TestFor(issues = "TW-44929")
-  public void testProvideDuplicateValue() throws Exception {
+  public void testProvideDuplicateValue() {
     final String VALUE = "a";
     final Map<String, Resource> definedResources = new HashMap<>();
     final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList(VALUE, VALUE), true);
@@ -296,12 +296,10 @@ public class ContextProcessorTest extends BaseTestCase {
   /**
    * 2 running builds hold same duplicate value
    * tests that the build about to start gets the different one
-   *
-   * @throws Exception if anything goes wrong
    */
   @Test
   @TestFor(issues = "TW-44929")
-  public void testDupValues_CollectLockedResources() throws Exception {
+  public void testDupValues_CollectLockedResources() {
     final String VALUE_HELD = "a";
     final String VALUE_AVAILABLE = "b";
 
@@ -363,14 +361,17 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myBuildStartContext).getBuild();
       will(returnValue(myRunningBuild));
 
-      oneOf(myRunningBuild).getBuildType();
+      allowing(myRunningBuild).getBuildType();
       will(returnValue(myBuildType));
 
-      oneOf(myRunningBuild).getProjectId();
+      allowing(myRunningBuild).getProjectId();
       will(returnValue(PROJECT_ID));
 
       oneOf(myRunningBuild).getBuildPromotion();
       will(returnValue(myBuildPromotion));
+
+      oneOf(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
     }};
   }
 }

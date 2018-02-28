@@ -74,7 +74,7 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
-    final SharedResourcesAgentsFilter filter = new SharedResourcesAgentsFilter(features, locks, takenLocks, myFixture.getSingletonService(RunningBuildsManager.class), inspector);
+    final SharedResourcesAgentsFilter filter = new SharedResourcesAgentsFilter(features, locks, takenLocks, myFixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
     final SharedResourcesContextProcessor
       processor = new SharedResourcesContextProcessor(features, locks, resources, locksStorage, myFixture.getSingletonService(RunningBuildsManager.class));
 
