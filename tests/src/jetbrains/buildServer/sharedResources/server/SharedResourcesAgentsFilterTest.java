@@ -66,9 +66,6 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<>();
 
-  private LocksStorage myLocksStorage;
-
-  private Resources myResources;
   /**
    * Class under test
    */
@@ -95,8 +92,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
     myProject = m.mock(ProjectEx.class);
-    myLocksStorage = m.mock(LocksStorage.class);
-    myResources = m.mock(Resources.class);
+    final LocksStorage locksStorage = m.mock(LocksStorage.class);
+    final Resources resources = m.mock(Resources.class);
     m.checking(new Expectations() {{
       allowing(myProject).getProjectId();
       will(returnValue(myProjectId));
@@ -105,7 +102,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(PROJECT_NAME));
 
     }});
-    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector, myLocksStorage, myResources);
+    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector, locksStorage, resources);
   }
 
   @Override
@@ -301,7 +298,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
     final TakenLock tl = new TakenLock(resource2);
-    tl.addLock(m.mock(BuildPromotionInfo.class), lock2);
+    tl.addLock(m.mock(BuildPromotionEx.class, "some-build"), lock2);
     takenLocks.put(tl.getResource(), tl);
 
     setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, Collections.emptyMap());

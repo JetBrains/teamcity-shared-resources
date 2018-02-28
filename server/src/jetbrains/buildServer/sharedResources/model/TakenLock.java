@@ -16,13 +16,12 @@
 
 package jetbrains.buildServer.sharedResources.model;
 
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Class {@code TakenLock}.
@@ -37,24 +36,24 @@ public class TakenLock {
   private final Resource myResource;
 
   @NotNull
-  private final Map<BuildPromotionInfo, String> myReadLocks = new HashMap<>();
+  private final Map<BuildPromotionEx, String> myReadLocks = new HashMap<>();
 
   @NotNull
-  private final Map<BuildPromotionInfo, String> myWriteLocks = new HashMap<>();
+  private final Map<BuildPromotionEx, String> myWriteLocks = new HashMap<>();
 
   public TakenLock(@NotNull final Resource resource) {
     myResource = resource;
   }
 
   public TakenLock(@NotNull final Resource resource,
-                   @NotNull final Map<BuildPromotionInfo, String> readLocks,
-                   @NotNull final Map<BuildPromotionInfo, String> writeLocks) {
+                   @NotNull final Map<BuildPromotionEx, String> readLocks,
+                   @NotNull final Map<BuildPromotionEx, String> writeLocks) {
     myResource = resource;
     myReadLocks.putAll(readLocks);
     myWriteLocks.putAll(writeLocks);
   }
 
-  public void addLock(@NotNull final BuildPromotionInfo info, @NotNull final Lock lock) {
+  public void addLock(@NotNull final BuildPromotionEx info, @NotNull final Lock lock) {
     switch (lock.getType()) {
       case READ:
         myReadLocks.put(info, lock.getValue());
@@ -66,12 +65,12 @@ public class TakenLock {
   }
 
   @NotNull
-  public Map<BuildPromotionInfo, String> getReadLocks() {
+  public Map<BuildPromotionEx, String> getReadLocks() {
     return Collections.unmodifiableMap(myReadLocks);
   }
 
   @NotNull
-  public Map<BuildPromotionInfo, String> getWriteLocks() {
+  public Map<BuildPromotionEx, String> getWriteLocks() {
     return Collections.unmodifiableMap(myWriteLocks);
   }
 
