@@ -4,7 +4,6 @@ import com.intellij.openapi.util.Trinity;
 import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -292,7 +291,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class), new Lock("custom_resource1", LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -320,7 +319,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class), new Lock("custom_resource1", LockType.READ, "v1"));
+      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.READ, "v1"));
       put(tl1.getResource(), tl1);
     }};
 
@@ -350,13 +349,13 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class), new Lock("custom_resource1", LockType.WRITE));
+      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.WRITE));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
       oneOf(myResources).getResourcesMap(myProjectId);
-      will(returnValue(resources));
+      will(returnValue(resources));                  
     }});
 
     final Set<String> fairSet = new HashSet<>();
@@ -378,8 +377,8 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("custom_resource1", LockType.READ, "v1"));
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock("custom_resource1", LockType.READ, "v2"));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("custom_resource1", LockType.READ, "v1"));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock("custom_resource1", LockType.READ, "v2"));
       put(tl1.getResource(), tl1);
     }};
 
@@ -406,8 +405,8 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock("quoted_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -435,7 +434,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("quoted_resource1", LockType.WRITE));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.WRITE));
       put(tl1.getResource(), tl1);
     }};
 
@@ -463,7 +462,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -506,7 +505,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -555,7 +554,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
@@ -614,13 +613,13 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocksAny = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(customResource);
-      tl1.addLock(m.mock(BuildPromotionInfo.class, "bp1"), new Lock(customResource.getName(), LockType.READ));
+      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(customResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     final Map<Resource, TakenLock> takenLocksSpecific = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl = new TakenLock(customResource);
-      tl.addLock(m.mock(BuildPromotionInfo.class, "bp2"), new Lock(customResource.getName(), LockType.READ, "val1"));
+      tl.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock(customResource.getName(), LockType.READ, "val1"));
       put(tl.getResource(), tl);
     }};
 
@@ -864,10 +863,10 @@ public class TakenLocksImplTest extends BaseTestCase {
     TakenLock takenLock = takenLocksMap.get(existingResource);
     assertNotNull(takenLock);
     assertEquals(4, takenLock.getLocksCount());
-    final Map<BuildPromotionInfo, String> readLocks = takenLock.getReadLocks();
+    final Map<BuildPromotionEx, String> readLocks = takenLock.getReadLocks();
     assertEquals(4, readLocks.size());
     assertEquals(0, takenLock.getWriteLocks().size());
-    final Set<BuildPromotionInfo> readLockPromotions = readLocks.keySet();
+    final Set<BuildPromotionEx> readLockPromotions = readLocks.keySet();
     assertContains(readLockPromotions, rb1.getThird());
     assertContains(readLockPromotions, rb2.getThird());
     assertContains(readLockPromotions, qb1.getThird());
@@ -875,6 +874,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   }
 
 
+  @SuppressWarnings("SameParameterValue")
   private Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> createMockRunningBuild(@NotNull final String projectId) {
     final String name = generateRandomName();
     final RunningBuildEx build = m.mock(RunningBuildEx.class, "runningBuild_" + name);
@@ -893,6 +893,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     return new Trinity<>(build, buildType, buildPromotion);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private Trinity<QueuedBuildInfo, BuildTypeEx, BuildPromotionEx> createMockQueuedBuild(@NotNull final String projectId) {
     final String name = generateRandomName();
     final QueuedBuildInfo build = m.mock(QueuedBuildInfo.class, "queuedBuildInfo" + name);
