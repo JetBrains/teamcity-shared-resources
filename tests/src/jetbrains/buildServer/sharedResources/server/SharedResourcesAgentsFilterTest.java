@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.server;
 
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.*;
@@ -11,8 +12,10 @@ import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +25,6 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -65,6 +66,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private Set<String> fairSet = new HashSet<>();
 
+  private LocksStorage myLocksStorage;
+
+  private Resources myResources;
   /**
    * Class under test
    */
@@ -91,6 +95,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
     myProject = m.mock(ProjectEx.class);
+    myLocksStorage = m.mock(LocksStorage.class);
+    myResources = m.mock(Resources.class);
     m.checking(new Expectations() {{
       allowing(myProject).getProjectId();
       will(returnValue(myProjectId));
@@ -99,7 +105,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(PROJECT_NAME));
 
     }});
-    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector);
+    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector, myLocksStorage, myResources);
   }
 
   @Override

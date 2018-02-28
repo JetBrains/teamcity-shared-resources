@@ -85,16 +85,16 @@ public class LocksStorageImpl implements LocksStorage {
    * Map with separate guarding lock for each build
    */
   @NotNull
-  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<ReentrantLock>(new TLongObjectHashMap<ReentrantLock>());
+  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>());
 
   public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
     CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
       @Override
-      public Map<String, Lock> load(@NotNull final SBuild build) throws Exception {
+      public Map<String, Lock> load(@NotNull final SBuild build) {
         final Map<String, Lock> result;
         final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
         if (artifact.exists()) {
-          result = new HashMap<String, Lock>();
+          result = new HashMap<>();
           try {
             final String content = FileUtil.readText(artifact, MY_ENCODING);
             final String[] lines = content.split("\\r?\\n");
@@ -152,8 +152,8 @@ public class LocksStorageImpl implements LocksStorage {
       try {
         l.lock();
         myGuards.put(buildId, l);
-        final Collection<String> serializedStrings = new ArrayList<String>();
-        Map<String, Lock> locksToStore = new HashMap<String, Lock>();
+        final Collection<String> serializedStrings = new ArrayList<>();
+        Map<String, Lock> locksToStore = new HashMap<>();
         for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
           serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
           locksToStore.put(entry.getKey().getName(), Lock.createFrom(entry.getKey(), entry.getValue()));

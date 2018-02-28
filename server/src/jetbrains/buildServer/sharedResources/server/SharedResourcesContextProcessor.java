@@ -1,6 +1,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.*;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -15,8 +16,6 @@ import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-
 /**
  * Created with IntelliJ IDEA.
  *
@@ -25,7 +24,7 @@ import java.util.*;
 public class SharedResourcesContextProcessor implements BuildStartContextProcessor {
 
   @NotNull
-  private static final Logger log = Logger.getInstance(SharedResourcesContextProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(SharedResourcesContextProcessor.class.getName());
 
   @NotNull
   private final Object o = new Object();
@@ -61,19 +60,74 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   @Override
   public void updateParameters(@NotNull final BuildStartContext context) {
     final SRunningBuild build = context.getBuild();
-    final SBuildType myType = build.getBuildType();
-    final String projectId = build.getProjectId();
-    if (projectId != null && myType != null) {
-      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myType);
+    // build can be part of build chain that contains shared resources.
+    // walk the chain graph.
+    // (R) <-- (R) <-- ... <-- (Q) <-- (Q)
+    // any upper subpath can be running (when there are running builds in other subtrees
+    // Move from top
+    // for each running build in build chain get taken locks
+    // for each queued build resolve locks and store
+    // for current (current build id NOT composite -> assign locks as usual)
+    //  corner cases:
+    //  write locks in upper composite builds do not prevent taking read lock in sub builds
+
+    final BuildPromotionEx promo = (BuildPromotionEx)build.getBuildPromotion();
+      // several locks on same resource may be taken by the chain
+    if (promo.isPartOfBuildChain()) {
+      final List<BuildPromotionEx> depPromos = promo.getDependentCompositePromotions();
+      for (BuildPromotionEx p: depPromos) {
+        SBuild b = p.getAssociatedBuild();
+        if (b instanceof RunningBuildEx) {
+          // When context processor is called, current build as well as all composite builds are already running
+          // Only thing that differentiates composite builds that were looked through and not is the result of locksStored method
+          LOG.debug("Composite build " + build.getBuildId() + " is running");
+          // build is running, locks are taken. print for now
+          if (myLocksStorage.locksStored(b)) {
+            // if this build contains any locks -> load
+            myLocksStorage.load(b).forEach((k, v) -> LOG.debug("" + b.getBuildId() + ": " + k + "=" + v));
+          } else {
+            // store locks
+            if (b.getBuildType() != null) {
+              final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(b.getBuildType());
+              final Map<String, Lock> locks = new HashMap<>();
+              // get locks required for composite build
+              for (SharedResourcesFeature f : features) {
+                locks.putAll(f.getLockedResources());
+              }
+              // store locks with no values for now
+              final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
+              myLocksStorage.store(b, myTakenValues);
+              // save locks as acquired by the chain.
+            }
+          }
+        }
+      }
+    }
+
+    findAndProcessLocks(context, build); // <-- here we should add restrictions
+
+  }
+
+  private void findAndProcessLocks(final @NotNull BuildStartContext context, final SRunningBuild build) {
+    if (build.getBuildType() != null) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildType());
       if (!features.isEmpty()) {
         final Map<String, Lock> locks = new HashMap<>();
-        for (SharedResourcesFeature f: features) {
+        for (SharedResourcesFeature f : features) {
           locks.putAll(f.getLockedResources());
         }
         if (!locks.isEmpty()) {
-          processCustomLocks(context, build, projectId, locks);
+          processCustomLocks(context, build, locks);
         }
       }
+    }
+  }
+
+  private void processCustomLocks(@NotNull final BuildStartContext context,
+                                  @NotNull final SRunningBuild build,
+                                  @NotNull final Map<String, Lock> locks) {
+    if (build.getProjectId() != null) {
+      processCustomLocks(context, build, build.getProjectId(), locks);
     }
   }
 
@@ -109,7 +163,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
               context.addSharedParameter(paramName, currentValue);
             } else {
               // throw exception?
-              log.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
+              LOG.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
             }
           }
         }

@@ -16,7 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.Optional;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
+import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
@@ -45,8 +48,14 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     enableRunningBuildsUpdate();
   }
 
+  /**
+   * Test setup:
+   *
+   * dep ---> (C)[resource, write_lock]
+   *
+   */
   @Test
-  public void testSimpleChain_NoOtherBuilds() {
+  public void testSimpleChain() {
     // create composite build
     BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
     // create dep build
@@ -68,7 +77,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     myFixture.flushQueueAndWaitN(2);
 
     assertEquals(2, myFixture.getBuildsManager().getRunningBuilds().size());
-    // read logs.. for now
+
     final SBuild depBuild = qbDep.getAssociatedBuild();
     assertTrue(depBuild instanceof RunningBuildEx);
     finishBuild((SRunningBuild)depBuild, false);
@@ -80,6 +89,12 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     final SBuild associatedBuild = qbComposite.getBuildPromotion().getAssociatedBuild();
     Assert.assertNotNull(associatedBuild);
     assertTrue(associatedBuild.isFinished());
+
+    // check for parameters
+
+    // check for stored locks
+    final BuildArtifactHolder artifact = associatedBuild.getArtifacts(BuildArtifactsViewMode.VIEW_HIDDEN_ONLY).findArtifact(".teamcity/JetBrains.SharedResources/taken_locks.txt");
+    assertTrue("Artifact with taken locks is not present in composite build", artifact.isAvailable());
   }
 
   /**
@@ -87,9 +102,9 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    *
    * 2 agents
    *
-   * (C1)['resource', write lock] <-- dep1
+   * dep1 ---> (C1)['resource', write lock]
    *
-   * (C2)['resource', write lock] <-- dep2
+   * dep2 ---> (C2)['resource', write lock] 
    *
    * Two simple chains of one composite and one dependent build
    * Composite builds each hold write lock on same resource
@@ -151,7 +166,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
       @Override
       protected boolean condition() {
         final SBuild associatedBuild = firstCompositePromo.getAssociatedBuild();
-        return associatedBuild != null && associatedBuild instanceof SFinishedBuild;
+        return associatedBuild instanceof SFinishedBuild;
       }
     };
 
@@ -166,7 +181,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    *
    * 2 agents
    *
-   * (C1) <--- (C2)[resource, write lock] <--- dep
+   * dep ---> (C2)[resource, write lock] ---> (C1)
    *
    * other_build[resource, write lock]
    *
@@ -214,7 +229,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
       @Override
       protected boolean condition() {
         final SBuild associatedBuild = bpOther.getAssociatedBuild();
-        return associatedBuild != null && associatedBuild instanceof SFinishedBuild;
+        return associatedBuild instanceof SFinishedBuild;
       }
     };
     // check that chain started
@@ -222,6 +237,87 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
 
     final SBuild depRunningBuild = depPromo.getAssociatedBuild();
     assertTrue(depRunningBuild instanceof RunningBuildEx);
+  }
+
+  /**
+   * Test setup:
+   *
+   * dep [resource, write lock] --> (C) ['resource', write lock]
+   *
+   * Same lock in composite head and dep should not prevent dep from starting
+   * Dep and composite should successfully acquire locks and have them in artifacts
+   */
+  @Test
+  public void testSameLockInComposite() {
+    // create composite build
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep build
+    SBuildType btDep = myProject.createBuildType("btDep", "btDep");
+    // add dependency
+    addDependency(btComposite, btDep);
+    // add resource
+    addResource(myProject, createInfiniteResource("resource"));
+    // add lock on resource to composite and dep builds
+    addWriteLock(btComposite, "resource");
+    addWriteLock(btDep, "resource");
+    // start composite build
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+    // await 2 running builds despite write locks inside one chain
+    final SQueuedBuild first = myFixture.getBuildQueue().getFirst();
+    Assert.assertNotNull(first);
+    BuildPromotion qbDep = first.getBuildPromotion();
+    myFixture.flushQueueAndWaitN(2);
+    assertEquals(2, myFixture.getBuildsManager().getRunningBuilds().size());
+    // dep build is running
+    final SBuild depBuild = qbDep.getAssociatedBuild();
+    assertTrue(depBuild instanceof RunningBuildEx);
+  }
+
+  /**
+   * Test setup:
+   *
+   * 2 agents
+   *
+   * dep1  ---- --- --- --- --- --- --->
+   *                                      ---> (C) ['resource', write lock]
+   * dep2 ['resource', write lock]  --->
+   *
+   * dep1 should start before dep2
+   * C, consequently, starts, acquires lock and becomes visible in RunningBuildsManager
+   * should not prevent dep2 from starting on the second agent, as write lock, taken by the chain should not count inside it
+   *
+   */
+  public void testSameLockInRunningComposite() {
+    // register second agent
+    myFixture.createEnabledAgent("Ant");
+    // create composite build
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep builds
+    SBuildType btDep1 = myProject.createBuildType("btDep1", "btDep1");
+    SBuildType btDep2 = myProject.createBuildType("btDep2", "btDep2");
+    // add dependency
+    addDependency(btComposite, btDep1);
+    addDependency(btComposite, btDep2);
+    // add resource
+    addResource(myProject, createInfiniteResource("resource"));
+    // add write locks to dep2 and composite head
+    addWriteLock(btComposite, "resource");
+    addWriteLock(btDep2, "resource");
+    // put chain to queue
+    // start composite build
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+    // get queued build of
+    Optional<SQueuedBuild> opQueued = myFixture.getBuildQueue().getItems().stream().filter(qb -> qb.getBuildType().equals(btDep1)).findFirst();
+    if (!opQueued.isPresent()) {
+      fail("Could not find needed dependency (dep1) in queue");
+    }
+    final SQueuedBuild dep1Queued = opQueued.get();
+    myFixture.getBuildQueue().moveTop(dep1Queued.getItemId());
+    // start and await 3 builds
+    myFixture.flushQueueAndWaitN(3);
+    assertEquals(3, myFixture.getBuildsManager().getRunningBuilds().size());
   }
 
   private void waitForAllBuildsToFinish() {
