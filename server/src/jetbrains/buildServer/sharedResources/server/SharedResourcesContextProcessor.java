@@ -56,25 +56,37 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     myRunningBuildsManager = runningBuildsManager;
   }
 
-
+  /**
+   *  (C_r0) <-- ... <-- (C_rN) <-- (C_0) <-- ... <-- (C_N) <--- (CURRENT_BUILD)
+   * C_r0, ..., C_rN part of the (composite) build chain that has started before this build
+   * when, for example, some other subtree started
+   * has locks fixed and stored in locksStorage
+   * has values for locks defined
+   * NB: builds can belong to other projects - need to resolve resources to get available values
+   * NB: match custom lock values by RESOURCES (otherwise value space can be different)
+   * custom lock values (if matched by resources) should define ANY-type locks in lower chain
+   * traversal should be top-to-bottom
+   *
+   * C_0, ..., C_N part of the (composite) build chain that is starting with the current build
+   *
+   * 
+   *
+   *
+   * @param context context of current starting build
+   */
   @Override
   public void updateParameters(@NotNull final BuildStartContext context) {
     final SRunningBuild build = context.getBuild();
-    // build can be part of build chain that contains shared resources.
-    // walk the chain graph.
-    // (R) <-- (R) <-- ... <-- (Q) <-- (Q)
-    // any upper subpath can be running (when there are running builds in other subtrees
-    // Move from top
-    // for each running build in build chain get taken locks
-    // for each queued build resolve locks and store
-    // for current (current build id NOT composite -> assign locks as usual)
-    //  corner cases:
-    //  write locks in upper composite builds do not prevent taking read lock in sub builds
-
     final BuildPromotionEx promo = (BuildPromotionEx)build.getBuildPromotion();
       // several locks on same resource may be taken by the chain
     if (promo.isPartOfBuildChain()) {
+      // get all dependent composite promotions
       final List<BuildPromotionEx> depPromos = promo.getDependentCompositePromotions();
+      // At this moment ALL composite builds are already in RunningBuildsManager
+
+      Collections.reverse(depPromos);
+      Map<String, Map<String, Resource>> projectResources = new HashMap<>();
+
       for (BuildPromotionEx p: depPromos) {
         SBuild b = p.getAssociatedBuild();
         if (b instanceof RunningBuildEx) {
@@ -87,13 +99,12 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
             myLocksStorage.load(b).forEach((k, v) -> LOG.debug("" + b.getBuildId() + ": " + k + "=" + v));
           } else {
             // store locks
-            if (b.getBuildType() != null) {
-              final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(b.getBuildType());
+            final SBuildType buildType = b.getBuildType();
+            if (buildType != null) {
               final Map<String, Lock> locks = new HashMap<>();
-              // get locks required for composite build
-              for (SharedResourcesFeature f : features) {
-                locks.putAll(f.getLockedResources());
-              }
+              myFeatures.searchForFeatures(buildType).stream()
+                        .map(SharedResourcesFeature::getLockedResources)
+                        .forEach(locks::putAll);
               // store locks with no values for now
               final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
               myLocksStorage.store(b, myTakenValues);

@@ -288,6 +288,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    * should not prevent dep2 from starting on the second agent, as write lock, taken by the chain should not count inside it
    *
    */
+  @Test
   public void testSameLockInRunningComposite() {
     // register second agent
     myFixture.createEnabledAgent("Ant");
