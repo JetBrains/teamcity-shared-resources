@@ -75,84 +75,102 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   public AgentsFilterResult filterAgents(@NotNull final AgentsFilterContext context) {
     // get custom data
     final Set<String> featureContext = getOrCreateFeatureData(context);
-    AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
-    AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
+    final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
+    final AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
-    QueuedBuildInfo queuedBuild = context.getStartingBuild();
+    final QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
-
-    // contains resources and locks that are INSIDE of the build chain
-    final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks = new HashMap<>(); // resource -> {promotion -> lock}
-    final Map<String, Map<String, Resource>> chainResources = new HashMap<>(); // projectID -> {name, resource}
 
     if (myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
-      // first - get top of the chain. Builds that are already running.
-      // they have locks already taken
-      depPromos.stream()
-               .map(BuildPromotion::getAssociatedBuild)
-               .filter(Objects::nonNull)
-               .filter(it -> it.getProjectId() != null)
-               .filter(it -> it instanceof SRunningBuild)
-               .forEach(build -> {
-                 if (myLocksStorage.locksStored(build)) {
-                   LOG.debug("build " + build.getBuildId() + " is running. Loading locks");
-                   final Map<String, Lock> chainBuildLocks = myLocksStorage.load(build);
-                   if (!chainBuildLocks.isEmpty()) {
-                     chainResources.computeIfAbsent(build.getProjectId(), myResources::getResourcesMap);
-                     // if there are locks - resolve locks against resources according to project hierarchy of composite build
-                     resolve(chainLocks, chainResources.get(build.getProjectId()), (BuildPromotionEx)build.getBuildPromotion(), chainBuildLocks);
+      if (depPromos.isEmpty()) {
+        LOG.debug("Queued build does not have dependent composite promotions");
+        reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
+      } else {
+        LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
+        // contains resources and locks that are INSIDE of the build chain
+        final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks = new HashMap<>(); // resource -> {promotion -> lock}
+        final Map<String, Map<String, Resource>> chainResources = new HashMap<>(); // projectID -> {name, resource}
+
+        // first - get top of the chain. Builds that are already running.
+        // they have locks already taken
+        depPromos.stream()
+                 .map(BuildPromotion::getAssociatedBuild)
+                 .filter(Objects::nonNull)
+                 .filter(it -> it.getProjectId() != null)
+                 .filter(it -> it instanceof SRunningBuild)
+                 .forEach(build -> {
+                   if (myLocksStorage.locksStored(build)) {
+                     LOG.debug("build " + build.getBuildId() + " is running. Loading locks");
+                     final Map<String, Lock> currentNodeLocks = myLocksStorage.load(build);
+                     if (!currentNodeLocks.isEmpty()) {
+                       chainResources.computeIfAbsent(build.getProjectId(), myResources::getResourcesMap);
+                       // if there are locks - resolve locks against resources according to project hierarchy of composite build
+                       resolve(chainLocks, chainResources.get(build.getProjectId()), (BuildPromotionEx)build.getBuildPromotion(), currentNodeLocks);
+                     }
                    }
-                 }
-               });
-      // rest are queued builds.
-      // make sure queued builds can start.
-      // builds inside composite build chain are not affected by the locks taken in the same chain
+                 });
 
-
-      final List<SQueuedBuild> queued = depPromos.stream()
-                                                 .map(BuildPromotion::getQueuedBuild)
-                                                 .filter(Objects::nonNull)
-                                                 .collect(Collectors.toList());
-      for (SQueuedBuild compositeQueuedBuild: queued) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeQueuedBuild.getBuildType());
-        if (!features.isEmpty()) {
-          final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
-          if (!locksToTake.isEmpty()) {
-            // resolve locks that build wants to take against actual resources
-            chainResources.computeIfAbsent(compositeQueuedBuild.getBuildType().getProjectId(), myResources::getResourcesMap);
-            reason = getWaitReason(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), chainLocks, locksToTake);
-            if (reason != null) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
-                LOG.debug("Found blocked composite build on the path: " + compositeQueuedBuild);
+        // rest are queued builds.
+        // make sure queued builds can start.
+        // builds inside composite build chain are not affected by the locks taken in the same chain
+        final List<SQueuedBuild> queued = depPromos.stream()
+                                                   .map(BuildPromotion::getQueuedBuild)
+                                                   .filter(Objects::nonNull)
+                                                   .collect(Collectors.toList());
+        for (SQueuedBuild compositeQueuedBuild : queued) {
+          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeQueuedBuild.getBuildType());
+          if (!features.isEmpty()) {
+            final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
+            if (!locksToTake.isEmpty()) {
+              // resolve locks that build wants to take against actual resources
+              chainResources.computeIfAbsent(compositeQueuedBuild.getBuildType().getProjectId(), myResources::getResourcesMap);
+              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), chainLocks,
+                                           locksToTake);
+              if (reason != null) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
+                  LOG.debug("Found blocked composite build on the path: " + compositeQueuedBuild);
+                }
+                break;
               }
-              break;
             }
-            // no need to resolve here. queued composite builds do not affect each other
-            //resolve(chainLocks, chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), locksToTake);
+          }
+        }
+        // process build itself
+        if (reason == null) {
+          if (myPromotion.getBuildType() != null) {
+            final String projectId = myPromotion.getBuildType().getProjectId();
+            chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
+            final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion.getBuildType());
+            if (!features.isEmpty()) {
+              reason = checkForInvalidLocks(myPromotion.getBuildType());
+            }
+            final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
+            if (!locksToTake.isEmpty()) {
+              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake);
+            }
           }
         }
       }
-    }
-    if (reason == null) {
-      reason = getWaitReason(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
+    } else {
+      reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
     }
     final AgentsFilterResult result = new AgentsFilterResult();
     result.setWaitReason(reason);
     return result;
   }
 
-  private WaitReason getWaitReason(final Set<String> featureContext,
-                                   final AtomicReference<List<SRunningBuild>> runningBuilds,
-                                   final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
-                                   final AtomicReference<Map<Resource, TakenLock>> takenLocks,
-                                   final Map<String, Resource> chainNodeResources,
-                                   final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
-                                   final Map<String, Lock> locksToTake) {
+  private WaitReason processBuildInChain(@NotNull final Set<String> featureContext,
+                                         @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
+                                         @NotNull final Map<String, Resource> chainNodeResources,
+                                         @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
+                                         @NotNull final Map<String, Lock> locksToTake) {
     WaitReason reason = null;
 
     if (runningBuilds.get() == null) {
@@ -161,22 +179,18 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (takenLocks.get() == null) {
       takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
     }
-    // todo: need second method here, that takes resolved resources and build chain into account
     final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), featureContext, chainNodeResources, chainLocks);
     if (!unavailableLocks.isEmpty()) {
       reason = createWaitReason(takenLocks.get(), unavailableLocks);
     }
-
-    // here we should have resolved resources and locks. should add to collections as in resolve() method
-
     return reason;
   }
 
-  private WaitReason getWaitReason(@NotNull final BuildPromotionEx buildPromotion,
-                                   @NotNull final Set<String> featureContext,
-                                   @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
-                                   @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
-                                   @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
+  private WaitReason processSingleBuild(@NotNull final BuildPromotionEx buildPromotion,
+                                        @NotNull final Set<String> featureContext,
+                                        @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                        @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                        @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
     final String projectId = buildPromotion.getProjectId();
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
