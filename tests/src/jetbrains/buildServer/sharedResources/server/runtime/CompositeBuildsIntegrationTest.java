@@ -16,7 +16,9 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
 import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
@@ -275,6 +277,10 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   }
 
   /**
+   * dep1 should start before dep2
+   * C, consequently, starts, acquires lock and becomes visible in RunningBuildsManager
+   * should not prevent dep2 from starting on the second agent, as write lock, taken by the chain should not count inside it
+   * 
    * Test setup:
    *
    * 2 agents
@@ -282,11 +288,6 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    * dep1  ---- --- --- --- --- --- --->
    *                                      ---> (C) ['resource', write lock]
    * dep2 ['resource', write lock]  --->
-   *
-   * dep1 should start before dep2
-   * C, consequently, starts, acquires lock and becomes visible in RunningBuildsManager
-   * should not prevent dep2 from starting on the second agent, as write lock, taken by the chain should not count inside it
-   *
    */
   @Test
   public void testSameLockInRunningComposite() {
@@ -320,6 +321,72 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     myFixture.flushQueueAndWaitN(3);
     assertEquals(3, myFixture.getBuildsManager().getRunningBuilds().size());
   }
+
+
+  /**
+   * Composite build holds write lock to resource
+   * Its dependencies should acquire read locks
+   *
+   * Other chains/builds should not
+   *
+   *
+   * 3 agents
+   *
+   * dep1[resource, read lock] -->
+   *                               (C)[resource, write lock]
+   * dep2[resource, read lock] -->
+   *
+   * other [resource, read lock]
+   *
+   * dep1, dep2 and (C) should be running
+   * other should wait for (C) to finish
+   *
+   */
+  @Test
+  public void testTwoBuildsInsideChainShareLock() {
+    myFixture.createEnabledAgent("Ant");
+    myFixture.createEnabledAgent("Ant");
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep builds
+    SBuildType btDep1 = myProject.createBuildType("btDep1", "btDep1");
+    SBuildType btDep2 = myProject.createBuildType("btDep2", "btDep2");
+    // add dependency
+    addDependency(btComposite, btDep1);
+    addDependency(btComposite, btDep2);
+    // create other build
+    SBuildType btOther = myProject.createBuildType("btOther", "btOther");
+    // add resource
+    addResource(myProject, createInfiniteResource("resource"));
+    // add locks
+    addWriteLock(btComposite, "resource");
+    addReadLock(btDep1, "resource");
+    addReadLock(btDep2, "resource");
+    addReadLock(btOther, "resource");
+    // add composite to queue
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+    final List<SQueuedBuild> queueItems = myFixture.getBuildQueue().getItems();
+    assertEquals(3, queueItems.size());
+    final List<BuildPromotion> depPromos = queueItems.stream()
+                                                   .map(BuildPromotionOwner::getBuildPromotion)
+                                                   .filter(promo -> !promo.isCompositeBuild())
+                                                   .collect(Collectors.toList());
+
+    myFixture.flushQueueAndWaitN(3);
+    QueuedBuildEx qbOther = (QueuedBuildEx)btOther.addToQueue("");
+    assertNotNull(qbOther);
+    //add other to queue
+    final BuildPromotionEx otherPromo = qbOther.getBuildPromotion();
+    waitForReason(qbOther, "Build is waiting for the following resource to become available: resource " +
+                           "(locked by My Default Test Project :: composite, My Default Test Project :: btDep1, My Default Test Project :: btDep2)");
+    depPromos.forEach(promo -> assertTrue(promo.getAssociatedBuild() instanceof SRunningBuild));
+
+    depPromos.forEach(promo -> finishBuild((SRunningBuild)promo.getAssociatedBuild(), false));
+    flushQueueAndWait();
+    assertTrue(otherPromo.getAssociatedBuild() instanceof SRunningBuild);
+  }
+
+
 
   private void waitForAllBuildsToFinish() {
     new WaitForAssert() {
