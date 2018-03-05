@@ -197,6 +197,12 @@ public class ContextProcessorTest extends BaseTestCase {
       storedLocks.put(lock, "value2");
       oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
 
+      allowing(myRunningBuild).getBuildId();
+      will(returnValue(0L));
+
+      allowing(otherRunningBuild).getBuildId();
+      will(returnValue(1L));
+
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, "value2");
     }});
     myProcessor.updateParameters(myBuildStartContext);
@@ -288,6 +294,9 @@ public class ContextProcessorTest extends BaseTestCase {
 
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE);
 
+      allowing(runningBuild).getBuildId();
+      will(returnValue(0L));
+
       allowing(myLocksStorage);
     }});
     myProcessor.updateParameters(myBuildStartContext);
@@ -350,6 +359,12 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
 
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE_AVAILABLE);
+
+      allowing(runningBuild1).getBuildId();
+      will(returnValue(0L));
+
+      allowing(runningBuild2).getBuildId();
+      will(returnValue(1L));
 
       allowing(myLocksStorage);
     }});

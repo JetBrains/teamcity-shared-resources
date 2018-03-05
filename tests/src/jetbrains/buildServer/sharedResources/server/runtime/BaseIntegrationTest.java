@@ -35,7 +35,7 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
   public void simpleIntegrationTest() {
     myProjectFeatures.addFeature(myProject, createInfiniteResource("resource"));
     final BuildTypeEx bt = myProject.createBuildType("check");
-    bt.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock("resource"));
+    addReadLock(bt, "resource");
     myProject.persist();
 
     QueuedBuildEx qb = (QueuedBuildEx)bt.addToQueue("");

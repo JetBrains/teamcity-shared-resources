@@ -2,6 +2,8 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -69,57 +71,86 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
    *
    * C_0, ..., C_N part of the (composite) build chain that is starting with the current build
    *
-   * 
-   *
-   *
    * @param context context of current starting build
    */
   @Override
   public void updateParameters(@NotNull final BuildStartContext context) {
-    final SRunningBuild build = context.getBuild();
-    final BuildPromotionEx promo = (BuildPromotionEx)build.getBuildPromotion();
-      // several locks on same resource may be taken by the chain
-    if (promo.isPartOfBuildChain()) {
+    final SRunningBuild startingBuild = context.getBuild();
+    final BuildPromotionEx startingBuildPromotion = (BuildPromotionEx)startingBuild.getBuildPromotion();
+    final Set<Long> runningCompositeIds = new HashSet<>();
+    // several locks on same resource may be taken by the chain
+    if (startingBuildPromotion.isPartOfBuildChain()) {
       // get all dependent composite promotions
-      final List<BuildPromotionEx> depPromos = promo.getDependentCompositePromotions();
+      final List<BuildPromotionEx> depPromos = startingBuildPromotion.getDependentCompositePromotions();
       // At this moment ALL composite builds are already in RunningBuildsManager
-
-      Collections.reverse(depPromos);
-      Map<String, Map<String, Resource>> projectResources = new HashMap<>();
-
-      for (BuildPromotionEx p: depPromos) {
-        SBuild b = p.getAssociatedBuild();
-        if (b instanceof RunningBuildEx) {
-          // When context processor is called, current build as well as all composite builds are already running
-          // Only thing that differentiates composite builds that were looked through and not is the result of locksStored method
-          LOG.debug("Composite build " + build.getBuildId() + " is running");
-          // build is running, locks are taken. print for now
-          if (myLocksStorage.locksStored(b)) {
-            // if this build contains any locks -> load
-            myLocksStorage.load(b).forEach((k, v) -> LOG.debug("" + b.getBuildId() + ": " + k + "=" + v));
-          } else {
-            // store locks
-            final SBuildType buildType = b.getBuildType();
-            if (buildType != null) {
-              final Map<String, Lock> locks = new HashMap<>();
-              myFeatures.searchForFeatures(buildType).stream()
-                        .map(SharedResourcesFeature::getLockedResources)
-                        .forEach(locks::putAll);
-              // store locks with no values for now
-              final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
-              myLocksStorage.store(b, myTakenValues);
-              // save locks as acquired by the chain.
+      depPromos.stream()
+               .filter(p -> p.getAssociatedBuild() instanceof SRunningBuild)
+               .map(BuildPromotionEx::getAssociatedBuildId)
+               .filter(Objects::nonNull)
+               .forEach(runningCompositeIds::add);
+      // When context processor is called, current build as well as all composite builds are already running
+      // Only thing that differentiates composite builds that were looked through and not is the result of locksStored method
+      depPromos.stream()
+               .map(BuildPromotionEx::getAssociatedBuild)
+               .filter(build -> build instanceof RunningBuildEx)
+               .filter(build -> !myLocksStorage.locksStored(build))
+               .forEach(build -> processCompositeBuild(build, runningCompositeIds));
+    }
+    //todo: SPECIFIC (ex. A) -> ANY -> ANY -> ANY ===> A -> A -> A -> A
+    findAndProcessLocks(context, startingBuild, runningCompositeIds); // <-- here we should add restrictions
+  }
+  private void processCompositeBuild(@NotNull final SBuild build,
+                                     @NotNull final Set<Long> compositeRunningBuildIds) {
+    // load locks
+    // load resources
+    if (build.getBuildType() != null && build.getProjectId() != null) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildType());
+      if (!features.isEmpty()) {
+        final Map<String, Lock> locks = new HashMap<>();
+        for (SharedResourcesFeature f : features) {
+          locks.putAll(f.getLockedResources());
+        }
+        if (!locks.isEmpty()) {
+          final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
+          // get custom resources from our locks
+          final Map<String, CustomResource> myCustomResources = getCustomResources(build.getProjectId(), locks);
+          synchronized (o) {
+            // decide whether we need to resolve values
+            if (!myCustomResources.isEmpty()) {
+              // used values should not include the values from composite chain
+              final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks, compositeRunningBuildIds);
+              for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
+                if (entry.getValue().isEnabled()) {
+                  // get value space for current resources
+                  final List<String> values = new ArrayList<>(entry.getValue().getValues());
+                  final String key = entry.getKey();
+                  // remove used values
+                  usedValues.get(key).forEach(values::remove);
+                  if (!values.isEmpty()) {
+                    final Lock currentLock = locks.get(key);
+                    String currentValue;
+                    if (LockType.READ.equals(currentLock.getType())) {
+                      currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                      // todo: add support of multiple values per lock in custom storage
+                      myTakenValues.put(currentLock, currentValue);
+                    }
+                  } else {
+                    // throw exception?
+                    LOG.warn("Unable to assign value to lock [" + key + "] for build with id [" + build.getBuildId() + "]");
+                  }
+                }
+              }
             }
+            myLocksStorage.store(build, myTakenValues);
           }
         }
       }
     }
-
-    findAndProcessLocks(context, build); // <-- here we should add restrictions
-
   }
 
-  private void findAndProcessLocks(final @NotNull BuildStartContext context, final SRunningBuild build) {
+  private void findAndProcessLocks(@NotNull final BuildStartContext context,
+                                   @NotNull final SRunningBuild build,
+                                   @NotNull final Set<Long> compositeRunningBuildIds) {
     if (build.getBuildType() != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildType());
       if (!features.isEmpty()) {
@@ -128,7 +159,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
           locks.putAll(f.getLockedResources());
         }
         if (!locks.isEmpty()) {
-          processCustomLocks(context, build, locks);
+          processCustomLocks(context, build, locks, compositeRunningBuildIds);
         }
       }
     }
@@ -136,23 +167,26 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   private void processCustomLocks(@NotNull final BuildStartContext context,
                                   @NotNull final SRunningBuild build,
-                                  @NotNull final Map<String, Lock> locks) {
+                                  @NotNull final Map<String, Lock> locks,
+                                  @NotNull final Set<Long> compositeRunningBuildIds) {
     if (build.getProjectId() != null) {
-      processCustomLocks(context, build, build.getProjectId(), locks);
+      processCustomLocks(context, build, build.getProjectId(), locks, compositeRunningBuildIds);
     }
   }
 
   private void processCustomLocks(@NotNull final BuildStartContext context,
                                   @NotNull final SRunningBuild build,
                                   @NotNull final String projectId,
-                                  @NotNull final Map<String, Lock> locks) {
+                                  @NotNull final Map<String, Lock> locks,
+                                  @NotNull final Set<Long> compositeRunningBuildIds) {
     final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
     // get custom resources from our locks
     final Map<String, CustomResource> myCustomResources = getCustomResources(projectId, locks);
     synchronized (o) {
       // decide whether we need to resolve values
       if (!myCustomResources.isEmpty()) {
-        final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks);
+        // used values should not include the values from composite chain
+        final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks, compositeRunningBuildIds);
         for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
           if (entry.getValue().isEnabled()) {
             // get value space for current resources
@@ -190,8 +224,12 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
    * @return map of locks and taken values
    */
   @NotNull
-  private Map<String, List<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks) {
-    final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
+  private Map<String, List<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks, Set<Long> runningCompositeBuilds) {
+    // ignore locks taken in chain
+    final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds()
+                                                                    .stream()
+                                                                    .filter(b -> !runningCompositeBuilds.contains(b.getBuildId()))
+                                                                    .collect(Collectors.toList());
     final Map<String, List<String>> usedValues = new HashMap<>();
     for (String name: locks.keySet()) {
       usedValues.put(name, new ArrayList<>());
@@ -235,10 +273,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
 
   @NotNull
   private Map<Lock, String> initTakenValues(@NotNull final Collection<Lock> myLocks) {
-    final Map<Lock, String> result = new HashMap<>();
-    for (Lock lock: myLocks) {
-      result.put(lock, "");
-    }
-    return result;
+    return myLocks.stream()
+                  .collect(Collectors.toMap(Function.identity(), val -> ""));
   }
 }
