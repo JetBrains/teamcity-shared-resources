@@ -128,8 +128,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             if (!locksToTake.isEmpty()) {
               // resolve locks that build wants to take against actual resources
               chainResources.computeIfAbsent(compositeQueuedBuild.getBuildType().getProjectId(), myResources::getResourcesMap);
-              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), chainLocks,
-                                           locksToTake);
+              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks,
+                                           chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), chainLocks,locksToTake);
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");

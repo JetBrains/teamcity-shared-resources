@@ -16,10 +16,13 @@
 
 package jetbrains.buildServer.sharedResources.tests;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.*;
 import jetbrains.buildServer.sharedResources.server.feature.*;
@@ -98,6 +101,12 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     buildType.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock(resourceName));
   }
 
+  @SuppressWarnings("SameParameterValue")
+  protected void addSpecificLock(@NotNull final SBuildType buildType,
+                                 @NotNull final String resourceName,
+                                 @NotNull final String value) {
+    buildType.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createSpecificLock(resourceName, value));
+  }
 
   @SuppressWarnings("SameParameterValue")
   protected Map<String, String> createInfiniteResource(final String name) {
@@ -108,12 +117,26 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected Map<String, String> createReadLock(@NotNull final String resourceName) {
+  protected Map<String, String> createCustomResource(final String name, String... values) {
+    return CollectionsUtil.asMap(NAME, name,
+                                 TYPE, ResourceType.CUSTOM.name(),
+                                 QUOTA, "-1",
+                                 ENABLED, Boolean.toString(Boolean.TRUE),
+                                 VALUES, Arrays.stream(values).collect(Collectors.joining("\n")));
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private Map<String, String> createReadLock(@NotNull final String resourceName) {
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + "\treadLock");
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected Map<String, String> createWriteLock(@NotNull final String resourceName) {
+  private Map<String, String> createWriteLock(@NotNull final String resourceName) {
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + "\twriteLock");
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private Map<String, String> createSpecificLock(@NotNull final String resourceName, @NotNull final String value) {
+    return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock " + value);
   }
 }

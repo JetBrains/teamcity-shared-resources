@@ -16,6 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +31,7 @@ import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
+import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.WaitFor;
 import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +134,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     SBuildType btDepSecond = myProject.createBuildType("btDep2", "btDep2");
     addDependency(btCompositeSecond, btDepSecond);
     // create lock in second composite build
-    btCompositeSecond.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createWriteLock("resource"));
+    addWriteLock(btCompositeSecond, "resource");
 
     // register second agent
     myFixture.createEnabledAgent("Ant");
@@ -386,7 +391,85 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     assertTrue(otherPromo.getAssociatedBuild() instanceof SRunningBuild);
   }
 
+  /**
+   * Composite parent has lock with {@code SPECIFIC} value
+   * One child has no locks
+   * Second child has the same {@code SPECIFIC} value lock
+   *
+   * When composite parent is already running with stored locks (value is occupied) because of second child,
+   * the child with locks should start and successfully acquire value
+   *
+   * 2 agents
+   *
+   * dep1[resource, specific(value1)] -->
+   *                                      (C)[resource, specific(value1)]
+   * dep2 --- --- --- --- --- --- --- -->
+   *
+   */
+  @Test
+  public void testAcquireSameCustomValueAsInComposite() {
+    myFixture.createEnabledAgent("Ant");
 
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep builds
+    SBuildType btDep1 = myProject.createBuildType("btDep1", "btDep1");
+    SBuildType btDep2 = myProject.createBuildType("btDep2", "btDep2");
+    // add dependency
+    addDependency(btComposite, btDep1);
+    addDependency(btComposite, btDep2);
+    // add custom resource
+    addResource(myProject, createCustomResource("resource", "value1", "value2"));
+    // add specific lock to composite and dep1
+    addSpecificLock(btComposite, "resource", "value1");
+    addSpecificLock(btDep1, "resource", "value1");
+    // add composite to queue
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+    final List<SQueuedBuild> queueItems = myFixture.getBuildQueue().getItems();
+    assertEquals(3, queueItems.size());
+    SQueuedBuild dep1Queued = findQueuedBuild(btDep1);
+    // put build without locks to top
+    myFixture.getBuildQueue().moveTop(findQueuedBuild(btDep2).getItemId());
+    // process queue
+    myFixture.flushQueueAndWaitN(3);
+    assertEquals(3, myFixture.getBuildsManager().getRunningBuilds().size());
+    // finish builds
+    finishAllBuilds();
+    // check for SPECIFIC lock value in composite build
+    final SBuild compositeAssocBuild = qbComposite.getBuildPromotion().getAssociatedBuild();
+    assertTrue(compositeAssocBuild instanceof SFinishedBuild);
+    assertContains(readArtifact(compositeAssocBuild), "resource\treadLock\tvalue1");
+    // check for SPECIFIC lock value in dep1
+    final SBuild dep1AssocBuild = dep1Queued.getBuildPromotion().getAssociatedBuild();
+    assertTrue(dep1AssocBuild instanceof SFinishedBuild);
+    assertContains(readArtifact(dep1AssocBuild), "resource\treadLock\tvalue1");
+  }
+
+  private SQueuedBuild findQueuedBuild(@NotNull final SBuildType buildType) {
+    Optional<SQueuedBuild> opQueued = myFixture.getBuildQueue().getItems().stream()
+                                               .filter(qb -> qb.getBuildType().equals(buildType))
+                                               .findFirst();
+    if (!opQueued.isPresent()) {
+      fail("Could not find needed dependency (dep2) in queue");
+    }
+    return opQueued.get();
+  }
+
+  @NotNull
+  private List<String> readArtifact(SBuild build) {
+    final BuildArtifactHolder holder = build.getArtifacts(BuildArtifactsViewMode.VIEW_HIDDEN_ONLY)
+                                            .findArtifact(".teamcity/JetBrains.SharedResources/taken_locks.txt");
+    if (!holder.isAvailable()) {
+      fail("Shared resources artifact is not available for the build: " + build);
+    }
+    try {
+      return new BufferedReader(new InputStreamReader(holder.getArtifact().getInputStream())).lines().collect(Collectors.toList());
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail("Failed to read shared resources artifact contents from build [" + build + "], Exception: " + e.getMessage());
+    }
+    return null;
+  }
 
   private void waitForAllBuildsToFinish() {
     new WaitForAssert() {
