@@ -51,7 +51,8 @@ public final class ResourcesImpl implements Resources {
   public Map<String, Resource> getResourcesMap(@NotNull final String projectId) {
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      return getResources(project).stream().collect(Collectors.toMap(Resource::getName, Function.identity()));
+      return getResources(project).stream()
+                                  .collect(Collectors.toMap(Resource::getName, Function.identity()));
     } else {
       return Collections.emptyMap();
     }
@@ -81,13 +82,26 @@ public final class ResourcesImpl implements Resources {
 
   @NotNull
   @Override
+  public Collection<Resource> getResources(@NotNull final String projectId) {
+    final SProject project = myProjectManager.findProjectById(projectId);
+    if (project != null) {
+      return getResources(project);
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  @Override
   public List<Resource> getResources(@NotNull final SProject project) {
     final Set<String> names = new HashSet<>();
     final Set<Resource> result = new HashSet<>();
     final List<SProject> path = project.getProjectPath();
     final ListIterator<SProject> it = path.listIterator(path.size());
     while (it.hasPrevious()) {
-      final Set<Resource> filtered = getOwnResources(it.previous()).stream().filter(data -> !names.contains(data.getName())).collect(Collectors.toSet());
+      final Set<Resource> filtered = getOwnResources(it.previous()).stream()
+                                                                   .filter(data -> !names.contains(data.getName()))
+                                                                   .collect(Collectors.toSet());
       result.addAll(filtered);
       names.addAll(filtered.stream().map(Resource::getName).collect(Collectors.toSet()));
     }
