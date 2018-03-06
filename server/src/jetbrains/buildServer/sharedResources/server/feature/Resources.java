@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import jetbrains.buildServer.serverSide.SProject;
@@ -61,6 +62,15 @@ public interface Resources {
    */
   @NotNull
   List<Resource> getOwnResources(@NotNull final SProject project);
+
+  /**
+   * Gets all resources for project with given {@code projectId} and all its ancestors
+   *
+   * @param projectId id oof the current project
+   * @return collection of all resources for project
+   */
+  @NotNull
+  Collection<Resource> getResources(@NotNull final String projectId);
 
   /**
    * Gets resources for project with inheritance

@@ -17,7 +17,6 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -29,9 +28,7 @@ import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
-import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.WaitFor;
 import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
@@ -96,12 +93,8 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     final SBuild associatedBuild = qbComposite.getBuildPromotion().getAssociatedBuild();
     Assert.assertNotNull(associatedBuild);
     assertTrue(associatedBuild.isFinished());
-
-    // check for parameters
-
     // check for stored locks
-    final BuildArtifactHolder artifact = associatedBuild.getArtifacts(BuildArtifactsViewMode.VIEW_HIDDEN_ONLY).findArtifact(".teamcity/JetBrains.SharedResources/taken_locks.txt");
-    assertTrue("Artifact with taken locks is not present in composite build", artifact.isAvailable());
+    assertContains(readArtifact(associatedBuild), "resource\treadLock\t ");
   }
 
   /**
@@ -315,12 +308,8 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // start composite build
     QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
     assertNotNull(qbComposite);
-    // get queued build of
-    Optional<SQueuedBuild> opQueued = myFixture.getBuildQueue().getItems().stream().filter(qb -> qb.getBuildType().equals(btDep1)).findFirst();
-    if (!opQueued.isPresent()) {
-      fail("Could not find needed dependency (dep1) in queue");
-    }
-    final SQueuedBuild dep1Queued = opQueued.get();
+    // move dep1 to top
+    final SQueuedBuild dep1Queued = findQueuedBuild(btDep1);
     myFixture.getBuildQueue().moveTop(dep1Queued.getItemId());
     // start and await 3 builds
     myFixture.flushQueueAndWaitN(3);

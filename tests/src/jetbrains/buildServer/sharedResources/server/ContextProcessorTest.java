@@ -85,9 +85,9 @@ public class ContextProcessorTest extends BaseTestCase {
     final Lock lock = new Lock("CustomResource", LockType.WRITE);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<>();
+    final Map<String, Resource> definedResources = new HashMap<>();
     final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
-    myDefinedResources.put(resource.getName(), resource);
+    definedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.writeLock." + lock.getName();
 
@@ -101,8 +101,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(myDefinedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -123,9 +123,9 @@ public class ContextProcessorTest extends BaseTestCase {
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<>();
+    final Map<String, Resource> definedResources = new HashMap<>();
     final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
-    myDefinedResources.put(resource.getName(), resource);
+    definedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
@@ -139,8 +139,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(myDefinedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -161,9 +161,9 @@ public class ContextProcessorTest extends BaseTestCase {
     final Lock lock = new Lock("CustomResource", LockType.READ);
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<>();
+    final Map<String, Resource> definedResources = new HashMap<>();
     final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
-    myDefinedResources.put(resource.getName(), resource);
+    definedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
@@ -181,8 +181,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(currentFeature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(myDefinedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(otherRunningBuild)));
@@ -214,9 +214,9 @@ public class ContextProcessorTest extends BaseTestCase {
     final Lock lock = new Lock("CustomResource", LockType.READ, "value2");
     myTakenLocks.put(lock.getName(), lock);
 
-    final Map<String, Resource> myDefinedResources = new HashMap<>();
+    final Map<String, Resource> definedResources = new HashMap<>();
     final CustomResource resource = (CustomResource) ResourceFactory.newCustomResource("CustomResource", PROJECT_ID, "CustomResource", Arrays.asList("value1", "value2"), true);
-    myDefinedResources.put(resource.getName(), resource);
+    definedResources.put(resource.getName(), resource);
 
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
@@ -232,8 +232,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(myDefinedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -276,8 +276,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(definedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(runningBuild)));
@@ -339,8 +339,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).getResourcesMap(PROJECT_ID);
-      will(returnValue(definedResources));
+      oneOf(myResources).getResources(PROJECT_ID);
+      will(returnValue(definedResources.values()));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Arrays.asList(runningBuild1, runningBuild2)));
