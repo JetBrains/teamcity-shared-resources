@@ -71,9 +71,9 @@ public class ContextProcessorTest extends BaseTestCase {
     myLocksStorage = m.mock(LocksStorage.class);
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
     myBuildStartContext = m.mock(BuildStartContext.class);
-    myRunningBuild = m.mock(SRunningBuild.class);
+    myRunningBuild = m.mock(SRunningBuild.class, "my-running-build");
     myBuildType = m.mock(SBuildType.class);
-    myBuildPromotion = m.mock(BuildPromotionEx.class);
+    myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
     myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager);
     m.checking(createCommonExpectations());
   }
@@ -265,6 +265,7 @@ public class ContextProcessorTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     final SRunningBuild runningBuild = m.mock(SRunningBuild.class, "running-build");
+    final BuildPromotionEx runningBuildPromotion = m.mock(BuildPromotionEx.class, "running-build-promotion");
     final Map<String, Lock> runningBuildLocks = new HashMap<>();
     runningBuildLocks.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE));
 
@@ -293,6 +294,12 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
 
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE);
+
+      oneOf(myRunningBuild).getBuildPromotion();
+      will(returnValue(runningBuildPromotion));
+
+      oneOf(runningBuildPromotion).isCompositeBuild();
+      will(returnValue(false));
 
       allowing(runningBuild).getBuildId();
       will(returnValue(0L));
@@ -325,10 +332,12 @@ public class ContextProcessorTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     final SRunningBuild runningBuild1 = m.mock(SRunningBuild.class, "running-build-1");
+    final BuildPromotionEx runningBuildPromotion1 = m.mock(BuildPromotionEx.class, "running-build-promotion-1");
     final Map<String, Lock> runningBuildLocks1 = new HashMap<>();
     runningBuildLocks1.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE_HELD));
 
     final SRunningBuild runningBuild2 = m.mock(SRunningBuild.class, "running-build-2");
+    final BuildPromotionEx runningBuildPromotion2 = m.mock(BuildPromotionEx.class, "running-build-promotion-2");
     final Map<String, Lock> runningBuildLocks2 = new HashMap<>();
     runningBuildLocks2.put(resource.getName(), new Lock(resource.getName(), LockType.READ, VALUE_HELD));
 
@@ -366,6 +375,18 @@ public class ContextProcessorTest extends BaseTestCase {
       allowing(runningBuild2).getBuildId();
       will(returnValue(1L));
 
+      oneOf(runningBuild1).getBuildPromotion();
+      will(returnValue(runningBuildPromotion1));
+
+      oneOf(runningBuildPromotion1).isCompositeBuild();
+      will(returnValue(false));
+
+      oneOf(runningBuild2).getBuildPromotion();
+      will(returnValue(runningBuildPromotion2));
+
+      oneOf(runningBuildPromotion2).isCompositeBuild();
+      will(returnValue(false));
+
       allowing(myLocksStorage);
     }});
     myProcessor.updateParameters(myBuildStartContext);
@@ -382,10 +403,13 @@ public class ContextProcessorTest extends BaseTestCase {
       allowing(myRunningBuild).getProjectId();
       will(returnValue(PROJECT_ID));
 
-      oneOf(myRunningBuild).getBuildPromotion();
+      allowing(myRunningBuild).getBuildPromotion();
       will(returnValue(myBuildPromotion));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
+      will(returnValue(false));
+
+      allowing(myBuildPromotion).isCompositeBuild();
       will(returnValue(false));
     }};
   }
