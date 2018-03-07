@@ -17,8 +17,6 @@
 package jetbrains.buildServer.sharedResources;
 
 import java.util.Comparator;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 
 /**
  * @author Oleg Rybak
@@ -75,4 +73,6 @@ public class SharedResourcesPluginConstants {
   }
 
   public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
+
+  public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
 }
