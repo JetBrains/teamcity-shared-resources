@@ -77,7 +77,6 @@ public final class ResourcesImpl implements Resources {
                      .filter(list -> list.size() == 1) // exclude duplicates
                      .map(list -> list.get(0))
                      .collect(Collectors.toList());
-
   }
 
   @NotNull

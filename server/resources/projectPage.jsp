@@ -21,6 +21,7 @@
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <%--@elvariable id="usages" type="java.util.Map<jetbrains.buildServer.sharedResources.model.resources.Resource, java.util.Map<jetbrains.buildServer.serverSide.SBuildType,java.util.List<jetbrains.buildServer.sharedResources.model.Lock>>"--%>
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
+<%--@elvariable id="overrides" type="java.util.Set<java.lang.String>"--%>
 
 <c:set var="project" value="${bean.project}"/>
 

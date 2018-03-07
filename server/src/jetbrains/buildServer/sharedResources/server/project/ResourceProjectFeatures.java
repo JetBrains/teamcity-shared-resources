@@ -16,12 +16,12 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
-import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created with IntelliJ IDEA.
@@ -40,5 +40,6 @@ public interface ResourceProjectFeatures {
                      @NotNull final String id,
                      @NotNull final Map<String, String> featureParameters);
 
-  void removeFeature(@NotNull final SProject project, @NotNull final String id);
+  @Nullable
+  SProjectFeatureDescriptor removeFeature(@NotNull final SProject project, @NotNull final String id);
 }

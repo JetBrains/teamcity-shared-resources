@@ -41,11 +41,13 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
   }
 
   @Override
-  public void removeFeature(@NotNull final SProject project, @NotNull final String id) {
+  @Nullable
+  public SProjectFeatureDescriptor removeFeature(@NotNull final SProject project, @NotNull final String id) {
     final SProjectFeatureDescriptor descriptor = getFeatureById(project, id);
     if (descriptor != null) {
       project.removeFeature(descriptor.getId());
     }
+    return descriptor;
   }
 
   public void updateFeature(@NotNull final SProject project,

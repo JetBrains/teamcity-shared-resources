@@ -17,8 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.util.Pair;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
@@ -28,6 +27,7 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -78,6 +78,7 @@ public class SharedResourcesPage extends EditProjectTab {
     super.fillModel(model, request);
     final SProject project = getProject(request);
     if (project != null) {
+      model.put("overrides", overrides(project));
       model.put("bean", new SharedResourcesBean(project, myResources, true));
       model.put("configurationErrors", getConfigurationErrors(project));
       model.put("usages", myAnalyzer.collectResourceUsages(project));
@@ -108,6 +109,24 @@ public class SharedResourcesPage extends EditProjectTab {
                     p -> p.first,
                     p -> p.second
                   ));
+  }
+
+  /**
+   * Returns set of overridden resource names,
+   * so that overridden resources can be deleted from the UI
+   * despite of usages
+   *
+   * @return set of overridden resource names
+   */
+  private Set<String> overrides(@NotNull final SProject project) {
+    return project.getProjectPath().stream()
+                  .map(myResources::getOwnResources)
+                  .flatMap(Collection::stream)
+                  .collect(Collectors.groupingBy(Resource::getName))
+                  .entrySet().stream()
+                  .filter(e -> e.getValue().size() > 1)
+                  .map(Map.Entry::getKey)
+                  .collect(Collectors.toSet());
   }
 
   private Map<String, Boolean> prepareDuplicates(@NotNull final SProject project) {

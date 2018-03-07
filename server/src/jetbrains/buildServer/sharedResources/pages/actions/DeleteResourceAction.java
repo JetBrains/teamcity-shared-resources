@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
@@ -46,10 +47,12 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
     if (project != null) {
-      myProjectFeatures.removeFeature(project, resourceId);
-      // todo: resource name
-      project.persist(myConfigActionFactory.createAction(project, "'" + resourceId + "' shared resource was removed"));
-      addMessage(request, "Resource " + resourceId + " was deleted");
+      SProjectFeatureDescriptor descriptor = myProjectFeatures.removeFeature(project, resourceId);
+      if (descriptor != null) {
+        final String resourceName = descriptor.getParameters().get(SharedResourcesPluginConstants.ProjectFeatureParameters.NAME);
+        project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' (" + resourceId + ") shared resource was removed"));
+        addMessage(request, "Resource " + resourceName + " was deleted");
+      }
     } else {
       LOG.error("Project [" + projectId + "] no longer exists!");
     }

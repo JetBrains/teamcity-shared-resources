@@ -72,7 +72,7 @@
                     </l:li>
                     <l:li>
                       <c:choose>
-                        <c:when test="${used}">
+                        <c:when test="${used && empty overrides.contains(resource.name)}">
                           <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
                         </c:when>
                         <c:otherwise>
