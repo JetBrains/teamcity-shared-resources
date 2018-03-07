@@ -44,12 +44,12 @@ import org.testng.annotations.Test;
  */
 public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTest {
 
-
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     enableRunningBuildsUpdate();
+    enableBuildChainsProcessing();
   }
 
   /**

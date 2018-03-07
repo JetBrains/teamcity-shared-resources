@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import jetbrains.buildServer.serverSide.BuildFeature;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.server.feature.FeatureParams;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -82,6 +83,6 @@ public class SharedResourcesBuildFeature extends BuildFeature {
 
   @Override
   public boolean isRequiresAgent() {
-    return false;
+    return !TeamCityProperties.getBoolean(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED);
   }
 }

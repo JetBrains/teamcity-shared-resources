@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
@@ -83,7 +84,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
     // several locks on same resource may be taken by the chain
     synchronized (o) {
-      if (startingBuildPromotion.isPartOfBuildChain()) {
+      if (TeamCityProperties.getBoolean(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && startingBuildPromotion.isPartOfBuildChain()) {
         // get all dependent composite promotions
         final List<BuildPromotionEx> depPromos = startingBuildPromotion.getDependentCompositePromotions();
         // At this moment ALL composite builds are already in RunningBuildsManager

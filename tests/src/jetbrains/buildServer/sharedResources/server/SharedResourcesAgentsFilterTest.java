@@ -124,7 +124,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
     }});
 
@@ -147,7 +147,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(null));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
     }});
@@ -171,7 +171,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
       oneOf(myFeatures).searchForFeatures(myBuildType);
@@ -214,7 +214,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       atMost(2).of(myBuildType).getFullName();
       will(returnValue("My Build Type"));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
     }});
     final AgentsFilterResult result = myAgentsFilter.filterAgents(createContext());
@@ -247,7 +247,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myLocks).fromBuildFeaturesAsMap(features);
       will(returnValue(Collections.emptyMap()));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
     }});
@@ -416,7 +416,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildType).getExtendedName();
       will(returnValue("Project :: BuildType"));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
     }});
@@ -460,7 +460,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet);
       will(returnValue(unavailableLocks));
 
-      oneOf(myBuildPromotion).isPartOfBuildChain();
+      allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
       allowing(myBuildPromotion).getQueuedBuild();
