@@ -71,12 +71,13 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     final SharedResourcesBuildFeature feature = new SharedResourcesBuildFeature(descriptor, params);
     final SharedResourcesFeatureFactory factory = new SharedResourcesFeatureFactoryImpl(locks);
     final SharedResourcesFeatures features = new SharedResourcesFeaturesImpl(factory);
+    final LocksStorage locksStorage = new LocksStorageImpl(myFixture.getEventDispatcher());
 
-    final BuildFeatureParametersProvider provider = new BuildFeatureParametersProvider(features);
+    final BuildFeatureParametersProvider provider = new BuildFeatureParametersProvider(features, locks, locksStorage);
 
     myProjectFeatures = new ResourceProjectFeaturesImpl();
     final Resources resources = new ResourcesImpl(myFixture.getProjectManager(), myProjectFeatures);
-    final LocksStorage locksStorage = new LocksStorageImpl(myFixture.getEventDispatcher());
+
     final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
@@ -113,6 +114,12 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   }
 
   @SuppressWarnings("SameParameterValue")
+  protected void addAnyLock(@NotNull final SBuildType buildType,
+                            @NotNull final String resourceName) {
+    buildType.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createAnyLock(resourceName));
+  }
+
+  @SuppressWarnings("SameParameterValue")
   protected Map<String, String> createInfiniteResource(final String name) {
     return CollectionsUtil.asMap(NAME, name,
                                  TYPE, ResourceType.QUOTED.name(),
@@ -144,6 +151,10 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock " + value);
   }
 
+  @SuppressWarnings("SameParameterValue")
+  private Map<String, String> createAnyLock(@NotNull final String resourceName) {
+    return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock ");
+  }
 
   protected void enableBuildChainsProcessing() {
     try {

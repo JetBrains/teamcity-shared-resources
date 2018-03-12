@@ -16,19 +16,21 @@
 
 package jetbrains.buildServer.sharedResources.server;
 
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
@@ -69,8 +71,6 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** Class under test */
   private BuildFeatureParametersProvider myBuildFeatureParametersProvider;
 
-
-
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
@@ -81,6 +81,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myFeature = m.mock(SharedResourcesFeature.class);
     myResolvedSettings = m.mock(ResolvedSettings.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
+    
+    final Locks locks = m.mock(Locks.class);
+    final LocksStorage storage = m.mock(LocksStorage.class);
 
     myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
       put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
@@ -88,23 +91,32 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
       put("param2_key", "param2_value");
     }};
 
-
-    myBuildFeatureParametersProvider = new BuildFeatureParametersProvider(myFeatures);
-  }
-
-  /**
-   * Tests parameters provider when feature is not present
-   * @throws Exception if something goes wrong
-   */
-  @Test
-  public void testNoFeaturePresent() throws Exception {
+    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
     m.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
+      allowing(myBuild).getBuildPromotion();
+      will(returnValue(promo));
+
+      allowing(promo).isCompositeBuild();
+      will(returnValue(false));
+    }});
+
+
+    myBuildFeatureParametersProvider = new BuildFeatureParametersProvider(myFeatures, locks, storage);
+  }
+
+  /**
+   * Tests parameters provider when feature is not present
+   */
+  @Test
+  public void testNoFeaturePresent() {
+    m.checking(new Expectations() {{
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(Collections.emptyList()));
     }});
+
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
@@ -114,10 +126,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
 
   /**
    * Test parameters provider when none locks are taken
-   * @throws Exception if something goes wrong
    */
   @Test
-  public void testEmptyParams() throws Exception {
+  public void testEmptyParams() {
     final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
       add(myFeature);
     }};
@@ -130,13 +141,11 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
 
   }
 
-
   /**
    * Test parameters provider when some locks are taken
-   * @throws Exception if something goes wrong
    */
   @Test
-  public void testNonEmptyParamsSomeLocks() throws Exception {
+  public void testNonEmptyParamsSomeLocks() {
     final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
       add(myFeature);
     }};
@@ -152,10 +161,8 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   }
 
   private void setupFeatureParamsExpectations(final Collection<SharedResourcesFeature> descriptors, final Map<String, String> expectedParams) {
-    m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildType();
-      will(returnValue(myBuildType));
 
+    m.checking(new Expectations() {{
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
 
