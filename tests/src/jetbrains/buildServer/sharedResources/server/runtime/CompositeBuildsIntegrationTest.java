@@ -16,10 +16,13 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
@@ -432,6 +435,40 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     final SBuild dep1AssocBuild = dep1Queued.getBuildPromotion().getAssociatedBuild();
     assertTrue(dep1AssocBuild instanceof SFinishedBuild);
     assertContains(readArtifact(dep1AssocBuild), "resource\treadLock\tvalue1");
+  }
+
+  /**
+   * Checks that {@code BuildFeatureParametersProvider} provides necessary parameters to the composite build
+   *
+   * dep ---> (C) [resource, read lock; resource2, SPECIFIC(value1)]
+   *
+   */
+  @Test
+  public void testParametersProvidedToCompositeBuild() {
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep build
+    SBuildType btDep = myProject.createBuildType("btDep", "btDep");
+    // add dependency
+    addDependency(btComposite, btDep);
+    // create resources
+    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myProject, createCustomResource("resource2", "value1", "value2", "valueN"));
+    // add locks
+    addReadLock(btComposite, "resource");
+    addAnyLock(btComposite, "resource2");
+    // add composite to queue
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+    myFixture.flushQueueAndWaitN(2);
+    finishAllBuilds();
+    // check for parameters
+    final SBuild compositeAssocBuild = qbComposite.getBuildPromotion().getAssociatedBuild();
+    assertTrue(compositeAssocBuild instanceof SFinishedBuild);
+    final Map<String, String> allParameters = compositeAssocBuild.getParametersProvider().getAll();
+    String customValue = allParameters.get("teamcity.locks.readLock.resource2");
+    assertNotNull("Provided custom resource value is null", customValue);
+    assertFalse("Provided custom resource value is empty", StringUtil.isEmptyOrSpaces(customValue));
+    assertContains(Arrays.asList("value1", "value2", "valueN", customValue));
   }
 
   private SQueuedBuild findQueuedBuild(@NotNull final SBuildType buildType) {
