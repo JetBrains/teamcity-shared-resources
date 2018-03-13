@@ -398,7 +398,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    * dep2 --- --- --- --- --- --- --- -->
    *
    */
-  @Test
+  @Test(enabled = false)
   public void testAcquireSameCustomValueAsInComposite() {
     myFixture.createEnabledAgent("Ant");
 
@@ -443,7 +443,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
    * dep ---> (C) [resource, read lock; resource2, SPECIFIC(value1)]
    *
    */
-  @Test
+  @Test(enabled = false)
   public void testParametersProvidedToCompositeBuild() {
     BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
     // create dep build

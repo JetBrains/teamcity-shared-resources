@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.pages;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -43,12 +42,26 @@ public class SharedResourcesBean {
   public SharedResourcesBean(@NotNull final SProject project,
                              @NotNull final Resources resources,
                              boolean forProjectPage) {
+    this(project, resources, forProjectPage, Collections.emptySet());
+  }
+
+  public SharedResourcesBean(@NotNull final SProject project,
+                             @NotNull final Resources resources,
+                             boolean forProjectPage,
+                             @NotNull final Set<String> available) {
     myProject = project;
-    myResourceMap = resources.getResources(project).stream().collect(Collectors.groupingBy(Resource::getProjectId));
     if (forProjectPage) {
+      // no filtering of any kind
       myOwnResources = resources.getAllOwnResources(project);
+      myResourceMap = resources.getResources(project).stream()
+                               .collect(Collectors.groupingBy(Resource::getProjectId));
     } else {
-      myOwnResources = resources.getOwnResources(project);
+      myOwnResources = resources.getOwnResources(project).stream()
+                                .filter(resource -> available.contains(resource.getName()))
+                                .collect(Collectors.toList());
+      myResourceMap = resources.getResources(project).stream()
+                               .filter(resource -> available.contains(resource.getName()))
+                               .collect(Collectors.groupingBy(Resource::getProjectId));
     }
   }
 
@@ -78,7 +91,7 @@ public class SharedResourcesBean {
   @NotNull
   public Collection<Resource> getAllResources() {
     return myResourceMap.values().stream()
-                        .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
+                        .flatMap(Collection::stream)
                         .collect(Collectors.toList());
   }
 

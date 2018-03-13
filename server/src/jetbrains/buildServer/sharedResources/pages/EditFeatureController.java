@@ -16,10 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.controllers.BaseController;
@@ -32,6 +30,7 @@ import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -83,7 +82,7 @@ public class EditFeatureController extends BaseController {
   @Nullable
   @Override
   protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
-                                  @NotNull final HttpServletResponse response) throws Exception {
+                                  @NotNull final HttpServletResponse response) {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     assert form != null;
@@ -93,9 +92,9 @@ public class EditFeatureController extends BaseController {
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<>();
-    final String projectId = project.getProjectId();
     // map of all visible resources from this project and its subtree
-    final Map<String, Resource> resources = new HashMap<>(myResources.getResourcesMap(projectId));
+    final List<Resource> projectResources = myResources.getResources(project);
+    final Set<String> available = projectResources.stream().map(Resource::getName).collect(Collectors.toSet());
     final Map<String, Object> model = result.getModel();
     final Collection<Lock> invalidLocks = new ArrayList<>();
     boolean inherited = false;
@@ -114,11 +113,16 @@ public class EditFeatureController extends BaseController {
           }
         } else {
           // we have feature, that is not current feature under edit. must remove resources used by other features
-          f.getLockedResources().keySet().forEach(resources::remove);
+          f.getLockedResources().keySet().forEach(available::remove);
         }
       }
     }
-    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, false);
+    if (buildTypeSettings.isCompositeBuildType()) { // custom resources are not available for composite build types yet
+      projectResources.stream()
+                      .filter(resource -> resource.getType() == ResourceType.CUSTOM)
+                      .forEach(resource -> available.remove(resource.getName()));
+    }
+    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, false, available);
     final Map<String, Lock> invalidLocksMap = new HashMap<>();
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);
