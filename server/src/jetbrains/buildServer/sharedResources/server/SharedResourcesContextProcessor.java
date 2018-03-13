@@ -116,35 +116,41 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final Map<String, Lock> locks = extractLocks(currentBuild);
     final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
     // get custom resources from our locks
-    final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuild.getProjectId(), projectTreeCustomResources), locks);
-    // decide whether we need to resolve values
-    if (!myCustomResources.isEmpty()) {
-      // used values should not include the values from composite chain
-      final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks, compositeRunningBuildIds, runningBuilds);
-      for (Map.Entry<String, CustomResource> entry: myCustomResources.entrySet()) {
-        if (entry.getValue().isEnabled()) {
-          // get value space for current resources
-          final List<String> values = new ArrayList<>(entry.getValue().getValues());
-          final String key = entry.getKey();
-          // remove used values
-          usedValues.get(key).forEach(values::remove);
-          if (!values.isEmpty()) {
-            final Lock currentLock = locks.get(key);
-            final String paramName = myLocks.asBuildParameter(currentLock);
-            String currentValue;
-            if (LockType.READ.equals(currentLock.getType())) {
-              currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
-              // todo: add support of multiple values per lock in custom storage
-              myTakenValues.put(currentLock, currentValue);
+
+    // FIXME: disable custom resources processing for composite builds until method of consistent delivery of values to the chain is implemented
+    // from UI: user should not be able to add a lock on custom resource in composite build => initTakenValues will not contain any custom resources
+    // locks on regular resources will be saved
+    if (!currentBuild.getBuildPromotion().isCompositeBuild()) {
+      final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuild.getProjectId(), projectTreeCustomResources), locks);
+      // decide whether we need to resolve values
+      if (!myCustomResources.isEmpty()) {
+        // used values should not include the values from composite chain
+        final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks, compositeRunningBuildIds, runningBuilds);
+        for (Map.Entry<String, CustomResource> entry : myCustomResources.entrySet()) {
+          if (entry.getValue().isEnabled()) {
+            // get value space for current resources
+            final List<String> values = new ArrayList<>(entry.getValue().getValues());
+            final String key = entry.getKey();
+            // remove used values
+            usedValues.get(key).forEach(values::remove);
+            if (!values.isEmpty()) {
+              final Lock currentLock = locks.get(key);
+              final String paramName = myLocks.asBuildParameter(currentLock);
+              String currentValue;
+              if (LockType.READ.equals(currentLock.getType())) {
+                currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                // todo: add support of multiple values per lock in custom storage
+                myTakenValues.put(currentLock, currentValue);
+              } else {
+                currentValue = StringUtil.join(values, ";");
+              }
+              if (!currentBuild.getBuildPromotion().isCompositeBuild()) {
+                context.addSharedParameter(paramName, currentValue);
+              }
             } else {
-              currentValue = StringUtil.join(values, ";");
+              // throw exception?
+              LOG.warn("Unable to assign value to lock [" + key + "] for build with id [" + currentBuild.getBuildId() + "]");
             }
-            if (!currentBuild.getBuildPromotion().isCompositeBuild()) {
-              context.addSharedParameter(paramName, currentValue);
-            }
-          } else {
-            // throw exception?
-            LOG.warn("Unable to assign value to lock [" + key + "] for build with id [" + currentBuild.getBuildId() + "]");
           }
         }
       }
@@ -182,9 +188,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     }
 
     final Map<String, List<String>> usedValues = new HashMap<>();
-    for (String name: locks.keySet()) {
-      usedValues.put(name, new ArrayList<>());
-    }
+    locks.forEach((k, v) -> usedValues.put(k, new ArrayList<>()));
     // collect taken values from runtime
     for (SRunningBuild runningBuild: runningBuilds.get()) {
       Map<String, Lock> locksInRunningBuild = myLocksStorage.load(runningBuild);
