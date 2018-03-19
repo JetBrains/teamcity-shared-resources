@@ -24,23 +24,19 @@ import gnu.trove.TLongHashSet;
 import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.serverSide.BuildServerAdapter;
 import jetbrains.buildServer.serverSide.BuildServerListener;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SRunningBuild;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.server.storage.BuildArtifactsAccessor;
 import jetbrains.buildServer.util.EventDispatcher;
-import jetbrains.buildServer.util.FileUtil;
-import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class {@code LocksStorageImpl}
@@ -52,19 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LocksStorageImpl implements LocksStorage {
 
   @NotNull
-  static final String FILE_PARENT = ".teamcity/" + SharedResourcesPluginConstants.PLUGIN_NAME;
-
-  @NotNull
-  private static final String FILE_NAME = "taken_locks.txt";
-
-  @NotNull
-  static final String FILE_PATH = FILE_PARENT + "/" + FILE_NAME; // package visibility for tests
-
-  @NotNull
   private static final Logger log = Logger.getInstance(LocksStorageImpl.class.getName());
-
-  @NotNull
-  private static final String MY_ENCODING = "UTF-8";
 
   /**
    * Contains the set of build ids, that contain taken locks that are stored
@@ -72,6 +56,9 @@ public class LocksStorageImpl implements LocksStorage {
    */
   @NotNull
   private final TLongHashSet existsSet = new TLongHashSet();
+
+  @NotNull
+  private final BuildArtifactsAccessor myAccessor;
 
   /**
    * Stores last N entries of taken locks
@@ -85,38 +72,20 @@ public class LocksStorageImpl implements LocksStorage {
    * Map with separate guarding lock for each build
    */
   @NotNull
-  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<ReentrantLock>(new TLongObjectHashMap<ReentrantLock>());
+  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>());
 
-  public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
-    CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
+
+  public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher,
+                          @NotNull final BuildArtifactsAccessor accessor) {
+    myAccessor = accessor;
+
+    final CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
       @Override
-      public Map<String, Lock> load(@NotNull final SBuild build) throws Exception {
-        final Map<String, Lock> result;
-        final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-        if (artifact.exists()) {
-          result = new HashMap<String, Lock>();
-          try {
-            final String content = FileUtil.readText(artifact, MY_ENCODING);
-            final String[] lines = content.split("\\r?\\n");
-            for (String line: lines) {
-              final Lock lock = deserializeTakenLock(line);
-              if (lock != null) {
-                result.put(lock.getName(), lock);
-              } else {
-                if (log.isDebugEnabled()) {
-                  log.debug("Wrong locks storage format in file {" + artifact.getAbsolutePath() + "} line: {" + line + "}");
-                }
-              }
-            }
-          } catch(IOException e) {
-            log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
-          }
-        } else {
-          result = Collections.emptyMap();
-        }
-        return result;
+      public Map<String, Lock> load(@NotNull final SBuild build) {
+        return myAccessor.load(build);
       }
     };
+
     myLocksCache = CacheBuilder.<SBuild, Map<String, Lock>>newBuilder()
             .maximumSize(300) // each entry corresponds to a running build
             .build(loader);
@@ -152,24 +121,15 @@ public class LocksStorageImpl implements LocksStorage {
       try {
         l.lock();
         myGuards.put(buildId, l);
-        final Collection<String> serializedStrings = new ArrayList<String>();
-        Map<String, Lock> locksToStore = new HashMap<String, Lock>();
-        for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
-          serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
-          locksToStore.put(entry.getKey().getName(), Lock.createFrom(entry.getKey(), entry.getValue()));
-        }
+        final Map<String, Lock> locksToStore = new HashMap<>();
+        takenLocks.forEach((lock, value) -> locksToStore.put(lock.getName(), Lock.createFrom(lock, value)));
         try {
-          final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
-          if (FileUtil.createParentDirs(artifact)) {
-            FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
-            myLocksCache.put(build, locksToStore);
-            existsSet.add(buildId);
-          } else {
-            log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
-          }
+          myAccessor.store(build, takenLocks);
         } catch (IOException e) {
           log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
         }
+        myLocksCache.put(build, locksToStore);
+        existsSet.add(buildId);
       } finally {
         l.unlock();
         myGuards.remove(buildId);
@@ -213,24 +173,4 @@ public class LocksStorageImpl implements LocksStorage {
       }
     }
   }
-
-  @NotNull
-  private String serializeTakenLock(@NotNull final Lock lock, @NotNull final String value) {
-    return StringUtil.join("\t", lock.getName(), lock.getType(), value.equals("") ? " " : value);
-  }
-
-  @Nullable
-  private Lock deserializeTakenLock(@NotNull final String line) {
-    final List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
-    Lock result = null;
-    if (strings.size() == 3) {
-      String value =  StringUtil.trim(strings.get(2));
-      if (value == null) {
-        value = "";
-      }
-      result = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
-    }
-    return result;
-  }
-
 }

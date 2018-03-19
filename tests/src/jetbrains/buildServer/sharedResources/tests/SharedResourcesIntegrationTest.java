@@ -31,6 +31,7 @@ import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl;
+import jetbrains.buildServer.sharedResources.server.storage.BuildArtifactsAccessor;
 import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +72,9 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     final BuildFeatureParametersProvider provider = new BuildFeatureParametersProvider(features);
 
     myProjectFeatures = new ResourceProjectFeaturesImpl();
+    final BuildArtifactsAccessor accessor = new BuildArtifactsAccessor();
     final Resources resources = new ResourcesImpl(myFixture.getProjectManager(), myProjectFeatures);
-    final LocksStorage locksStorage = new LocksStorageImpl(myFixture.getEventDispatcher());
+    final LocksStorage locksStorage = new LocksStorageImpl(myFixture.getEventDispatcher(), accessor);
     final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
