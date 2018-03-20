@@ -159,7 +159,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     Assert.assertNotNull(depSecond);
     BuildPromotion qbDepSecond = depSecond.getBuildPromotion();
 
-    final String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project :: composite1)";
+    final String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project / composite1)";
     waitForReason(depSecond, expectedWaitReason);
 
     // finish current builds
@@ -224,7 +224,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     final SQueuedBuild depBuild = myFixture.getBuildQueue().getFirst();
     assertNotNull(depBuild);
     final BuildPromotionEx depPromo = (BuildPromotionEx)depBuild.getBuildPromotion();
-    String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project :: Other Build Type)";
+    String expectedWaitReason = "Build is waiting for the following resource to become available: resource (locked by My Default Test Project / Other Build Type)";
     waitForReason(depBuild, expectedWaitReason);
     // finish build
     finishBuild((SRunningBuild)otherBuild, false);
@@ -375,7 +375,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     //add other to queue
     final BuildPromotionEx otherPromo = qbOther.getBuildPromotion();
     waitForReason(qbOther, "Build is waiting for the following resource to become available: resource " +
-                           "(locked by My Default Test Project :: composite, My Default Test Project :: btDep1, My Default Test Project :: btDep2)");
+                           "(locked by My Default Test Project / btDep1, My Default Test Project / btDep2, My Default Test Project / composite)");
     depPromos.forEach(promo -> assertTrue(promo.getAssociatedBuild() instanceof SRunningBuild));
 
     depPromos.forEach(promo -> finishBuild((SRunningBuild)promo.getAssociatedBuild(), false));
@@ -507,18 +507,29 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   }
 
   private void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
-    CachingBuildEstimator estimator = myFixture.getSingletonService(CachingBuildEstimator.class);
+    final CachingBuildEstimator estimator = myFixture.getSingletonService(CachingBuildEstimator.class);
 
     new WaitForAssert() {
+
+      private String myReportedReason = "<default>";
+
       @Override
       protected boolean condition() {
         estimator.invalidate(false);
         final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
         if (buildEstimates != null) {
           final WaitReason waitReason = buildEstimates.getWaitReason();
-          return waitReason != null && waitReason.getDescription().equals(expectedReason);
+          if (waitReason != null) {
+            myReportedReason = waitReason.getDescription();
+          }
+          return myReportedReason.equals(expectedReason);
         }
         return false;
+      }
+
+      @Override
+      protected String getAssertMessage() {
+        return "Expected wait reason [" + expectedReason + "], last reported: [" + myReportedReason + "]";
       }
     };
   }

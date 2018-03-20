@@ -274,7 +274,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       descr.append(entry.getValue().getName());
       if (!buildTypeNames.isEmpty()) {
         descr.append(" (locked by ");
-        descr.append(StringUtil.join(buildTypeNames, ", "));
+        descr.append(buildTypeNames.stream().sorted().collect(Collectors.joining(", ")));
         descr.append(")");
       }
       lockDescriptions.add(descr.toString());
