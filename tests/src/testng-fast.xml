@@ -43,7 +43,8 @@
   <test name="Integration tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.runtime.BaseIntegrationTest"/>
-      <class name="jetbrains.buildServer.sharedResources.server.runtime.CompositeBuildsIntegrationTest"/>
+      <!-- not implemented yet-->
+      <!--<class name="jetbrains.buildServer.sharedResources.server.runtime.CompositeBuildsIntegrationTest"/>-->
     </classes>
   </test>
 </suite>
