@@ -62,7 +62,7 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     if (emulationMode || !build.getBuildPromotion().isCompositeBuild()) {
       return getParametersFromFeatures(build);
     } else {
-      return myLocks.asBuildParameters(myStorage.load(build).values());
+      return myLocks.asBuildParameters(myStorage.load(build.getBuildPromotion()).values());
     }
   }
 

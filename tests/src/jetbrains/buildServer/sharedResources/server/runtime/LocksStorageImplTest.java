@@ -18,6 +18,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.google.common.cache.Cache;
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildServerListener;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SRunningBuild;
@@ -53,11 +54,11 @@ public class LocksStorageImplTest extends BaseTestCase {
   private static final String file_Mixed = "lock1\treadLock\tMy Value 1\nlock2\twriteLock\tMy Value 2\nlock3\twriteLock\t ";
   private static final String file_Incorrect = "lock1\treadLock\t \nHELLO!\n";
 
-  private final Long buildId = 1L;
+  private final Long id = 1L;
 
   private LocksStorage myLocksStorage;
 
-  private SBuild myBuild;
+  private BuildPromotion myPromotion;
 
   private Mockery m ;
 
@@ -68,7 +69,7 @@ public class LocksStorageImplTest extends BaseTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     m = new Mockery();
-    myBuild = m.mock(SBuild.class);
+    myPromotion = m.mock(BuildPromotion.class);
     myDispatcher = EventDispatcher.create(BuildServerListener.class);
     myLocksStorage = new LocksStorageImpl(myDispatcher);
   }
@@ -84,7 +85,7 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_NoValues() throws Exception {
     final File artifactsDir = createTempFileWithContent(file_noValues);
     addSingleArtifactsAccessExpectations(artifactsDir);
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
 
     assertNotNull(result);
     assertEquals(4, result.size());
@@ -94,7 +95,7 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testLoad_Values() throws Exception {
     final File artifactsDir = createTempFileWithContent(file_Values);
     addSingleArtifactsAccessExpectations(artifactsDir);
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(2, result.size());
 
@@ -105,7 +106,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempFileWithContent(file_Mixed);
     addSingleArtifactsAccessExpectations(artifactsDir);
 
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(3, result.size());
   }
@@ -115,7 +116,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempFileWithContent(file_Incorrect);
     addSingleArtifactsAccessExpectations(artifactsDir);
 
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -126,8 +127,8 @@ public class LocksStorageImplTest extends BaseTestCase {
     addSingleArtifactsAccessExpectations(artifactsDir);
 
     final Map<Lock, String> takenLocks = new HashMap<>();
-    myLocksStorage.store(myBuild, takenLocks);
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    myLocksStorage.store(myPromotion, takenLocks);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -143,13 +144,13 @@ public class LocksStorageImplTest extends BaseTestCase {
 
     takenLocks.put(lock1, "");
     takenLocks.put(lock2, "");
-    myLocksStorage.store(myBuild, takenLocks);
+    myLocksStorage.store(myPromotion, takenLocks);
     // values are in cache. No file access needed
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(2, result.size());
     assertContains(result.values(), lock1);
@@ -169,14 +170,14 @@ public class LocksStorageImplTest extends BaseTestCase {
     final Lock lock2 = new Lock("lock2", LockType.WRITE);
     takenLocks.put(lock1, value1);
     takenLocks.put(lock2, value2);
-    myLocksStorage.store(myBuild, takenLocks);
+    myLocksStorage.store(myPromotion, takenLocks);
 
     // values are in cache. No file access needed
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(2, result.size());
     assertEquals(value1, result.get(lock1.getName()).getValue());
@@ -187,10 +188,10 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testStore_Mixed() throws Exception {
     final File artifactsDir = createTempDir();
     m.checking(new Expectations() {{
-      exactly(2).of(myBuild).getBuildId();
-      will(returnValue(buildId));
+      exactly(2).of(myPromotion).getId();
+      will(returnValue(id));
 
-      atMost(2).of(myBuild).getArtifactsDirectory();
+      atMost(2).of(myPromotion).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
 
@@ -203,8 +204,8 @@ public class LocksStorageImplTest extends BaseTestCase {
     takenLocks.put(lock1, "");
     takenLocks.put(lock11, value);
     takenLocks.put(lock2, "");
-    myLocksStorage.store(myBuild, takenLocks);
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    myLocksStorage.store(myPromotion, takenLocks);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(3, result.size());
     assertEquals("", result.get(lock1.getName()).getValue());
@@ -216,22 +217,22 @@ public class LocksStorageImplTest extends BaseTestCase {
   public void testArtifactExist_CacheYes() throws Exception {
     // check that call of 'locksStored' method does not cause disk access
     m.checking(new Expectations() {{
-      exactly(2).of(myBuild).getBuildId();
-      will(returnValue(buildId));
+      exactly(2).of(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertFalse(myLocksStorage.locksStored(myBuild));
-    assertFalse(myLocksStorage.locksStored(myBuild));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
 
     // store locks. expect 1 disk access here
-    storeSomeLocks(myBuild);
+    storeSomeLocks(myPromotion);
 
     // subsequent 'locksStored' method calls return true and do not cause disk access
     m.checking(new Expectations() {{
-      exactly(2).of(myBuild).getBuildId();
-      will(returnValue(buildId));
+      exactly(2).of(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertTrue(myLocksStorage.locksStored(myBuild));
-    assertTrue(myLocksStorage.locksStored(myBuild));
+    assertTrue(myLocksStorage.locksStored(myPromotion));
+    assertTrue(myLocksStorage.locksStored(myPromotion));
   }
 
 
@@ -242,42 +243,42 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
     // no locks
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertFalse(myLocksStorage.locksStored(myBuild));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
     // store some
-    storeSomeLocks(myBuild, artifactsDir);
+    storeSomeLocks(myPromotion, artifactsDir);
     // check we have them in cache
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertTrue(myLocksStorage.locksStored(myBuild));
+    assertTrue(myLocksStorage.locksStored(myPromotion));
     // evict value cache, but not exists cache
     Field cacheField = myLocksStorage.getClass().getDeclaredField("myLocksCache");
     cacheField.setAccessible(true);
     final Cache<SBuild,  Map<String, Lock>> cache = (Cache<SBuild,  Map<String, Lock>>)cacheField.get(myLocksStorage);
-    cache.invalidate(myBuild);
+    cache.invalidate(myPromotion);
     // call 'locksStored'. Should return true without accessing disk
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
     // locksStored flag must remain
-    assertTrue(myLocksStorage.locksStored(myBuild));
+    assertTrue(myLocksStorage.locksStored(myPromotion));
     // call load 2 times. Expect 1 disk access
     m.checking(new Expectations() {{
-      exactly(2).of(myBuild).getBuildId();
-      will(returnValue(buildId));
+      exactly(2).of(myPromotion).getId();
+      will(returnValue(id));
 
-      oneOf(myBuild).getArtifactsDirectory();
+      oneOf(myPromotion).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
-    final Map<String, Lock> result = myLocksStorage.load(myBuild);
+    final Map<String, Lock> result = myLocksStorage.load(myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
-    myLocksStorage.load(myBuild);
+    myLocksStorage.load(myPromotion);
   }
 
   @Test
@@ -286,42 +287,42 @@ public class LocksStorageImplTest extends BaseTestCase {
     final File artifactsDir = createTempDir();
     // no locks
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertFalse(myLocksStorage.locksStored(myBuild));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
     // store some
-    storeSomeLocks(myBuild, artifactsDir);
+    storeSomeLocks(myPromotion, artifactsDir);
     // check we have them in cache
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertTrue(myLocksStorage.locksStored(myBuild));
+    assertTrue(myLocksStorage.locksStored(myPromotion));
     // terminate build
     SRunningBuild runningBuild = m.mock(SRunningBuild.class);
     m.checking(new Expectations() {{
       allowing(runningBuild).getBuildId();
-      will(returnValue(buildId));
+      will(returnValue(id));
     }});
     myDispatcher.getMulticaster().buildFinished(runningBuild);
     // check that locks are no longer stored
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertFalse(myLocksStorage.locksStored(myBuild));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
   }
 
 
   @Test
   @TestFor(issues = "TW-44474")
-  public void testArtifactExists_No() throws Exception {
+  public void testArtifactExists_No() {
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
     }});
-    assertFalse(myLocksStorage.locksStored(myBuild));
+    assertFalse(myLocksStorage.locksStored(myPromotion));
   }
 
   @Test
@@ -341,23 +342,23 @@ public class LocksStorageImplTest extends BaseTestCase {
     takenLocks.put(lock2, "");
 
     m.checking(new Expectations() {{
-      allowing(myBuild).getBuildId();
-      will(returnValue(buildId));
+      allowing(myPromotion).getId();
+      will(returnValue(id));
 
-      oneOf(myBuild).getArtifactsDirectory();
+      oneOf(myPromotion).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
 
 
     final Runnable runReader = () -> {
-      while (!myLocksStorage.locksStored(myBuild)) {
+      while (!myLocksStorage.locksStored(myPromotion)) {
         try {
           Thread.sleep(10);
         } catch (InterruptedException e) {
           fail(e.getMessage());
         }
       }
-      final Map<String, Lock> result = myLocksStorage.load(myBuild);
+      final Map<String, Lock> result = myLocksStorage.load(myPromotion);
       assertNotNull(result);
       assertEquals(3, result.size());
       assertEquals("", result.get(lock1.getName()).getValue());
@@ -368,7 +369,7 @@ public class LocksStorageImplTest extends BaseTestCase {
     new Thread(runReader).start();
 
     final Runnable runWriter = () -> {
-      myLocksStorage.store(myBuild, takenLocks);
+      myLocksStorage.store(myPromotion, takenLocks);
       myLatch.countDown();
     };
     new Thread(runWriter).start();
@@ -395,23 +396,23 @@ public class LocksStorageImplTest extends BaseTestCase {
 
   /**
    * Creates artifact with locks. Invokes {@code store} method, adds necessary expectations
-   * @param build build to store locks for
+   * @param buildPromotion build promotions to store locks for
    * @throws Exception if something goes wrong
    */
-  private void storeSomeLocks(@NotNull final SBuild build) throws Exception {
-    storeSomeLocks(build, createTempDir());
+  private void storeSomeLocks(@NotNull final BuildPromotion buildPromotion) throws Exception {
+    storeSomeLocks(buildPromotion, createTempDir());
   }
 
   /**
    * Creates artifact with locks inside predefined directory. Invokes {@code store} method, adds necessary expectations
-   * @param build build to store locks for
+   * @param buildPromotion build promotion to store locks for
    */
-  private void storeSomeLocks(@NotNull final SBuild build, @NotNull final File artifactsDir) {
+  private void storeSomeLocks(@NotNull final BuildPromotion buildPromotion, @NotNull final File artifactsDir) {
     final Map<Lock, String> someLocks = new HashMap<Lock, String>() {{
       put(new Lock("someLock", LockType.READ), "SOME_VALUE");
     }};
     addSingleArtifactsAccessExpectations(artifactsDir);
-    myLocksStorage.store(build, someLocks);
+    myLocksStorage.store(buildPromotion, someLocks);
   }
 
   /**
@@ -420,10 +421,10 @@ public class LocksStorageImplTest extends BaseTestCase {
    */
   private void addSingleArtifactsAccessExpectations(@NotNull final File artifactsDir) {
     m.checking(new Expectations() {{
-      oneOf(myBuild).getBuildId();
-      will(returnValue(buildId));
+      oneOf(myPromotion).getId();
+      will(returnValue(id));
 
-      oneOf(myBuild).getArtifactsDirectory();
+      oneOf(myPromotion).getArtifactsDirectory();
       will(returnValue(artifactsDir));
     }});
   }

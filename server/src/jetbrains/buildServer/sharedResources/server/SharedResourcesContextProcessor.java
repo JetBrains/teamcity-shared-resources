@@ -1,6 +1,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TLongHashSet;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -79,7 +80,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   public void updateParameters(@NotNull final BuildStartContext context) {
     final SRunningBuild startingBuild = context.getBuild();
     final BuildPromotionEx startingBuildPromotion = (BuildPromotionEx)startingBuild.getBuildPromotion();
-    final Set<Long> runningCompositeIds = new HashSet<>();
+    final TLongHashSet compositeIds = new TLongHashSet();
     final Map<String, Map<String, CustomResource>> projectTreeCustomResources = new HashMap<>();
     final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
     // several locks on same resource may be taken by the chain
@@ -87,41 +88,35 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
       if (TeamCityProperties.getBoolean(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && startingBuildPromotion.isPartOfBuildChain()) {
         // get all dependent composite promotions
         final List<BuildPromotionEx> depPromos = startingBuildPromotion.getDependentCompositePromotions();
-        // At this moment ALL composite builds are already in RunningBuildsManager
+        // collect promotion ids of composite builds in chain.
+        // we don't need to check the values against them
+        depPromos.forEach(promo -> compositeIds.add(promo.getId()));
+        // some build promotions in composite chain may not have the locks stored -> we need to process and store locks
         depPromos.stream()
-                 .filter(p -> p.getAssociatedBuild() instanceof SRunningBuild)
-                 .map(BuildPromotionEx::getAssociatedBuildId)
-                 .filter(Objects::nonNull)
-                 .forEach(runningCompositeIds::add);
-        // When context processor is called, current build as well as all composite builds are already running
-        // Only thing that differentiates composite builds that were looked through and not is the result of locksStored method
-        depPromos.stream()
-                 .map(BuildPromotionEx::getAssociatedBuild)
-                 .filter(build -> build instanceof RunningBuildEx)
-                 .filter(build -> !myLocksStorage.locksStored(build))
-                 .forEach(build -> processBuild(context, build, runningCompositeIds, projectTreeCustomResources, runningBuilds));
+                 .filter(promo -> !myLocksStorage.locksStored(promo))
+                 .forEach(promo -> processBuild(context, promo, compositeIds, projectTreeCustomResources, runningBuilds));
       }
-      processBuild(context, startingBuild, runningCompositeIds, projectTreeCustomResources, runningBuilds);
+      processBuild(context, startingBuild.getBuildPromotion(), compositeIds, projectTreeCustomResources, runningBuilds);
     }
   }
 
   private void processBuild(@NotNull final BuildStartContext context,
-                            @NotNull final SBuild currentBuild,
-                            @NotNull final Set<Long> compositeRunningBuildIds,
+                            @NotNull final BuildPromotion currentBuildPromotion,
+                            @NotNull final TLongHashSet compositeRunningBuildIds,
                             @NotNull final Map<String, Map<String, CustomResource>> projectTreeCustomResources,
                             @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds) {
-    if (currentBuild.getBuildType() == null || currentBuild.getProjectId() == null) {
+    if (currentBuildPromotion.getBuildType() == null || currentBuildPromotion.getProjectId() == null) {
       return;
     }
-    final Map<String, Lock> locks = extractLocks(currentBuild);
+    final Map<String, Lock> locks = extractLocks(currentBuildPromotion);
     final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
     // get custom resources from our locks
 
     // FIXME: disable custom resources processing for composite builds until method of consistent delivery of values to the chain is implemented
     // from UI: user should not be able to add a lock on custom resource in composite build => initTakenValues will not contain any custom resources
     // locks on regular resources will be saved
-    if (!currentBuild.getBuildPromotion().isCompositeBuild()) {
-      final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuild.getProjectId(), projectTreeCustomResources), locks);
+    if (!currentBuildPromotion.isCompositeBuild()) {
+      final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuildPromotion.getProjectId(), projectTreeCustomResources), locks);
       // decide whether we need to resolve values
       if (!myCustomResources.isEmpty()) {
         // used values should not include the values from composite chain
@@ -144,24 +139,24 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
               } else {
                 currentValue = StringUtil.join(values, ";");
               }
-              if (!currentBuild.getBuildPromotion().isCompositeBuild()) {
+              if (!currentBuildPromotion.isCompositeBuild()) {
                 context.addSharedParameter(paramName, currentValue);
               }
             } else {
               // throw exception?
-              LOG.warn("Unable to assign value to lock [" + key + "] for build with id [" + currentBuild.getBuildId() + "]");
+              LOG.warn("Unable to assign value to lock [" + key + "] for build promotion with id [" + currentBuildPromotion.getId() + "]");
             }
           }
         }
       }
     }
-    myLocksStorage.store(currentBuild, myTakenValues);
+    myLocksStorage.store(currentBuildPromotion, myTakenValues);
   }
 
-  private Map<String, Lock> extractLocks(@NotNull final SBuild build) {
+  private Map<String, Lock> extractLocks(@NotNull final BuildPromotion buildPromotion) {
     final Map<String, Lock> result = new HashMap<>();
-    if (build.getBuildType() != null) {
-      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildType());
+    if (buildPromotion.getBuildType() != null) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildPromotion.getBuildType());
       features.stream()
               .map(SharedResourcesFeature::getLockedResources)
               .forEach(result::putAll);
@@ -178,12 +173,12 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
    */
   @NotNull
   private Map<String, List<String>> collectTakenValuesFromRuntime(@NotNull final Map<String, Lock> locks,
-                                                                  @NotNull final Set<Long> runningCompositeBuilds,
+                                                                  @NotNull final TLongHashSet compositePromotionIds,
                                                                   @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds) {
     if (runningBuilds.get() == null) {
       runningBuilds.set(myRunningBuildsManager.getRunningBuilds()
                                               .stream()
-                                              .filter(b -> !runningCompositeBuilds.contains(b.getBuildId()))
+                                              .filter(b -> !compositePromotionIds.contains(b.getBuildPromotion().getId()))
                                               .collect(Collectors.toList()));
     }
 
@@ -191,7 +186,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     locks.forEach((k, v) -> usedValues.put(k, new ArrayList<>()));
     // collect taken values from runtime
     for (SRunningBuild runningBuild: runningBuilds.get()) {
-      Map<String, Lock> locksInRunningBuild = myLocksStorage.load(runningBuild);
+      Map<String, Lock> locksInRunningBuild = myLocksStorage.load(runningBuild.getBuildPromotion());
       for (Lock l: locks.values()) {
         Lock runningLock = locksInRunningBuild.get(l.getName());
         if (runningLock != null) {

@@ -116,10 +116,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 
-      oneOf(myLocksStorage).locksStored(rb1);
+      oneOf(myLocksStorage).locksStored(bp1);
       will(returnValue(true));
 
-      oneOf(myLocksStorage).load(rb1);
+      oneOf(myLocksStorage).load(bp1);
       will(returnValue(takenLocks1));
 
       oneOf(rb1_bt).getProjectId();
@@ -137,10 +137,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb2).getBuildPromotionInfo();
       will(returnValue(bp2));
 
-      oneOf(myLocksStorage).locksStored(rb2);
+      oneOf(myLocksStorage).locksStored(bp2);
       will(returnValue(true));
 
-      oneOf(myLocksStorage).load(rb2);
+      oneOf(myLocksStorage).load(bp2);
       will(returnValue(takenLocks2));
 
       oneOf(rb2_bt).getProjectId();
@@ -233,7 +233,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 
-      oneOf(myLocksStorage).locksStored(rb1);
+      oneOf(myLocksStorage).locksStored(bp1);
       will(returnValue(false));
 
       oneOf(myFeatures).searchForFeatures(rb1_bt);
@@ -831,13 +831,13 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myFeatures).searchForFeatures(rb2.getSecond());
       will(returnValue(features));
 
-      allowing(myLocksStorage).locksStored(with(any(SBuild.class)));
+      allowing(myLocksStorage).locksStored(with(any(BuildPromotion.class)));
       will(returnValue(true));
 
-      oneOf(myLocksStorage).load(rb1.getFirst());
+      oneOf(myLocksStorage).load(rb1.getThird());
       will(returnValue(allExistingLocks));
 
-      oneOf(myLocksStorage).load(rb2.getFirst());
+      oneOf(myLocksStorage).load(rb2.getThird());
       will(returnValue(withDeletedLocks));
 
       allowing(myResources).getResourcesMap(myProjectId);

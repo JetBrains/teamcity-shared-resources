@@ -71,11 +71,10 @@ public class TakenLocksImpl implements TakenLocks {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
         // at this point we have features
-        BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
-        RunningBuildEx rbEx = (RunningBuildEx) build;
+        final BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
         Map<String, Lock> locks;
-        if (myLocksStorage.locksStored(rbEx)) { // lock values are already resolved
-          locks = myLocksStorage.load(rbEx);
+        if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
+          locks = myLocksStorage.load(bpEx);
         } else {
           locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
         }

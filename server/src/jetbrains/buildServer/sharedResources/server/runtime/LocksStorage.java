@@ -16,7 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
-import jetbrains.buildServer.serverSide.SBuild;
+import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,28 +33,27 @@ public interface LocksStorage {
 
   /**
    * Stores taken locks for given build
-   *
-   * @param build build to store locks for
+   *  @param buildPromotion build promotion to store locks for
    * @param takenLocks taken locks for given build with values
    */
-  void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks);
+  void store(@NotNull final BuildPromotion buildPromotion, @NotNull final Map<Lock, String> takenLocks);
 
   /**
    * Loads taken locks
    *
-   * @param build build to load locks for
+   * @param buildPromotion build promotion to load locks for
    * @return collection of taken locks. Values are restored inside locks
    */
   @NotNull
-  Map<String, Lock> load(@NotNull final SBuild build);
+  Map<String, Lock> load(@NotNull final BuildPromotion buildPromotion);
 
   /**
    * Checks, whether locks has been already stored
    *
-   * @param build build to check for
+   * @param buildPromotion build promotion to check for
    * @return {@code true} if locks has been stored inside build artifact
    * {@code false} otherwise
    */
-  boolean locksStored(@NotNull final SBuild build);
+  boolean locksStored(@NotNull final BuildPromotion buildPromotion);
 
 }

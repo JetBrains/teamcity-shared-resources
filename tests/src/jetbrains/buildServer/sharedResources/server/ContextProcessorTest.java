@@ -52,7 +52,7 @@ public class ContextProcessorTest extends BaseTestCase {
   private LocksStorage myLocksStorage;
   private RunningBuildsManager myRunningBuildsManager;
   private SRunningBuild myRunningBuild;
-  private SBuildType myBuildType;
+  private BuildTypeEx myBuildType;
   private BuildPromotionEx myBuildPromotion;
   private BuildStartContext myBuildStartContext;
 
@@ -72,7 +72,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
     myBuildStartContext = m.mock(BuildStartContext.class);
     myRunningBuild = m.mock(SRunningBuild.class, "my-running-build");
-    myBuildType = m.mock(SBuildType.class);
+    myBuildType = m.mock(BuildTypeEx.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
     myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager);
     m.checking(createCommonExpectations());
@@ -95,6 +95,7 @@ public class ContextProcessorTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     m.checking(new Expectations() {{
+
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(features));
 
@@ -168,6 +169,7 @@ public class ContextProcessorTest extends BaseTestCase {
     final String lockParamName = "teamcity.locks.readLock." + lock.getName();
 
     final SRunningBuild otherRunningBuild = m.mock(SRunningBuild.class, "other-running-build");
+    final BuildPromotion otherBuildPromotion = m.mock(BuildPromotion.class, "other-build-promotion");
     final Map<String, Lock> otherTakenLocks = new HashMap<>();
     otherTakenLocks.put("CustomResource", new Lock("CustomResource", LockType.READ, "value1"));
 
@@ -175,6 +177,9 @@ public class ContextProcessorTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> currentFeatures = Collections.singleton(currentFeature);
 
     m.checking(new Expectations() {{
+      allowing(otherRunningBuild).getBuildPromotion();
+      will(returnValue(otherBuildPromotion));
+
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(currentFeatures));
 
@@ -187,7 +192,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(otherRunningBuild)));
 
-      oneOf(myLocksStorage).load(otherRunningBuild);
+      oneOf(myLocksStorage).load(otherBuildPromotion);
       will(returnValue(otherTakenLocks));
 
       oneOf(myLocks).asBuildParameter(lock);
@@ -195,7 +200,13 @@ public class ContextProcessorTest extends BaseTestCase {
 
       final Map<Lock, String> storedLocks = new HashMap<>();
       storedLocks.put(lock, "value2");
-      oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
+      oneOf(myLocksStorage).store(myBuildPromotion, storedLocks);
+
+      allowing(myBuildPromotion).getId();
+      will(returnValue(0L));
+
+      allowing(otherBuildPromotion).getId();
+      will(returnValue(1L));
 
       allowing(myRunningBuild).getBuildId();
       will(returnValue(0L));
@@ -283,7 +294,7 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(runningBuild)));
 
-      oneOf(myLocksStorage).load(runningBuild);
+      oneOf(myLocksStorage).load(runningBuildPromotion);
       will(returnValue(runningBuildLocks));
 
       oneOf(myLocks).asBuildParameter(lock);
@@ -291,18 +302,25 @@ public class ContextProcessorTest extends BaseTestCase {
 
       final Map<Lock, String> storedLocks = new HashMap<>();
       storedLocks.put(lock, VALUE);
-      oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
+
+      oneOf(myLocksStorage).store(myBuildPromotion, storedLocks);
 
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE);
 
-      oneOf(myRunningBuild).getBuildPromotion();
+      allowing(runningBuild).getBuildPromotion();
       will(returnValue(runningBuildPromotion));
 
       oneOf(runningBuildPromotion).isCompositeBuild();
       will(returnValue(false));
 
+      allowing(myBuildPromotion).getId();
+      will(returnValue(0L));
+
       allowing(runningBuild).getBuildId();
       will(returnValue(0L));
+
+      allowing(runningBuildPromotion).getId();
+      will(returnValue(1L));
 
       allowing(myLocksStorage);
     }});
@@ -354,10 +372,10 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Arrays.asList(runningBuild1, runningBuild2)));
 
-      oneOf(myLocksStorage).load(runningBuild1);
+      oneOf(myLocksStorage).load(runningBuildPromotion1);
       will(returnValue(runningBuildLocks1));
 
-      oneOf(myLocksStorage).load(runningBuild2);
+      oneOf(myLocksStorage).load(runningBuildPromotion2);
       will(returnValue(runningBuildLocks2));
 
       oneOf(myLocks).asBuildParameter(lock);
@@ -365,26 +383,35 @@ public class ContextProcessorTest extends BaseTestCase {
 
       final Map<Lock, String> storedLocks = new HashMap<>();
       storedLocks.put(lock, VALUE_AVAILABLE);
-      oneOf(myLocksStorage).store(myRunningBuild, storedLocks);
+      oneOf(myLocksStorage).store(myBuildPromotion, storedLocks);
 
       oneOf(myBuildStartContext).addSharedParameter(lockParamName, VALUE_AVAILABLE);
 
-      allowing(runningBuild1).getBuildId();
+      allowing(myBuildPromotion).getId();
       will(returnValue(0L));
 
-      allowing(runningBuild2).getBuildId();
+      allowing(runningBuildPromotion1).getId();
       will(returnValue(1L));
 
-      oneOf(runningBuild1).getBuildPromotion();
+      allowing(runningBuildPromotion2).getId();
+      will(returnValue(2L));
+
+      allowing(runningBuild1).getBuildId();
+      will(returnValue(1L));
+
+      allowing(runningBuild2).getBuildId();
+      will(returnValue(2L));
+
+      allowing(runningBuild1).getBuildPromotion();
       will(returnValue(runningBuildPromotion1));
 
-      oneOf(runningBuildPromotion1).isCompositeBuild();
+      allowing(runningBuildPromotion1).isCompositeBuild();
       will(returnValue(false));
 
-      oneOf(runningBuild2).getBuildPromotion();
+      allowing(runningBuild2).getBuildPromotion();
       will(returnValue(runningBuildPromotion2));
 
-      oneOf(runningBuildPromotion2).isCompositeBuild();
+      allowing(runningBuildPromotion2).isCompositeBuild();
       will(returnValue(false));
 
       allowing(myLocksStorage);
@@ -405,6 +432,12 @@ public class ContextProcessorTest extends BaseTestCase {
 
       allowing(myRunningBuild).getBuildPromotion();
       will(returnValue(myBuildPromotion));
+
+      allowing(myBuildPromotion).getBuildType();
+      will(returnValue(myBuildType));
+
+      allowing(myBuildPromotion).getProjectId();
+      will(returnValue(PROJECT_ID));
 
       allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));

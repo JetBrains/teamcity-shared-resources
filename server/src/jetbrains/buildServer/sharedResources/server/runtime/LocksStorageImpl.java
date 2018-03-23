@@ -24,10 +24,7 @@ import gnu.trove.TLongHashSet;
 import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
-import jetbrains.buildServer.serverSide.BuildServerAdapter;
-import jetbrains.buildServer.serverSide.BuildServerListener;
-import jetbrains.buildServer.serverSide.SBuild;
-import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -79,7 +76,7 @@ public class LocksStorageImpl implements LocksStorage {
    * Ff we do, data for at least 300 of them will be accessed without accessing artifacts storage
    */
   @NotNull
-  private LoadingCache<SBuild, Map<String, Lock>> myLocksCache;
+  private LoadingCache<BuildPromotion, Map<String, Lock>> myLocksCache;
 
   /**
    * Map with separate guarding lock for each build
@@ -88,11 +85,11 @@ public class LocksStorageImpl implements LocksStorage {
   private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>());
 
   public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
-    CacheLoader<SBuild, Map<String, Lock>> loader = new CacheLoader<SBuild, Map<String, Lock>>() {
+    CacheLoader<BuildPromotion, Map<String, Lock>> loader = new CacheLoader<BuildPromotion, Map<String, Lock>>() {
       @Override
-      public Map<String, Lock> load(@NotNull final SBuild build) {
+      public Map<String, Lock> load(@NotNull final BuildPromotion buildPromotion) {
         final Map<String, Lock> result;
-        final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+        final File artifact = new File(buildPromotion.getArtifactsDirectory(), FILE_PATH);
         if (artifact.exists()) {
           result = new HashMap<>();
           try {
@@ -109,7 +106,7 @@ public class LocksStorageImpl implements LocksStorage {
               }
             }
           } catch(IOException e) {
-            log.warn("Failed to load taken locks for build [" + build + "]; Message is: " + e.getMessage());
+            log.warn("Failed to load taken locks for build [" + buildPromotion + "]; Message is: " + e.getMessage());
           }
         } else {
           result = Collections.emptyMap();
@@ -145,13 +142,14 @@ public class LocksStorageImpl implements LocksStorage {
   }
 
   @Override
-  public void store(@NotNull final SBuild build, @NotNull final Map<Lock, String> takenLocks) {
+  public void store(@NotNull final BuildPromotion buildPromotion,
+                    @NotNull final Map<Lock, String> takenLocks) {
     if (!takenLocks.isEmpty()) {
-      final Long buildId = build.getBuildId();
+      final Long promotionId = buildPromotion.getId();
       final ReentrantLock l = new ReentrantLock(true);
       try {
         l.lock();
-        myGuards.put(buildId, l);
+        myGuards.put(promotionId, l);
         final Collection<String> serializedStrings = new ArrayList<>();
         Map<String, Lock> locksToStore = new HashMap<>();
         for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
@@ -159,34 +157,34 @@ public class LocksStorageImpl implements LocksStorage {
           locksToStore.put(entry.getKey().getName(), Lock.createFrom(entry.getKey(), entry.getValue()));
         }
         try {
-          final File artifact = new File(build.getArtifactsDirectory(), FILE_PATH);
+          final File artifact = new File(buildPromotion.getArtifactsDirectory(), FILE_PATH);
           if (FileUtil.createParentDirs(artifact)) {
             FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
-            myLocksCache.put(build, locksToStore);
-            existsSet.add(buildId);
+            myLocksCache.put(buildPromotion, locksToStore);
+            existsSet.add(promotionId);
           } else {
-            log.warn("Failed to create parent dirs for file with taken locks for build {" + build + "}");
+            log.warn("Failed to create parent dirs for file with taken locks for build {" + buildPromotion + "}");
           }
         } catch (IOException e) {
-          log.warn("Failed to store taken locks for build [" + build + "]; Message is: " + e.getMessage());
+          log.warn("Failed to store taken locks for build [" + buildPromotion + "]; Message is: " + e.getMessage());
         }
       } finally {
         l.unlock();
-        myGuards.remove(buildId);
+        myGuards.remove(promotionId);
       }
     }
   }
 
   @NotNull
   @Override
-  public Map<String, Lock> load(@NotNull final SBuild build) {
-    final ReentrantLock l = myGuards.get(build.getBuildId());
+  public Map<String, Lock> load(@NotNull final BuildPromotion buildPromotion) {
+    final ReentrantLock l = myGuards.get(buildPromotion.getId());
     try {
       if (l != null) {
         l.lock();
       }
       try {
-        return myLocksCache.get(build);
+        return myLocksCache.get(buildPromotion);
       } catch (Exception e) {
         log.warn(e);
         return Collections.emptyMap();
@@ -199,8 +197,8 @@ public class LocksStorageImpl implements LocksStorage {
   }
 
   @Override
-  public boolean locksStored(@NotNull final SBuild build) {
-    final long id = build.getBuildId();
+  public boolean locksStored(@NotNull final BuildPromotion buildPromotion) {
+    final long id = buildPromotion.getId();
     final ReentrantLock l = myGuards.get(id);
     try {
       if (l != null) {

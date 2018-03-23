@@ -94,22 +94,18 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
         // contains resources and locks that are INSIDE of the build chain
         final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks = new HashMap<>(); // resource -> {promotion -> lock}
         final Map<String, Map<String, Resource>> chainResources = new HashMap<>(); // projectID -> {name, resource}
-
         // first - get top of the chain. Builds that are already running.
         // they have locks already taken
         depPromos.stream()
-                 .map(BuildPromotion::getAssociatedBuild)
-                 .filter(Objects::nonNull)
                  .filter(it -> it.getProjectId() != null)
-                 .filter(it -> it instanceof SRunningBuild)
-                 .forEach(build -> {
-                   if (myLocksStorage.locksStored(build)) {
-                     LOG.debug("build " + build.getBuildId() + " is running. Loading locks");
-                     final Map<String, Lock> currentNodeLocks = myLocksStorage.load(build);
+                 .forEach(promo -> {
+                   if (myLocksStorage.locksStored(promo)) {
+                     LOG.debug("build promotion" + promo.getId() + " is running. Loading locks");
+                     final Map<String, Lock> currentNodeLocks = myLocksStorage.load(promo);
                      if (!currentNodeLocks.isEmpty()) {
-                       chainResources.computeIfAbsent(build.getProjectId(), myResources::getResourcesMap);
+                       chainResources.computeIfAbsent(promo.getProjectId(), myResources::getResourcesMap);
                        // if there are locks - resolve locks against resources according to project hierarchy of composite build
-                       resolve(chainLocks, chainResources.get(build.getProjectId()), (BuildPromotionEx)build.getBuildPromotion(), currentNodeLocks);
+                       resolve(chainLocks, chainResources.get(promo.getProjectId()), promo, currentNodeLocks);
                      }
                    }
                  });
