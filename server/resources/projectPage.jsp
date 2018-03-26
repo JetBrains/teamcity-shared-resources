@@ -21,7 +21,7 @@
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <%--@elvariable id="usages" type="java.util.Map<jetbrains.buildServer.sharedResources.model.resources.Resource, java.util.Map<jetbrains.buildServer.serverSide.SBuildType,java.util.List<jetbrains.buildServer.sharedResources.model.Lock>>"--%>
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
-<%--@elvariable id="overrides" type="java.util.Set<java.lang.String>"--%>
+<%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.String>"--%>  <%-- ResourceName -> ProjectName --%>
 
 <c:set var="project" value="${bean.project}"/>
 
@@ -110,20 +110,29 @@
       });
     },
 
+    deleteResourceOverride: function(resource_id, resource_name, ancestor_name) {
+      if (confirm('Are you sure you want to delete the resource "' + resource_name + '"? Overridden resource from ' + ancestor_name + ' will be used instead.')) {
+        this.doDeleteResource(resource_id, '${project.projectId}');
+      }
+    },
+
     deleteResource: function (resource_id) {
+      if (confirm('Are you sure you want to delete this resource? It may result in errors if the name is used as a parameter reference.')) {
+        this.doDeleteResource(resource_id, '${project.projectId}');
+      }
+    },
+
+    doDeleteResource: function(resource_id, project_id) {
       var params = {};
-      params['${PARAM_PROJECT_ID}'] = '${project.projectId}';
+      params['${PARAM_PROJECT_ID}'] = project_id;
       params['${PARAM_RESOURCE_ID}'] = resource_id;
       params['action'] = 'deleteResource';
-
-      if (confirm('Are you sure you want to delete this resource? It may result in errors if the name is used as a parameter reference.')) {
-        BS.ajaxRequest(this.actionsUrl, {
-          parameters: params,
-          onSuccess: function () {
-            window.location.reload();
-          }
-        });
-      }
+      BS.ajaxRequest(this.actionsUrl, {
+        parameters: params,
+        onSuccess: function () {
+          window.location.reload();
+        }
+      });
     },
 
     alertCantDelete: function (resource_name) {
@@ -151,7 +160,6 @@
 <script type="text/javascript">
   var myValues;
   var r;
-  var v;
   <c:forEach var="item" items="${bean.ownResources}">
   <c:set var="type" value="${item.type}"/>
   r = {

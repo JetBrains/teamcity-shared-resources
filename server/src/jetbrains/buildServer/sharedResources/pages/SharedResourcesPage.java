@@ -112,21 +112,24 @@ public class SharedResourcesPage extends EditProjectTab {
   }
 
   /**
-   * Returns set of overridden resource names,
+   * Returns map of overridden resource names with corresponding projects,
    * so that overridden resources can be deleted from the UI
    * despite of usages
    *
-   * @return set of overridden resource names
+   * @return map of overridden resource names and projects
    */
-  private Set<String> overrides(@NotNull final SProject project) {
-    return project.getProjectPath().stream()
-                  .map(myResources::getOwnResources)
-                  .flatMap(Collection::stream)
-                  .collect(Collectors.groupingBy(Resource::getName))
-                  .entrySet().stream()
-                  .filter(e -> e.getValue().size() > 1)
-                  .map(Map.Entry::getKey)
-                  .collect(Collectors.toSet());
+  private Map<String, String> overrides(@NotNull final SProject project) {
+    final Map<String, String> result = new HashMap<>();
+    final Set<String> ourResources = myResources.getOwnResources(project).stream()
+                                                .map(Resource::getName)
+                                                .collect(Collectors.toSet());
+    project.getProjectPath().stream()
+           .filter(p -> !p.equals(project))
+           .map(p -> new Pair<>(p, myResources.getOwnResources(p)))
+           .forEach(pair -> pair.getSecond().stream()
+                                .filter(rc -> ourResources.contains(rc.getName()))
+                                .forEach(rc -> result.put(rc.getName(), pair.getFirst().getExtendedName())));
+    return result;
   }
 
   private Map<String, Boolean> prepareDuplicates(@NotNull final SProject project) {

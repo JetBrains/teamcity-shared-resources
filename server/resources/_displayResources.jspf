@@ -72,8 +72,11 @@
                     </l:li>
                     <l:li>
                       <c:choose>
-                        <c:when test="${used && empty overrides.contains(resource.name)}">
+                        <c:when test="${used && empty overrides.containsKey(resource.name)}">
                           <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
+                        </c:when>
+                        <c:when test="${used && not empty overrides.containsKey(resource.name)}">
+                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResourceOverride('${resource.id}', '${resource.name}', '${overrides[resource.name]}')"/>
                         </c:when>
                         <c:otherwise>
                           <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.id}')"/>
