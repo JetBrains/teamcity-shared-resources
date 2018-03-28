@@ -83,6 +83,6 @@ public class SharedResourcesBuildFeature extends BuildFeature {
 
   @Override
   public boolean isRequiresAgent() {
-    return !TeamCityProperties.getBoolean(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED);
+    return !TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED);
   }
 }

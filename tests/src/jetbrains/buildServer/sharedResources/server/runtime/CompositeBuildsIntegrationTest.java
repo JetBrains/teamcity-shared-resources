@@ -52,7 +52,6 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   protected void setUp() throws Exception {
     super.setUp();
     enableRunningBuildsUpdate();
-    enableBuildChainsProcessing();
   }
 
   /**

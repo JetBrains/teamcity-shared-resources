@@ -85,7 +85,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
     // several locks on same resource may be taken by the chain
     synchronized (o) {
-      if (TeamCityProperties.getBoolean(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && startingBuildPromotion.isPartOfBuildChain()) {
+      if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && startingBuildPromotion.isPartOfBuildChain()) {
         // get all dependent composite promotions
         final List<BuildPromotionEx> depPromos = startingBuildPromotion.getDependentCompositePromotions();
         // collect promotion ids of composite builds in chain.

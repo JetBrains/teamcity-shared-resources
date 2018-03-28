@@ -16,8 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.tests;
 
-import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +33,6 @@ import jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl;
 import jetbrains.buildServer.util.CollectionsUtil;
-import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
@@ -156,19 +153,5 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock ");
   }
 
-  protected void enableBuildChainsProcessing() {
-    try {
-      final String text = SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED + "=true";
-      final File myProps = createTempFile(text);
-      final FileWatchingPropertiesModel myModel = new FileWatchingPropertiesModel(myProps);
-      final Field field = TeamCityProperties.class.getDeclaredField("ourModel");
-      field.setAccessible(true);
-      field.set(TeamCityProperties.class, myModel);
-      FileUtil.writeFileAndReportErrors(myProps, text);
-      myModel.forceReloadProperties();
-    } catch (Exception e) {
-      fail(e.getMessage());
-    }
-  }
 }
 
