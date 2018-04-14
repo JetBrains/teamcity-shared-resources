@@ -17,6 +17,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,16 +50,21 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   @NotNull
   private final RunningBuildsManager myRunningBuildsManager;
 
+  @NotNull
+  private final BuildUsedResourcesReport myBuildUsedResourcesReport;
+
   public SharedResourcesContextProcessor(@NotNull final SharedResourcesFeatures features,
                                          @NotNull final Locks locks,
                                          @NotNull final Resources resources,
                                          @NotNull final LocksStorage locksStorage,
-                                         @NotNull final RunningBuildsManager runningBuildsManager) {
+                                         @NotNull final RunningBuildsManager runningBuildsManager,
+                                         @NotNull final BuildUsedResourcesReport buildUsedResourcesReport) {
     myFeatures = features;
     myLocks = locks;
     myResources = resources;
     myLocksStorage = locksStorage;
     myRunningBuildsManager = runningBuildsManager;
+    myBuildUsedResourcesReport = buildUsedResourcesReport;
   }
 
   /**
@@ -81,7 +87,10 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final SRunningBuild startingBuild = context.getBuild();
     final BuildPromotionEx startingBuildPromotion = (BuildPromotionEx)startingBuild.getBuildPromotion();
     final TLongHashSet compositeIds = new TLongHashSet();
+    // projectID -> Map of custom resources
     final Map<String, Map<String, CustomResource>> projectTreeCustomResources = new HashMap<>();
+    // projectId -> Map of all resources
+    final Map<String, Map<String, Resource>> projectTreeResources = new HashMap<>();
     final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
     // several locks on same resource may be taken by the chain
     synchronized (o) {
@@ -94,15 +103,16 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
         // some build promotions in composite chain may not have the locks stored -> we need to process and store locks
         depPromos.stream()
                  .filter(promo -> !myLocksStorage.locksStored(promo))
-                 .forEach(promo -> processBuild(context, promo, compositeIds, projectTreeCustomResources, runningBuilds));
+                 .forEach(promo -> processBuild(context, promo, compositeIds, projectTreeResources, projectTreeCustomResources, runningBuilds));
       }
-      processBuild(context, startingBuild.getBuildPromotion(), compositeIds, projectTreeCustomResources, runningBuilds);
+      processBuild(context, startingBuild.getBuildPromotion(), compositeIds, projectTreeResources, projectTreeCustomResources, runningBuilds);
     }
   }
 
   private void processBuild(@NotNull final BuildStartContext context,
                             @NotNull final BuildPromotion currentBuildPromotion,
                             @NotNull final TLongHashSet compositeRunningBuildIds,
+                            @NotNull final Map<String, Map<String, Resource>> projectTreeResources,
                             @NotNull final Map<String, Map<String, CustomResource>> projectTreeCustomResources,
                             @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds) {
     if (currentBuildPromotion.getBuildType() == null || currentBuildPromotion.getProjectId() == null) {
@@ -111,12 +121,12 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     final Map<String, Lock> locks = extractLocks(currentBuildPromotion);
     final Map<Lock, String> myTakenValues = initTakenValues(locks.values());
     // get custom resources from our locks
-
+    final Map<String, Resource> projectResources = getResources(currentBuildPromotion.getProjectId(), projectTreeResources);
     // FIXME: disable custom resources processing for composite builds until method of consistent delivery of values to the chain is implemented
     // from UI: user should not be able to add a lock on custom resource in composite build => initTakenValues will not contain any custom resources
     // locks on regular resources will be saved
     if (!currentBuildPromotion.isCompositeBuild()) {
-      final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuildPromotion.getProjectId(), projectTreeCustomResources), locks);
+      final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuildPromotion.getProjectId(), projectResources, projectTreeCustomResources), locks);
       // decide whether we need to resolve values
       if (!myCustomResources.isEmpty()) {
         // used values should not include the values from composite chain
@@ -134,7 +144,6 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
               String currentValue;
               if (LockType.READ.equals(currentLock.getType())) {
                 currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
-                // todo: add support of multiple values per lock in custom storage
                 myTakenValues.put(currentLock, currentValue);
               } else {
                 currentValue = StringUtil.join(values, ";");
@@ -151,6 +160,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
       }
     }
     myLocksStorage.store(currentBuildPromotion, myTakenValues);
+    myBuildUsedResourcesReport.save((BuildPromotionEx)currentBuildPromotion, projectResources, myTakenValues);
   }
 
   private Map<String, Lock> extractLocks(@NotNull final BuildPromotion buildPromotion) {
@@ -212,17 +222,19 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     return result;
   }
 
-  private Map<String, CustomResource> getCustomResources(@NotNull final String projectId,
-                                                         @NotNull final Map<String, Map<String, CustomResource>> projectTreeCustomResources) {
-    return projectTreeCustomResources.computeIfAbsent(projectId, this::doGetCustomResources);
+  private Map<String, Resource> getResources(@NotNull final String projectId,
+                                             @NotNull final Map<String, Map<String, Resource>> projectTreeResources) {
+    return projectTreeResources.computeIfAbsent(projectId, myResources::getResourcesMap);
   }
 
-  private Map<String, CustomResource> doGetCustomResources(@NotNull final String projectId) {
-    return myResources.getResources(projectId)
-                      .stream()
-                      .filter(resource -> ResourceType.CUSTOM.equals(resource.getType()))
-                      .map(resource -> (CustomResource)resource)
-                      .collect(Collectors.toMap(Resource::getName, Function.identity()));
+  private Map<String, CustomResource> getCustomResources(@NotNull final String projectId,
+                                                         @NotNull final Map<String, Resource> projectResources,
+                                                         @NotNull final Map<String, Map<String, CustomResource>> projectTreeCustomResources) {
+    return projectTreeCustomResources.computeIfAbsent(projectId,
+                                                      id -> projectResources.values().stream()
+                                                                            .filter(resource -> ResourceType.CUSTOM.equals(resource.getType()))
+                                                                            .map(resource -> (CustomResource)resource)
+                                                                            .collect(Collectors.toMap(Resource::getName, Function.identity())));
   }
 
   @NotNull

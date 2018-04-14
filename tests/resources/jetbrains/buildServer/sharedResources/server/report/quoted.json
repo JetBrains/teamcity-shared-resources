@@ -1,0 +1,19 @@
+[
+  {
+    "resource": {
+      "quota": 100,
+      "name": "resource_name",
+      "projectId": "projectId",
+      "type": "QUOTED",
+      "id": "myId",
+      "state": true
+    },
+    "locks": [
+      {
+        "name": "resource_name",
+        "type": "WRITE",
+        "value": ""
+      }
+    ]
+  }
+]

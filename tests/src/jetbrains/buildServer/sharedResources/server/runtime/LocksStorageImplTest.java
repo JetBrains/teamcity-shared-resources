@@ -22,6 +22,7 @@ import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildServerListener;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -314,7 +315,6 @@ public class LocksStorageImplTest extends BaseTestCase {
     assertFalse(myLocksStorage.locksStored(myPromotion));
   }
 
-
   @Test
   @TestFor(issues = "TW-44474")
   public void testArtifactExists_No() {
@@ -376,7 +376,6 @@ public class LocksStorageImplTest extends BaseTestCase {
     myLatch.await(10, TimeUnit.SECONDS);
   }
 
-
   /**
    * Creates temp file with specified content.
    * @param content content to write
@@ -384,7 +383,7 @@ public class LocksStorageImplTest extends BaseTestCase {
    */
   private File createTempFileWithContent(@NotNull final String content) throws Exception {
     final File artifactsDir = createTempDir();
-    final File parentDir = new File(artifactsDir, LocksStorageImpl.FILE_PARENT);
+    final File parentDir = new File(artifactsDir, SharedResourcesPluginConstants.BASE_ARTIFACT_PATH);
     FileUtil.createDir(parentDir);
     registerAsTempFile(parentDir);
     final File artifactFile = new File(artifactsDir, LocksStorageImpl.FILE_PATH);

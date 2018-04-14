@@ -28,6 +28,8 @@ import jetbrains.buildServer.sharedResources.server.*;
 import jetbrains.buildServer.sharedResources.server.feature.*;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl;
+import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
+import jetbrains.buildServer.sharedResources.server.report.UsedResourcesSerializer;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
@@ -47,7 +49,9 @@ import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams
  */
 public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase {
 
-  protected ResourceProjectFeatures myProjectFeatures;
+  private ResourceProjectFeatures myProjectFeatures;
+
+  protected BuildUsedResourcesReport myBuildUsedResourcesReport;
 
   @BeforeMethod
   @Override
@@ -69,6 +73,7 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     final SharedResourcesFeatureFactory factory = new SharedResourcesFeatureFactoryImpl(locks);
     final SharedResourcesFeatures features = new SharedResourcesFeaturesImpl(factory);
     final LocksStorage locksStorage = new LocksStorageImpl(myFixture.getEventDispatcher());
+    myBuildUsedResourcesReport = new BuildUsedResourcesReport(new UsedResourcesSerializer());
 
     final BuildFeatureParametersProvider provider = new BuildFeatureParametersProvider(features, locks, locksStorage);
 
@@ -81,7 +86,8 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     final SharedResourcesAgentsFilter filter =
       new SharedResourcesAgentsFilter(features, locks, takenLocks, myFixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
     final SharedResourcesContextProcessor
-      processor = new SharedResourcesContextProcessor(features, locks, resources, locksStorage, myFixture.getSingletonService(RunningBuildsManager.class));
+      processor = new SharedResourcesContextProcessor(features, locks, resources, locksStorage, myFixture.getSingletonService(RunningBuildsManager.class),
+                                                      myBuildUsedResourcesReport);
 
     myServer.registerExtension(BuildParametersProvider.class, "tests", provider);
     myFixture.addService(filter);
@@ -118,10 +124,7 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
 
   @SuppressWarnings("SameParameterValue")
   protected Map<String, String> createInfiniteResource(final String name) {
-    return CollectionsUtil.asMap(NAME, name,
-                                 TYPE, ResourceType.QUOTED.name(),
-                                 QUOTA, "-1",
-                                 ENABLED, Boolean.toString(Boolean.TRUE));
+    return createQuotedResource(name, -1);
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -131,6 +134,13 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
                                  QUOTA, "-1",
                                  ENABLED, Boolean.toString(Boolean.TRUE),
                                  VALUES, Arrays.stream(values).collect(Collectors.joining("\n")));
+  }
+
+  protected Map<String, String> createQuotedResource(final String name, final int quota) {
+    return CollectionsUtil.asMap(NAME, name,
+                                 TYPE, ResourceType.QUOTED.name(),
+                                 QUOTA, Integer.toString(quota),
+                                 ENABLED, Boolean.toString(Boolean.TRUE));
   }
 
   @SuppressWarnings("SameParameterValue")

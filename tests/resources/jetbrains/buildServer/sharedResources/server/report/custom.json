@@ -1,0 +1,24 @@
+[
+  {
+    "resource": {
+      "values": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "name": "resource_name",
+      "projectId": "projectId",
+      "type": "CUSTOM",
+      "id": "myId",
+      "state": true
+    },
+    "locks": [
+      {
+        "name": "resource_name",
+        "type": "READ",
+        "value": "a"
+      }
+    ]
+  }
+]

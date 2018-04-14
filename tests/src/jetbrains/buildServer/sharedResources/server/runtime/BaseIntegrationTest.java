@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.util.List;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.WaitForAssert;
 import org.testng.Assert;
@@ -33,10 +32,9 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void simpleIntegrationTest() {
-    myProjectFeatures.addFeature(myProject, createInfiniteResource("resource"));
+    addResource(myProject, createInfiniteResource("resource"));
     final BuildTypeEx bt = myProject.createBuildType("check");
     addReadLock(bt, "resource");
-    myProject.persist();
 
     QueuedBuildEx qb = (QueuedBuildEx)bt.addToQueue("");
     assertNotNull(qb);

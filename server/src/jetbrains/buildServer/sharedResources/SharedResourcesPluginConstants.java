@@ -39,6 +39,11 @@ public class SharedResourcesPluginConstants {
   public static final String PLUGIN_NAME = "JetBrains.SharedResources";
 
   /**
+   * Base directory for created artifacts
+   */
+  public static final String BASE_ARTIFACT_PATH = ".teamcity/" + PLUGIN_NAME;
+
+  /**
    * Name of the service. Used in project settings factory
    */
   public static final String FEATURE_TYPE = "JetBrains.SharedResources";

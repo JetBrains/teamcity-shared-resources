@@ -28,10 +28,12 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -55,6 +57,7 @@ public class ContextProcessorTest extends BaseTestCase {
   private BuildTypeEx myBuildType;
   private BuildPromotionEx myBuildPromotion;
   private BuildStartContext myBuildStartContext;
+  private BuildUsedResourcesReport myReport;
 
   /** Class under test */
   private SharedResourcesContextProcessor myProcessor;
@@ -64,7 +67,9 @@ public class ContextProcessorTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = new Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+    }};
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myLocks = m.mock(Locks.class);
     myResources = m.mock(Resources.class);
@@ -74,7 +79,8 @@ public class ContextProcessorTest extends BaseTestCase {
     myRunningBuild = m.mock(SRunningBuild.class, "my-running-build");
     myBuildType = m.mock(BuildTypeEx.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
-    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager);
+    myReport = m.mock(BuildUsedResourcesReport.class);
+    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport);
     m.checking(createCommonExpectations());
   }
 
@@ -102,8 +108,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -140,8 +146,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -186,8 +192,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(currentFeature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(otherRunningBuild)));
@@ -243,8 +249,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(myTakenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.emptyList()));
@@ -288,8 +294,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Collections.singletonList(runningBuild)));
@@ -366,8 +372,8 @@ public class ContextProcessorTest extends BaseTestCase {
       oneOf(feature).getLockedResources();
       will(returnValue(takenLocks));
 
-      oneOf(myResources).getResources(PROJECT_ID);
-      will(returnValue(definedResources.values()));
+      oneOf(myResources).getResourcesMap(PROJECT_ID);
+      will(returnValue(definedResources));
 
       oneOf(myRunningBuildsManager).getRunningBuilds();
       will(returnValue(Arrays.asList(runningBuild1, runningBuild2)));
@@ -444,6 +450,8 @@ public class ContextProcessorTest extends BaseTestCase {
 
       allowing(myBuildPromotion).isCompositeBuild();
       will(returnValue(false));
+
+      allowing(myReport);
     }};
   }
 }

@@ -49,13 +49,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class LocksStorageImpl implements LocksStorage {
 
   @NotNull
-  static final String FILE_PARENT = ".teamcity/" + SharedResourcesPluginConstants.PLUGIN_NAME;
-
-  @NotNull
   private static final String FILE_NAME = "taken_locks.txt";
 
   @NotNull
-  static final String FILE_PATH = FILE_PARENT + "/" + FILE_NAME; // package visibility for tests
+  static final String FILE_PATH = SharedResourcesPluginConstants.BASE_ARTIFACT_PATH + "/" + FILE_NAME; // package visibility for tests
 
   @NotNull
   private static final Logger log = Logger.getInstance(LocksStorageImpl.class.getName());
