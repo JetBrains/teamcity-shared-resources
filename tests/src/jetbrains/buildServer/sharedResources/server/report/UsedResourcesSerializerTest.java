@@ -80,7 +80,7 @@ public class UsedResourcesSerializerTest extends BaseTestCase {
     }
 
     final String serialized = read(fileName);
-    assertEquals(serialized, result);
+    assertEqualsNormalized(serialized, result);
 
     List<UsedResource> usedResources;
     try (StringReader reader = new StringReader(serialized)) {
@@ -93,6 +93,14 @@ public class UsedResourcesSerializerTest extends BaseTestCase {
     assertEquals(usedResource.getResource(), ur.getResource());
     assertEquals(usedResource.getLocks().iterator().next(), ur.getLocks().iterator().next());
 
+  }
+
+  private void assertEqualsNormalized(@NotNull final String expected, @NotNull final String actual) {
+    assertEquals(normalize(expected), normalize(actual));
+  }
+
+  private String normalize(@NotNull final String str) {
+    return str.replace("\r\n", "\n");
   }
 
   private String read(@NotNull final String fileName) throws Exception {
