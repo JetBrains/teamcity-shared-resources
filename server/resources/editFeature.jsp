@@ -22,10 +22,10 @@
 
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-<jsp:useBean id="locks" scope="request"
-             type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
+<jsp:useBean id="locks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <jsp:useBean id="inherited" scope="request" type="java.lang.Boolean"/>
+
 
 <c:set var="locksFeatureParamKey" value="<%=FeatureParams.LOCKS_FEATURE_PARAM_KEY%>"/>
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
@@ -37,8 +37,8 @@
 
 <c:set var="templateLink">
   <c:choose>
-    <c:when test="${inherited}">
-      <%--@elvariable id="template" type="jetbrains.buildServer.serverSide.BuildTypeTemplate"--%>
+    <%--@elvariable id="template" type="jetbrains.buildServer.serverSide.BuildTypeTemplate"--%>
+    <c:when test="${inherited && not empty template}">
       <admin:editBuildTypeNavSteps settings="${template}"/>
       <jsp:useBean id="buildConfigSteps"
                    scope="request"
@@ -74,8 +74,8 @@ BS.LocksUtil = {
     var resource = BS.SharedResourcesFeatureDialog.resources[lock.name];
     var result = {};
     result.name = lock.name;
-    if (resource.type == 'CUSTOM') {
-      if (lock.type == 'writeLock') {
+    if (resource.type === 'CUSTOM') {
+      if (lock.type === 'writeLock') {
         result.description = "All Values";
       } else {
         if (lock.value) {
@@ -157,9 +157,10 @@ BS.SharedResourcesFeatureDialog = {
       }
       var text = "Build feature contains invalid lock" + (size > 1 ? "s" : "") + ": " + arr.join(', ') + ". ";
       var messageElement = $j('#invalidLocksMessage');
-      if (this.inherited) {
+      var templateLink = '${templateLink}';
+      if (this.inherited && templateLink !== '') {
         text += (size > 1 ? "They" : "It") + " can be removed in ";
-        text += "<a href=\"${templateLink}\">corresponding template</a>.";
+        text += "<a href=\"${templateLink}\">corresponding template</a>";
       }
       messageElement.html(text);
       if (!this.inherited) {
@@ -282,7 +283,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     // restore selection
     $j('#lockFromResources option').each(function () {
       var self = $j(this);
-      self.prop("selected", self.val() == lockName);
+      self.prop("selected", self.val() === lockName);
     });
     this.displayResourceChooser();
     this.chooseResource();
@@ -300,20 +301,20 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       }
       $j('#newCustomLockType option').each(function () {
         var self = $j(this);
-        self.prop("selected", self.val() == customLockType);
+        self.prop("selected", self.val() === customLockType);
       }); // restore lock type
       this.chooseCustomLockType();
       if (customLockType === 'SPECIFIC') {
         // restore selection
         $j('#newCustomLockType_Values option').each(function () {
           var self = $j(this);
-          self.prop("selected", self.val() == currentLock.value);
+          self.prop("selected", self.val() === currentLock.value);
         });
       }
     } else { // quoted resource. simply select lock type
       $j('#newLockType option').each(function () {
         var self = $j(this);
-        self.prop("selected", self.val() == currentLock.type);
+        self.prop("selected", self.val() === currentLock.type);
       }); // restore lock type
     }
     this.showCentered();
@@ -372,7 +373,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     // get resource for value
     var resource = BS.SharedResourcesFeatureDialog.resources[resourceName];
     // get resource type
-    if (resource.type == 'QUOTED') {
+    if (resource.type === 'QUOTED') {
       BS.Util.show('row_QuotedResource_Type');
       BS.Util.hide('row_CustomResource_Type');
       BS.Util.hide('row_CustomResource_Value');

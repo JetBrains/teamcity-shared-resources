@@ -16,6 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
+import com.intellij.openapi.util.text.StringUtil;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import jetbrains.buildServer.controllers.admin.projects.BuildFeaturesBean;
 import jetbrains.buildServer.controllers.admin.projects.EditBuildTypeFormFactory;
 import jetbrains.buildServer.controllers.admin.projects.EditableBuildTypeSettingsForm;
 import jetbrains.buildServer.serverSide.BuildTypeSettings;
+import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -65,17 +67,22 @@ public class EditFeatureController extends BaseController {
   @NotNull
   private final ConfigurationInspector myInspector;
 
+  @NotNull
+  private final ProjectManager myProjectManager;
+
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
                                @NotNull final SharedResourcesFeatureFactory factory,
-                               @NotNull final ConfigurationInspector inspector) {
+                               @NotNull final ConfigurationInspector inspector,
+                               @NotNull final ProjectManager projectManager) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
     myFactory = factory;
     myInspector = inspector;
+    myProjectManager = projectManager;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
   }
 
@@ -108,8 +115,11 @@ public class EditFeatureController extends BaseController {
           locks.putAll(f.getLockedResources());
           invalidLocks.addAll(myInspector.inspect(project, f).keySet());
           inherited =  bfb.isInherited();
-          if (inherited) {
-            model.put("template", buildTypeSettings.getTemplate());
+          String originExternalId = bfb.getOriginExternalId();
+          if (!StringUtil.isEmptyOrSpaces(originExternalId)) {
+            if (inherited) {
+              model.put("template", myProjectManager.findBuildTypeTemplateByExternalId(originExternalId));
+            }
           }
         } else {
           // we have feature, that is not current feature under edit. must remove resources used by other features
