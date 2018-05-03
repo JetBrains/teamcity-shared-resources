@@ -22,7 +22,10 @@ import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.ResolvedSettings;
 import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
+import jetbrains.buildServer.sharedResources.server.feature.LocksImpl;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
@@ -31,8 +34,6 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
 /**
  * Class {@code BuildFeatureParametersProviderTest}
@@ -59,12 +60,6 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** SharedResources build feature descriptor */
   private SharedResourcesFeature myFeature;
 
-  /** Build feature parameters with some locks */
-  private Map<String, String> myNonEmptyParamMapSomeLocks;
-
-  /** Empty build feature parameters */
-  private final Map<String, String> myEmptyParamMap = Collections.emptyMap();
-
   /** Build feature extractor mock*/
   private SharedResourcesFeatures myFeatures;
 
@@ -81,15 +76,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     myFeature = m.mock(SharedResourcesFeature.class);
     myResolvedSettings = m.mock(ResolvedSettings.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
-    
-    final Locks locks = m.mock(Locks.class);
-    final LocksStorage storage = m.mock(LocksStorage.class);
 
-    myNonEmptyParamMapSomeLocks = new HashMap<String, String>() {{
-      put(LOCKS_FEATURE_PARAM_KEY, "lock1 readLock\nlock2 writeLock\nlock3 readLock");
-      put("param1_key", "param1_value");
-      put("param2_key", "param2_value");
-    }};
+    final Locks locks = new LocksImpl();
+    final LocksStorage storage = m.mock(LocksStorage.class);
 
     final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
     m.checking(new Expectations() {{
@@ -112,10 +101,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testNoFeaturePresent() {
-    m.checking(new Expectations() {{
-      oneOf(myFeatures).searchForFeatures(myBuildType);
-      will(returnValue(Collections.emptyList()));
-    }});
+    addFeatureExpectations();
 
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
@@ -129,10 +115,13 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
    */
   @Test
   public void testEmptyParams() {
-    final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
-      add(myFeature);
-    }};
-    setupFeatureParamsExpectations(descriptors, myEmptyParamMap);
+    addFeatureExpectations(myFeature);
+
+    m.checking(new Expectations() {{
+      oneOf(myFeature).getLockedResources();
+      will(returnValue(Collections.emptyMap()));
+    }});
+
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
     int size = result.size();
@@ -149,7 +138,20 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> descriptors = new ArrayList<SharedResourcesFeature>() {{
       add(myFeature);
     }};
-    setupFeatureParamsExpectations(descriptors, myNonEmptyParamMapSomeLocks);
+
+    final Map<String, Lock> locksMap = new HashMap<String, Lock>() {{
+      put("lock1", new Lock("lock1", LockType.READ));
+      put("lock2", new Lock("lock2", LockType.WRITE));
+      put("lock3", new Lock("lock3", LockType.READ));
+    }};
+
+    m.checking(new Expectations() {{
+      oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(descriptors));
+
+      oneOf(myFeature).getLockedResources();
+      will(returnValue(locksMap));
+    }});
 
     Map<String, String> result = myBuildFeatureParametersProvider.getParameters(myBuild, false);
     assertNotNull(result);
@@ -160,14 +162,13 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  private void setupFeatureParamsExpectations(final Collection<SharedResourcesFeature> descriptors, final Map<String, String> expectedParams) {
+
+  private void addFeatureExpectations(SharedResourcesFeature ... features) {
+    final Collection<SharedResourcesFeature> descriptors = Arrays.asList(features);
 
     m.checking(new Expectations() {{
       oneOf(myFeatures).searchForFeatures(myBuildType);
       will(returnValue(descriptors));
-
-      oneOf(myFeature).getBuildParameters();
-      will(returnValue(expectedParams));
     }});
   }
 }

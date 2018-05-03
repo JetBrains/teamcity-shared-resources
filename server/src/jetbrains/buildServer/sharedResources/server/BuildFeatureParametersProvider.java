@@ -23,7 +23,6 @@ import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.parameters.AbstractBuildParametersProvider;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import org.jetbrains.annotations.NotNull;
@@ -70,11 +69,10 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      myFeatures.searchForFeatures(buildType).stream()
-                .map(SharedResourcesFeature::getBuildParameters)
-                .forEach(result::putAll);
+      myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(buildType))
+             .values()
+             .forEach(lock -> result.put(myLocks.asBuildParameter(lock), lock.getValue()));
     }
     return result;
   }
-
 }

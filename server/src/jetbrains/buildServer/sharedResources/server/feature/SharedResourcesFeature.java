@@ -49,12 +49,5 @@ public interface SharedResourcesFeature {
   boolean updateLock(@NotNull final SBuildType buildType,
                      @NotNull final String oldName,
                      @NotNull final String newName);
-
-  /**
-   * Exposes locks as parameters
-   *
-   * @return map of locks, exposed as parameters
-   */
-  @NotNull
-  Map<String, String> getBuildParameters();
+  
 }

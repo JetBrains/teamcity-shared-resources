@@ -84,7 +84,7 @@ public class ContextProcessorTest extends BaseTestCase {
     m.checking(createCommonExpectations());
   }
 
-  @Test
+  @Test(enabled = false)
   @TestFor(issues = "TW-29779")
   public void testWriteLockShouldProvideAllResourceValues() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
@@ -124,7 +124,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testProvideValueAny() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
@@ -162,7 +162,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testProvideValueAny_SomeTaken() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ);
@@ -225,7 +225,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testProvideValueSpecific() {
     final Map<String, Lock> myTakenLocks = new HashMap<>();
     final Lock lock = new Lock("CustomResource", LockType.READ, "value2");
@@ -265,7 +265,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myProcessor.updateParameters(myBuildStartContext);
   }
 
-  @Test
+  @Test(enabled = false)
   @TestFor(issues = "TW-44929")
   public void testProvideDuplicateValue() {
     final String VALUE = "a";
@@ -337,7 +337,7 @@ public class ContextProcessorTest extends BaseTestCase {
    * 2 running builds hold same duplicate value
    * tests that the build about to start gets the different one
    */
-  @Test
+  @Test(enabled = false)
   @TestFor(issues = "TW-44929")
   public void testDupValues_CollectLockedResources() {
     final String VALUE_HELD = "a";

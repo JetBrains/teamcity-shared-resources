@@ -89,10 +89,4 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
     return result;
   }
 
-  @NotNull
-  @Override
-  public Map<String, String> getBuildParameters() {
-    return myLocks.asBuildParameters(myLockedResources.values());
-  }
-
 }

@@ -33,7 +33,7 @@ public interface ResourceProjectFeatures {
   @NotNull
   List<ResourceProjectFeature> getOwnFeatures(@NotNull final SProject project);
 
-  void addFeature(@NotNull final SProject project,
+  SProjectFeatureDescriptor addFeature(@NotNull final SProject project,
                   @NotNull final Map<String, String> featureParameters);
 
   void updateFeature(@NotNull final SProject project,

@@ -1,12 +1,11 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildType;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
+import org.jetbrains.annotations.NotNull;
 
 import static jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature.FEATURE_TYPE;
 
@@ -32,7 +31,7 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
 
   @NotNull
   private Collection<SharedResourcesFeature> createFeatures(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
-    final List<SharedResourcesFeature> result = new ArrayList<SharedResourcesFeature>();
+    final List<SharedResourcesFeature> result = new ArrayList<>();
     for (SBuildFeatureDescriptor descriptor : descriptors) {
       result.add(myFactory.createFeature(descriptor));
     }
@@ -41,7 +40,7 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
 
   @NotNull
   private Collection<SBuildFeatureDescriptor> getEnabledUnresolvedFeatureDescriptors(@NotNull final SBuildType buildType) {
-    final List<SBuildFeatureDescriptor> result = new ArrayList<SBuildFeatureDescriptor>();
+    final List<SBuildFeatureDescriptor> result = new ArrayList<>();
     for (SBuildFeatureDescriptor descriptor : buildType.getBuildFeatures()) {
       if (FEATURE_TYPE.equals(descriptor.getType()) && buildType.isEnabled(descriptor.getId())) {
         result.add(descriptor);

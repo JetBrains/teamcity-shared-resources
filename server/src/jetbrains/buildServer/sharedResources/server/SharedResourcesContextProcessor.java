@@ -15,7 +15,6 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
-import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
@@ -166,10 +165,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   private Map<String, Lock> extractLocks(@NotNull final BuildPromotion buildPromotion) {
     final Map<String, Lock> result = new HashMap<>();
     if (buildPromotion.getBuildType() != null) {
-      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildPromotion.getBuildType());
-      features.stream()
-              .map(SharedResourcesFeature::getLockedResources)
-              .forEach(result::putAll);
+      result.putAll(myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(buildPromotion.getBuildType())));
     }
     return result;
   }

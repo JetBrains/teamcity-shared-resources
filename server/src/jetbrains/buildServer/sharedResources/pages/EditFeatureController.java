@@ -121,10 +121,7 @@ public class EditFeatureController extends BaseController {
               model.put("template", myProjectManager.findBuildTypeTemplateByExternalId(originExternalId));
             }
           }
-        } else {
-          // we have feature, that is not current feature under edit. must remove resources used by other features
-          f.getLockedResources().keySet().forEach(available::remove);
-        }
+        } 
       }
     }
     if (buildTypeSettings.isCompositeBuildType()) { // custom resources are not available for composite build types yet

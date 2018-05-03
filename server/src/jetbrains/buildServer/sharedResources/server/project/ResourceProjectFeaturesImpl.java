@@ -35,9 +35,9 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @Override
-  public void addFeature(@NotNull final SProject project,
+  public SProjectFeatureDescriptor addFeature(@NotNull final SProject project,
                          @NotNull final Map<String, String> featureParameters) {
-    project.addFeature(FEATURE_TYPE, featureParameters);
+    return project.addFeature(FEATURE_TYPE, featureParameters);
   }
 
   @Override

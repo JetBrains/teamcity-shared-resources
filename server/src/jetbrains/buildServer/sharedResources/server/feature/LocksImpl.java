@@ -16,17 +16,13 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.*;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 
@@ -52,7 +48,7 @@ public final class LocksImpl implements Locks {
   @NotNull
   @Override
   public Map<String, String> asBuildParameters(@NotNull final Collection<Lock> locks) {
-    final Map<String, String> buildParams = new HashMap<String, String>();
+    final Map<String, String> buildParams = new HashMap<>();
     for (Lock lock: locks) {
       buildParams.put(asBuildParameterInternal(lock), lock.getValue());
     }
@@ -62,10 +58,10 @@ public final class LocksImpl implements Locks {
   @NotNull
   @Override
   public Map<String, Lock> fromBuildFeaturesAsMap(@NotNull final Collection<SharedResourcesFeature> features) {
-    final Map<String, Lock> result = new HashMap<String, Lock>();
-    for (SharedResourcesFeature feature: features) {
-      result.putAll(feature.getLockedResources());
-    }
+    final Map<String, Lock> result = new LinkedHashMap<>();       // enforced -> my -> template
+    features.stream()
+            .flatMap(f -> f.getLockedResources().entrySet().stream())
+            .forEach(e -> result.putIfAbsent(e.getKey(), e.getValue()));
     return result;
   }
 
@@ -118,7 +114,7 @@ public final class LocksImpl implements Locks {
   @NotNull
   private Map<String, Lock> fromFeatureParametersInternal(@NotNull final Map<String, String> featureParameters) {
     final String locksString = featureParameters.get(LOCKS_FEATURE_PARAM_KEY);
-    final Map<String, Lock> result = new HashMap<String, Lock>();
+    final Map<String, Lock> result = new LinkedHashMap<>();
     if (locksString != null && !"".equals(locksString)) {
       final List<String> serializedLocks = StringUtil.split(locksString, true, '\n');
       for (String str: serializedLocks) {

@@ -6,7 +6,6 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildTypeTemplate;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.sharedResources.TestUtils;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.TestFor;
@@ -37,7 +36,6 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   private Map<String, Lock> myLockedResources;
 
-  private Map<String, String> expectedBuildParameters;
 
   @BeforeMethod
   @Override
@@ -54,15 +52,10 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
       put("lock2", new Lock("lock2", LockType.WRITE));
       put("lock_with_value1", new Lock("lock_with_value1", LockType.WRITE, "lock_value"));
     }};
-    expectedBuildParameters = new HashMap<String, String>() {{
-      for (String str : myLockedResources.keySet()) {
-        put(TestUtils.generateLockAsBuildParam(str, myLockedResources.get(str).getType()), "");
-      }
-    }};
   }
 
   @Test
-  public void testGetLockedResources() throws Exception {
+  public void testGetLockedResources() {
     m.checking(new Expectations() {{
       oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
       will(returnValue(myLockedResources));
@@ -78,26 +71,11 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
     m.assertIsSatisfied();
   }
 
-  @Test
-  public void testGetBuildParameters() throws Exception {
-    m.checking(new Expectations() {{
-      oneOf(myLocks).fromFeatureParameters(myBuildFeatureDescriptor);
-      will(returnValue(myLockedResources));
-
-      oneOf(myLocks).asBuildParameters(myLockedResources.values());
-      will(returnValue(expectedBuildParameters));
-    }});
-    final SharedResourcesFeature feature = new SharedResourcesFeatureImpl(myLocks, myBuildFeatureDescriptor);
-    final Map<String, String> params = feature.getBuildParameters();
-    assertNotNull(params);
-    assertEquals(expectedBuildParameters.size(), params.size());
-    m.assertIsSatisfied();
-  }
 
   private final String oldName = "lock2";
   private final String newName = "lock3";
 
-  private void setupCommonExpectations() throws Exception {
+  private void setupCommonExpectations() {
     final String newLocksAsString = "lock1 readLock\nlock3 writeLock";
     params.put(FeatureParams.LOCKS_FEATURE_PARAM_KEY, newLocksAsString);
 
@@ -121,7 +99,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testUpdateLock_BuildType() throws Exception {
+  public void testUpdateLock_BuildType() {
     setupCommonExpectations();
     m.checking(new Expectations() {{
       oneOf(myBuildType).updateBuildFeature("", "", params);
@@ -138,7 +116,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
 
   @Test
   @TestFor (issues = "TW-26249")
-  public void testUpdateLock_Value() throws Exception {
+  public void testUpdateLock_Value() {
     setupCommonExpectations();
     m.checking(new Expectations() {{
       oneOf(myBuildType).updateBuildFeature("", "", params);
@@ -155,7 +133,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
   }
 
   @Test
-  public void testUpdateLock_BuildTypeTemplate() throws Exception {
+  public void testUpdateLock_BuildTypeTemplate() {
     setupCommonExpectations();
     m.checking(new Expectations() {{
       oneOf(myBuildType).updateBuildFeature("", "", params);

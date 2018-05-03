@@ -23,6 +23,10 @@ import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
+import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.server.*;
 import jetbrains.buildServer.sharedResources.server.feature.*;
@@ -37,6 +41,7 @@ import jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl;
 import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.*;
@@ -95,31 +100,46 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
     myFixture.addService(feature);
   }
 
-  protected void addResource(@NotNull final SProject project, @NotNull final Map<String, String> resource) {
-    myProjectFeatures.addFeature(project, resource);
+  protected Resource addResource(@NotNull final SProject project, @NotNull final Map<String, String> resource) {
+    return ResourceFactory.fromDescriptor(myProjectFeatures.addFeature(project, resource));
+  }
+
+  protected Lock addWriteLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource) {
+    return addWriteLock(settings, resource.getName());
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected void addWriteLock(@NotNull final SBuildType buildType, @NotNull final String resourceName) {
-    buildType.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createWriteLock(resourceName));
+  protected Lock addWriteLock(@NotNull final BuildTypeSettings settings, @NotNull final String resourceName) {
+    settings.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createWriteLock(resourceName));
+    return new Lock(resourceName, LockType.WRITE);
+  }
+
+  protected Lock addReadLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource) {
+    return addReadLock(settings, resource.getName());
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected void addReadLock(@NotNull final SBuildType buildType, @NotNull final String resourceName) {
-    buildType.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock(resourceName));
+  protected Lock addReadLock(@NotNull final BuildTypeSettings settings, @NotNull final String resourceName) {
+    settings.addBuildFeature(SharedResourcesBuildFeature.FEATURE_TYPE, createReadLock(resourceName));
+    return new Lock(resourceName, LockType.READ);
+  }
+
+  protected Lock addSpecificLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource, String value) {
+    return addSpecificLock(settings, resource.getName(), value);
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected void addSpecificLock(@NotNull final SBuildType buildType,
+  protected Lock addSpecificLock(@NotNull final BuildTypeSettings settings,
                                  @NotNull final String resourceName,
                                  @NotNull final String value) {
-    buildType.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createSpecificLock(resourceName, value));
+    settings.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createSpecificLock(resourceName, value));
+    return new Lock(resourceName, LockType.READ, value);
   }
 
   @SuppressWarnings("SameParameterValue")
-  protected void addAnyLock(@NotNull final SBuildType buildType,
+  protected void addAnyLock(@NotNull final BuildTypeSettings settings,
                             @NotNull final String resourceName) {
-    buildType.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createAnyLock(resourceName));
+    settings.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createAnyLock(resourceName));
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -161,6 +181,30 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   @SuppressWarnings("SameParameterValue")
   private Map<String, String> createAnyLock(@NotNull final String resourceName) {
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock ");
+  }
+
+
+  protected final void assertLock(@NotNull final Map<String, String> params,
+                                  @NotNull final Lock lock) {
+    assertLock(params, lock.getName(), lock.getType(), lock.getValue());
+
+  }
+
+  protected final void assertLock(@NotNull final Map<String, String> params,
+                                  @NotNull final String name,
+                                  @NotNull final LockType lockType) {
+    assertLock(params, name, lockType, null);
+  }
+
+  private void assertLock(@NotNull final Map<String, String> params,
+                          @NotNull final String name,
+                          @NotNull final LockType lockType,
+                          @Nullable final String value) {
+    String key = "teamcity.locks." + lockType.getName() + "." + name;
+    assertTrue("Resulting build parameters do not contain required key [" + key + "]", params.containsKey(key));
+    if (value != null) {
+      assertEquals("Expected lock value [" + value + "], got [" + params.get(key) + "]", value, params.get(key));
+    }
   }
 
 }

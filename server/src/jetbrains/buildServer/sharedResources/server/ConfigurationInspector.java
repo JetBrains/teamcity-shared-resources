@@ -178,10 +178,10 @@ public class ConfigurationInspector {
       }
       // 2) resolve rest of the locks
       Map<String, String> resolutionResult = resolveStep(myResources.getOwnResources(p), locks);
-      resolutionResult.entrySet().forEach(entry -> {
-        Lock lock = locks.remove(entry.getKey());
-        if (!OK.equals(entry.getValue()) && lock != null) { // we have error.
-          result.put(lock, entry.getValue());
+      resolutionResult.forEach((name, res) -> {
+        Lock lock = locks.remove(name);
+        if (!OK.equals(res) && lock != null) { // we have error.
+          result.put(lock, res);
         }
       });
     }

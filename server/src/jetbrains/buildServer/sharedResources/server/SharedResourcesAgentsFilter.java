@@ -142,6 +142,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             final String projectId = myPromotion.getBuildType().getProjectId();
             chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
             final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion.getBuildType());
+
             if (!features.isEmpty()) {
               reason = checkForInvalidLocks(myPromotion.getBuildType());
             }
