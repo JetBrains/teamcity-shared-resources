@@ -17,13 +17,15 @@
 package jetbrains.buildServer.sharedResources.server.report;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.util.List;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.FileUtil;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,11 +34,20 @@ import org.testng.annotations.Test;
  */
 public class BuildUsedResourcesReportTest extends SharedResourcesIntegrationTest {
 
+  private BuildUsedResourcesReport myBuildUsedResourcesReport;
+
+  @Override
+  @BeforeMethod
+  public void setUp() throws Exception {
+    super.setUp();
+    myBuildUsedResourcesReport = myFixture.getSingletonService(BuildUsedResourcesReport.class);
+  }
+
   @Test
   public void testReportExists_Yes() {
-    addResource(myProject, createInfiniteResource("resource_infinite"));
-    addResource(myProject, createQuotedResource("resource_quoted", 10));
-    addResource(myProject, createCustomResource("resource_custom", "a", "b", "c", "d"));
+    addResource(myFixture, myProject, createInfiniteResource("resource_infinite"));
+    addResource(myFixture, myProject, createQuotedResource("resource_quoted", 10));
+    addResource(myFixture, myProject, createCustomResource("resource_custom", "a", "b", "c", "d"));
 
     final BuildTypeEx bt = myProject.createBuildType("BuildType");
 

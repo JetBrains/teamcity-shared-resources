@@ -19,9 +19,8 @@ package jetbrains.buildServer.sharedResources.server.feature;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import jetbrains.buildServer.serverSide.BuildTypeTemplate;
+import jetbrains.buildServer.serverSide.BuildTypeSettings;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +44,8 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   private final Map<String, Lock> myLockedResources;
 
 
-  public SharedResourcesFeatureImpl(@NotNull final Locks locks,
-                                    @NotNull final SBuildFeatureDescriptor descriptor) {
+  SharedResourcesFeatureImpl(@NotNull final Locks locks,
+                             @NotNull final SBuildFeatureDescriptor descriptor) {
     myLocks = locks;
     myDescriptor = descriptor;
     myLockedResources = myLocks.fromFeatureParameters(myDescriptor);
@@ -59,7 +58,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
   }
 
   @Override
-  public boolean updateLock(@NotNull final SBuildType buildType,
+  public boolean updateLock(@NotNull final BuildTypeSettings settings,
                             @NotNull final String oldName,
                             @NotNull final String newName) {
     boolean result = false;
@@ -77,14 +76,7 @@ public final class SharedResourcesFeatureImpl implements SharedResourcesFeature 
       final Map<String, String> newParams = new HashMap<>(myDescriptor.getParameters());
       newParams.put(LOCKS_FEATURE_PARAM_KEY, locksAsString);
       // update build feature
-      boolean updated = buildType.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
-      // feature belongs to template. That is why it was not updated
-      if (!updated) {
-        final BuildTypeTemplate template = buildType.getTemplate();
-        if (template != null) {
-          template.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
-        }
-      }
+      settings.updateBuildFeature(myDescriptor.getId(), myDescriptor.getType(), newParams);
     }
     return result;
   }

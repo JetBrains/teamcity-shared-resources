@@ -38,8 +38,8 @@
   </test>
   <test name="Web tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.pages.actions.EditActionTest"/>
       <class name="jetbrains.buildServer.sharedResources.pages.ResourceHelperTest"/>
+      <class name="jetbrains.buildServer.sharedResources.pages.actions.ActionsTest"/>
     </classes>
   </test>
   <test name="Integration tests">

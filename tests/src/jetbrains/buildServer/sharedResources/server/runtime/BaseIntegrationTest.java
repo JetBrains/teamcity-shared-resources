@@ -23,6 +23,8 @@ import jetbrains.buildServer.util.WaitForAssert;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -32,7 +34,7 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void simpleIntegrationTest() {
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     final BuildTypeEx bt = myProject.createBuildType("check");
     addReadLock(bt, "resource");
 

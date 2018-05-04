@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.pages.actions;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,7 +51,6 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
   protected void doProcess(@NotNull final HttpServletRequest request,
                            @NotNull final HttpServletResponse response,
                            @NotNull final Element ajaxResponse) {
-
     final String oldName = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_OLD_RESOURCE_NAME);
     final String projectId = request.getParameter(SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID);
     final SProject project = myProjectManager.findProjectById(projectId);
@@ -59,7 +59,7 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
       if (resource != null) {
         final String newName = resource.getName();
         boolean selfPersisted = false;
-        myProjectFeatures.updateFeature(project, resource.getId(), resource.getParameters()); // todo: remove resource here
+        myProjectFeatures.updateFeature(project, resource.getId(), resource.getParameters());
         ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
         if (!newName.equals(oldName)) {
           // my resource can be used only in my build configurations or in build configurations in my subtree
@@ -67,23 +67,21 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
           projects.add(project);
           for (SProject p: projects) {
             boolean updated = false;
-            final List<SBuildType> buildTypes = p.getOwnBuildTypes();
-            for (SBuildType type: buildTypes) {
-              // todo: do we need resolved features here? Using unresolved for now
-              for (SharedResourcesFeature feature: myBuildFeatures.searchForFeatures(type)) {
-                updated = feature.updateLock(type, oldName, newName) || updated;
+            final List<BuildTypeSettings> containers = getSettingsContainers(p);
+            for (BuildTypeSettings settings: containers) {
+              for (SharedResourcesFeature feature: myBuildFeatures.searchForFeatures(settings)) {
+                updated = feature.updateLock(settings, oldName, newName) || updated;
               }
             }
             if (updated) {
               p.persist(cause);
-              // make sure we persist current project even if no resource usages were detected
-              if (!selfPersisted && p.equals(project)) {
+              if (!selfPersisted && p.equals(project)) { // make sure we persist current project even if no resource usages were detected
                 selfPersisted = true;
               }
             }
           }
           if (!selfPersisted) {
-            project.persist();
+            project.persist(cause);
           }
         } else { // just persist project so that settings will be saved
           project.persist(cause);
@@ -91,5 +89,12 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
         addMessage(request, "Resource " + newName + " was updated");
       }
     }
+  }
+
+  private List<BuildTypeSettings> getSettingsContainers(@NotNull final SProject project) {
+    List<BuildTypeSettings> result = new ArrayList<>();
+    result.addAll(project.getOwnBuildTypes());
+    result.addAll(project.getOwnBuildTypeTemplates());
+    return result;
   }
 }

@@ -29,6 +29,8 @@ import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -39,9 +41,9 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
   @Test
   public void testSingleTemplate_NoOverride() {
     // create resource 1
-    final Resource rc1 = addResource(myProject, createInfiniteResource("resource1"));
+    final Resource rc1 = addResource(myFixture, myProject, createInfiniteResource("resource1"));
     // create resource 2
-    final Resource rc2 = addResource(myProject, createInfiniteResource("resource2"));
+    final Resource rc2 = addResource(myFixture, myProject, createInfiniteResource("resource2"));
     // create template
     final BuildTypeTemplate template = myProject.createBuildTypeTemplate("myTemplate");
     // add lock to template
@@ -62,7 +64,7 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testSingleTemplate_Override() {
-    final Resource rc = addResource(myProject, createInfiniteResource("resource"));
+    final Resource rc = addResource(myFixture, myProject, createInfiniteResource("resource"));
     final BuildTypeTemplate template = myProject.createBuildTypeTemplate("myTemplate");
     addReadLock(template, rc.getName());
     final SBuildType buildType = myProject.createBuildType("myBuildType");
@@ -78,8 +80,8 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testSingleTemplate_Cross() {
-    final Resource rc = addResource(myProject, createInfiniteResource("resource"));
-    final Resource rc2 = addResource(myProject, createInfiniteResource("resource2"));
+    final Resource rc = addResource(myFixture, myProject, createInfiniteResource("resource"));
+    final Resource rc2 = addResource(myFixture, myProject, createInfiniteResource("resource2"));
     final BuildTypeTemplate template = myProject.createBuildTypeTemplate("myTemplate");
     addReadLock(template, rc.getName());
     final Lock templateLock = addReadLock(template, rc2.getName());
@@ -95,9 +97,9 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testMultipleTemplates_NoCrossNoOverride() {
-    final Resource template1Resource = addResource(myProject, createInfiniteResource("template1Resource"));
-    final Resource template2Resource = addResource(myProject, createInfiniteResource("template2Resource"));
-    final Resource buildTypeResource = addResource(myProject, createInfiniteResource("buildTypeResource"));
+    final Resource template1Resource = addResource(myFixture, myProject, createInfiniteResource("template1Resource"));
+    final Resource template2Resource = addResource(myFixture, myProject, createInfiniteResource("template2Resource"));
+    final Resource buildTypeResource = addResource(myFixture, myProject, createInfiniteResource("buildTypeResource"));
     final BuildTypeTemplate template1 = myProject.createBuildTypeTemplate("template1");
     final Lock template1Lock = addReadLock(template1, template1Resource);
     final BuildTypeTemplate template2 = myProject.createBuildTypeTemplate("template2");
@@ -116,8 +118,8 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testMultipleTemplates_OverrideInTemplates() {
-    final Resource templateResource = addResource(myProject, createInfiniteResource("templateResource"));
-    final Resource buildTypeResource = addResource(myProject, createInfiniteResource("buildTypeResource"));
+    final Resource templateResource = addResource(myFixture, myProject, createInfiniteResource("templateResource"));
+    final Resource buildTypeResource = addResource(myFixture, myProject, createInfiniteResource("buildTypeResource"));
 
     final BuildTypeTemplate template1 = myProject.createBuildTypeTemplate("template1");
     addReadLock(template1, templateResource);
@@ -141,10 +143,10 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testMultipleTemplates_CrossOverride() {
-    final Resource resource1 = addResource(myProject, createInfiniteResource("resource1"));
-    final Resource resource2 = addResource(myProject, createInfiniteResource("resource2"));
-    final Resource resource3 = addResource(myProject, createInfiniteResource("resource3"));
-    final Resource buildTypeResource = addResource(myProject, createInfiniteResource("buildTypeResource"));
+    final Resource resource1 = addResource(myFixture, myProject, createInfiniteResource("resource1"));
+    final Resource resource2 = addResource(myFixture, myProject, createInfiniteResource("resource2"));
+    final Resource resource3 = addResource(myFixture, myProject, createInfiniteResource("resource3"));
+    final Resource buildTypeResource = addResource(myFixture, myProject, createInfiniteResource("buildTypeResource"));
 
     final BuildTypeTemplate template1 = myProject.createBuildTypeTemplate("template1");
     addReadLock(template1, resource1);
@@ -174,8 +176,8 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testMultipleTemplates_Reorder() {
-    final Resource templateResource = addResource(myProject, createInfiniteResource("templateResource"));
-    final Resource buildTypeResource = addResource(myProject, createInfiniteResource("buildTypeResource"));
+    final Resource templateResource = addResource(myFixture, myProject, createInfiniteResource("templateResource"));
+    final Resource buildTypeResource = addResource(myFixture, myProject, createInfiniteResource("buildTypeResource"));
 
     final BuildTypeTemplate template1 = myProject.createBuildTypeTemplate("template1");
     final Lock template1Lock = addReadLock(template1, templateResource);
@@ -207,8 +209,8 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testDefaultTemplate() {
-    final Resource resource1 = addResource(myProject, createInfiniteResource("resource1"));
-    final Resource resource2 = addResource(myProject, createInfiniteResource("resource2"));
+    final Resource resource1 = addResource(myFixture, myProject, createInfiniteResource("resource1"));
+    final Resource resource2 = addResource(myFixture, myProject, createInfiniteResource("resource2"));
 
     final SBuildType buildType = myProject.createBuildType("myBuildType");
     final Lock buildTypeLock = addReadLock(buildType, resource1);
@@ -242,7 +244,7 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
   @Test
   public void testEnforcedSettings_NoOverride() {
-    final Resource resource = addResource(myProject, createInfiniteResource("resource"));
+    final Resource resource = addResource(myFixture, myProject, createInfiniteResource("resource"));
 
     final SBuildType buildType = myProject.createBuildType("myBuildType");
     addReadLock(buildType, resource);

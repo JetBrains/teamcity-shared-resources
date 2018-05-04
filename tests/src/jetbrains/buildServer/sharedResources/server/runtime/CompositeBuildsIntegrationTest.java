@@ -40,6 +40,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -69,7 +71,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // add dependency
     addDependency(btComposite, btDep);
     // add resource
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     // add lock on resource to composite build
     addReadLock(btComposite, "resource");
     // start composite build
@@ -121,7 +123,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     SBuildType btDepFirst = myProject.createBuildType("btDep1", "btDep1");
     addDependency(btCompositeFirst, btDepFirst);
     // create resource
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     // create lock in composite build
     addWriteLock(btCompositeFirst, "resource");
     // create second simple chain
@@ -201,7 +203,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // create other build
     SBuildType btOther = myProject.createBuildType("btOther", "Other Build Type");
     // add resources and locks
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     addWriteLock(btComposite2, "resource");
     addWriteLock(btOther, "resource");
     // run other build
@@ -258,7 +260,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // add dependency
     addDependency(btComposite, btDep);
     // add resource
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     // add lock on resource to composite and dep builds
     addWriteLock(btComposite, "resource");
     addWriteLock(btDep, "resource");
@@ -302,7 +304,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     addDependency(btComposite, btDep1);
     addDependency(btComposite, btDep2);
     // add resource
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     // add write locks to dep2 and composite head
     addWriteLock(btComposite, "resource");
     addWriteLock(btDep2, "resource");
@@ -352,7 +354,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // create other build
     SBuildType btOther = myProject.createBuildType("btOther", "btOther");
     // add resource
-    addResource(myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
     // add locks
     addWriteLock(btComposite, "resource");
     addReadLock(btDep1, "resource");
@@ -409,7 +411,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     addDependency(btComposite, btDep1);
     addDependency(btComposite, btDep2);
     // add custom resource
-    addResource(myProject, createCustomResource("resource", "value1", "value2"));
+    addResource(myFixture, myProject, createCustomResource("resource", "value1", "value2"));
     // add specific lock to composite and dep1
     addSpecificLock(btComposite, "resource", "value1");
     addSpecificLock(btDep1, "resource", "value1");
@@ -450,8 +452,8 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // add dependency
     addDependency(btComposite, btDep);
     // create resources
-    addResource(myProject, createInfiniteResource("resource"));
-    addResource(myProject, createCustomResource("resource2", "value1", "value2", "valueN"));
+    addResource(myFixture, myProject, createInfiniteResource("resource"));
+    addResource(myFixture, myProject, createCustomResource("resource2", "value1", "value2", "valueN"));
     // add locks
     addReadLock(btComposite, "resource");
     addAnyLock(btComposite, "resource2");
