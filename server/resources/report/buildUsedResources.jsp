@@ -1,3 +1,4 @@
+<%--suppress ELValidationInJSP --%>
 <%--
   ~ Copyright 2000-2018 JetBrains s.r.o.
   ~
@@ -32,9 +33,9 @@
   <c:when test="${not empty usedResources}">
     <div class="buildParameters">
       <h2>Shared resources used by the build</h2>
-      <table class="runnerFormTable">
+      <table class="runnerFormTable" style="width: 80em;">
         <tr>
-          <th>Resource</th>
+          <th style="width: 15%; white-space: nowrap">Resource</th>
           <th>Lock</th>
         </tr>
         <c:forEach var="ur" items="${usedResources}">
@@ -101,7 +102,7 @@
                   <c:when test="${rc.type == CUSTOM}">
                     <c:choose>
                       <c:when test="${lock.type.name == TYPE_READ}">
-                        <bs:out value="Locked value: ${lock.value}"/><br/>
+                        Locked value: <code><bs:out value="${lock.value}"/></code><br/>
                       </c:when>
                       <c:otherwise>
                         <bs:out value="All custom values were locked"/>
