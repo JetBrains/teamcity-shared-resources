@@ -34,6 +34,7 @@
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
 
 <c:set var="project" value="${bean.project}"/>
+<c:set var="canEdit" value="${not project.readOnly and afn:permissionGrantedForProject(project, 'EDIT_PROJECT')}"/>
 
 <c:set var="templateLink">
   <c:choose>
@@ -103,6 +104,7 @@ BS.SharedResourcesFeatureDialog = {
   resources: {}, // map of resources: <resource_name, Resource>
   locks: {}, // map of locks: <lock_name, Lock>
   invalid: {}, // map of invalid locks <lock_name, Lock>
+  canEdit: true,
 
   inherited: false,
 
@@ -125,7 +127,7 @@ BS.SharedResourcesFeatureDialog = {
     }
 
     if (needRendering) { // we have some locks
-      this.rehighlight();
+      this.reHighlight();
       BS.Util.show('locksTaken');
       BS.Util.hide('noLocksTaken');
     } else { // no locks are taken
@@ -163,10 +165,9 @@ BS.SharedResourcesFeatureDialog = {
         text += "<a href=\"${templateLink}\">corresponding template</a>";
       }
       messageElement.html(text);
-      if (!this.inherited) {
+      if (!this.inherited && this.canEdit) {
         messageElement.append($j('<a>').attr('href', '#').attr('style', 'float: right').attr('onclick', 'BS.SharedResourcesFeatureDialog.removeInvalid(); return false;').text('Remove'));
       }
-
       BS.Util.show('invalidLocksRow');
     } else {
       BS.Util.hide('invalidLocksRow');
@@ -179,12 +180,16 @@ BS.SharedResourcesFeatureDialog = {
     var hClass;
     if (this.inherited) {
       oc = '';
-      od = '';
       hClass = '';
       editCell = $j('<td>').attr('class', 'edit').append($j('<span>').attr('style', 'white-space: nowrap;').text('cannot be edited'));
       deleteCell = $j('<td>').attr('class', 'edit').text('undeletable');
+    } else if (!this.canEdit) {
+      oc = '';
+      hClass = '';
+      editCell = '';
+      deleteCell = '';
     } else {
-      oc = 'BS.LocksDialog.showEdit(\"' + key + '\"); return false;';
+      oc = 'BS.LocksDialog.showEdit(\"' + key + '\", ' + this.canEdit + '); return false;';
       od = 'BS.SharedResourcesFeatureDialog.deleteLock(\"' + key + '\"); return false;';
       hClass = 'highlight';
       editCell = $j('<td>').attr('class', 'edit ' + hClass).attr('style', 'width: 10%').attr('onclick', oc).append($j('<a>').attr('href', '#').attr('onclick', oc).text('edit'));
@@ -193,12 +198,16 @@ BS.SharedResourcesFeatureDialog = {
 
     var tableRow = BS.LocksUtil.lockToTableRow(this.locks[key]);
     //noinspection JSCheckFunctionSignatures
-    tableBody.append($j('<tr>')
-            .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
-            .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc))
-            .append(editCell)
-            .append(deleteCell)
-    );
+    var row = $j('<tr>')
+        .append($j('<td>').attr('class', hClass).text(tableRow.name).attr('onclick', oc))
+        .append($j('<td>').attr('class', hClass).text(tableRow.description).attr('onclick', oc));
+    if (editCell !== '') {
+      row.append(editCell)
+    }
+    if (deleteCell !== '') {
+      row.append(deleteCell);
+    }
+    tableBody.append(row);
   },
 
   removeInvalid: function() {
@@ -213,7 +222,7 @@ BS.SharedResourcesFeatureDialog = {
     this.refreshUI();
   },
 
-  rehighlight: function () {
+  reHighlight: function () {
     var hElements = $j("#locksTaken td.highlight");
     hElements.each(function (i, element) {
       BS.TableHighlighting.createInitElementFunction.call(this, element, 'Click to edit lock');
@@ -247,6 +256,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
   attachedToRoot: false,
   availableResources: {},
   currentLockName: "",
+  canEdit: true,
 
   getContainer: function () {
     return $('locksDialog');
@@ -254,6 +264,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
   showDialog: function () {
     this.editMode = false;
+    this.canEdit = true;
     $j('#locksDialogTitle').html('Add Lock');
     // filter available resources
     this.fillAvailableResources();
@@ -265,9 +276,10 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     this.bindCtrlEnterHandler(this.submit.bind(this));
   },
 
-  showEdit: function (lockName) {
+  showEdit: function (lockName, canEdit) {
     this.editMode = true;
     this.currentLockName = lockName;
+    this.canEdit = canEdit;
     // set proper title
     $j('#locksDialogTitle').html('Edit Lock');
     // select resource
@@ -449,6 +461,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 <script type="text/javascript">
   var self = BS.SharedResourcesFeatureDialog;
   /* load resources into javaScript */
+  self.canEdit = ${canEdit};
   var rs = self.resources;
   var rc;
 
@@ -503,7 +516,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
 
 <tr>
   <td class="noBorder" colspan="2">
-    <c:if test="${not inherited}">
+    <c:if test="${not inherited && canEdit}">
       <forms:addButton id="addNewLock" onclick="BS.LocksDialog.showDialog(); return false">Add lock</forms:addButton>
     </c:if>
     <bs:dialog dialogId="locksDialog" title="Add Lock" titleId="locksDialogTitle" closeCommand="BS.LocksDialog.close()">
@@ -559,10 +572,12 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
         <forms:cancel onclick="BS.LocksDialog.close()" showdiscardchangesmessage="false"/>
       </div>
     </bs:dialog>
-    <div style="float:right">
-      <c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
-      <a href="${url}">Configure resources</a>
-    </div>
+    <c:if test="${canEdit}">
+      <div style="float:right">
+        <c:url var="url" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
+        <a href="${url}">Configure resources</a>
+      </div>
+    </c:if>
   </td>
 </tr>
 
@@ -572,7 +587,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       <thead>
       <tr>
         <th style="width: 25%">Resource Name</th>
-        <th colspan="3" style="width: 75%">Lock Details</th>
+        <th <c:if test="${canEdit}"> colspan="3" </c:if> style="width: 75%">Lock Details</th>
       </tr>
       </thead>
       <tbody>
