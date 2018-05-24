@@ -1,6 +1,16 @@
+<%--suppress CheckTagEmptyBody --%>
 <c:forEach var="resource" items="${resourcesToDisplay}">
-  <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.id}', ${canEdit});"/>
-  <c:set var="highlight" value="highlight"/>
+  <c:choose>
+    <c:when test="${ownResources}">
+      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.id}', ${canEdit});"/>
+      <c:set var="highlight" value="highlight"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="onclick" value=""/>
+      <c:set var="highlight" value=""/>
+    </c:otherwise>
+  </c:choose>
+
   <c:set var="cellStyle">
     <c:choose>
       <c:when test="${not resource.enabled}">
@@ -79,12 +89,14 @@
                   </ul>
                 </div>
               </jsp:attribute>
-            <jsp:body>More</jsp:body>
+            <jsp:body></jsp:body>
           </bs:actionsPopup>
         </td>
       </c:when>
       <c:otherwise>
-        <td class="edit ${highlight}" onclick="${onclick}"><a href="#">View</a></td>
+        <c:if test="${ownResources}">
+          <td class="edit ${highlight}" onclick="${onclick}"><a href="#">View</a></td>
+        </c:if>
       </c:otherwise>
     </c:choose>
   </tr>

@@ -224,6 +224,7 @@
           <th colspan="${canEdit ? 4 : 3}">Description</th>
         </tr>
         <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
+        <c:set var="ownResources" value="${true}"/>
         <%@ include file="_displayResources.jspf" %>
       </l:tableWithHighlighting>
     </c:if>
@@ -250,7 +251,8 @@
             <th colspan="2">Description</th>
           </tr>
           <c:set var="resourcesToDisplay" value="${projectResources}"/>
-          <c:set var="allowChange" value="${false}"/>
+          <c:set var="canEdit" value="${false}"/>
+          <c:set var="ownResources" value="${false}"/>
           <%@ include file="_displayResources.jspf" %>
         </table>
       </c:if>
