@@ -23,8 +23,6 @@
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
 <%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.String>"--%>  <%-- ResourceName -> ProjectName --%>
 
-<c:set var="project" value="${bean.project}"/>
-
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
 <c:set var="PARAM_RESOURCE_QUOTA" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_QUOTA%>"/>
@@ -38,6 +36,9 @@
 
 <c:set var="type_quota" value="<%=ResourceType.QUOTED%>"/>
 <c:set var="type_custom" value="<%=ResourceType.CUSTOM%>"/>
+
+<c:set var="project" value="${bean.project}"/>
+<c:set var="canEdit" value="${not project.readOnly and afn:permissionGrantedForProject(project, 'EDIT_PROJECT')}"/>
 
 <style type="text/css">
   .resourcesDialog {
@@ -202,7 +203,7 @@
 
   <bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
 
-  <c:if test="${not project.readOnly}">
+  <c:if test="${canEdit}">
     <forms:addButton id="addNewResource"
                      onclick="BS.ResourceDialog.showDialog(); return false">Add new resource</forms:addButton>
   </c:if>
@@ -211,28 +212,22 @@
     <%@ include file="_resourcesDialog.jspf" %>
     <%@ include file="_displayErrors.jspf" %>
 
-    <c:choose>
-      <c:when test="${not empty bean.ownResources}">
-        <p style="margin-top: 2em">Resources defined in the current project</p>
-        <l:tableWithHighlighting id="resourcesTable"
-                                 className="parametersTable"
-                                 mouseovertitle="Click to edit resource"
-                                 highlightImmediately="true">
-          <tr>
-            <th style="width: 45%">Resource Name</th>
-            <th colspan="4">Description</th>
-          </tr>
-          <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
-          <c:set var="allowChange" value="${not project.readOnly}"/>
-          <%@ include file="_displayResources.jspf" %>
-        </l:tableWithHighlighting>
-      </c:when>
-      <c:otherwise>
-        <%--<p>
-          <c:out value="There are no resources defined in the current project."/>
-        </p>--%>
-      </c:otherwise>
-    </c:choose>
+
+    <c:if test="${not empty bean.ownResources}">
+      <p style="margin-top: 2em">Resources defined in the current project</p>
+      <l:tableWithHighlighting id="resourcesTable"
+                               className="parametersTable"
+                               mouseovertitle="Click to edit resource"
+                               highlightImmediately="true">
+        <tr>
+          <th style="width: 45%">Resource Name</th>
+          <th colspan="${canEdit ? 4 : 3}">Description</th>
+        </tr>
+        <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
+        <%@ include file="_displayResources.jspf" %>
+      </l:tableWithHighlighting>
+    </c:if>
+
 
     <c:forEach var="pathElement" items="${bean.projectPath}">
       <c:set var="projectResources" value="${bean.inheritedResources[pathElement.projectId]}"/>

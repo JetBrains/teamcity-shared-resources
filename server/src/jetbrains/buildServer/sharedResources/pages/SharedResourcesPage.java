@@ -97,7 +97,8 @@ public class SharedResourcesPage extends EditProjectTab {
     final SUser user = (SUser) mySecurityContext.getAuthorityHolder().getAssociatedUser();
     return  user != null
             && project != null
-            && user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT);
+            && (user.isPermissionGrantedForProject(project.getProjectId(), Permission.EDIT_PROJECT)
+                || user.isPermissionGrantedForProject(project.getProjectId(), Permission.VIEW_BUILD_CONFIGURATION_SETTINGS));
   }
 
   @NotNull

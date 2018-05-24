@@ -10,6 +10,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   editMode: false,
   currentResourceName: "",
   myData: {},
+  canEdit: true,
 
   getContainer: function () {
     return $('resourcesFormDialog');
@@ -22,10 +23,11 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
   showDialog: function () {
     this.editMode = false;
     this.clearErrors();
+    this.canEdit = true;
 
     $j('#resource_type option').each(function () {
       var self = $j(this);
-      self.prop("selected", self.val() == 'infinite');
+      self.prop("selected", self.val() === 'infinite');
     });
     $j('#resource_type').trigger('change');
     $j('#resource_quota').val(1);
@@ -35,9 +37,12 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     this.showCommon();
   },
 
-  showEdit: function (resource_id) {
+  showEdit: function (resource_id, canEdit) {
+    Form.enable(this.formElement());
+    this.setSaving(false);
     this.editMode = true;
     this.id = resource_id;
+    this.canEdit = canEdit;
     this.clearErrors();
     $j('#resource_id').val(resource_id);
     var r = this.myData[resource_id]; // current resource contents
@@ -51,7 +56,7 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
     }
     $j('#resource_type option').each(function () {
       var self = $j(this);
-      self.prop("selected", self.val() == type);
+      self.prop("selected", self.val() === type);
     });
     $j('#resource_type').trigger('change');
 
@@ -79,6 +84,12 @@ BS.ResourceDialog = OO.extend(BS.AbstractModalDialog, {
       $j('#resource_name').bind('input propertychange', this.onNameChange);
     } else {
       $j('#resource_name').unbind('input propertychange', this.onNameChange);
+    }
+    if (this.canEdit) {
+      BS.Util.show('resourceDialogSubmit')
+    } else {
+      Form.disable(this.formElement());
+      BS.Util.hide('resourceDialogSubmit');
     }
     BS.MultilineProperties.updateVisible();
     $j('#resource_name').focus();

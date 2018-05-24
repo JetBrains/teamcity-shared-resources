@@ -1,16 +1,6 @@
 <c:forEach var="resource" items="${resourcesToDisplay}">
-
-  <c:choose>
-    <c:when test="${allowChange}">
-      <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.id}');"/>
-      <c:set var="highlight" value="highlight"/>
-    </c:when>
-    <c:otherwise>
-      <c:set var="onclick" value=""/>
-      <c:set var="highlight" value=""/>
-    </c:otherwise>
-  </c:choose>
-
+  <c:set var="onclick" value="BS.ResourceDialog.showEdit('${resource.id}', ${canEdit});"/>
+  <c:set var="highlight" value="highlight"/>
   <c:set var="cellStyle">
     <c:choose>
       <c:when test="${not resource.enabled}">
@@ -58,11 +48,13 @@
         <%@ include file="_resourceUsage.jspf" %>
       </div>
     </td>
-    <c:if test="${allowChange}">
-      <td class="edit ${highlight}" onclick="${onclick}"><a href="#">Edit</a></td>
-      <td class="edit">
-        <bs:actionsPopup controlId="${util:forJSIdentifier(resource.id)}_actions"
-                        popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
+
+    <c:choose>
+      <c:when test="${canEdit}">
+        <td class="edit ${highlight}" onclick="${onclick}"><a href="#">Edit</a></td>
+        <td class="edit">
+          <bs:actionsPopup controlId="${util:forJSIdentifier(resource.id)}_actions"
+                           popup_options="shift: {x: -150, y: 20}, className: 'quickLinksMenuPopup'">
               <jsp:attribute name="content">
                 <div>
                   <ul class="menuList">
@@ -87,9 +79,13 @@
                   </ul>
                 </div>
               </jsp:attribute>
-          <jsp:body>More</jsp:body>
-        </bs:actionsPopup>
-      </td>
-    </c:if>
+            <jsp:body>More</jsp:body>
+          </bs:actionsPopup>
+        </td>
+      </c:when>
+      <c:otherwise>
+        <td class="edit ${highlight}" onclick="${onclick}"><a href="#">View</a></td>
+      </c:otherwise>
+    </c:choose>
   </tr>
 </c:forEach>
