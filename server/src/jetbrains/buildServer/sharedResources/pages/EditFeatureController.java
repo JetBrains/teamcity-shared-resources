@@ -121,7 +121,13 @@ public class EditFeatureController extends BaseController {
               model.put("template", myProjectManager.findBuildTypeTemplateByExternalId(originExternalId));
             }
           }
-        } 
+        } else {
+          // if feature belongs to current build type settings (not inherited, not enforced etc),
+          // we must remove resources locked by this feature from available
+          if (!bfb.isInherited()) {
+            f.getLockedResources().keySet().forEach(available::remove);
+          }
+        }
       }
     }
     if (buildTypeSettings.isCompositeBuildType()) { // custom resources are not available for composite build types yet
