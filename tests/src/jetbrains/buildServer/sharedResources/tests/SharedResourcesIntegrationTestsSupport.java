@@ -31,6 +31,7 @@ import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.server.*;
+import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.*;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl;
@@ -85,6 +86,8 @@ public class SharedResourcesIntegrationTestsSupport {
       processor = new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class),
                                                       buildUsedResourcesReport);
 
+    final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
+
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
     fixture.addService(new Messages());
     fixture.addService(new ResourceHelper());
@@ -95,6 +98,7 @@ public class SharedResourcesIntegrationTestsSupport {
     fixture.addService(processor);
     fixture.addService(feature);
     fixture.addService(resources);
+    fixture.addService(analyzer);
   }
 
   public static Resource addResource(@NotNull final BuildServerCreator fixture,
@@ -121,13 +125,10 @@ public class SharedResourcesIntegrationTestsSupport {
     return new Lock(resourceName, LockType.READ);
   }
 
-  public static Lock addSpecificLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource, String value) {
-    return addSpecificLock(settings, resource.getName(), value);
-  }
-
+  @SuppressWarnings("UnusedReturnValue")
   public static Lock addSpecificLock(@NotNull final BuildTypeSettings settings,
-                                 @NotNull final String resourceName,
-                                 @NotNull final String value) {
+                                     @NotNull final String resourceName,
+                                     @NotNull final String value) {
     settings.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createSpecificLock(resourceName, value));
     return new Lock(resourceName, LockType.READ, value);
   }
@@ -181,12 +182,6 @@ public class SharedResourcesIntegrationTestsSupport {
                                   @NotNull final Lock lock) {
     assertLock(params, lock.getName(), lock.getType(), lock.getValue());
 
-  }
-
-  public static void assertLock(@NotNull final Map<String, String> params,
-                                  @NotNull final String name,
-                                  @NotNull final LockType lockType) {
-    assertLock(params, name, lockType, null);
   }
 
   private static void assertLock(@NotNull final Map<String, String> params,

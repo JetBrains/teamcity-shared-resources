@@ -23,15 +23,24 @@
   </c:set>
 
   <c:set var="resourceName" value="${resource.name}"/>
-  <c:set var="usage" value="${usages[resource]}"/> <%--Map<SBuildType -> List<Lock>>--%>
+  <c:set var="used" value="${not empty usedResources[resourceName]}"/>
   <tr>
     <td class="${highlight}" onclick="${onclick}">
-      <div style="${cellStyle}">
+      <span style="${cellStyle}">
         <c:if test="${not empty duplicates[resourceName]}">
           <span class="icon icon16 yellowTriangle" <bs:tooltipAttrs text="Resource ${resourceName} has duplicate name"/>></span>
         </c:if>
         <c:out value="${resourceName}"/><c:if test="${not resource.enabled}"><bs:out value=" (disabled)"/></c:if>
-      </div>
+      </span>
+
+      <span style="float: right; padding-left: 2em;">
+        <c:if test="${used}">
+          <c:url value='/admin/editProject.html?tab=usagesReport&projectId=${project.externalId}&resourceProjectId=${currentProject.externalId}&resourceId=${resource.id}' var="resourceUsages"/>
+          <a onclick="BS.stopPropagation(event);" href="${resourceUsages}">View usages</a>
+        </c:if>
+        <c:if test="${not used}"><em>(unused)</em></c:if>
+
+      </span>
     </td>
     <c:choose>
       <c:when test="${resource.type == type_quota}">
@@ -53,11 +62,6 @@
         <bs:out value="${typeValue}"/>
       </div>
     </td>
-    <td class="${highlight}" onclick="${onclick}">
-      <div style="${cellStyle}">
-        <%@ include file="_resourceUsage.jspf" %>
-      </div>
-    </td>
 
     <c:choose>
       <c:when test="${canEdit}">
@@ -74,10 +78,10 @@
                     </l:li>
                     <l:li>
                       <c:choose>
-                        <c:when test="${used && empty overrides.containsKey(resource.name)}">
+                        <c:when test="${used && not overrides.containsKey(resource.name)}">
                           <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
                         </c:when>
-                        <c:when test="${used && not empty overrides.containsKey(resource.name)}">
+                        <c:when test="${used && overrides.containsKey(resource.name)}">
                           <c:set var="onclick" value="BS.SharedResourcesActions.deleteResourceOverride('${resource.id}', '${resource.name}', '${overrides[resource.name]}')"/>
                         </c:when>
                         <c:otherwise>

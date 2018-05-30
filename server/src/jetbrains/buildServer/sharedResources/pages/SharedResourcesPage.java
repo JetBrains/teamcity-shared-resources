@@ -29,7 +29,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
-import jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzer;
+import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.web.openapi.PagePlaces;
@@ -81,7 +81,7 @@ public class SharedResourcesPage extends EditProjectTab {
       model.put("overrides", overrides(project));
       model.put("bean", new SharedResourcesBean(project, myResources, true));
       model.put("configurationErrors", getConfigurationErrors(project));
-      model.put("usages", myAnalyzer.collectResourceUsages(project));
+      model.put("usedResources", myAnalyzer.findUsedResources(project));
       model.put("duplicates", prepareDuplicates(project));
     }
   }

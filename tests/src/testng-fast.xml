@@ -12,7 +12,7 @@
   </test>
   <test name="Inspection tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.ResourceUsageAnalyzerTest" />
+      <class name="jetbrains.buildServer.sharedResources.server.FindUsagesTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.ConfigurationInspectorTest"/>
     </classes>
   </test>

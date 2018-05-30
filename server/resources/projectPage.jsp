@@ -14,12 +14,11 @@
   ~ limitations under the License.
   --%>
 <%@ include file="/include-internal.jsp" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
 
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
-<%--@elvariable id="usages" type="java.util.Map<jetbrains.buildServer.sharedResources.model.resources.Resource, java.util.Map<jetbrains.buildServer.serverSide.SBuildType,java.util.List<jetbrains.buildServer.sharedResources.model.Lock>>"--%>
+<%--@elvariable id="usedResources" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.resources.Resource>"--%>
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
 <%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.String>"--%>  <%-- ResourceName -> ProjectName --%>
 
@@ -220,11 +219,12 @@
                                mouseovertitle="Click to edit resource"
                                highlightImmediately="true">
         <tr>
-          <th style="width: 45%">Resource Name</th>
-          <th colspan="${canEdit ? 4 : 3}">Description</th>
+          <th>Resource Name</th>
+          <th colspan="${canEdit ? 3 : 2}">Description</th>
         </tr>
         <c:set var="resourcesToDisplay" value="${bean.ownResources}"/>
         <c:set var="ownResources" value="${true}"/>
+        <c:set var="currentProject" value="${project}"/>
         <%@ include file="_displayResources.jspf" %>
       </l:tableWithHighlighting>
     </c:if>
@@ -247,12 +247,13 @@
         </p>
         <table class="parametersTable">
           <tr>
-            <th style="width: 45%">Resource Name</th>
-            <th colspan="2">Description</th>
+            <th>Resource Name</th>
+            <th>Description</th>
           </tr>
           <c:set var="resourcesToDisplay" value="${projectResources}"/>
           <c:set var="canEdit" value="${false}"/>
           <c:set var="ownResources" value="${false}"/>
+          <c:set var="currentProject" value="${pathElement}"/>
           <%@ include file="_displayResources.jspf" %>
         </table>
       </c:if>
