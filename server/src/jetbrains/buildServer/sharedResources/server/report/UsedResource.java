@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class UsedResource {
-  
+
   @NotNull
   private final Resource myResource;
 
@@ -35,7 +35,7 @@ public class UsedResource {
   private final Collection<Lock> myLocks;
 
   UsedResource(@NotNull final Resource resource,
-                      @NotNull final Collection<Lock> locks) {
+               @NotNull final Collection<Lock> locks) {
     myResource = resource;
     myLocks = locks;
   }

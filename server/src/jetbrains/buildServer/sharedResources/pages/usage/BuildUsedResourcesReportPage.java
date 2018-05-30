@@ -23,6 +23,7 @@ import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SBuildServer;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.report.UsedResource;
 import jetbrains.buildServer.web.openapi.PagePlaces;
@@ -39,13 +40,16 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
 
   @NotNull
   private final BuildUsedResourcesReport myReport;
+  @NotNull private final Locks myLocks;
 
   public BuildUsedResourcesReportPage(@NotNull final PagePlaces pagePlaces,
                                       @NotNull final SBuildServer server,
                                       @NotNull final PluginDescriptor descriptor,
-                                      @NotNull final BuildUsedResourcesReport report) {
+                                      @NotNull final BuildUsedResourcesReport report,
+                                      @NotNull final Locks locks) {
     super("Shared Resources", "buildUsedResources", pagePlaces, server);
     myReport = report;
+    myLocks = locks;
     setIncludeUrl(descriptor.getPluginResourcesPath("report/buildUsedResources.jsp"));
   }
 
@@ -56,6 +60,8 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
     final Set<String> failed = new HashSet<>();
     final ProjectManager pm = myServer.getProjectManager();
     final Map<String, SProject> resourceOrigins = new HashMap<>();
+    final Map<String, String> parameters = new HashMap<>();
+
     usedResources.forEach(ur -> {
       String id = ur.getResource().getProjectId();
       if (projects.containsKey(id)) {
@@ -73,9 +79,11 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
           }
         }
       }
+      parameters.putAll(myLocks.asBuildParameters(ur.getLocks()));
     });
     model.put("resourceOrigins", resourceOrigins);
     model.put("usedResources", usedResources);
+    model.put("parameters", parameters);
   }
 
   @Override

@@ -15,11 +15,11 @@
   ~ limitations under the License.
   --%>
 
+<%@ include file="/include-internal.jsp" %>
 <%@ taglib prefix="admin" tagdir="/WEB-INF/tags/admin" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.LockType" %>
-<%@ include file="/include-internal.jsp" %>
-<%@ page contentType="text/html;charset=UTF-8" %>
+
 <c:set var="CUSTOM" value="<%=ResourceType.CUSTOM.name()%>"/>
 <c:set var ="TYPE_READ" value="<%=LockType.READ.getName()%>"/>
 <c:set var ="TYPE_WRITE" value="<%=LockType.WRITE.getName()%>"/>
@@ -30,12 +30,13 @@
 <c:choose>
   <%--@elvariable id="usedResources" type="java.util.List<jetbrains.buildServer.sharedResources.server.report.UsedResource>"--%>
   <%--@elvariable id="resourceOrigins" type="java.util.Map<java.lang.String, jetbrains.buildServer.serverSide.SProject>"--%>
+  <%--@elvariable id="parameters" type="java.util.Map<java.lang.String, java.lang.String>"--%>
   <c:when test="${not empty usedResources}">
     <div class="buildParameters">
       <h2>Shared resources used by the build</h2>
       <table class="runnerFormTable" style="width: 80em;">
         <tr>
-          <th style="width: 15%; white-space: nowrap">Resource</th>
+          <th style="width: 25%; white-space: nowrap">Resource</th>
           <th>Lock</th>
         </tr>
         <c:forEach var="ur" items="${usedResources}">
@@ -118,6 +119,24 @@
           </tr>
         </c:forEach>
       </table>
+
+      <c:if test="${not empty parameters}">
+        <h2>Provided build parameters</h2>
+        <table class="runnerFormTable" style="width: 80em;">
+          <tr>
+            <th style="width: 25%; white-space: nowrap">Name</th>
+            <th>Value</th>
+          </tr>
+          <c:forEach items="${parameters}" var="entry">
+            <c:set var="val" value="${empty entry.value ? '<empty>' : entry.value}"/>
+            <c:set var="valueClass" value="${empty entry.value ? 'emptyValue' : ''}"/>
+            <tr>
+              <td class="at_top"><c:out value="${entry.key}"/></td>
+              <td class="${valueClass}"><bs:out value="${val}" multilineOnly="true"/></td>
+            </tr>
+          </c:forEach>
+        </table>
+      </c:if>
     </div>
   </c:when>
   <c:otherwise>
