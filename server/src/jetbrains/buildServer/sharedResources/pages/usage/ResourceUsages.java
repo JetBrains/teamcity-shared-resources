@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
-import jetbrains.buildServer.controllers.admin.usages.UsagesReportPageExtension;
+import jetbrains.buildServer.controllers.admin.projects.UsagesReportPageExtension;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.sharedResources.model.Lock;
