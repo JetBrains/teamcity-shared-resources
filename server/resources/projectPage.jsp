@@ -197,7 +197,7 @@
 <div class="section noMargin">
   <h2 class="noBorder">Shared Resources</h2>
   <div class="grayNote">
-    This page contains shared resources defined in the current project, as well as inherited resources.<bs:help file="Shared+Resources"/>
+    This page lists shared resources defined in the current project, as well as inherited resources.<bs:help file="Shared+Resources"/>
   </div>
 
   <bs:messages key="<%=SharedResourcesPluginConstants.WEB.ACTION_MESSAGE_KEY%>"/>
