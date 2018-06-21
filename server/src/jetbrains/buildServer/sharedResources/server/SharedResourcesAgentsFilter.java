@@ -118,14 +118,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                                    .filter(Objects::nonNull)
                                                    .collect(Collectors.toList());
         for (SQueuedBuild compositeQueuedBuild : queued) {
-          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeQueuedBuild.getBuildType());
+          final SBuildType compositeQueuedBuildType = getBuildTypeSafe(compositeQueuedBuild);
+          if (compositeQueuedBuildType == null) continue;
+          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeQueuedBuildType);
           if (!features.isEmpty()) {
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
               // resolve locks that build wants to take against actual resources
-              chainResources.computeIfAbsent(compositeQueuedBuild.getBuildType().getProjectId(), myResources::getResourcesMap);
+              chainResources.computeIfAbsent(compositeQueuedBuildType.getProjectId(), myResources::getResourcesMap);
               reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks,
-                                           chainResources.get(compositeQueuedBuild.getBuildType().getProjectId()), chainLocks,locksToTake);
+                                           chainResources.get(compositeQueuedBuildType.getProjectId()), chainLocks, locksToTake);
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
@@ -138,13 +140,14 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
         }
         // process build itself
         if (reason == null) {
-          if (myPromotion.getBuildType() != null) {
-            final String projectId = myPromotion.getBuildType().getProjectId();
+          final BuildTypeEx promoBuildType = myPromotion.getBuildType();
+          if (promoBuildType != null) {
+            final String projectId = promoBuildType.getProjectId();
             chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
-            final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion.getBuildType());
+            final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(promoBuildType);
 
             if (!features.isEmpty()) {
-              reason = checkForInvalidLocks(myPromotion.getBuildType());
+              reason = checkForInvalidLocks(promoBuildType);
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
@@ -161,6 +164,15 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return result;
   }
 
+  @Nullable
+  private SBuildType getBuildTypeSafe(@NotNull final SQueuedBuild queuedBuild) {
+    try {
+      return queuedBuild.getBuildType();
+    } catch (BuildTypeNotFoundException ignored) {}
+    return null;
+  }
+
+  @Nullable
   private WaitReason processBuildInChain(@NotNull final Set<String> featureContext,
                                          @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
                                          @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
