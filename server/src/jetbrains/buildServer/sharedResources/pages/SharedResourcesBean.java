@@ -23,6 +23,9 @@ import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import org.jetbrains.annotations.NotNull;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_BY_NAME_COMPARATOR;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.toSortedList;
+
 /**
  * Created with IntelliJ IDEA.
  *
@@ -39,29 +42,29 @@ public class SharedResourcesBean {
   @NotNull
   private Map<String, List<Resource>> myResourceMap;
 
-  public SharedResourcesBean(@NotNull final SProject project,
-                             @NotNull final Resources resources,
-                             boolean forProjectPage) {
+  SharedResourcesBean(@NotNull final SProject project,
+                      @NotNull final Resources resources,
+                      boolean forProjectPage) {
     this(project, resources, forProjectPage, Collections.emptySet());
   }
 
-  public SharedResourcesBean(@NotNull final SProject project,
-                             @NotNull final Resources resources,
-                             boolean forProjectPage,
-                             @NotNull final Set<String> available) {
+  SharedResourcesBean(@NotNull final SProject project,
+                      @NotNull final Resources resources,
+                      boolean forProjectPage,
+                      @NotNull final Set<String> available) {
     myProject = project;
     if (forProjectPage) {
-      // no filtering of any kind
-      myOwnResources = resources.getAllOwnResources(project);
+      myOwnResources = resources.getAllOwnResources(project).stream().sorted(RESOURCE_BY_NAME_COMPARATOR).collect(Collectors.toList());
       myResourceMap = resources.getResources(project).stream()
-                               .collect(Collectors.groupingBy(Resource::getProjectId));
+                               .collect(Collectors.groupingBy(Resource::getProjectId, toSortedList(RESOURCE_BY_NAME_COMPARATOR)));
     } else {
       myOwnResources = resources.getOwnResources(project).stream()
                                 .filter(resource -> available.contains(resource.getName()))
+                                .sorted(RESOURCE_BY_NAME_COMPARATOR)
                                 .collect(Collectors.toList());
       myResourceMap = resources.getResources(project).stream()
                                .filter(resource -> available.contains(resource.getName()))
-                               .collect(Collectors.groupingBy(Resource::getProjectId));
+                               .collect(Collectors.groupingBy(Resource::getProjectId, toSortedList(RESOURCE_BY_NAME_COMPARATOR)));
     }
   }
 
