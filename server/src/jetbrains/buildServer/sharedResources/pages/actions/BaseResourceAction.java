@@ -7,8 +7,11 @@ import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.ConfigActionFactory;
 import jetbrains.buildServer.serverSide.ProjectManager;
+import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.ControllerAction;
 import org.jdom.Element;
@@ -31,34 +34,39 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseResourceAction implements ControllerAction {
 
   @NotNull
-  protected final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
+  final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
 
   @NotNull
-  protected final ProjectManager myProjectManager;
+  final ProjectManager myProjectManager;
 
   @NotNull
-  protected final ResourceHelper myResourceHelper;
+  final ResourceHelper myResourceHelper;
 
   @NotNull
   private final Messages myMessages;
 
   @NotNull
-  protected final ConfigActionFactory myConfigActionFactory;
+  final ConfigActionFactory myConfigActionFactory;
 
   @NotNull
-  protected final ResourceProjectFeatures myProjectFeatures;
+  private final Resources myResources;
+
+  @NotNull
+  final ResourceProjectFeatures myProjectFeatures;
 
 
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,
                                @NotNull final ResourceProjectFeatures projectFeatures,
                                @NotNull final ResourceHelper resourceHelper,
                                @NotNull final Messages messages,
-                               @NotNull final ConfigActionFactory configActionFactory) {
+                               @NotNull final ConfigActionFactory configActionFactory,
+                               @NotNull final Resources resources) {
     myProjectManager = projectManager;
     myProjectFeatures = projectFeatures;
     myResourceHelper = resourceHelper;
     myMessages = messages;
     myConfigActionFactory = configActionFactory;
+    myResources = resources;
   }
 
   @NotNull
@@ -84,13 +92,20 @@ public abstract class BaseResourceAction implements ControllerAction {
                                     @NotNull final HttpServletResponse response,
                                     @NotNull final Element ajaxResponse);
 
-  protected void createNameError(@NotNull final Element ajaxResponse, @NotNull final String name) {
-    final ActionErrors errors = new ActionErrors();
-    errors.addError("name", "Name " + name + " is already used");
-    errors.serialize(ajaxResponse);
+  void addMessage(@NotNull final HttpServletRequest request, @NotNull final String message) {
+    myMessages.addMessage(request, message);
   }
 
-  protected void addMessage(@NotNull final HttpServletRequest request, @NotNull final String message) {
-    myMessages.addMessage(request, message);
+  boolean containsDuplicateName(@NotNull final SProject project,
+                                @NotNull final String resourceName) {
+    return myResources.getAllOwnResources(project).stream()
+                      .map(Resource::getName)
+                      .anyMatch(resourceName::equals);
+  }
+
+  void createNameError(@NotNull final Element ajaxResponse, @NotNull final String name) {
+    final ActionErrors errors = new ActionErrors();
+    errors.addError("name", "Name " + name + " is already used by another resource");
+    errors.serialize(ajaxResponse);
   }
 }
