@@ -16,7 +16,9 @@
 
 package jetbrains.buildServer.sharedResources.pages.usage;
 
+import com.intellij.openapi.util.Pair;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SBuild;
@@ -40,7 +42,9 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
 
   @NotNull
   private final BuildUsedResourcesReport myReport;
-  @NotNull private final Locks myLocks;
+
+  @NotNull
+  private final Locks myLocks;
 
   public BuildUsedResourcesReportPage(@NotNull final PagePlaces pagePlaces,
                                       @NotNull final SBuildServer server,
@@ -56,11 +60,12 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
   @Override
   protected void fillModel(@NotNull final Map<String, Object> model, @NotNull final HttpServletRequest request, @NotNull final SBuild build) {
     final List<UsedResource> usedResources = myReport.load(build);
+    usedResources.sort((r1, r2) -> r1.getResource().getName().compareToIgnoreCase(r2.getResource().getName()));
     final Map<String, SProject> projects = new HashMap<>();
     final Set<String> failed = new HashSet<>();
     final ProjectManager pm = myServer.getProjectManager();
     final Map<String, SProject> resourceOrigins = new HashMap<>();
-    final Map<String, String> parameters = new HashMap<>();
+    final List<Pair<String, String>> parameters = new ArrayList<>();
 
     usedResources.forEach(ur -> {
       String id = ur.getResource().getProjectId();
@@ -79,8 +84,11 @@ public class BuildUsedResourcesReportPage extends ViewLogTab {
           }
         }
       }
-      parameters.putAll(myLocks.asBuildParameters(ur.getLocks()));
+      parameters.addAll(myLocks.asBuildParameters(ur.getLocks()).entrySet().stream()
+                               .map(e -> new Pair<>(e.getKey(), e.getValue()))
+                               .collect(Collectors.toList()));
     });
+    parameters.sort((p1, p2) -> p1.getFirst().compareToIgnoreCase(p2.getFirst()));
     model.put("resourceOrigins", resourceOrigins);
     model.put("usedResources", usedResources);
     model.put("parameters", parameters);
