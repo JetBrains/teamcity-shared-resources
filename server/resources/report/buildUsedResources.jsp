@@ -30,7 +30,7 @@
 <c:choose>
   <%--@elvariable id="usedResources" type="java.util.List<jetbrains.buildServer.sharedResources.server.report.UsedResource>"--%>
   <%--@elvariable id="resourceOrigins" type="java.util.Map<java.lang.String, jetbrains.buildServer.serverSide.SProject>"--%>
-  <%--@elvariable id="parameters" type="java.util.Map<java.lang.String, java.lang.String>"--%>
+  <%--@elvariable id="parameters" type="java.util.List<com.intellij.openapi.util.Pair<java.lang.String, java.lang.String>>"--%>
   <c:when test="${not empty usedResources}">
     <div class="buildParameters">
       <h2>Shared resources used by the build</h2>
@@ -127,11 +127,11 @@
             <th style="width: 25%; white-space: nowrap">Name</th>
             <th>Value</th>
           </tr>
-          <c:forEach items="${parameters}" var="entry">
-            <c:set var="val" value="${empty entry.value ? '<empty>' : entry.value}"/>
-            <c:set var="valueClass" value="${empty entry.value ? 'emptyValue' : ''}"/>
+          <c:forEach items="${parameters}" var="pair">
+            <c:set var="val" value="${empty pair.second ? '<empty>' : pair.second}"/>
+            <c:set var="valueClass" value="${empty pair.second ? 'emptyValue' : ''}"/>
             <tr>
-              <td class="at_top"><c:out value="${entry.key}"/></td>
+              <td class="at_top"><c:out value="${pair.first}"/></td>
               <td class="${valueClass}"><bs:out value="${val}" multilineOnly="true"/></td>
             </tr>
           </c:forEach>
