@@ -25,6 +25,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeature;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.util.StringUtil;
@@ -43,8 +44,9 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
                                      @NotNull final ResourceProjectFeatures projectFeatures,
                                      @NotNull final ResourceHelper resourceHelper,
                                      @NotNull final Messages messages,
-                                     @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory);
+                                     @NotNull final ConfigActionFactory configActionFactory,
+                                     @NotNull final Resources resources) {
+    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory, resources);
   }
 
   @NotNull

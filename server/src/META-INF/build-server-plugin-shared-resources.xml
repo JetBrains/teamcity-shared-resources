@@ -24,10 +24,15 @@
   <bean class="jetbrains.buildServer.sharedResources.pages.usage.BuildUsedResourcesReportPage"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.usage.ResourceUsages"/>
 
+  <!-- === Actions === -->
+  <bean class="jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.actions.DeleteResourceAction"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
   <!-- ===  INTERNALS  === -->
 
   <bean class="jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl"/>
-  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl"/>

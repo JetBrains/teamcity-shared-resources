@@ -23,21 +23,20 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import jetbrains.buildServer.controllers.BaseControllerTestCase;
 import jetbrains.buildServer.controllers.MockRequest;
+import jetbrains.buildServer.controllers.XmlResponseUtil;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
-import jetbrains.buildServer.sharedResources.pages.Messages;
-import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
 import jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport;
 import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.Test;
@@ -52,6 +51,10 @@ import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegra
 public class ActionsTest extends BaseControllerTestCase<SharedResourcesActionsController> {
 
   private Resources myResources;
+
+  private AddResourceAction myAddResourceAction;
+
+  private EditResourceAction myEditResourceAction;
 
   @Test
   public void testAddResourceAction() throws Exception {
@@ -202,6 +205,57 @@ public class ActionsTest extends BaseControllerTestCase<SharedResourcesActionsCo
     assertContains(updatedProjects, subProjectWithUsages.getProjectId());
   }
 
+  @Test
+  @TestFor(issues = "TW-55849")
+  public void testAddResource_DuplicateName() {
+    final String usedResourceName = "SOME_USED_RESOURCE";
+    final SProject currentProject = myFixture.createProject("testAddResource_DuplicateName_Project");
+    assertEmpty(myResources.getOwnResources(currentProject));
+    // add resource through the features api
+    SharedResourcesIntegrationTestsSupport.addResource(myFixture,
+                                                       currentProject,
+                                                       createQuotedResource(usedResourceName, 1));
+    currentProject.persist();
+    assertEquals(1, myResources.getAllOwnResources(currentProject).size());
+    myResponse.reset();
+    myRequest.setParameters("action", "addResource",
+                            SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID, currentProject.getProjectId(),
+                            SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME, usedResourceName,
+                            SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_TYPE, ResourceType.QUOTED.toString());
+    assertEquals(1, myResources.getAllOwnResources(currentProject).size());
+
+    final Element ajaxResponse = XmlResponseUtil.newXmlResponse();
+    myAddResourceAction.process(myRequest, myResponse, ajaxResponse);
+    assertEquals(1, ajaxResponse.getContent().size());
+    final Element errors = ajaxResponse.getChild("errors");
+    assertNotNull("Expected resource name error. None found", errors);
+    assertEquals("Name", "Name " + usedResourceName + " is already used by another resource", errors.getChildText("error"));
+  }
+
+  @Test
+  @TestFor(issues = "TW-55849")
+  public void testEditResource_DuplicateName() {
+    final String usedResourceName = "SOME_USED_RESOURCE";
+    final SProject currentProject = myFixture.createProject("testEditResource_DuplicateName_Project");
+    assertEmpty(myResources.getOwnResources(currentProject));
+    // add resource through the features api
+    final Resource resource1 = addResource(myFixture,
+                                          currentProject,
+                                          createQuotedResource(usedResourceName, 1));
+    final Resource resource2 = addResource(myFixture,
+                                           currentProject,
+                                           createQuotedResource("valid name", 1));
+    currentProject.persist();
+    assertEquals(2, myResources.getAllOwnResources(currentProject).size());
+    myResponse.reset();
+    setupEditAction(myRequest, currentProject, (QuotedResource)resource2, usedResourceName);
+    final Element ajaxResponse = XmlResponseUtil.newXmlResponse();
+    myEditResourceAction.process(myRequest, myResponse, ajaxResponse);
+    assertEquals(1, ajaxResponse.getContent().size());
+    final Element errors = ajaxResponse.getChild("errors");
+    assertNotNull("Expected resource name error. None found", errors);
+    assertEquals("Name", "Name " + usedResourceName + " is already used by another resource", errors.getChildText("error"));
+  }
 
   private static void setupEditAction(@NotNull final MockRequest request,
                                       @NotNull final SProject project,
@@ -224,14 +278,15 @@ public class ActionsTest extends BaseControllerTestCase<SharedResourcesActionsCo
   protected SharedResourcesActionsController createController() {
     SharedResourcesIntegrationTestsSupport.apply(myFixture);
     myResources = myFixture.getSingletonService(Resources.class);
+    myAddResourceAction = myFixture.getSingletonService(AddResourceAction.class);
+    myEditResourceAction = myFixture.getSingletonService(EditResourceAction.class);
+
     return new SharedResourcesActionsController(
-      myServer.getSingletonService(WebControllerManager.class),
-      myFixture.getProjectManager(),
-      myFixture.getSingletonService(ResourceProjectFeatures.class),
-      myFixture.getSingletonService(ResourceHelper.class),
-      myFixture.getSingletonService(SharedResourcesFeatures.class),
-      myFixture.getSingletonService(Messages.class),
-      myFixture.getSingletonService(ConfigActionFactory.class)
+      myFixture.getSingletonService(WebControllerManager.class),
+      myAddResourceAction,
+      myFixture.getSingletonService(DeleteResourceAction.class),
+      myEditResourceAction,
+      myFixture.getSingletonService(EnableDisableResourceAction.class)
     );
   }
 }

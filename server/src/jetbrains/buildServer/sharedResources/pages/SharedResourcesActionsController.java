@@ -8,6 +8,7 @@ import jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.DeleteResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
@@ -21,17 +22,15 @@ import org.jetbrains.annotations.NotNull;
 public class SharedResourcesActionsController extends BaseAjaxActionController {
 
   public SharedResourcesActionsController(@NotNull final WebControllerManager controllerManager,
-                                          @NotNull final ProjectManager projectManager,
-                                          @NotNull final ResourceProjectFeatures projectFeatures,
-                                          @NotNull final ResourceHelper resourceHelper,
-                                          @NotNull final SharedResourcesFeatures features,
-                                          @NotNull final Messages messages,
-                                          @NotNull final ConfigActionFactory configActionFactory) {
+                                          @NotNull final AddResourceAction addResourceAction,
+                                          @NotNull final DeleteResourceAction deleteResourceAction,
+                                          @NotNull final EditResourceAction editResourceAction,
+                                          @NotNull final EnableDisableResourceAction enableDisableResourceAction) {
     super(controllerManager);
     controllerManager.registerController(SharedResourcesPluginConstants.WEB.ACTIONS, this);
-    registerAction(new AddResourceAction(projectManager, projectFeatures, resourceHelper, messages, configActionFactory));
-    registerAction(new DeleteResourceAction(projectManager, projectFeatures, resourceHelper, messages, configActionFactory));
-    registerAction(new EditResourceAction(projectManager, projectFeatures, features, resourceHelper, messages, configActionFactory));
-    registerAction(new EnableDisableResourceAction(projectManager, projectFeatures, resourceHelper, messages, configActionFactory));
+    registerAction(addResourceAction);
+    registerAction(deleteResourceAction);
+    registerAction(editResourceAction);
+    registerAction(enableDisableResourceAction);
   }
 }

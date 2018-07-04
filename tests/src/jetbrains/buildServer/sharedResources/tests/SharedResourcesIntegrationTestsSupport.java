@@ -16,9 +16,7 @@
 
 package jetbrains.buildServer.sharedResources.tests;
 
-import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collectors;
 import jetbrains.BuildServerCreator;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
@@ -30,6 +28,10 @@ import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
+import jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction;
+import jetbrains.buildServer.sharedResources.pages.actions.DeleteResourceAction;
+import jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction;
+import jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction;
 import jetbrains.buildServer.sharedResources.server.*;
 import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.*;
@@ -47,8 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.*;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.ENABLED;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.ProjectFeatureParameters.QUOTA;
 import static jetbrains.buildServer.sharedResources.server.feature.FeatureParams.LOCKS_FEATURE_PARAM_KEY;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -87,10 +87,14 @@ public class SharedResourcesIntegrationTestsSupport {
                                                       buildUsedResourcesReport);
 
     final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
+    final ResourceHelper resourceHelper = new ResourceHelper();
+    final Messages messages = new Messages();
+    final ConfigActionFactory configActionFactory = fixture.getSingletonService(ConfigActionFactory.class);
+
 
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
-    fixture.addService(new Messages());
-    fixture.addService(new ResourceHelper());
+    fixture.addService(messages);
+    fixture.addService(resourceHelper);
     fixture.addService(features);
     fixture.addService(projectFeatures);
     fixture.addService(buildUsedResourcesReport);
@@ -99,6 +103,11 @@ public class SharedResourcesIntegrationTestsSupport {
     fixture.addService(feature);
     fixture.addService(resources);
     fixture.addService(analyzer);
+    // actions
+    fixture.addService(new AddResourceAction(fixture.getProjectManager(), projectFeatures, resourceHelper, messages, configActionFactory, resources));
+    fixture.addService(new DeleteResourceAction(fixture.getProjectManager(), projectFeatures, resourceHelper, messages, configActionFactory, resources));
+    fixture.addService(new EditResourceAction(fixture.getProjectManager(), projectFeatures, features, resourceHelper, messages, configActionFactory, resources));
+    fixture.addService(new EnableDisableResourceAction(fixture.getProjectManager(), projectFeatures, resourceHelper, messages, configActionFactory, resources));
   }
 
   public static Resource addResource(@NotNull final BuildServerCreator fixture,
@@ -148,7 +157,7 @@ public class SharedResourcesIntegrationTestsSupport {
                                  TYPE, ResourceType.CUSTOM.name(),
                                  QUOTA, "-1",
                                  ENABLED, Boolean.toString(Boolean.TRUE),
-                                 VALUES, Arrays.stream(values).collect(Collectors.joining("\n")));
+                                 VALUES, String.join("\n", values));
   }
 
   public static Map<String, String> createQuotedResource(final String name, final int quota) {

@@ -9,6 +9,7 @@ import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.Messages;
 import jetbrains.buildServer.sharedResources.pages.ResourceHelper;
+import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatures;
@@ -36,8 +37,9 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
                             @NotNull final SharedResourcesFeatures buildFeatures,
                             @NotNull final ResourceHelper resourceHelper,
                             @NotNull final Messages messages,
-                            @NotNull final ConfigActionFactory configActionFactory) {
-    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory);
+                            @NotNull final ConfigActionFactory configActionFactory,
+                            @NotNull final Resources resources) {
+    super(projectManager, projectFeatures, resourceHelper, messages, configActionFactory, resources);
     myBuildFeatures = buildFeatures;
   }
 
@@ -58,10 +60,16 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
       final Resource resource = myResourceHelper.getResourceFromRequest(projectId, request);
       if (resource != null) {
         final String newName = resource.getName();
+        boolean changedName = !newName.equals(oldName);
+        // check if there is already resource with such name
+        if (changedName && containsDuplicateName(project, newName)) {
+          createNameError(ajaxResponse, newName);
+          return;
+        }
         boolean selfPersisted = false;
         myProjectFeatures.updateFeature(project, resource.getId(), resource.getParameters());
         ConfigAction cause = myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was updated");
-        if (!newName.equals(oldName)) {
+        if (changedName) {
           // my resource can be used only in my build configurations or in build configurations in my subtree
           final List<SProject> projects = project.getProjects();
           projects.add(project);
