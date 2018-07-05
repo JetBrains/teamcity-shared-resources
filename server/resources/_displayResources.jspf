@@ -24,13 +24,18 @@
 
   <c:set var="resourceName" value="${resource.name}"/>
   <c:set var="used" value="${not empty usedResources[resourceName]}"/>
+
   <tr>
     <td class="${highlight}" onclick="${onclick}">
-      <span style="${cellStyle}">
-        <c:if test="${not empty duplicates[resourceName]}">
-          <span class="icon icon16 yellowTriangle" <bs:tooltipAttrs text="Resource ${resourceName} has duplicate name"/>></span>
-        </c:if>
-        <c:out value="${resourceName}"/><c:if test="${not resource.enabled}"><bs:out value=" (disabled)"/></c:if>
+      <span style="${cellStyle}"
+      <c:choose>
+        <c:when test="${not empty duplicates[resourceName]}">
+          <bs:tooltipAttrs text="Resource ${resourceName} has duplicate name"/>>
+          <bs:buildStatusIcon type="red-sign" className="warningIcon"/>
+        </c:when>
+        <c:otherwise>></c:otherwise>
+      </c:choose>
+      <c:out value="${resourceName}"/><c:if test="${not resource.enabled}"><bs:out value=" (disabled)"/></c:if>
       </span>
 
       <span style="float: right; padding-left: 2em;">
