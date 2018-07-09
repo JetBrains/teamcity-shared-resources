@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
@@ -42,6 +43,12 @@ public class SharedResourcesBean {
   @NotNull
   private Map<String, List<Resource>> myResourceMap;
 
+  @NotNull
+  private Map<String, Resource> myOverridesMap = new HashMap<>();
+
+  @NotNull
+  private final Map<String, SProject> myProjects;
+
   SharedResourcesBean(@NotNull final SProject project,
                       @NotNull final Resources resources,
                       boolean forProjectPage) {
@@ -53,10 +60,20 @@ public class SharedResourcesBean {
                       boolean forProjectPage,
                       @NotNull final Set<String> available) {
     myProject = project;
+    myProjects = myProject.getProjectPath().stream().collect(Collectors.toMap(SProject::getProjectId, Function.identity()));
     if (forProjectPage) {
+      myResourceMap = new HashMap<>();
       myOwnResources = resources.getAllOwnResources(project).stream().sorted(RESOURCE_BY_NAME_COMPARATOR).collect(Collectors.toList());
-      myResourceMap = resources.getResources(project).stream()
-                               .collect(Collectors.groupingBy(Resource::getProjectId, toSortedList(RESOURCE_BY_NAME_COMPARATOR)));
+      project.getProjectPath().forEach(p -> {
+        final List<Resource> currentOwnResources = resources.getAllOwnResources(p);
+        // check that current resource overrides something
+        currentOwnResources.forEach(resource -> {
+          // check overrides
+          checkOverrides(resource, myResourceMap, myOverridesMap);
+        });
+        currentOwnResources.sort(RESOURCE_BY_NAME_COMPARATOR);
+        myResourceMap.put(p.getProjectId(), currentOwnResources);
+      });
     } else {
       myOwnResources = resources.getOwnResources(project).stream()
                                 .filter(resource -> available.contains(resource.getName()))
@@ -66,6 +83,19 @@ public class SharedResourcesBean {
                                .filter(resource -> available.contains(resource.getName()))
                                .collect(Collectors.groupingBy(Resource::getProjectId, toSortedList(RESOURCE_BY_NAME_COMPARATOR)));
     }
+  }
+
+  private void checkOverrides(final Resource resource,
+                              final Map<String, List<Resource>> result,
+                              final Map<String, Resource> omap) {
+    result.forEach((projectId, resources) -> {
+      for (Resource rc : resources) {
+        if (resource.getName().equals(rc.getName())) {
+          omap.put(rc.getId(), resource);
+          break;
+        }
+      }
+    });
   }
 
   @NotNull
@@ -98,4 +128,13 @@ public class SharedResourcesBean {
                         .collect(Collectors.toList());
   }
 
+  @NotNull
+  public Map<String, Resource> getOverridesMap() {
+    return myOverridesMap;
+  }
+
+  @NotNull
+  public Map<String, SProject> getProjects() {
+    return myProjects;
+  }
 }
