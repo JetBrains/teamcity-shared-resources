@@ -21,7 +21,7 @@
           <jsp:attribute name="ifAccessDenied">
             <bs:projectLink project="${p}"><c:out value="${p.extendedFullName}"/></bs:projectLink>
           </jsp:attribute>
-    </authz:authorize> contains duplicate resource  shared resources definition<bs:s val="${fn:length(dups)}"/>:
+    </authz:authorize> contains duplicate shared resources definition<bs:s val="${fn:length(dups)}"/>:
     <%
       @SuppressWarnings("unchecked")
       final List<String> dups = (List<String>)healthStatusItem.getAdditionalData().get("duplicates");
