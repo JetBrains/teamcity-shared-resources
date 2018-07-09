@@ -20,7 +20,7 @@
 <jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
 <%--@elvariable id="usedResources" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.resources.Resource>"--%>
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
-<%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.String>"--%>  <%-- ResourceName -> ProjectName --%>
+<%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.Resource>"--%>
 
 <c:set var="PARAM_RESOURCE_NAME" value="<%=SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_NAME%>"/>
 <c:set var="PARAM_PROJECT_ID" value="<%=SharedResourcesPluginConstants.WEB.PARAM_PROJECT_ID%>"/>
@@ -38,6 +38,8 @@
 
 <c:set var="project" value="${bean.project}"/>
 <c:set var="canEdit" value="${not project.readOnly and afn:permissionGrantedForProject(project, 'EDIT_PROJECT')}"/>
+<c:set var="overrides" value="${bean.overridesMap}"/>
+<c:set var="projects" value="${bean.projects}"/>
 
 <style type="text/css">
   .resourcesDialog {

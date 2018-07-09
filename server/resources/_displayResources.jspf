@@ -11,9 +11,12 @@
     </c:otherwise>
   </c:choose>
 
+  <c:set var="disabled" value="${not resource.enabled}"/>
+  <c:set var="overridden" value="${not empty overrides[resource.id]}"/>
+
   <c:set var="cellStyle">
     <c:choose>
-      <c:when test="${not resource.enabled}">
+      <c:when test="${disabled or overridden}">
         color: #888
       </c:when>
       <c:otherwise>
@@ -26,7 +29,7 @@
   <c:set var="used" value="${not empty usedResources[resourceName]}"/>
 
   <tr>
-    <td class="${highlight}" onclick="${onclick}">
+    <td class="${highlight}" onclick="${onclick}" style="${cellStyle}">
       <span style="${cellStyle}"
       <c:choose>
         <c:when test="${not empty duplicates[resourceName]}">
@@ -39,12 +42,29 @@
       </span>
 
       <span style="float: right; padding-left: 2em;">
-        <c:if test="${used}">
-          <c:url value='/admin/editProject.html?tab=usagesReport&projectId=${project.externalId}&resourceProjectId=${currentProject.externalId}&resourceId=${resource.id}' var="resourceUsages"/>
-          <a onclick="BS.stopPropagation(event);" href="${resourceUsages}">View usages</a>
-        </c:if>
-        <c:if test="${not used}"><em>(unused)</em></c:if>
-
+        <c:choose>
+          <c:when test="${overridden}">
+            <c:set var="oProject" value="${projects[overrides[resource.id].projectId]}"/>
+            <em>(overridden by:
+                <authz:authorize projectId="${oProject.projectId}" allPermissions="EDIT_PROJECT">
+                  <jsp:attribute name="ifAccessGranted"> <%--edit project--%>
+                    <admin:editProjectLink projectId="${oProject.externalId}" addToUrl="&tab=JetBrains.SharedResources"><bs:out value="${oProject.name} / ${overrides[resource.id].name}"/></admin:editProjectLink>
+                  </jsp:attribute>
+                  <jsp:attribute name="ifAccessDenied"> <%--view project--%>
+                    <bs:projectLink project="${oProject}"><bs:out value="${oProject.name} / ${overrides[resource.id].name}"/></bs:projectLink>
+                  </jsp:attribute>
+                </authz:authorize>)</em>
+          </c:when>
+          <c:otherwise>
+            <c:choose>
+              <c:when test="${used}">
+                <c:url value='/admin/editProject.html?tab=usagesReport&projectId=${project.externalId}&resourceProjectId=${currentProject.externalId}&resourceId=${resource.id}' var="resourceUsages"/>
+                <a onclick="BS.stopPropagation(event);" href="${resourceUsages}">View usages</a>
+              </c:when>
+              <c:otherwise><em>(unused)</em></c:otherwise>
+            </c:choose>
+          </c:otherwise>
+        </c:choose>
       </span>
     </td>
     <c:choose>
