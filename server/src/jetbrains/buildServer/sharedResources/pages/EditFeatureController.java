@@ -102,6 +102,8 @@ public class EditFeatureController extends BaseController {
     // map of all visible resources from this project and its subtree
     final List<Resource> projectResources = myResources.getResources(project);
     final Set<String> available = projectResources.stream().map(Resource::getName).collect(Collectors.toSet());
+    // resource names locked by other features defined in current build type
+    final Set<String> lockedByOtherFeatures = new HashSet<>();
     final Map<String, Object> model = result.getModel();
     final Collection<Lock> invalidLocks = new ArrayList<>();
     boolean inherited = false;
@@ -125,11 +127,15 @@ public class EditFeatureController extends BaseController {
           // if feature belongs to current build type settings (not inherited, not enforced etc),
           // we must remove resources locked by this feature from available
           if (!bfb.isInherited()) {
-            f.getLockedResources().keySet().forEach(available::remove);
+            lockedByOtherFeatures.addAll(f.getLockedResources().keySet());
           }
         }
       }
     }
+    if (!inherited) { // we are editing build feature descriptor in current build type
+      available.removeAll(lockedByOtherFeatures);
+    }
+
     if (buildTypeSettings.isCompositeBuildType()) { // custom resources are not available for composite build types yet
       projectResources.stream()
                       .filter(resource -> resource.getType() == ResourceType.CUSTOM)
