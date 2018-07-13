@@ -23,7 +23,7 @@
 <jsp:useBean id="keys" class="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
 <jsp:useBean id="locks" scope="request" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.Lock>"/>
-<jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
+<jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.beans.EditFeatureBean"/>
 <jsp:useBean id="inherited" scope="request" type="java.lang.Boolean"/>
 
 

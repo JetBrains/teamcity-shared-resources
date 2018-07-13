@@ -32,6 +32,7 @@ import jetbrains.buildServer.sharedResources.pages.actions.AddResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.DeleteResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction;
 import jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction;
+import jetbrains.buildServer.sharedResources.pages.beans.BeansFactory;
 import jetbrains.buildServer.sharedResources.server.*;
 import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.*;
@@ -63,8 +64,6 @@ public class SharedResourcesIntegrationTestsSupport {
   public static void apply(@NotNull final BuildServerCreator fixture) {
     final PluginDescriptor descriptor = new MockServerPluginDescriptior();
     final Locks locks = new LocksImpl();
-    final FeatureParams params = new FeatureParamsImpl(locks);
-    final SharedResourcesBuildFeature feature = new SharedResourcesBuildFeature(descriptor, params);
     final SharedResourcesFeatureFactory factory = new SharedResourcesFeatureFactoryImpl(locks);
     final SharedResourcesFeatures features = new SharedResourcesFeaturesImpl(factory);
     final LocksStorage locksStorage = new LocksStorageImpl(fixture.getEventDispatcher());
@@ -82,15 +81,15 @@ public class SharedResourcesIntegrationTestsSupport {
     final SharedResourcesAgentsFilter filter =
       new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
 
-    final SharedResourcesContextProcessor
-      processor = new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class),
-                                                      buildUsedResourcesReport);
+    final SharedResourcesContextProcessor processor =
+      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport);
 
     final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
     final ResourceHelper resourceHelper = new ResourceHelper();
     final Messages messages = new Messages();
     final ConfigActionFactory configActionFactory = fixture.getSingletonService(ConfigActionFactory.class);
 
+    final BeansFactory beansFactory = new BeansFactory(resources);
 
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
     fixture.addService(messages);
@@ -100,9 +99,10 @@ public class SharedResourcesIntegrationTestsSupport {
     fixture.addService(buildUsedResourcesReport);
     fixture.addService(filter);
     fixture.addService(processor);
-    fixture.addService(feature);
     fixture.addService(resources);
     fixture.addService(analyzer);
+    fixture.addService(descriptor);
+    fixture.addService(beansFactory);
     // actions
     fixture.addService(new AddResourceAction(fixture.getProjectManager(), projectFeatures, resourceHelper, messages, configActionFactory, resources));
     fixture.addService(new DeleteResourceAction(fixture.getProjectManager(), projectFeatures, resourceHelper, messages, configActionFactory, resources));
@@ -116,7 +116,7 @@ public class SharedResourcesIntegrationTestsSupport {
     return ResourceFactory.fromDescriptor(fixture.getSingletonService(ResourceProjectFeatures.class).addFeature(project, resource));
   }
 
-  public static  Lock addWriteLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource) {
+  public static Lock addWriteLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource) {
     return addWriteLock(settings, resource.getName());
   }
 
@@ -143,7 +143,7 @@ public class SharedResourcesIntegrationTestsSupport {
   }
 
   public static void addAnyLock(@NotNull final BuildTypeSettings settings,
-                            @NotNull final String resourceName) {
+                                @NotNull final String resourceName) {
     settings.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createAnyLock(resourceName));
   }
 
@@ -188,7 +188,7 @@ public class SharedResourcesIntegrationTestsSupport {
 
 
   public static void assertLock(@NotNull final Map<String, String> params,
-                                  @NotNull final Lock lock) {
+                                @NotNull final Lock lock) {
     assertLock(params, lock.getName(), lock.getType(), lock.getValue());
 
   }

@@ -28,6 +28,7 @@ import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.pages.beans.BeansFactory;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -57,18 +58,21 @@ public class SharedResourcesPage extends EditProjectTab {
 
   @NotNull
   private final ResourceUsageAnalyzer myAnalyzer;
+  @NotNull private final BeansFactory myBeansFactory;
 
   public SharedResourcesPage(@NotNull final PagePlaces pagePlaces,
                              @NotNull final PluginDescriptor descriptor,
                              @NotNull final Resources resources,
                              @NotNull final SecurityContext securityContext,
                              @NotNull final ConfigurationInspector inspector,
-                             @NotNull final ResourceUsageAnalyzer analyzer) {
+                             @NotNull final ResourceUsageAnalyzer analyzer,
+                             @NotNull final BeansFactory beansFactory) {
     super(pagePlaces, SharedResourcesPluginConstants.PLUGIN_NAME, descriptor.getPluginResourcesPath("projectPage.jsp"), TITLE_PREFIX);
     myResources = resources;
     mySecurityContext = securityContext;
     myInspector = inspector;
     myAnalyzer = analyzer;
+    myBeansFactory = beansFactory;
     addCssFile("/css/admin/buildTypeForm.css");
     addJsFile(descriptor.getPluginResourcesPath("js/ResourceDialog.js"));
   }
@@ -79,7 +83,7 @@ public class SharedResourcesPage extends EditProjectTab {
     final SProject project = getProject(request);
     if (project != null) {
       model.put("overrides", overrides(project));
-      model.put("bean", new SharedResourcesBean(project, myResources, true));
+      model.put("bean", myBeansFactory.createProjectPageBean(project));
       model.put("configurationErrors", getConfigurationErrors(project));
       model.put("usedResources", myAnalyzer.findUsedResources(project));
       model.put("duplicates", prepareDuplicates(project));

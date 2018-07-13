@@ -17,7 +17,7 @@
 <%@ page import="jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants" %>
 <%@ page import="jetbrains.buildServer.sharedResources.model.resources.ResourceType" %>
 
-<jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.SharedResourcesBean"/>
+<jsp:useBean id="bean" scope="request" type="jetbrains.buildServer.sharedResources.pages.beans.ProjectPageBean"/>
 <%--@elvariable id="usedResources" type="java.util.Map<java.lang.String, jetbrains.buildServer.sharedResources.model.resources.Resource>"--%>
 <%--@elvariable id="duplicates" type="java.util.Map<java.lang.String, java.lang.Boolean>"--%>
 <%--@elvariable id="overrides" type="java.util.Map<java.lang.String, java.lang.Resource>"--%>

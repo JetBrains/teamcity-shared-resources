@@ -41,6 +41,7 @@
     <classes>
       <class name="jetbrains.buildServer.sharedResources.pages.ResourceHelperTest"/>
       <class name="jetbrains.buildServer.sharedResources.pages.actions.ActionsTest"/>
+      <class name="jetbrains.buildServer.sharedResources.pages.beans.ProjectPageBeanTest"/>
     </classes>
   </test>
   <test name="Integration tests">
