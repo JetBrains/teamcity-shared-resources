@@ -6,7 +6,6 @@
        default-autowire="constructor">
 
   <!-- ===  BUILD FEATURE ===-->
-
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilter"/>
@@ -17,6 +16,7 @@
   <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidLocksReport"/>
   <bean class="jetbrains.buildServer.sharedResources.server.health.DuplicateResourcesHealthReport"/>
   <bean class="jetbrains.buildServer.sharedResources.server.health.InvalidResourcesHealthReport"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer"/>
 
   <!-- === REPORTS === -->
   <bean class="jetbrains.buildServer.sharedResources.server.report.UsedResourcesSerializer"/>
@@ -30,19 +30,21 @@
   <bean class="jetbrains.buildServer.sharedResources.pages.actions.EditResourceAction"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.actions.EnableDisableResourceAction"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesActionsController"/>
-  <!-- ===  INTERNALS  === -->
 
+  <!-- === PAGES === -->
+  <bean class="jetbrains.buildServer.sharedResources.pages.beans.BeansFactory"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
+  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
+
+  <!-- ===  INTERNALS  === -->
   <bean class="jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
-  <bean class="jetbrains.buildServer.sharedResources.pages.EditFeatureController"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.ResourcesImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatureFactoryImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.FeatureParamsImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImpl"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer"/>
-  <bean class="jetbrains.buildServer.sharedResources.pages.SharedResourcesPage"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.ResourceHelper"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.Messages"/>
 

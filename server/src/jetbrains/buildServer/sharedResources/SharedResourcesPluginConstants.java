@@ -86,12 +86,5 @@ public class SharedResourcesPluginConstants {
 
   public static Comparator<Resource> RESOURCE_BY_NAME_COMPARATOR = (rc1, rc2) -> rc1.getName().compareToIgnoreCase(rc2.getName());
 
-  public static <T> Collector<T, ?, List<T>> toSortedList(Comparator<? super T> comparator) {
-    return Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
-      list.sort(comparator);
-      return list;
-    });
-  }
-
   public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
 }

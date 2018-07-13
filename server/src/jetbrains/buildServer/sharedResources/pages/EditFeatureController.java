@@ -17,7 +17,10 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import java.lang.ref.Reference;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +36,8 @@ import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.pages.beans.BeansFactory;
+import jetbrains.buildServer.sharedResources.pages.beans.EditFeatureBean;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
@@ -42,10 +47,12 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.web.servlet.ModelAndView;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.FEATURE_TYPE;
 
 /**
  * @author Oleg Rybak
@@ -70,19 +77,24 @@ public class EditFeatureController extends BaseController {
   @NotNull
   private final ProjectManager myProjectManager;
 
+  @NotNull
+  private final BeansFactory myBeansFactory;
+
   public EditFeatureController(@NotNull final PluginDescriptor descriptor,
                                @NotNull final WebControllerManager web,
                                @NotNull final EditBuildTypeFormFactory formFactory,
                                @NotNull final Resources resources,
                                @NotNull final SharedResourcesFeatureFactory factory,
                                @NotNull final ConfigurationInspector inspector,
-                               @NotNull final ProjectManager projectManager) {
+                               @NotNull final ProjectManager projectManager,
+                               @NotNull final BeansFactory beansFactory) {
     myDescriptor = descriptor;
     myFormFactory = formFactory;
     myResources = resources;
     myFactory = factory;
     myInspector = inspector;
     myProjectManager = projectManager;
+    myBeansFactory = beansFactory;
     web.registerController(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_HTML), this);
   }
 
@@ -91,12 +103,17 @@ public class EditFeatureController extends BaseController {
   protected ModelAndView doHandle(@NotNull final HttpServletRequest request,
                                   @NotNull final HttpServletResponse response) {
     final ModelAndView result = new ModelAndView(myDescriptor.getPluginResourcesPath(EDIT_FEATURE_PATH_JSP));
+    final Map<String, Object> model = result.getModel();
+
     final EditableBuildTypeSettingsForm form = myFormFactory.getOrCreateForm(request);
     assert form != null;
+
     final BuildTypeSettings buildTypeSettings = form.getSettings();
     assert buildTypeSettings != null;
+
     final SProject project = form.getProject();
     final BuildFeaturesBean buildFeaturesBean = form.getBuildFeaturesBean();
+
     final String buildFeatureId = request.getParameter("featureId");
     final Map<String, Lock> locks = new HashMap<>();
     // map of all visible resources from this project and its subtree
@@ -104,10 +121,10 @@ public class EditFeatureController extends BaseController {
     final Set<String> available = projectResources.stream().map(Resource::getName).collect(Collectors.toSet());
     // resource names locked by other features defined in current build type
     final Set<String> lockedByOtherFeatures = new HashSet<>();
-    final Map<String, Object> model = result.getModel();
+
     final Collection<Lock> invalidLocks = new ArrayList<>();
     boolean inherited = false;
-    for (BuildFeatureBean bfb : buildFeaturesBean.getBuildFeatureDescriptors()) {
+    for (BuildFeatureBean bfb: buildFeaturesBean.getBuildFeatureDescriptors()) {
       SBuildFeatureDescriptor descriptor = bfb.getDescriptor();
       if (SharedResourcesBuildFeature.FEATURE_TYPE.equals(descriptor.getType())) {
         // we have build feature of needed type
@@ -139,9 +156,10 @@ public class EditFeatureController extends BaseController {
     if (buildTypeSettings.isCompositeBuildType()) { // custom resources are not available for composite build types yet
       projectResources.stream()
                       .filter(resource -> resource.getType() == ResourceType.CUSTOM)
-                      .forEach(resource -> available.remove(resource.getName()));
+                      .map(Resource::getName)
+                      .forEach(available::remove);
     }
-    final SharedResourcesBean bean = new SharedResourcesBean(project, myResources, false, available);
+    final EditFeatureBean bean = myBeansFactory.createEditFeatureBean(project, available);
     final Map<String, Lock> invalidLocksMap = new HashMap<>();
     for (Lock lock: invalidLocks) {
       invalidLocksMap.put(lock.getName(), lock);
