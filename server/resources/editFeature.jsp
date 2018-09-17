@@ -416,7 +416,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
     for (var key in resource.values) {
       if (resource.values.hasOwnProperty(key)) {
         //noinspection JSCheckFunctionSignatures
-        valuesDropdown.append("<option value='" + resource.values[key] + "'>" + resource.values[key] + "</option>");
+        valuesDropdown.append($j("<option>").attr('value', resource.values[key]).text(resource.values[key]));
       }
     }
   },
