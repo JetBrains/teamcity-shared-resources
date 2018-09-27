@@ -72,7 +72,7 @@ public class SharedResourcesBuildFeature extends BuildFeature {
   @NotNull
   @Override
   public String describeParameters(@NotNull final Map<String, String> params) {
-    return WebUtil.escapeXml(myFeatureParams.describeParams(params));
+    return myFeatureParams.describeParams(params);
   }
 
   @Nullable
