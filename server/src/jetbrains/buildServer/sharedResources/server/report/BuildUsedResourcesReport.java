@@ -59,7 +59,14 @@ public class BuildUsedResourcesReport {
                    @NotNull final Map<Lock, String> takenLocks) {
     if (takenLocks.isEmpty()) return;
     final List<UsedResource> usedResources = new ArrayList<>();
-    takenLocks.forEach((lock, value) -> usedResources.add(new UsedResource(resources.get(lock.getName()), Collections.singleton(Lock.createFrom(lock, value)))));
+    takenLocks.forEach((lock, value) -> {
+      final Resource resource = resources.get(lock.getName());
+      if (resource != null) {
+        usedResources.add(new UsedResource(resource, Collections.singleton(Lock.createFrom(lock, value))));
+      } else {
+        LOG.warn("Resource with name " + lock.getName() + " was not found for used resources report for build promotion with id " + promo.getId());
+      }
+    });
     final File artifact = new File(promo.getArtifactsDirectory(), ARTIFACT_PATH);
     try {
       if (FileUtil.createParentDirs(artifact)) {
