@@ -18,7 +18,9 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.util.List;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
+import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.util.WaitForAssert;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -64,5 +66,35 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     Assert.assertNotNull(associatedBuild);
     assertTrue(associatedBuild.isFinished());
     assertEquals(1, getSharedResourceParameters(associatedBuild).size());
+  }
+
+  /**
+   * 2 agents
+   *
+   * ProjectA (resource) -> btA(resource, write lock)
+   * ProjectB (resource) -> btB(resource, write lock)
+   *
+   * btA and btB should run simultaneously
+   *
+   */
+  @Test
+  @TestFor(issues = "TW-57326")
+  public void testSameResourceDifferentTrees() {
+    final SProject projectA = myFixture.createProject("ProjectA");
+    final Resource resourceA = addResource(myFixture, projectA, createInfiniteResource("resource"));
+    final SBuildType btA = projectA.createBuildType("btA");
+    addWriteLock(btA, resourceA);
+
+    final SProject projectB = myFixture.createProject("ProjectB");
+    final Resource resourceB = addResource(myFixture, projectB, createInfiniteResource("resource"));
+    final SBuildType btB = projectB.createBuildType("btB");
+    addWriteLock(btB, resourceB);
+
+    myFixture.createEnabledAgent("Ant");
+
+    btA.addToQueue("");
+    btB.addToQueue("");
+
+    myFixture.flushQueueAndWaitN(2);
   }
 }
