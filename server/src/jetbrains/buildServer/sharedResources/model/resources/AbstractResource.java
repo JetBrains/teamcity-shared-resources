@@ -72,7 +72,6 @@ public abstract class AbstractResource implements Resource {
   @Override
   public Map<String, String> getParameters() {
     return CollectionsUtil.asMap(
-            "id", myId,
             "type", myType.name().toLowerCase(),
             "name", myName,
             "enabled", Boolean.toString(myState)

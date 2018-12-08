@@ -16,7 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
-import java.util.Map;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +27,6 @@ public interface ResourceProjectFeature {
 
   @NotNull
   String getId();
-
-  @NotNull
-  Map<String, String> getParameters();
 
   @Nullable
   Resource getResource();
