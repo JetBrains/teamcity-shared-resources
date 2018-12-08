@@ -20,6 +20,7 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.*;
 import jetbrains.buildServer.util.TestFor;
+import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.AfterMethod;
@@ -65,7 +66,7 @@ public class ResourceHelperTest extends BaseTestCase {
   }
 
   @Test
-  public void testGetResourceFromRequest_Infinite() throws Exception {
+  public void testGetResourceFromRequest_Infinite() {
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
       will(returnValue("my_id"));
@@ -84,10 +85,11 @@ public class ResourceHelperTest extends BaseTestCase {
     assertEquals(RESOURCE_NAME, rc.getName());
     assertTrue(rc.isEnabled());
     assertTrue(((QuotedResource) rc).isInfinite());
+    validateResourceParameters(rc);
   }
 
   @Test
-  public void testGetResourceFromRequest_Quoted() throws Exception {
+  public void testGetResourceFromRequest_Quoted() {
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
       will(returnValue("my_id"));
@@ -107,10 +109,11 @@ public class ResourceHelperTest extends BaseTestCase {
     assertTrue(rc.isEnabled());
     assertFalse(((QuotedResource) rc).isInfinite());
     assertEquals(1, ((QuotedResource) rc).getQuota());
+    validateResourceParameters(rc);
   }
 
   @Test
-  public void testGetResourceFromRequest_Custom() throws Exception {
+  public void testGetResourceFromRequest_Custom() {
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
       will(returnValue("my_id"));
@@ -133,10 +136,11 @@ public class ResourceHelperTest extends BaseTestCase {
     assertNotEmpty(values);
     assertEquals(3, values.size());
     assertContains(values, "value1", "value2", "value3");
+    validateResourceParameters(rc);
   }
 
   @Test
-  public void testGetResourceFromRequest_Invalid_Quota() throws Exception {
+  public void testGetResourceFromRequest_Invalid_Quota() {
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
       will(returnValue("my_id"));
@@ -155,7 +159,7 @@ public class ResourceHelperTest extends BaseTestCase {
   }
 
   @Test
-  public void testGetResourceFromRequest_Invalid_Type() throws Exception {
+  public void testGetResourceFromRequest_Invalid_Type() {
     m.checking(new Expectations() {{
       oneOf(myRequest).getParameter(SharedResourcesPluginConstants.WEB.PARAM_RESOURCE_ID);
       will(returnValue("my_id"));
@@ -171,12 +175,13 @@ public class ResourceHelperTest extends BaseTestCase {
   }
 
   @Test
-  public void testGetResourceInState() throws Exception {
+  public void testGetResourceInState() {
     {
       final Resource rc = ResourceFactory.newInfiniteResource(RESOURCE_NAME + "id", PROJECT_ID, RESOURCE_NAME, true);
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
+      validateResourceParameters(result);
     }
 
     {
@@ -184,6 +189,7 @@ public class ResourceHelperTest extends BaseTestCase {
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
+      validateResourceParameters(result);
     }
 
     {
@@ -191,6 +197,11 @@ public class ResourceHelperTest extends BaseTestCase {
       final Resource result = myHelper.getResourceInState(PROJECT_ID, rc, false);
       assertEquals(rc, result);
       assertFalse(result.isEnabled());
+      validateResourceParameters(result);
     }
+  }
+
+  private void validateResourceParameters(@NotNull final Resource resource) {
+    assertFalse(resource.getParameters().keySet().contains("id"));
   }
 }

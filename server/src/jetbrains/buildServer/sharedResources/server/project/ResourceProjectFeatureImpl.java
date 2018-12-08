@@ -16,7 +16,6 @@
 
 package jetbrains.buildServer.sharedResources.server.project;
 
-import java.util.Map;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceFactory;
@@ -37,12 +36,6 @@ public class ResourceProjectFeatureImpl implements ResourceProjectFeature {
   public ResourceProjectFeatureImpl(@NotNull final SProjectFeatureDescriptor descriptor) {
     myDescriptor = descriptor;
     myResource = ResourceFactory.fromDescriptor(myDescriptor);
-  }
-
-  @NotNull
-  @Override
-  public Map<String, String> getParameters() {
-    return myDescriptor.getParameters();
   }
 
   @Nullable
