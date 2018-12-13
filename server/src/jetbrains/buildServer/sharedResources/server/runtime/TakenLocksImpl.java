@@ -265,7 +265,8 @@ public class TakenLocksImpl implements TakenLocks {
     final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
     switch (lock.getType()) {
       case READ:
-        if (fairSet.contains(lock.getName())) { // some build requested write lock before us
+        // some build requested write lock on the current resource before us
+        if (fairSet.contains(resource.getId())) {
           result = false;
           break;
         }
@@ -282,7 +283,7 @@ public class TakenLocksImpl implements TakenLocks {
       case WRITE:
         // if anyone is accessing the resource
         if (takenLock.hasReadLocks() || takenLock.hasWriteLocks() || isOverQuota(takenLock, resource)) {
-          fairSet.add(lock.getName()); // remember write access request
+          fairSet.add(resource.getId()); // remember write access request on the current resource
           result = false;
         }
     }
