@@ -25,7 +25,6 @@ import jetbrains.buildServer.serverSide.impl.BuildTypeSettingsFactory;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
-import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
@@ -275,12 +274,7 @@ public class HierarchyTest extends SharedResourcesIntegrationTest {
 
     final SFinishedBuild result = finishBuild((SRunningBuild)build, false);
 
-    new WaitForAssert() {
-      @Override
-      protected boolean condition() {
-        return myFixture.getBuildsManager().getRunningBuilds().size() == 0;
-      }
-    };
+    waitForAllBuildsToFinish();
 
     return result;
   }
