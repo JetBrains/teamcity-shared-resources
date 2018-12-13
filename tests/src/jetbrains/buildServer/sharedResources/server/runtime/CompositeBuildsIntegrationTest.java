@@ -28,12 +28,9 @@ import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
 import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
-import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
-import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.WaitFor;
-import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -496,43 +493,6 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
       fail("Failed to read shared resources artifact contents from build [" + build + "], Exception: " + e.getMessage());
     }
     return null;
-  }
-
-  private void waitForAllBuildsToFinish() {
-    new WaitForAssert() {
-      @Override
-      protected boolean condition() {
-        return myFixture.getBuildsManager().getRunningBuilds().size() == 0;
-      }
-    };
-  }
-
-  private void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
-    final CachingBuildEstimator estimator = myFixture.getSingletonService(CachingBuildEstimator.class);
-
-    new WaitForAssert() {
-
-      private String myReportedReason = "<default>";
-
-      @Override
-      protected boolean condition() {
-        estimator.invalidate(false);
-        final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
-        if (buildEstimates != null) {
-          final WaitReason waitReason = buildEstimates.getWaitReason();
-          if (waitReason != null) {
-            myReportedReason = waitReason.getDescription();
-          }
-          return myReportedReason.equals(expectedReason);
-        }
-        return false;
-      }
-
-      @Override
-      protected String getAssertMessage() {
-        return "Expected wait reason [" + expectedReason + "], last reported: [" + myReportedReason + "]";
-      }
-    };
   }
 
   @SuppressWarnings("SameParameterValue")
