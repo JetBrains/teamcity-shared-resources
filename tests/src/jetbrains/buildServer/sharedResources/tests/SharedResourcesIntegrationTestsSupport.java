@@ -40,10 +40,7 @@ import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeatu
 import jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.report.UsedResourcesSerializer;
-import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
-import jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl;
-import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
-import jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl;
+import jetbrains.buildServer.sharedResources.server.runtime.*;
 import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +52,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * Created with IntelliJ IDEA.
- *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 public class SharedResourcesIntegrationTestsSupport {
@@ -75,14 +70,16 @@ public class SharedResourcesIntegrationTestsSupport {
     final ResourceProjectFeaturesImpl projectFeatures = new ResourceProjectFeaturesImpl();
     final Resources resources = new ResourcesImpl(fixture.getProjectManager(), projectFeatures);
 
-    final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
+    final ResourceAffinity affinity = new ResourceAffinity(fixture.getServer(), fixture.getEventDispatcher());
+
+    final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features, affinity);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
     final SharedResourcesAgentsFilter filter =
-      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
+      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources, affinity);
 
     final SharedResourcesContextProcessor processor =
-      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport);
+      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport, affinity);
 
     final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
     final ResourceHelper resourceHelper = new ResourceHelper();
@@ -92,6 +89,7 @@ public class SharedResourcesIntegrationTestsSupport {
     final BeansFactory beansFactory = new BeansFactory(resources);
 
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
+    fixture.addService(locksStorage);
     fixture.addService(messages);
     fixture.addService(resourceHelper);
     fixture.addService(features);

@@ -18,6 +18,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,18 +53,23 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   @NotNull
   private final BuildUsedResourcesReport myBuildUsedResourcesReport;
 
+  @NotNull
+  private final ResourceAffinity myAffinity;
+
   public SharedResourcesContextProcessor(@NotNull final SharedResourcesFeatures features,
                                          @NotNull final Locks locks,
                                          @NotNull final Resources resources,
                                          @NotNull final LocksStorage locksStorage,
                                          @NotNull final RunningBuildsManager runningBuildsManager,
-                                         @NotNull final BuildUsedResourcesReport buildUsedResourcesReport) {
+                                         @NotNull final BuildUsedResourcesReport buildUsedResourcesReport,
+                                         @NotNull final ResourceAffinity affinity) {
     myFeatures = features;
     myLocks = locks;
     myResources = resources;
     myLocksStorage = locksStorage;
     myRunningBuildsManager = runningBuildsManager;
     myBuildUsedResourcesReport = buildUsedResourcesReport;
+    myAffinity = affinity;
   }
 
   /**
@@ -128,6 +134,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
       final Map<String, CustomResource> myCustomResources = matchCustomResources(getCustomResources(currentBuildPromotion.getProjectId(), projectResources, projectTreeCustomResources), locks);
       // decide whether we need to resolve values
       if (!myCustomResources.isEmpty()) {
+        final Map<String, String> affinityMap = myAffinity.getRequestedValues(currentBuildPromotion);
         // used values should not include the values from composite chain
         final Map<String, List<String>> usedValues = collectTakenValuesFromRuntime(locks, compositeRunningBuildIds, runningBuilds);
         for (Map.Entry<String, CustomResource> entry : myCustomResources.entrySet()) {
@@ -142,7 +149,11 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
               final String paramName = myLocks.asBuildParameter(currentLock);
               String currentValue;
               if (LockType.READ.equals(currentLock.getType())) {
-                currentValue = currentLock.getValue().equals("") ? values.iterator().next() : currentLock.getValue();
+                if (currentLock.getValue().equals("")) {
+                  currentValue = affinityMap.get(entry.getValue().getId());
+                } else {
+                  currentValue = currentLock.getValue();
+                }
                 myTakenValues.put(currentLock, currentValue);
               } else {
                 currentValue = StringUtil.join(values, ";");
@@ -160,6 +171,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
     }
     myLocksStorage.store(currentBuildPromotion, myTakenValues);
     myBuildUsedResourcesReport.save((BuildPromotionEx)currentBuildPromotion, projectResources, myTakenValues);
+    myAffinity.release(currentBuildPromotion);
   }
 
   private Map<String, Lock> extractLocks(@NotNull final BuildPromotion buildPromotion) {
@@ -210,9 +222,9 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
                                                            @NotNull final Map<String, Lock> locks) {
     final Map<String, CustomResource> result = new HashMap<>();
     for (Map.Entry<String, Lock> entry: locks.entrySet()) {
-      final Resource r = resources.get(entry.getKey());
+      final CustomResource r = resources.get(entry.getKey());
       if (r != null) {
-        result.put(r.getName(), (CustomResource)r);
+        result.put(r.getName(), r);
       }
     }
     return result;

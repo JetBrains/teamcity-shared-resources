@@ -16,8 +16,16 @@
 
 package jetbrains.buildServer.sharedResources.tests;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.BuildEstimates;
+import jetbrains.buildServer.serverSide.SBuild;
 import jetbrains.buildServer.serverSide.SQueuedBuild;
+import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
+import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
 import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
@@ -37,6 +45,22 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   protected void setUp() throws Exception {
     super.setUp();
     SharedResourcesIntegrationTestsSupport.apply(myFixture);
+  }
+
+  @NotNull
+  protected List<String> readArtifact(SBuild build) {
+    final BuildArtifactHolder holder = build.getArtifacts(BuildArtifactsViewMode.VIEW_HIDDEN_ONLY)
+                                            .findArtifact(".teamcity/JetBrains.SharedResources/taken_locks.txt");
+    if (!holder.isAvailable()) {
+      fail("Shared resources artifact is not available for the build: " + build);
+    }
+    try {
+      return new BufferedReader(new InputStreamReader(holder.getArtifact().getInputStream())).lines().collect(Collectors.toList());
+    } catch (IOException e) {
+      e.printStackTrace();
+      fail("Failed to read shared resources artifact contents from build [" + build + "], Exception: " + e.getMessage());
+    }
+    return null;
   }
 
   protected void waitForAllBuildsToFinish() {
@@ -64,7 +88,6 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
           if (waitReason != null) {
             myReportedReason = waitReason.getDescription();
           }
-          System.out.println(myReportedReason);
           return myReportedReason != null && myReportedReason.equals(expectedReason);
         }
         return false;

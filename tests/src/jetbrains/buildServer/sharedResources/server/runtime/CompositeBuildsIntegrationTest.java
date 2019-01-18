@@ -17,17 +17,12 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
-import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.WaitFor;
@@ -477,22 +472,6 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
       fail("Could not find needed dependency (dep2) in queue");
     }
     return opQueued.get();
-  }
-
-  @NotNull
-  private List<String> readArtifact(SBuild build) {
-    final BuildArtifactHolder holder = build.getArtifacts(BuildArtifactsViewMode.VIEW_HIDDEN_ONLY)
-                                            .findArtifact(".teamcity/JetBrains.SharedResources/taken_locks.txt");
-    if (!holder.isAvailable()) {
-      fail("Shared resources artifact is not available for the build: " + build);
-    }
-    try {
-      return new BufferedReader(new InputStreamReader(holder.getArtifact().getInputStream())).lines().collect(Collectors.toList());
-    } catch (IOException e) {
-      e.printStackTrace();
-      fail("Failed to read shared resources artifact contents from build [" + build + "], Exception: " + e.getMessage());
-    }
-    return null;
   }
 
   @SuppressWarnings("SameParameterValue")

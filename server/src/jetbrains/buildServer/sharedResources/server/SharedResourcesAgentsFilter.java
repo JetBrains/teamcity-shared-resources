@@ -10,12 +10,14 @@ import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
+import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,13 +56,17 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @NotNull
   private final Resources myResources;
 
+  @NotNull
+  private final ResourceAffinity myResourceAffinity;
+
   public SharedResourcesAgentsFilter(@NotNull final SharedResourcesFeatures features,
                                      @NotNull final Locks locks,
                                      @NotNull final TakenLocks takenLocks,
                                      @NotNull final RunningBuildsManager runningBuildsManager,
                                      @NotNull final ConfigurationInspector inspector,
                                      @NotNull final LocksStorage locksStorage,
-                                     @NotNull final Resources resources) {
+                                     @NotNull final Resources resources,
+                                     @NotNull final ResourceAffinity resourceAffinity) {
     myFeatures = features;
     myLocks = locks;
     myTakenLocks = takenLocks;
@@ -68,6 +74,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     myInspector = inspector;
     myLocksStorage = locksStorage;
     myResources = resources;
+    myResourceAffinity = resourceAffinity;
   }
 
   @NotNull
@@ -88,7 +95,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
       if (depPromos.isEmpty()) {
         LOG.debug("Queued build does not have dependent composite promotions");
-        reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
+        reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks, myPromotion);
       } else {
         LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
         // contains resources and locks that are INSIDE of the build chain
@@ -127,7 +134,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
               // resolve locks that build wants to take against actual resources
               chainResources.computeIfAbsent(compositeQueuedBuildType.getProjectId(), myResources::getResourcesMap);
               reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks,
-                                           chainResources.get(compositeQueuedBuildType.getProjectId()), chainLocks, locksToTake);
+                                           chainResources.get(compositeQueuedBuildType.getProjectId()), chainLocks, locksToTake, compositeQueuedBuild.getBuildPromotion());
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
@@ -151,13 +158,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
-              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake);
+              reason = processBuildInChain(featureContext, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake, myPromotion);
             }
           }
         }
       }
     } else {
-      reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks);
+      reason = processSingleBuild(myPromotion, featureContext, runningBuilds, canBeStarted, takenLocks, myPromotion);
     }
     final AgentsFilterResult result = new AgentsFilterResult();
     result.setWaitReason(reason);
@@ -179,16 +186,11 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                          @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                          @NotNull final Map<String, Resource> chainNodeResources,
                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
-                                         @NotNull final Map<String, Lock> locksToTake) {
+                                         @NotNull final Map<String, Lock> locksToTake,
+                                         @NotNull final BuildPromotion promotion) {
     WaitReason reason = null;
-
-    if (runningBuilds.get() == null) {
-      runningBuilds.set(myRunningBuildsManager.getRunningBuilds());
-    }
-    if (takenLocks.get() == null) {
-      takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
-    }
-    final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), featureContext, chainNodeResources, chainLocks);
+    gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
+    final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), featureContext, chainNodeResources, chainLocks, promotion);
     if (!unavailableLocks.isEmpty()) {
       reason = createWaitReason(takenLocks.get(), unavailableLocks);
     }
@@ -199,7 +201,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                         @NotNull final Set<String> featureContext,
                                         @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
-                                        @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
+                                        @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
+                                        @NotNull final BuildPromotion promotion) {
     final String projectId = buildPromotion.getProjectId();
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
@@ -211,25 +214,80 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
-            if (runningBuilds.get() == null) {
-              runningBuilds.set(myRunningBuildsManager.getRunningBuilds());
-            }
-            if (takenLocks.get() == null) {
-              takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
-            }
+            gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
             // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
-            final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, featureContext);
+            final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, featureContext, promotion);
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(takenLocks.get(), unavailableLocks);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Firing precondition for queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
+            } else {
+              storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake); // assign ANY locks here
+              // if we are here, then the build will pass on to be started
             }
           }
         }
       }
     }
     return reason;
+  }
+
+  private void storeResourcesAffinity(@NotNull final BuildPromotion promotion,
+                                      @NotNull final String projectId,
+                                      @NotNull final Map<Resource, TakenLock> takenLocks,
+                                      @NotNull final Collection<Lock> locksToTake) {
+
+    final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
+    final Map<String, String> affinityMap = new HashMap<>();
+    locksToTake.forEach(lock -> {
+      Resource r = resources.get(lock.getName());
+      if (r instanceof CustomResource) {
+        if (StringUtil.isEmptyOrSpaces(lock.getValue())) {
+          // if lock is ANY lock -> choose next available value
+          final String next = getNextAvailableValue((CustomResource)r, takenLocks);
+          if (StringUtil.isEmptyOrSpaces(next)) {
+            LOG.warn("Failed to allocate values for promotion: " + promotion + ", resource: " + r);
+          }
+          affinityMap.put(r.getId(), next);
+        } else {
+          // if lock is SPECIFIC lock - choose lock value
+          affinityMap.put(r.getId(), lock.getValue());
+        }
+      }
+    });
+    if (!affinityMap.isEmpty()) {
+      myResourceAffinity.store(promotion, affinityMap);
+    }
+  }
+
+  private String getNextAvailableValue(final CustomResource r, final Map<Resource, TakenLock> takenLocks) {
+    final Set<String> values = new HashSet<>(r.getValues());
+    // remove all other requested values
+    values.removeAll(myResourceAffinity.getRequestedValues(r));
+    // remove values from taken locks
+    final TakenLock takenLock = takenLocks.get(r);
+    if (takenLock != null) {
+      values.removeAll(takenLock.getReadLocks().values());
+    }
+    return values.isEmpty() ? "" : values.iterator().next();
+    }
+
+  /**
+   * Gathers information about running and distributed build from runtime
+   * @param runningBuilds local running build reference
+   * @param canBeStarted distributor output
+   * @param takenLocks local taken locks reference
+   */
+  private void gatherRuntimeInfo(@NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                 @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                 @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
+    if (runningBuilds.get() == null) {
+      runningBuilds.set(myRunningBuildsManager.getRunningBuilds());
+    }
+    if (takenLocks.get() == null) {
+      takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
+    }
   }
 
   /**
@@ -263,7 +321,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     builder.append("to become available: ");
     final Set<String> lockDescriptions = new HashSet<>();
     for (Map.Entry<Resource, Lock> entry : unavailableLocks.entrySet()) {
-      final StringBuilder descr = new StringBuilder();
+      final StringBuilder description = new StringBuilder();
       final Set<String> buildTypeNames = new HashSet<>();
       final TakenLock takenLock = takenLocks.get(entry.getKey());
       if (takenLock != null) {
@@ -280,13 +338,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           }
         }
       }
-      descr.append(entry.getValue().getName());
+      description.append(entry.getValue().getName());
       if (!buildTypeNames.isEmpty()) {
-        descr.append(" (locked by ");
-        descr.append(buildTypeNames.stream().sorted().collect(Collectors.joining(", ")));
-        descr.append(")");
+        description.append(" (locked by ");
+        description.append(buildTypeNames.stream().sorted().collect(Collectors.joining(", ")));
+        description.append(")");
       }
-      lockDescriptions.add(descr.toString());
+      lockDescriptions.add(description.toString());
     }
     builder.append(StringUtil.join(lockDescriptions, ", "));
     final String reasonDescription = builder.toString();

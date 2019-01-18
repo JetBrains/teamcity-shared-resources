@@ -30,6 +30,7 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -80,7 +81,8 @@ public class ContextProcessorTest extends BaseTestCase {
     myBuildType = m.mock(BuildTypeEx.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
     myReport = m.mock(BuildUsedResourcesReport.class);
-    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport);
+    final ResourceAffinity resourceAffinity = m.mock(ResourceAffinity.class);
+    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport, resourceAffinity);
     m.checking(createCommonExpectations());
   }
 

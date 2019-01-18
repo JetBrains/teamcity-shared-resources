@@ -47,5 +47,6 @@
   <bean class="jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeaturesImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.ResourceHelper"/>
   <bean class="jetbrains.buildServer.sharedResources.pages.Messages"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity"/>
 
 </beans>

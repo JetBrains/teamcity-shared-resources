@@ -49,14 +49,19 @@ public class TakenLocksImpl implements TakenLocks {
   @NotNull
   private final SharedResourcesFeatures myFeatures;
 
+  @NotNull
+  private final ResourceAffinity myAffinity;
+
   public TakenLocksImpl(@NotNull final Locks locks,
                         @NotNull final Resources resources,
                         @NotNull final LocksStorage locksStorage,
-                        @NotNull final SharedResourcesFeatures features) {
+                        @NotNull final SharedResourcesFeatures features,
+                        @NotNull final ResourceAffinity affinity) {
     myLocks = locks;
     myResources = resources;
     myLocksStorage = locksStorage;
     myFeatures = features;
+    myAffinity = affinity;
   }
 
   @NotNull
@@ -125,13 +130,14 @@ public class TakenLocksImpl implements TakenLocks {
   public Map<Resource, Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
                                                  @NotNull Map<Resource, TakenLock> takenLocks,
                                                  @NotNull String projectId,
-                                                 @NotNull final Set<String> fairSet) {
+                                                 @NotNull final Set<String> fairSet,
+                                                 @NotNull final BuildPromotion buildPromotion) {
     final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
     final Map<Resource, Lock> result = new HashMap<>();
     for (Lock lock : locksToTake) {
       final Resource resource = resources.get(lock.getName());
       if (resource != null) {
-        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, fairSet)) {
+        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, fairSet, buildPromotion)) {
           result.put(resource, lock);
         }
       }
@@ -145,13 +151,14 @@ public class TakenLocksImpl implements TakenLocks {
                                                  @NotNull final Map<Resource, TakenLock> takenLocks,
                                                  @NotNull final Set<String> fairSet,
                                                  @NotNull final Map<String, Resource> chainNodeResources,
-                                                 @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks) {
+                                                 @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
+                                                 @NotNull final BuildPromotion buildPromotion) {
     final Map<Resource, Lock> result = new HashMap<>();
     Map<Resource, TakenLock> chainTakenLocks = purifyTakenLocks(takenLocks, chainLocks);
     locksToTake.forEach((name, lock) -> {
       final Resource resource = chainNodeResources.get(name);
       if (resource != null) {
-        if (!resource.isEnabled() || !checkAgainstResource(lock, chainTakenLocks, resource, fairSet)) {
+        if (!resource.isEnabled() || !checkAgainstResource(lock, chainTakenLocks, resource, fairSet, buildPromotion)) {
           result.put(resource, lock);
         }
       }
@@ -190,15 +197,17 @@ public class TakenLocksImpl implements TakenLocks {
     return takenLocks.computeIfAbsent(resource, TakenLock::new);
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private boolean checkAgainstResource(@NotNull final Lock lock,
                                        @NotNull final Map<Resource, TakenLock> takenLocks,
                                        @NotNull final Resource resource,
-                                       @NotNull final Set<String> fairSet) {
+                                       @NotNull final Set<String> fairSet,
+                                       @NotNull final BuildPromotion buildPromotion) {
     boolean result = true;
     if (ResourceType.QUOTED.equals(resource.getType())) {
       result = checkAgainstQuotedResource(lock, takenLocks, (QuotedResource) resource, fairSet);
     } else if (ResourceType.CUSTOM.equals(resource.getType())) {
-      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource, fairSet);
+      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource, fairSet, buildPromotion);
     }
     return result;
   }
@@ -206,7 +215,8 @@ public class TakenLocksImpl implements TakenLocks {
   private boolean checkAgainstCustomResource(@NotNull final Lock lock,
                                              @NotNull final Map<Resource, TakenLock> takenLocks,
                                              @NotNull final CustomResource resource,
-                                             @NotNull final Set<String> fairSet) {
+                                             @NotNull final Set<String> fairSet,
+                                             @NotNull final BuildPromotion buildPromotion) {
     boolean result = true;
     // what type of lock do we have
     // write            -> all
@@ -238,6 +248,9 @@ public class TakenLocksImpl implements TakenLocks {
           final Set<String> takenValues = new HashSet<>();
           takenValues.addAll(takenLock.getReadLocks().values());
           takenValues.addAll(takenLock.getWriteLocks().values());
+          // get resource value affinity with other builds
+          final Set<String> otherAssignedValues = myAffinity.getOtherAssignedValues(resource, buildPromotion);
+          takenValues.addAll(otherAssignedValues);
           if (takenValues.contains(requiredValue)) {
             // value was already taken
             result = false;

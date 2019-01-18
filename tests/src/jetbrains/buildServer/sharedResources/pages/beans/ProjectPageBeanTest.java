@@ -62,7 +62,6 @@ public class ProjectPageBeanTest extends SharedResourcesIntegrationTest {
     final BeansFactory factory = myFixture.getSingletonService(BeansFactory.class);
     final ProjectPageBean result = factory.createProjectPageBean(bottom);
     final Map<String, Resource> overridesMap = result.getOverridesMap();
-    overridesMap.forEach((k, v) -> System.out.println(k + " -> " + v));
     assertEquals(4, overridesMap.size());
     assertEquals(overridesMap.get(topToMiddle.getId()), topToMiddleOverride);
     assertEquals(overridesMap.get(topToBottom.getId()), topToBottomOverride);

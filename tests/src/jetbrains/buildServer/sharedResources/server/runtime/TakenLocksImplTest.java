@@ -18,6 +18,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -47,18 +48,26 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   private SharedResourcesFeatures myFeatures;
 
+  private BuildPromotion myPromotion;
+
+  private ResourceAffinity myResourceAffinity;
+
   private final String myProjectId = "MY_PROJECT_ID";
 
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = new Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+    }};
     myLocks = m.mock(Locks.class);
     myResources = m.mock(Resources.class);
     myLocksStorage = m.mock(LocksStorage.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
-    myTakenLocks = new TakenLocksImpl(myLocks, myResources, myLocksStorage, myFeatures);
+    myPromotion = m.mock(BuildPromotion.class);
+    myResourceAffinity = m.mock(ResourceAffinity.class);
+    myTakenLocks = new TakenLocksImpl(myLocks, myResources, myLocksStorage, myFeatures, myResourceAffinity);
   }
 
   @Test
@@ -302,7 +311,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -330,7 +339,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
 
@@ -360,7 +369,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -388,7 +397,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
 
     final Set<String> fairSet = new HashSet<>();
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -416,7 +425,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     }});
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
 
@@ -445,7 +454,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -473,7 +482,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -514,7 +523,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
     final Set<String> fairSet = new HashSet<>();
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
     assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
@@ -567,14 +576,14 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Set<String> fairSet = new HashSet<>();
 
     { // 1) Check that read-read locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
+      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
       assertEmpty(fairSet);
     }
 
     { // 2) Check that fair set influences read lock processing
-      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, fairSet);
+      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
       assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
@@ -582,7 +591,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       assertEquals(infiniteResource.getId(), fairSet.iterator().next());
 
       // now we have lock name in fair set. read lock must not be acquired
-      result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet);
+      result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
       assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
@@ -631,21 +640,21 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Set<String> fairSet = new HashSet<>();
 
     { // Check that any-any locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
+      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
       assertEmpty(fairSet);
     }
 
     { // Check that any-specific locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksSpecific, myProjectId, fairSet);
+      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksSpecific, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
       assertEmpty(fairSet);
     }
 
     { // Check that fair set influences read lock processing
-      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, fairSet);
+      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
       assertEquals(customResource.getName(), result.get(customResource).getName());
@@ -653,7 +662,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       assertEquals(customResource.getName(), fairSet.iterator().next());
 
       // now we have lock name in fair set. any lock must not be acquired
-      result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet);
+      result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, fairSet, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
       assertEquals(customResource.getName(), result.get(customResource).getName());
@@ -681,7 +690,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Set<String> fairSet = new HashSet<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.emptyMap(), myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.emptyMap(), myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
     assertEquals(lockToTake, result.get(quotedResource));
@@ -707,7 +716,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertGreater(result.size(), 0);
     assertContains(result.values(), locksToTake.iterator().next());
@@ -732,7 +741,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Set<String> fairSet = new HashSet<>();
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertGreater(result.size(), 0);
     assertContains(result.values(), locksToTake.iterator().next());
@@ -766,7 +775,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet);
+    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, fairSet, myPromotion);
     assertNotNull(result);
     assertEquals(0, result.size());
   }

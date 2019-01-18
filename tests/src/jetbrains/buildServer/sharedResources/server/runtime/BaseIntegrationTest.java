@@ -17,7 +17,9 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.util.List;
+import java.util.Map;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.TestFor;
@@ -145,5 +147,60 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
 
     flushQueueAndWait();
     assertEquals(2, myFixture.getBuildsManager().getRunningBuilds().size());
+  }
+
+
+  /**
+   * 2 agents
+   *
+   * Top (resource_top, ['val1', 'val2'])
+   *
+   * Child1 -> bt1 (resource_top, specific(resource_top, 'val1'))
+   * Child2 -> bt2 (resource_top, any(resource_top))
+   *
+   */
+  @Test
+  @TestFor(issues = "TW-57515")
+  public void testCustomResource_SpecificAny() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "val1", "val2"));
+    final LocksStorage storage = myFixture.getSingletonService(LocksStorage.class);
+
+    SProject child1 = top.createProject("child1", "child1");
+    SBuildType btSpecific = child1.createBuildType("btSpecific", "btSpecific");
+    final String specificRequestedValue = "val1";
+    addSpecificLock(btSpecific, "resource_top", specificRequestedValue);
+
+    SProject child2 = top.createProject("child2", "child2");
+    SBuildType btAny = child2.createBuildType("btAny", "btAny");
+    addReadLock(btAny, resourceTop);
+
+    myFixture.createEnabledAgent("Ant");
+
+    final SQueuedBuild qbAny = btAny.addToQueue("");
+    final SQueuedBuild qbSpecific = btSpecific.addToQueue("");
+    assertNotNull(qbSpecific);
+    assertNotNull(qbAny);
+
+    final RunningBuildEx runningBuild = myFixture.flushQueueAndWait();
+    // 2 builds can start in any order
+
+    final BuildTypeEx bt = runningBuild.getBuildPromotion().getBuildType();
+    assertNotNull(bt);
+    if (bt.getExternalId().equals(btAny.getExternalId())) {
+      // if we started ANY build, we should check what lock was taken
+
+      final Map<String, Lock> payload = storage.load(runningBuild.getBuildPromotion());
+      String value = payload.get(resourceTop.getName()).getValue();
+      // if it is the value that is requested by SPECIFIC one, -> wait for status in specific build, finish any build, start specific, check lock
+      if (specificRequestedValue.equals(value)) {
+        waitForReason(qbSpecific, "Build is waiting for the following resource to become available: resource_top (locked by top / child2 / btAny)");
+        finishBuild(runningBuild, false);
+      }
+      waitForAllBuildsToFinish();
+      flushQueueAndWait();
+    }
+    finishAllBuilds();
+    assertContains(readArtifact(qbSpecific.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
   }
 }

@@ -19,6 +19,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
@@ -56,17 +57,20 @@ public interface TakenLocks {
    * @param locksToTake required locks
    * @param takenLocks taken locks
    * @param fairSet set used to remember write access requests
+   * @param promotion build promotion context of computation
    * @return empty collection, if locks can be acquired, collection, that contains unavailable locks otherwise
    */
   @NotNull
   Map<Resource, Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
                                           @NotNull final Map<Resource, TakenLock> takenLocks,
                                           @NotNull final String projectId,
-                                          @NotNull final Set<String> fairSet);
+                                          @NotNull final Set<String> fairSet,
+                                          @NotNull final BuildPromotion promotion);
 
-  Map<Resource, Lock> getUnavailableLocks(@NotNull Map<String, Lock> locksToTake,
-                                          @NotNull Map<Resource, TakenLock> takenLocks,
-                                          @NotNull Set<String> fairSet,
-                                          @NotNull Map<String, Resource> chainNodeResources,
-                                          @NotNull Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks);
+  Map<Resource, Lock> getUnavailableLocks(@NotNull final Map<String, Lock> locksToTake,
+                                          @NotNull final Map<Resource, TakenLock> takenLocks,
+                                          @NotNull final Set<String> fairSet,
+                                          @NotNull final Map<String, Resource> chainNodeResources,
+                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
+                                          @NotNull final BuildPromotion promotion);
 }
