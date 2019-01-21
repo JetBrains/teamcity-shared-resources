@@ -245,7 +245,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       if (r instanceof CustomResource) {
         if (StringUtil.isEmptyOrSpaces(lock.getValue())) {
           // if lock is ANY lock -> choose next available value
-          final String next = getNextAvailableValue((CustomResource)r, takenLocks);
+          final String next = getNextAvailableValue((CustomResource)r, takenLocks, promotion);
           if (StringUtil.isEmptyOrSpaces(next)) {
             LOG.warn("Failed to allocate values for promotion: " + promotion + ", resource: " + r);
           }
@@ -261,10 +261,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     }
   }
 
-  private String getNextAvailableValue(final CustomResource r, final Map<Resource, TakenLock> takenLocks) {
+  private String getNextAvailableValue(final CustomResource r, final Map<Resource, TakenLock> takenLocks, final BuildPromotion promotion) {
     final Set<String> values = new HashSet<>(r.getValues());
     // remove all other requested values
-    values.removeAll(myResourceAffinity.getRequestedValues(r));
+    values.removeAll(myResourceAffinity.getOtherAssignedValues(r, promotion));
     // remove values from taken locks
     final TakenLock takenLock = takenLocks.get(r);
     if (takenLock != null) {

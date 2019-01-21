@@ -163,7 +163,7 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
   @TestFor(issues = "TW-57515")
   public void testCustomResource_SpecificAny() {
     final SProject top = myFixture.createProject("top");
-    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "val1", "val2"));
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "val2", "val1"));
     final LocksStorage storage = myFixture.getSingletonService(LocksStorage.class);
 
     SProject child1 = top.createProject("child1", "child1");
@@ -183,24 +183,38 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertNotNull(qbAny);
 
     final RunningBuildEx runningBuild = myFixture.flushQueueAndWait();
+    // we can start either one build (any with "specific" value)
+    // ot two builds (any and specific with different values)
+
     // 2 builds can start in any order
+    RunningBuildEx specificRunningBuild;
 
     final BuildTypeEx bt = runningBuild.getBuildPromotion().getBuildType();
     assertNotNull(bt);
     if (bt.getExternalId().equals(btAny.getExternalId())) {
       // if we started ANY build, we should check what lock was taken
-
       final Map<String, Lock> payload = storage.load(runningBuild.getBuildPromotion());
       String value = payload.get(resourceTop.getName()).getValue();
       // if it is the value that is requested by SPECIFIC one, -> wait for status in specific build, finish any build, start specific, check lock
       if (specificRequestedValue.equals(value)) {
         waitForReason(qbSpecific, "Build is waiting for the following resource to become available: resource_top (locked by top / child2 / btAny)");
         finishBuild(runningBuild, false);
+        waitForAllBuildsToFinish();
+        specificRunningBuild = myFixture.flushQueueAndWait();
+        assert (qbSpecific.getBuildPromotion().getAssociatedBuild() instanceof RunningBuildEx);
+        finishBuild(specificRunningBuild, false);
+        assertContains(readArtifact(qbAny.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
+      } else {
+        assertEquals(2, myFixture.getSingletonService(RunningBuildsManager.class).getRunningBuilds().size());
+        assert (qbSpecific.getBuildPromotion().getAssociatedBuild() instanceof RunningBuildEx);
+        specificRunningBuild = (RunningBuildEx)qbSpecific.getBuildPromotion().getAssociatedBuild();
+        finishBuild(runningBuild, false);
+        finishBuild(specificRunningBuild, false);
+        assertContains(readArtifact(qbAny.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval2");
       }
-      waitForAllBuildsToFinish();
-      flushQueueAndWait();
     }
     finishAllBuilds();
+    waitForAllBuildsToFinish();
     assertContains(readArtifact(qbSpecific.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
   }
 }

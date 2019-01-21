@@ -19,7 +19,6 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import gnu.trove.TLongObjectHashMap;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 import jetbrains.buildServer.ExtensionHolder;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.DistributionCycleExtension;
@@ -136,7 +135,7 @@ public class ResourceAffinity {
    * assigned to promotions other that the given one
    */
   @NotNull
-  Set<String> getOtherAssignedValues(@NotNull final Resource resource,
+  public Set<String> getOtherAssignedValues(@NotNull final Resource resource,
                                      @NotNull final BuildPromotion currentPromotion) {
     myLock.readLock().lock();
     try {
@@ -151,28 +150,6 @@ public class ResourceAffinity {
           return true;
         });
         return result;
-      }
-      return Collections.emptySet();
-    } finally {
-      myLock.readLock().unlock();
-    }
-  }
-
-  /**
-   * Returns all requested values for given resource
-   *
-   * @param resource resource
-   * @return all requested values
-   */
-  @NotNull
-  public Set<String> getRequestedValues(@NotNull final Resource resource) {
-    myLock.readLock().lock();
-    try {
-      final TLongObjectHashMap<String> allValues = myLockedValues.get(resource.getId());
-      if (allValues != null) {
-        return Arrays.stream(allValues.getValues())
-                     .map(it -> (String)it)
-                     .collect(Collectors.toSet());
       }
       return Collections.emptySet();
     } finally {
