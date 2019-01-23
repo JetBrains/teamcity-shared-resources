@@ -15,8 +15,8 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
+import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
-import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
   private ConfigurationInspector myInspector;
 
-  private Set<String> fairSet = new HashSet<>();
+  private DistributionDataAccessor myDataAccessor;
 
   private Resources myResources;
 
@@ -92,11 +92,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     myBuildDistributorInput = m.mock(BuildDistributorInput.class);
     myRunningBuildsManager = m.mock(RunningBuildsManager.class);
     myCustomData = new HashMap<>();
-    myCustomData.put(SharedResourcesAgentsFilter.CUSTOM_DATA_KEY, fairSet);
     myInspector = m.mock(ConfigurationInspector.class);
     myProject = m.mock(ProjectEx.class);
 
-    final ResourceAffinity resourceAffinity = m.mock(ResourceAffinity.class);
     final LocksStorage locksStorage = m.mock(LocksStorage.class);
 
     myResources = m.mock(Resources.class);
@@ -113,7 +111,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resourceMap));
     }});
-    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector, locksStorage, myResources, resourceAffinity);
+    myAgentsFilter = new SharedResourcesAgentsFilter(myFeatures, myLocks, myTakenLocks, myRunningBuildsManager, myInspector, locksStorage, myResources);
   }
 
   @Override
@@ -467,7 +465,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myTakenLocks).collectTakenLocks(runningBuilds, canBeStarted.keySet());
       will(returnValue(takenLocks));
 
-      oneOf(myTakenLocks).getUnavailableLocks(locksToTake.values(), takenLocks, myProjectId, fairSet, myBuildPromotion);
+      oneOf(myTakenLocks).getUnavailableLocks(with(same(locksToTake.values())), with(same(takenLocks)), with(same(myProjectId)), with(any(DistributionDataAccessor.class)), with(same(myBuildPromotion)));
       will(returnValue(unavailableLocks));
 
       allowing(myBuildPromotion).isPartOfBuildChain();

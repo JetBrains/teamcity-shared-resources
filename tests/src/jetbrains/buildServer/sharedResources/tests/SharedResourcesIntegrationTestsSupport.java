@@ -70,16 +70,14 @@ public class SharedResourcesIntegrationTestsSupport {
     final ResourceProjectFeaturesImpl projectFeatures = new ResourceProjectFeaturesImpl();
     final Resources resources = new ResourcesImpl(fixture.getProjectManager(), projectFeatures);
 
-    final ResourceAffinity affinity = new ResourceAffinity(fixture.getServer(), fixture.getEventDispatcher());
-
-    final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features, affinity);
+    final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
     final SharedResourcesAgentsFilter filter =
-      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources, affinity);
+      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
 
     final SharedResourcesContextProcessor processor =
-      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport, affinity);
+      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport);
 
     final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
     final ResourceHelper resourceHelper = new ResourceHelper();
@@ -88,6 +86,7 @@ public class SharedResourcesIntegrationTestsSupport {
 
     final BeansFactory beansFactory = new BeansFactory(resources);
 
+    fixture.addService(new ReservedValuesProvider(fixture.getServer()));
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
     fixture.addService(locksStorage);
     fixture.addService(messages);

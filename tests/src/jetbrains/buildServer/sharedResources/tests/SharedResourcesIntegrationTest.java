@@ -88,7 +88,6 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
           if (waitReason != null) {
             myReportedReason = waitReason.getDescription();
           }
-          System.out.println("wait reason: " + myReportedReason);
           return myReportedReason != null && myReportedReason.equals(expectedReason);
         }
         return false;

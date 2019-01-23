@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Oleg Rybak
@@ -87,4 +88,8 @@ public class SharedResourcesPluginConstants {
   public static Comparator<Resource> RESOURCE_BY_NAME_COMPARATOR = (rc1, rc2) -> rc1.getName().compareToIgnoreCase(rc2.getName());
 
   public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
+
+  public static String getReservedResourceAttributeKey(@NotNull final String resourceId) {
+    return "teamcity.sharedResources." + resourceId;
+  }
 }

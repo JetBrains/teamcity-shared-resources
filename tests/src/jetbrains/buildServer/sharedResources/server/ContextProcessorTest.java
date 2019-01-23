@@ -82,7 +82,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
     myReport = m.mock(BuildUsedResourcesReport.class);
     final ResourceAffinity resourceAffinity = m.mock(ResourceAffinity.class);
-    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport, resourceAffinity);
+    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport);
     m.checking(createCommonExpectations());
   }
 

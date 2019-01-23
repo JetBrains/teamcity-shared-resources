@@ -56,7 +56,7 @@ public interface TakenLocks {
    *
    * @param locksToTake required locks
    * @param takenLocks taken locks
-   * @param fairSet set used to remember write access requests
+   * @param distributionDataAccessor accessor for custom data
    * @param promotion build promotion context of computation
    * @return empty collection, if locks can be acquired, collection, that contains unavailable locks otherwise
    */
@@ -64,12 +64,12 @@ public interface TakenLocks {
   Map<Resource, Lock> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
                                           @NotNull final Map<Resource, TakenLock> takenLocks,
                                           @NotNull final String projectId,
-                                          @NotNull final Set<String> fairSet,
+                                          @NotNull final DistributionDataAccessor distributionDataAccessor,
                                           @NotNull final BuildPromotion promotion);
 
   Map<Resource, Lock> getUnavailableLocks(@NotNull final Map<String, Lock> locksToTake,
                                           @NotNull final Map<Resource, TakenLock> takenLocks,
-                                          @NotNull final Set<String> fairSet,
+                                          @NotNull final DistributionDataAccessor distributionDataAccessor,
                                           @NotNull final Map<String, Resource> chainNodeResources,
                                           @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
                                           @NotNull final BuildPromotion promotion);
