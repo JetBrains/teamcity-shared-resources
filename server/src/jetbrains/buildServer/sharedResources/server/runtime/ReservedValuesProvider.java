@@ -19,7 +19,6 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import jetbrains.buildServer.ExtensionHolder;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.buildDistribution.DistributionCycleExtension;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.DistributionData;
 import org.jetbrains.annotations.NotNull;
 

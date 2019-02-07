@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
+import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
@@ -431,6 +432,53 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
   }
 
   /**
+   * Test setup:
+   *
+   * dep[resource, ANY_LOCK] ---> (C)
+   *
+   */
+  @Test
+  public void testSimpleChain_CustomResource_Any_InDep() {
+    // create composite build
+    BuildTypeEx btComposite = createCompositeBuildType(myProject, "composite", null);
+    // create dep build
+    SBuildType btDep = myProject.createBuildType("btDep", "btDep");
+    // add dependency
+    addDependency(btComposite, btDep);
+    // add resource
+    final Resource resource = addResource(myFixture, myProject, createCustomResource("resource", "val2", "val1"));
+    // add lock on resource to composite build
+    addReadLock(btDep, resource);
+    // start composite build
+    QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
+    assertNotNull(qbComposite);
+
+    final SQueuedBuild qbDep = myFixture.getBuildQueue().getFirst();
+    Assert.assertNotNull(qbDep);
+    BuildPromotion qbPromotion = qbDep.getBuildPromotion();
+
+    myFixture.flushQueueAndWaitN(2);
+
+    assertEquals(2, myFixture.getBuildsManager().getRunningBuilds().size());
+
+    final SBuild depBuild = qbPromotion.getAssociatedBuild();
+    assertTrue(depBuild instanceof RunningBuildEx);
+    finishBuild((SRunningBuild)depBuild, false);
+
+    waitForAllBuildsToFinish();
+
+    assertEquals(0, myFixture.getBuildsManager().getRunningBuilds().size());
+    assertTrue(myFixture.getBuildQueue().isQueueEmpty());
+    final SBuild associatedBuild = qbDep.getBuildPromotion().getAssociatedBuild();
+    Assert.assertNotNull(associatedBuild);
+    assertTrue(associatedBuild.isFinished());
+    final String promoAtrValue = (String)((BuildPromotionEx)qbPromotion).getAttribute("teamcity.sharedResources." + resource.getId());
+    assertNotNull(promoAtrValue);
+    // check for stored locks
+    assertContains(readArtifact(associatedBuild), "resource\treadLock\t" + promoAtrValue);
+  }
+
+  /**
    * Checks that {@code BuildFeatureParametersProvider} provides necessary parameters to the composite build
    *
    * dep ---> (C) [resource, read lock; resource2, SPECIFIC(value1)]
@@ -446,9 +494,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     // create resources
     addResource(myFixture, myProject, createInfiniteResource("resource"));
     addResource(myFixture, myProject, createCustomResource("resource2", "value1", "value2", "valueN"));
-    // add locks
-    addReadLock(btComposite, "resource");
-    addAnyLock(btComposite, "resource2");
+
     // add composite to queue
     QueuedBuildEx qbComposite = (QueuedBuildEx)btComposite.addToQueue("");
     assertNotNull(qbComposite);

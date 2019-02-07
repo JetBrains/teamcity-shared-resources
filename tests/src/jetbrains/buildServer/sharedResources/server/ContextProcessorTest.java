@@ -17,6 +17,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.util.text.StringUtil;
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -30,15 +31,12 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.report.BuildUsedResourcesReport;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
-import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.util.TestFor;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -81,8 +79,7 @@ public class ContextProcessorTest extends BaseTestCase {
     myBuildType = m.mock(BuildTypeEx.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class, "my-build-promotion");
     myReport = m.mock(BuildUsedResourcesReport.class);
-    final ResourceAffinity resourceAffinity = m.mock(ResourceAffinity.class);
-    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myRunningBuildsManager, myReport);
+    myProcessor = new SharedResourcesContextProcessor(myFeatures, myLocks, myResources, myLocksStorage, myReport);
     m.checking(createCommonExpectations());
   }
 

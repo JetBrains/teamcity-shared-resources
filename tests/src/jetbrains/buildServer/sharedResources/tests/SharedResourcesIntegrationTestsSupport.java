@@ -77,7 +77,7 @@ public class SharedResourcesIntegrationTestsSupport {
       new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
 
     final SharedResourcesContextProcessor processor =
-      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, fixture.getSingletonService(RunningBuildsManager.class), buildUsedResourcesReport);
+      new SharedResourcesContextProcessor(features, locks, resources, locksStorage, buildUsedResourcesReport);
 
     final ResourceUsageAnalyzer analyzer = new ResourceUsageAnalyzer(resources, features);
     final ResourceHelper resourceHelper = new ResourceHelper();
@@ -139,11 +139,6 @@ public class SharedResourcesIntegrationTestsSupport {
     return new Lock(resourceName, LockType.READ, value);
   }
 
-  public static void addAnyLock(@NotNull final BuildTypeSettings settings,
-                                @NotNull final String resourceName) {
-    settings.addBuildFeature(SharedResourcesPluginConstants.FEATURE_TYPE, createAnyLock(resourceName));
-  }
-
   public static Map<String, String> createInfiniteResource(final String name) {
     return createQuotedResource(name, -1);
   }
@@ -177,12 +172,6 @@ public class SharedResourcesIntegrationTestsSupport {
   private static Map<String, String> createSpecificLock(@NotNull final String resourceName, @NotNull final String value) {
     return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock " + value);
   }
-
-  @SuppressWarnings("SameParameterValue")
-  private static Map<String, String> createAnyLock(@NotNull final String resourceName) {
-    return CollectionsUtil.asMap(LOCKS_FEATURE_PARAM_KEY, resourceName + " readLock ");
-  }
-
 
   public static void assertLock(@NotNull final Map<String, String> params,
                                 @NotNull final Lock lock) {

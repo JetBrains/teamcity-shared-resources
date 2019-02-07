@@ -189,11 +189,12 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     // 2 builds can start in any order
     RunningBuildEx specificRunningBuild;
 
-    final BuildTypeEx bt = runningBuild.getBuildPromotion().getBuildType();
+    final BuildPromotionEx buildPromotion = runningBuild.getBuildPromotion();
+    final BuildTypeEx bt = buildPromotion.getBuildType();
     assertNotNull(bt);
     if (bt.getExternalId().equals(btAny.getExternalId())) {
       // if we started ANY build, we should check what lock was taken
-      final Map<String, Lock> payload = storage.load(runningBuild.getBuildPromotion());
+      final Map<String, Lock> payload = storage.load(buildPromotion);
       String value = payload.get(resourceTop.getName()).getValue();
       // if it is the value that is requested by SPECIFIC one, -> wait for status in specific build, finish any build, start specific, check lock
       if (specificRequestedValue.equals(value)) {
@@ -213,8 +214,38 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
         assertContains(readArtifact(qbAny.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval2");
       }
     }
+    assertNotNull(buildPromotion.getAttribute("teamcity.sharedResources." + resourceTop.getId()));
     finishAllBuilds();
     waitForAllBuildsToFinish();
     assertContains(readArtifact(qbSpecific.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
+  }
+
+  @Test
+  public void testCustomResource_AnyAny() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "val2", "val1"));
+
+    SProject child1 = top.createProject("child1", "child1");
+    SBuildType btAny1 = child1.createBuildType("btAny1", "btAny1");
+    addReadLock(btAny1, resourceTop);
+
+    SProject child2 = top.createProject("child2", "child2");
+    SBuildType btAny2 = child2.createBuildType("btAny2", "btAny2");
+    addReadLock(btAny2, resourceTop);
+
+    myFixture.createEnabledAgent("Ant");
+
+    final SQueuedBuild qbAny1 = btAny1.addToQueue("");
+    final SQueuedBuild qbAny2 = btAny2.addToQueue("");
+
+    assertNotNull(qbAny1);
+    assertNotNull(qbAny2);
+
+    myFixture.flushQueueAndWaitN(2);
+
+    finishAllBuilds();
+
+    assertNotNull(((BuildPromotionEx)qbAny1.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
+    assertNotNull(((BuildPromotionEx)qbAny2.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
   }
 }

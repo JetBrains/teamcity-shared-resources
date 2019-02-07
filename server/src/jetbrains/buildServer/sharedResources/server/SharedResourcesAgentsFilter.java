@@ -18,7 +18,6 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
-import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,12 +179,18 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                          @NotNull final Map<String, Resource> chainNodeResources,
                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
                                          @NotNull final Map<String, Lock> locksToTake,
-                                         @NotNull final BuildPromotion promotion) {
+                                         @NotNull final BuildPromotion buildPromotion) {
+    final String projectId = buildPromotion.getProjectId();
     WaitReason reason = null;
-    gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
-    final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), accessor, chainNodeResources, chainLocks, promotion);
-    if (!unavailableLocks.isEmpty()) {
-      reason = createWaitReason(takenLocks.get(), unavailableLocks);
+    if (projectId != null) {
+      gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
+      final Map<Resource, Lock> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), accessor, chainNodeResources, chainLocks, buildPromotion);
+      if (!unavailableLocks.isEmpty()) {
+        reason = createWaitReason(takenLocks.get(), unavailableLocks);
+      } else {
+        storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor); // assign ANY locks here
+        // if we are here, then the build will pass on to be started
+      }
     }
     return reason;
   }
@@ -217,7 +222,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
               }
             } else {
               storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake, accessor); // assign ANY locks here
-              // if we are here, then the build will pass on to be started
             }
           }
         }
@@ -264,7 +268,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       values.removeAll(takenLock.getReadLocks().values());
     }
     return values.isEmpty() ? "" : values.iterator().next();
-    }
+  }
 
   /**
    * Gathers information about running and distributed build from runtime
