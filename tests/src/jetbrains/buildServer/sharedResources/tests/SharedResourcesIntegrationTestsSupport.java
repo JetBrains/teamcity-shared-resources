@@ -86,7 +86,6 @@ public class SharedResourcesIntegrationTestsSupport {
 
     final BeansFactory beansFactory = new BeansFactory(resources);
 
-    fixture.addService(new ReservedValuesProvider(fixture.getServer()));
     fixture.getServer().registerExtension(BuildParametersProvider.class, "tests", provider);
     fixture.addService(locksStorage);
     fixture.addService(messages);

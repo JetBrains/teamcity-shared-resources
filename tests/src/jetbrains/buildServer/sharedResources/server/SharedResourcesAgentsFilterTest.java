@@ -124,6 +124,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Test
   public void testNullBuildType() {
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 
@@ -147,6 +150,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
   @Test
   public void testNullProjectId() {
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 
@@ -171,6 +177,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = Collections.emptyList();
 
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 
@@ -202,6 +211,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     invalidLocks.put(new Lock("lock1", LockType.READ), "");
 
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 
@@ -238,6 +250,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> features = Collections.singleton(feature);
 
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 
@@ -406,6 +421,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     invalidLocks.put(new Lock("lock1", LockType.READ), "Resource 'lock1' has duplicate definition");
 
     m.checking(new Expectations() {{
+      oneOf(myRunningBuildsManager).getRunningBuilds();
+      will(returnValue(Collections.emptyList()));
+
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));
 

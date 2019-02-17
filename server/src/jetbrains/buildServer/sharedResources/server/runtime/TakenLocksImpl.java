@@ -17,12 +17,9 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.util.*;
-import jetbrains.buildServer.runner.SimpleRunnerConstants;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;

@@ -19,10 +19,13 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import java.util.List;
 import java.util.Map;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.TestFor;
+import jetbrains.buildServer.util.WaitFor;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -247,5 +250,38 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
 
     assertNotNull(((BuildPromotionEx)qbAny1.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
     assertNotNull(((BuildPromotionEx)qbAny2.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
+  }
+
+  @Test(invocationCount = 100)
+  public void testActualizeResourceAffinity() {
+    final String expectedReason = "You shall not pass!";
+    final StartingBuildAgentsFilter customFilter = agentsFilterContext -> {
+      AgentsFilterResult result = new AgentsFilterResult();
+      final BuildPromotionEx bp = (BuildPromotionEx)agentsFilterContext.getStartingBuild().getBuildPromotionInfo();
+      if ("stopMe".equals(bp.getBuildTypeExternalId())) {
+        result.setWaitReason(new SimpleWaitReason(expectedReason));
+      }
+      return result;
+    };
+    myFixture.addService(customFilter);
+
+    final SProject project = myFixture.createProject("project");
+    final Resource resource = addResource(myFixture, project, createCustomResource("resource", "value"));
+    final SBuildType btStopMe = project.createBuildType("stopMe", "stopMe");
+    final SBuildType btOk = project.createBuildType("btOk", "btOk");
+
+    addReadLock(btStopMe, resource);
+    addReadLock(btOk, resource);
+
+    final SQueuedBuild stopMeBuild = btStopMe.addToQueue("");
+    assertNotNull(stopMeBuild);
+    waitForReason(stopMeBuild, expectedReason);
+    final SQueuedBuild okQueuedBuild = btOk.addToQueue("");
+    assertNotNull(okQueuedBuild);
+    final RunningBuildEx rb = myFixture.flushQueueAndWait();
+    assertEquals(btOk, rb.getBuildType());
+    final String val = (String)rb.getBuildPromotion().getAttribute("teamcity.sharedResources." + resource.getId());
+    assertNotNull(val);
+    assertEquals("value", val);
   }
 }

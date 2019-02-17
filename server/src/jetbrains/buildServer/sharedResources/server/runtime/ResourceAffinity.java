@@ -17,13 +17,10 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import gnu.trove.TLongObjectHashMap;
+import gnu.trove.TLongObjectIterator;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.concurrent.NotThreadSafe;
-import jetbrains.buildServer.ExtensionHolder;
 import jetbrains.buildServer.serverSide.BuildPromotion;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.buildDistribution.DistributionCycleExtension;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,17 +51,18 @@ public class ResourceAffinity {
    */
   public void store(@NotNull final BuildPromotion promotion,
                     @NotNull final Map<String, String> affinityMap) {
-      final long promotionId = promotion.getId();
-      affinityMap.forEach((resourceId, value) -> {
-        // store the value
-        myLockedValues.computeIfAbsent(resourceId, it -> new TLongObjectHashMap<>()).put(promotionId, value);
-        Set<String> buildLockedResources = myBuildLockedResources.get(promotionId);
-        if (buildLockedResources == null) {
-          buildLockedResources = new HashSet<>();
-          myBuildLockedResources.put(promotionId, buildLockedResources);
-        }
-        buildLockedResources.add(resourceId);
-      });
+    final long promotionId = promotion.getId();
+    System.out.println("store: " + promotionId);
+    affinityMap.forEach((resourceId, value) -> {
+      // store the value
+      myLockedValues.computeIfAbsent(resourceId, it -> new TLongObjectHashMap<>()).put(promotionId, value);
+      Set<String> buildLockedResources = myBuildLockedResources.get(promotionId);
+      if (buildLockedResources == null) {
+        buildLockedResources = new HashSet<>();
+        myBuildLockedResources.put(promotionId, buildLockedResources);
+      }
+      buildLockedResources.add(resourceId);
+    });
 
   }
 
@@ -94,28 +92,15 @@ public class ResourceAffinity {
     return Collections.emptySet();
   }
 
-  /**
-   * Returns all requested resources with values for given promotion
-   *
-   * @param buildPromotion build promotion
-   * @return map of resources with corresponding requested values
-   */
-  @NotNull
-  Map<String, String> getRequestedValues(@NotNull final BuildPromotion buildPromotion) {
-    final Map<String, String> result = new HashMap<>();
-    final long promotionId = buildPromotion.getId();
-    final Set<String> buildLockedResources = myBuildLockedResources.get(promotionId);
-    if (buildLockedResources != null) {
-      buildLockedResources.forEach(resourceId -> {
-        final TLongObjectHashMap<String> resourceLockedValues = myLockedValues.get(resourceId);
-        if (resourceLockedValues != null) {
-          String val = resourceLockedValues.get(promotionId);
-          if (val != null) {
-            result.put(resourceId, val);
-          }
-        }
-      });
+  // clear reserved values for non-existing promotions
+  public void clear(@NotNull final Set<Long> ids) {
+    final TLongObjectIterator<Set<String>> iterator = myBuildLockedResources.iterator();
+    while (iterator.hasNext()) {
+      iterator.advance();
+      if (!ids.contains(iterator.key())) {
+        Optional.ofNullable(iterator.value()).ifPresent(it -> it.forEach(resourceId -> myLockedValues.get(resourceId).remove(iterator.key())));
+        iterator.remove();
+      }
     }
-    return result;
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -18,9 +19,12 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 
 /**
  * Created with IntelliJ IDEA.
@@ -72,15 +76,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @NotNull
   @Override
   public AgentsFilterResult filterAgents(@NotNull final AgentsFilterContext context) {
-    // get custom data
     final DistributionDataAccessor accessor = new DistributionDataAccessor(context);
-    final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>();
+    final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>(myRunningBuildsManager.getRunningBuilds());
     final AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
     final QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
+
+    cleanResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds.get());
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -163,6 +168,15 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return result;
   }
 
+  private void cleanResourceAffinity(@NotNull final ResourceAffinity resourceAffinity,
+                                     @NotNull final Collection<QueuedBuildInfo> canBeStarted,
+                                     @NotNull final Collection<SRunningBuild> runningBuilds) {
+    resourceAffinity.clear(Stream.concat(
+      canBeStarted.stream().map(QueuedBuildInfo::getBuildPromotionInfo).map(BuildPromotionInfo::getId),
+      runningBuilds.stream().map(SRunningBuild::getBuildPromotion).map(BuildPromotion::getId)
+    ).collect(Collectors.toSet()));
+  }
+
   @Nullable
   private SBuildType getBuildTypeSafe(@NotNull final SQueuedBuild queuedBuild) {
     try {
@@ -188,7 +202,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       if (!unavailableLocks.isEmpty()) {
         reason = createWaitReason(takenLocks.get(), unavailableLocks);
       } else {
-        storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor); // assign ANY locks here
+        storeResourcesAffinity((BuildPromotionEx)buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor); // assign ANY locks here
         // if we are here, then the build will pass on to be started
       }
     }
@@ -230,7 +244,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return reason;
   }
 
-  private void storeResourcesAffinity(@NotNull final BuildPromotion promotion,
+  private void storeResourcesAffinity(@NotNull final BuildPromotionEx promotion,
                                       @NotNull final String projectId,
                                       @NotNull final Map<Resource, TakenLock> takenLocks,
                                       @NotNull final Collection<Lock> locksToTake,
@@ -256,10 +270,14 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     });
     if (!affinityMap.isEmpty()) {
       accessor.getResourceAffinity().store(promotion, affinityMap);
+      affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
     }
   }
 
-  private String getNextAvailableValue(final CustomResource r, final Map<Resource, TakenLock> takenLocks, final BuildPromotion promotion, @NotNull final DistributionDataAccessor accessor) {
+  private String getNextAvailableValue(@NotNull final CustomResource r,
+                                       @NotNull final Map<Resource, TakenLock> takenLocks,
+                                       @NotNull final BuildPromotion promotion,
+                                       @NotNull final DistributionDataAccessor accessor) {
     final Set<String> values = new HashSet<>(r.getValues());
     values.removeAll(accessor.getResourceAffinity().getOtherAssignedValues(r, promotion));
     // remove values from taken locks
@@ -279,9 +297,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   private void gatherRuntimeInfo(@NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
                                  @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                  @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
-    if (runningBuilds.get() == null) {
-      runningBuilds.set(myRunningBuildsManager.getRunningBuilds());
-    }
     if (takenLocks.get() == null) {
       takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
     }
