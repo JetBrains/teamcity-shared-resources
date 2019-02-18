@@ -52,7 +52,6 @@ public class ResourceAffinity {
   public void store(@NotNull final BuildPromotion promotion,
                     @NotNull final Map<String, String> affinityMap) {
     final long promotionId = promotion.getId();
-    System.out.println("store: " + promotionId);
     affinityMap.forEach((resourceId, value) -> {
       // store the value
       myLockedValues.computeIfAbsent(resourceId, it -> new TLongObjectHashMap<>()).put(promotionId, value);
