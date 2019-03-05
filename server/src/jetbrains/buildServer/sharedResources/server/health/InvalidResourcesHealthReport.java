@@ -89,6 +89,6 @@ public class InvalidResourcesHealthReport extends HealthStatusReport {
     final Map<String, Object> data = new HashMap<>();
     data.put("invalidResources", definitionErrors);
     data.put("project", project);
-    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getProjectId(), CATEGORY, data);
+    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getExternalId(), CATEGORY, data);
   }
 }

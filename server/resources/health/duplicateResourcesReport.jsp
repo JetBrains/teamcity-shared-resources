@@ -13,7 +13,7 @@
 <c:set var="dups" value="${healthStatusItem.additionalData['duplicates']}"/>
 <c:if test="${not empty dups}">
   <div>
-    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
+    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_cPROJECT" >
           <jsp:attribute name="ifAccessGranted">
             <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
           <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
@@ -25,7 +25,8 @@
     <%
       @SuppressWarnings("unchecked")
       final List<String> dups = (List<String>)healthStatusItem.getAdditionalData().get("duplicates");
+      final String dupsFormatted = dups.stream().collect(Collectors.joining(", ", "\"", "\""));
     %>
-    <%=dups.stream().collect(Collectors.joining(", ", "\"", "\""))%>
+    <c:out value="<%=dupsFormatted%>"/>
   </div>
 </c:if>

@@ -16,6 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.server.health;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.healthStatus.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -24,11 +28,6 @@ import jetbrains.buildServer.web.openapi.PagePlaces;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -97,7 +96,7 @@ public class InvalidLocksReport extends HealthStatusReport {
       if (!invalidLocks.isEmpty()) {
         resultConsumer.consumeForBuildType(
                 type,
-                new HealthStatusItem("shared_resources_invalid_locks_" + type.getExtendedFullName(), myCategory, new HashMap<String, Object>() {{
+                new HealthStatusItem("shared_resources_invalid_locks_" + type.getExternalId(), myCategory, new HashMap<String, Object>() {{
           put("invalid_locks", invalidLocks);
           put("build_type", type);
         }}));
