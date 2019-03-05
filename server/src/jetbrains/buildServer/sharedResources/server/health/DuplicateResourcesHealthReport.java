@@ -90,6 +90,6 @@ public class DuplicateResourcesHealthReport extends HealthStatusReport {
     final Map<String, Object> data = new HashMap<>();
     data.put("project", project);
     data.put("duplicates", dups);
-    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getProjectId(), CATEGORY, data);
+    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getExternalId(), CATEGORY, data);
   }
 }

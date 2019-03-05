@@ -39,7 +39,7 @@
         <c:url var="resourcesUrl" value="/admin/editProject.html?projectId=${project.externalId}&tab=JetBrains.SharedResources"/>
         <ul>
           <c:forEach items="${invalidLocks}" var="item">
-            <li><a href="${resourcesUrl}">${item.key.name}</a> &mdash; ${item.value}</li>
+            <li><a href="${resourcesUrl}"><c:out value="${item.key.name}"/></a> &mdash; <c:out value="${item.value}"/></li>
           </c:forEach>
         </ul>
       </c:when>
@@ -48,8 +48,7 @@
           @SuppressWarnings("unchecked")
           final Set<Lock> locks = ((Map<Lock, String>)healthStatusItem.getAdditionalData().get("invalid_locks")).keySet();
         %>
-        <%=ResourceHelper.formatLocksList(locks)
-        %>
+        <c:out value="<%=ResourceHelper.formatLocksList(locks)%>"/>
       </c:otherwise>
     </c:choose>
   </div>
