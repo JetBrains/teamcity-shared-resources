@@ -13,7 +13,7 @@
 <c:set var="dups" value="${healthStatusItem.additionalData['duplicates']}"/>
 <c:if test="${not empty dups}">
   <div>
-    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_cPROJECT" >
+    <authz:authorize projectId="${p.externalId}" allPermissions="EDIT_PROJECT" >
           <jsp:attribute name="ifAccessGranted">
             <c:url var="editUrl" value="/admin/editProject.html?projectId=${p.externalId}&tab=JetBrains.SharedResources"/>
           <a href="${editUrl}"><c:out value="${p.extendedFullName}"/></a>
