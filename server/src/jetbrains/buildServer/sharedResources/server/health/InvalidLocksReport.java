@@ -29,6 +29,8 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.identity;
+
 
 /**
  * Class {@code InvalidLocksReport}
@@ -96,7 +98,7 @@ public class InvalidLocksReport extends HealthStatusReport {
       if (!invalidLocks.isEmpty()) {
         resultConsumer.consumeForBuildType(
                 type,
-                new HealthStatusItem("shared_resources_invalid_locks_" + type.getExternalId(), myCategory, new HashMap<String, Object>() {{
+                new HealthStatusItem(identity(myCategory.getId(), type.getExternalId()), myCategory, new HashMap<String, Object>() {{
           put("invalid_locks", invalidLocks);
           put("build_type", type);
         }}));

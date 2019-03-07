@@ -25,6 +25,8 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.healthStatus.HealthStatusItemPageExtension;
 import org.jetbrains.annotations.NotNull;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.identity;
+
 /**
  * @author Oleg Rybak <oleg.rybak@jetbrains.com>
  */
@@ -89,6 +91,6 @@ public class InvalidResourcesHealthReport extends HealthStatusReport {
     final Map<String, Object> data = new HashMap<>();
     data.put("invalidResources", definitionErrors);
     data.put("project", project);
-    return new HealthStatusItem(CATEGORY.getName() + "_" + project.getExternalId(), CATEGORY, data);
+    return new HealthStatusItem(identity(CATEGORY.getId(), project.getExternalId()), CATEGORY, data);
   }
 }

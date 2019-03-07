@@ -16,12 +16,10 @@
 
 package jetbrains.buildServer.sharedResources;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.util.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Oleg Rybak
@@ -87,4 +85,8 @@ public class SharedResourcesPluginConstants {
   public static Comparator<Resource> RESOURCE_BY_NAME_COMPARATOR = (rc1, rc2) -> rc1.getName().compareToIgnoreCase(rc2.getName());
 
   public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
+
+  public static String identity(@NotNull final String category, String... parts) {
+    return "shared_resources_health_" + category + "_" + StringUtil.join(parts, "").hashCode();
+  }
 }
