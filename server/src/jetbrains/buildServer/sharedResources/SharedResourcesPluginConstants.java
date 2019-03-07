@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -91,5 +92,9 @@ public class SharedResourcesPluginConstants {
 
   public static String getReservedResourceAttributeKey(@NotNull final String resourceId) {
     return "teamcity.sharedResources." + resourceId;
+  }
+
+  public static String identity(@NotNull final String category, String... parts) {
+    return "shared_resources_health_" + category + "_" + StringUtil.join(parts, "").hashCode();
   }
 }
