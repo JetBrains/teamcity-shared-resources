@@ -16,11 +16,7 @@
 
 package jetbrains.buildServer.sharedResources;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
