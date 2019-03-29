@@ -86,7 +86,4 @@ public class SharedResourcesPluginConstants {
 
   public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
 
-  public static String identity(@NotNull final String category, String... parts) {
-    return "shared_resources_health_" + category + "_" + StringUtil.join(parts, "").hashCode();
-  }
 }
