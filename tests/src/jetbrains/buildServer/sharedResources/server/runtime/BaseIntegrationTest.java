@@ -18,14 +18,15 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterResult;
+import jetbrains.buildServer.serverSide.buildDistribution.SimpleWaitReason;
+import jetbrains.buildServer.serverSide.buildDistribution.StartingBuildAgentsFilter;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.TestFor;
-import jetbrains.buildServer.util.WaitFor;
-import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -207,20 +208,20 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
         specificRunningBuild = myFixture.flushQueueAndWait();
         assert (qbSpecific.getBuildPromotion().getAssociatedBuild() instanceof RunningBuildEx);
         finishBuild(specificRunningBuild, false);
-        assertContains(readArtifact(qbAny.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
+        assertContains(readArtifact(Objects.requireNonNull(qbAny.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tval1");
       } else {
         assertEquals(2, myFixture.getSingletonService(RunningBuildsManager.class).getRunningBuilds().size());
         assert (qbSpecific.getBuildPromotion().getAssociatedBuild() instanceof RunningBuildEx);
         specificRunningBuild = (RunningBuildEx)qbSpecific.getBuildPromotion().getAssociatedBuild();
         finishBuild(runningBuild, false);
         finishBuild(specificRunningBuild, false);
-        assertContains(readArtifact(qbAny.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval2");
+        assertContains(readArtifact(Objects.requireNonNull(qbAny.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tval2");
       }
     }
     assertNotNull(buildPromotion.getAttribute("teamcity.sharedResources." + resourceTop.getId()));
     finishAllBuilds();
     waitForAllBuildsToFinish();
-    assertContains(readArtifact(qbSpecific.getBuildPromotion().getAssociatedBuild()), "resource_top\treadLock\tval1");
+    assertContains(readArtifact(Objects.requireNonNull(qbSpecific.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tval1");
   }
 
   @Test
@@ -252,7 +253,7 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertNotNull(((BuildPromotionEx)qbAny2.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
   }
 
-  @Test(invocationCount = 100)
+  @Test
   public void testActualizeResourceAffinity() {
     final String expectedReason = "You shall not pass!";
     final StartingBuildAgentsFilter customFilter = agentsFilterContext -> {

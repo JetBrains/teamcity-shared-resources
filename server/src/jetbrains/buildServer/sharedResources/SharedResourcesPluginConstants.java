@@ -18,7 +18,6 @@ package jetbrains.buildServer.sharedResources;
 
 import java.util.Comparator;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
-import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
