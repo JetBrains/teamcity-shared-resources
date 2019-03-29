@@ -90,7 +90,4 @@ public class SharedResourcesPluginConstants {
     return "teamcity.sharedResources." + resourceId;
   }
 
-  public static String identity(@NotNull final String category, String... parts) {
-    return "shared_resources_health_" + category + "_" + StringUtil.join(parts, "").hashCode();
-  }
 }
