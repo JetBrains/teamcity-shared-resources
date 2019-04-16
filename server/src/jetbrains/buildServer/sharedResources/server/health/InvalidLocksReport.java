@@ -60,7 +60,7 @@ public class InvalidLocksReport extends HealthStatusReport {
     myInspector = inspector;
     myCategory = new ItemCategory(CATEGORY_ID, CATEGORY_NAME, ItemSeverity.WARN);
     final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
-    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/invalidLocksReport.jsp"));
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("health/invalidLocksReport.jsp"));
     myPEx.addCssFile("/css/admin/buildTypeForm.css");
     myPEx.setVisibleOutsideAdminArea(true);
     myPEx.register();

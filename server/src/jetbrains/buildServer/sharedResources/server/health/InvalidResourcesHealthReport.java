@@ -46,7 +46,7 @@ public class InvalidResourcesHealthReport extends HealthStatusReport {
                                       @NotNull final ConfigurationInspector inspector) {
     myInspector = inspector;
     final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
-    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/invalidResourcesReport.jsp"));
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("health/invalidResourcesReport.jsp"));
     myPEx.setVisibleOutsideAdminArea(true);
     myPEx.register();
   }
