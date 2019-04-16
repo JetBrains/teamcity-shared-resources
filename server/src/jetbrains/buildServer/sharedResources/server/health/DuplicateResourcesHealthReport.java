@@ -46,7 +46,7 @@ public class DuplicateResourcesHealthReport extends HealthStatusReport {
                                         @NotNull final ConfigurationInspector inspector) {
     myInspector = inspector;
     final HealthStatusItemPageExtension myPEx = new HealthStatusItemPageExtension(TYPE, pagePlaces);
-    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("/health/duplicateResourcesReport.jsp"));
+    myPEx.setIncludeUrl(pluginDescriptor.getPluginResourcesPath("health/duplicateResourcesReport.jsp"));
     myPEx.setVisibleOutsideAdminArea(true);
     myPEx.register();
   }
