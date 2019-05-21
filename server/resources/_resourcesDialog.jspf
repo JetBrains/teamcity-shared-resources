@@ -33,7 +33,7 @@
         <span class="error" id="error_Name"></span>
         <span id="nameAttention" class="smallNoteAttention" style="display: none">
           <bs:out value="Are you sure you want to rename this resource? It may result in errors if the name is used as a"/>
-          <bs:helpLink file="Defining+and+Using+Build+Parameters+in+Build+Configuration">
+          <bs:helpLink file="Configuring+Build+Parameters">
             <bs:out value="parameter reference"/>
           </bs:helpLink>
         </span>
