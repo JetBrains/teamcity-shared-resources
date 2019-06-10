@@ -31,6 +31,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
+import static org.testng.Assert.assertNotEquals;
 
 /**
  * Created with IntelliJ IDEA.
@@ -249,8 +250,11 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
 
     finishAllBuilds();
 
-    assertNotNull(((BuildPromotionEx)qbAny1.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
-    assertNotNull(((BuildPromotionEx)qbAny2.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId()));
+    final String val1 = (String)((BuildPromotionEx)qbAny1.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId());
+    assertNotNull(val1);
+    final String val2 = (String)((BuildPromotionEx)qbAny2.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId());
+    assertNotNull(val2);
+    assertNotEquals(val1, val2, "Provided values for ANY locks are equal! " + val1 + ":" + val2);
   }
 
   @Test

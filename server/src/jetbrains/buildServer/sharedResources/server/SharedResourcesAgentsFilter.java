@@ -92,7 +92,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
       if (depPromos.isEmpty()) {
         LOG.debug("Queued build does not have dependent composite promotions");
-        reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion);
+        reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, context.isEmulationMode());
       } else {
         LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
         // contains resources and locks that are INSIDE of the build chain
@@ -131,7 +131,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
               // resolve locks that build wants to take against actual resources
               chainResources.computeIfAbsent(compositeQueuedBuildType.getProjectId(), myResources::getResourcesMap);
               reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks,
-                                           chainResources.get(compositeQueuedBuildType.getProjectId()), chainLocks, locksToTake, compositeQueuedBuild.getBuildPromotion());
+                                           chainResources.get(compositeQueuedBuildType.getProjectId()),
+                                           chainLocks, locksToTake, compositeQueuedBuild.getBuildPromotion(), context.isEmulationMode());
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
@@ -155,13 +156,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
-              reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake, myPromotion);
+              reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake, myPromotion, context.isEmulationMode());
             }
           }
         }
       }
     } else {
-      reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion);
+      reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, context.isEmulationMode());
     }
     final AgentsFilterResult result = new AgentsFilterResult();
     result.setWaitReason(reason);
@@ -193,7 +194,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                          @NotNull final Map<String, Resource> chainNodeResources,
                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
                                          @NotNull final Map<String, Lock> locksToTake,
-                                         @NotNull final BuildPromotion buildPromotion) {
+                                         @NotNull final BuildPromotion buildPromotion,
+                                         boolean emulationMode) {
     final String projectId = buildPromotion.getProjectId();
     WaitReason reason = null;
     if (projectId != null) {
@@ -202,7 +204,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       if (!unavailableLocks.isEmpty()) {
         reason = createWaitReason(takenLocks.get(), unavailableLocks);
       } else {
-        storeResourcesAffinity((BuildPromotionEx)buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor); // assign ANY locks here
+        storeResourcesAffinity((BuildPromotionEx)buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor, emulationMode); // assign ANY locks here
         // if we are here, then the build will pass on to be started
       }
     }
@@ -214,7 +216,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                         @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
-                                        @NotNull final BuildPromotion promotion) {
+                                        @NotNull final BuildPromotion promotion, final boolean emulationMode) {
     final String projectId = buildPromotion.getProjectId();
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
@@ -235,7 +237,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                 LOG.debug("Firing precondition for queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
             } else {
-              storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake, accessor); // assign ANY locks here
+              storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake, accessor, emulationMode); // assign ANY locks here
             }
           }
         }
@@ -248,8 +250,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                       @NotNull final String projectId,
                                       @NotNull final Map<Resource, TakenLock> takenLocks,
                                       @NotNull final Collection<Lock> locksToTake,
-                                      @NotNull final DistributionDataAccessor accessor) {
-
+                                      @NotNull final DistributionDataAccessor accessor,
+                                      final boolean emulationMode) {
     final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
     final Map<String, String> affinityMap = new HashMap<>();
     locksToTake.forEach(lock -> {
@@ -270,7 +272,9 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     });
     if (!affinityMap.isEmpty()) {
       accessor.getResourceAffinity().store(promotion, affinityMap);
-      affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
+      if (!emulationMode) {
+        affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
+      }
     }
   }
 
