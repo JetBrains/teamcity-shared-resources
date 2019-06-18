@@ -226,6 +226,24 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
   }
 
   @Test
+  public void testCustomResource_SpecificSingle() {
+    final Resource resourceTop = addResource(myFixture, myProject, createCustomResource("resource_top", "value"));
+    SBuildType btSpecific = myProject.createBuildType("btSpecific", "btSpecific");
+
+    addWriteLock(btSpecific, "resource_top");
+
+    final SQueuedBuild qbSpecific = btSpecific.addToQueue("");
+    assertNotNull(qbSpecific);
+    myFixture.flushQueueAndWait();
+
+    finishAllBuilds();
+    waitForAllBuildsToFinish();
+    final String reservedValue = (String)((BuildPromotionEx)qbSpecific.getBuildPromotion()).getAttribute("teamcity.sharedResources." + resourceTop.getId());
+    assertNull("Should not reserve value for write lock", reservedValue);
+    assertContains(readArtifact(Objects.requireNonNull(qbSpecific.getBuildPromotion().getAssociatedBuild())), "resource_top\twriteLock\t ");
+  }
+
+  @Test
   public void testCustomResource_AnyAny() {
     final SProject top = myFixture.createProject("top");
     final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "val2", "val1"));
@@ -257,6 +275,14 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertNotEquals(val1, val2, "Provided values for ANY locks are equal! " + val1 + ":" + val2);
   }
 
+  /**
+   * Custom shared resource with single value
+   *
+   * Two builds, both require custom shared resource value
+   * one is stopped by custom agent filter, the other is not
+   *
+   * Build that is not stopped should get value correctly
+   */
   @Test
   public void testActualizeResourceAffinity() {
     final String expectedReason = "You shall not pass!";
@@ -287,6 +313,6 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertEquals(btOk, rb.getBuildType());
     final String val = (String)rb.getBuildPromotion().getAttribute("teamcity.sharedResources." + resource.getId());
     assertNotNull(val);
-    assertEquals("value", val);
+    assertEquals("Incorrect value of " + "teamcity.sharedResources." + resource.getId() + " parameter", "value", val);
   }
 }

@@ -91,12 +91,18 @@ public class ResourceAffinity {
     return Collections.emptySet();
   }
 
-  // clear reserved values for non-existing promotions
-  public void clear(@NotNull final Set<Long> ids) {
+  /**
+   * Clears stored resource affinity for builds that do not participate in current distribution cycle
+   * Such builds appear when build is removed from the distribution cycle by other extensions
+   * after SharedResources plugin has already processed the build
+   *
+   * @param currentPromotionIds ids of promotions that participate in current distribution cycle
+   */
+  public void actualize(@NotNull final Set<Long> currentPromotionIds) {
     final TLongObjectIterator<Set<String>> iterator = myBuildLockedResources.iterator();
     while (iterator.hasNext()) {
       iterator.advance();
-      if (!ids.contains(iterator.key())) {
+      if (!currentPromotionIds.contains(iterator.key())) {
         Optional.ofNullable(iterator.value()).ifPresent(it -> it.forEach(resourceId -> myLockedValues.get(resourceId).remove(iterator.key())));
         iterator.remove();
       }

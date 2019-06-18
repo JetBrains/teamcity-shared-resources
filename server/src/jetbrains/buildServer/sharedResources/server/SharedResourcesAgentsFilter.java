@@ -10,6 +10,7 @@ import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
@@ -85,7 +86,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
 
-    cleanResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds.get());
+    actualizeResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds.get());
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -169,10 +170,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return result;
   }
 
-  private void cleanResourceAffinity(@NotNull final ResourceAffinity resourceAffinity,
-                                     @NotNull final Collection<QueuedBuildInfo> canBeStarted,
-                                     @NotNull final Collection<SRunningBuild> runningBuilds) {
-    resourceAffinity.clear(Stream.concat(
+  private void actualizeResourceAffinity(@NotNull final ResourceAffinity resourceAffinity,
+                                         @NotNull final Collection<QueuedBuildInfo> canBeStarted,
+                                         @NotNull final Collection<SRunningBuild> runningBuilds) {
+    resourceAffinity.actualize(Stream.concat(
       canBeStarted.stream().map(QueuedBuildInfo::getBuildPromotionInfo).map(BuildPromotionInfo::getId),
       runningBuilds.stream().map(SRunningBuild::getBuildPromotion).map(BuildPromotion::getId)
     ).collect(Collectors.toSet()));
@@ -216,7 +217,8 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                         @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
-                                        @NotNull final BuildPromotion promotion, final boolean emulationMode) {
+                                        @NotNull final BuildPromotion promotion,
+                                        final boolean emulationMode) {
     final String projectId = buildPromotion.getProjectId();
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
@@ -254,38 +256,41 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                       final boolean emulationMode) {
     final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
     final Map<String, String> affinityMap = new HashMap<>();
-    locksToTake.forEach(lock -> {
-      Resource r = resources.get(lock.getName());
-      if (r instanceof CustomResource) {
-        if (StringUtil.isEmptyOrSpaces(lock.getValue())) {
-          // if lock is ANY lock -> choose next available value
-          final String next = getNextAvailableValue((CustomResource)r, takenLocks, promotion, accessor);
-          if (StringUtil.isEmptyOrSpaces(next)) {
-            LOG.warn("Failed to allocate values for promotion: " + promotion + ", resource: " + r);
-          }
-          affinityMap.put(r.getId(), next);
-        } else {
-          // if lock is SPECIFIC lock - choose lock value
-          affinityMap.put(r.getId(), lock.getValue());
-        }
-      }
-    });
-    if (!affinityMap.isEmpty()) {
+    locksToTake.stream()
+               .filter(lock -> LockType.READ == lock.getType())
+               .forEach(lock -> {
+                 Resource r = resources.get(lock.getName());
+                 if (r instanceof CustomResource) {
+                   if (StringUtil.isEmptyOrSpaces(lock.getValue())) {
+                     // if lock is ANY lock -> choose next available value
+                     final String next = getNextAvailableValue((CustomResource)r, takenLocks, promotion, accessor);
+                     if (StringUtil.isEmptyOrSpaces(next)) {
+                       LOG.warn("Failed to allocate values for promotion: " + promotion + ", resource: " + r);
+                     }
+                     affinityMap.put(r.getId(), next);
+                   } else {
+                     // if lock is SPECIFIC lock - choose lock value
+                     affinityMap.put(r.getId(), lock.getValue());
+                   }
+                 }
+               });
+    if (!affinityMap.isEmpty() && !emulationMode) {
+      // store assigned values in affinity set to be used by other builds inside current distribution cycle
       accessor.getResourceAffinity().store(promotion, affinityMap);
-      if (!emulationMode) {
-        affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
-      }
+      // store assigned value from resource affinity inside build promotion
+      affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
     }
   }
 
-  private String getNextAvailableValue(@NotNull final CustomResource r,
+  private String getNextAvailableValue(@NotNull final CustomResource resource,
                                        @NotNull final Map<Resource, TakenLock> takenLocks,
                                        @NotNull final BuildPromotion promotion,
                                        @NotNull final DistributionDataAccessor accessor) {
-    final Set<String> values = new HashSet<>(r.getValues());
-    values.removeAll(accessor.getResourceAffinity().getOtherAssignedValues(r, promotion));
+    final Set<String> values = new HashSet<>(resource.getValues());
+    // remove all values reserved by other builds in current distribution cycle
+    values.removeAll(accessor.getResourceAffinity().getOtherAssignedValues(resource, promotion));
     // remove values from taken locks
-    final TakenLock takenLock = takenLocks.get(r);
+    final TakenLock takenLock = takenLocks.get(resource);
     if (takenLock != null) {
       values.removeAll(takenLock.getReadLocks().values());
     }
@@ -294,6 +299,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   /**
    * Gathers information about running and distributed build from runtime
+   *
    * @param runningBuilds local running build reference
    * @param canBeStarted distributor output
    * @param takenLocks local taken locks reference
