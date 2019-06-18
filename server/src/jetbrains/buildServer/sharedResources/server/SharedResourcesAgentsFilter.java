@@ -78,15 +78,16 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @Override
   public AgentsFilterResult filterAgents(@NotNull final AgentsFilterContext context) {
     final DistributionDataAccessor accessor = new DistributionDataAccessor(context);
-    final AtomicReference<List<SRunningBuild>> runningBuilds = new AtomicReference<>(myRunningBuildsManager.getRunningBuilds());
+
+    final QueuedBuildInfo queuedBuild = context.getStartingBuild();
+    final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
+    final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
+
     final AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
-    final QueuedBuildInfo queuedBuild = context.getStartingBuild();
-    final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
     final BuildPromotionEx myPromotion = (BuildPromotionEx) queuedBuild.getBuildPromotionInfo();
-
-    actualizeResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds.get());
+    actualizeResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds);
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -189,7 +190,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   @Nullable
   private WaitReason processBuildInChain(@NotNull final DistributionDataAccessor accessor,
-                                         @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                         @NotNull final List<SRunningBuild> runningBuilds,
                                          @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                          @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                          @NotNull final Map<String, Resource> chainNodeResources,
@@ -214,7 +215,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   private WaitReason processSingleBuild(@NotNull final BuildPromotionEx buildPromotion,
                                         @NotNull final DistributionDataAccessor accessor,
-                                        @NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+                                        @NotNull final List<SRunningBuild> runningBuilds,
                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                         @NotNull final BuildPromotion promotion,
@@ -304,11 +305,11 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
    * @param canBeStarted distributor output
    * @param takenLocks local taken locks reference
    */
-  private void gatherRuntimeInfo(@NotNull final AtomicReference<List<SRunningBuild>> runningBuilds,
+  private void gatherRuntimeInfo(@NotNull final List<SRunningBuild> runningBuilds,
                                  @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                  @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
     if (takenLocks.get() == null) {
-      takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds.get(), canBeStarted.keySet()));
+      takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds, canBeStarted.keySet()));
     }
   }
 
