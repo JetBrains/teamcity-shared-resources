@@ -16,20 +16,29 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import jetbrains.buildServer.agent.Constants;
+import jetbrains.buildServer.agentServer.AgentBuild;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterResult;
 import jetbrains.buildServer.serverSide.buildDistribution.SimpleWaitReason;
 import jetbrains.buildServer.serverSide.buildDistribution.StartingBuildAgentsFilter;
+import jetbrains.buildServer.serverSide.impl.MockBuildAgent;
+import jetbrains.buildServer.serverSide.impl.MockVcsSupport;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.TestFor;
+import jetbrains.buildServer.vcs.RepositoryStateImpl;
+import jetbrains.buildServer.vcs.VcsRootInstanceEx;
+import jetbrains.buildServer.vcs.impl.RepositoryStateManager;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
 import static org.testng.Assert.assertNotEquals;
 
@@ -314,5 +323,90 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     final String val = (String)rb.getBuildPromotion().getAttribute("teamcity.sharedResources." + resource.getId());
     assertNotNull(val);
     assertEquals("Incorrect value of " + "teamcity.sharedResources." + resource.getId() + " parameter", "value", val);
+  }
+
+  @Test
+  @TestFor(issues = "TW-57515")
+  public void testWithSingleTemplate() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resource = addResource(myFixture, top, createCustomResource("resource", "val2", "val1"));
+    final BuildTypeTemplate template = top.createBuildTypeTemplate("my_template", "My Template");
+    addReadLock(template, resource);
+    final String paramName = Constants.ENV_PREFIX + "TEST_VALUE";
+    template.addBuildParameter(new SimpleParameter(paramName, "%teamcity.locks.readLock." + resource.getName() + "%"));
+
+    final SBuildType bt1 = top.createBuildType("bt1");
+    bt1.addTemplate(template, false);
+    final SBuildType bt2 = top.createBuildType("bt2");
+    bt2.addTemplate(template, false);
+
+    myFixture.createEnabledAgent("Ant");
+
+    final SQueuedBuild qb1 = bt1.addToQueue("");
+    final SQueuedBuild qb2 = bt2.addToQueue("");
+
+    assertNotNull(qb1);
+    assertNotNull(qb2);
+
+    myFixture.flushQueueAndWaitN(2);
+    finishAllBuilds();
+
+    final String val1 = (String)((BuildPromotionEx)qb1.getBuildPromotion()).getAttribute(getReservedResourceAttributeKey(resource.getId()));
+    assertNotNull(val1);
+    final String val2 = (String)((BuildPromotionEx)qb2.getBuildPromotion()).getAttribute(getReservedResourceAttributeKey(resource.getId()));
+    assertNotNull(val2);
+    assertNotEquals(val1, val2, "Provided values for ANY locks are equal! " + val1 + ":" + val2);
+  }
+
+  @Test
+  @TestFor(issues = "TW-57515")
+  public void testWithBuildBranches() {
+    // register vcs support
+    final MockVcsSupport vcsSupport = myFixture.registerVcsSupport("git");
+    // create project
+    final SProject top = myFixture.createProject("top");
+    // create template
+    BuildTypeTemplateEx template = (BuildTypeTemplateEx)top.createBuildTypeTemplate("tpl", "tpl");
+    // create vcs root
+    // attach vcs root to template
+    template.addVcsRoot(top.createVcsRoot(vcsSupport.getName(), null, Collections.emptyMap()));
+    // setup branches
+    final VcsRootInstanceEx instance = (VcsRootInstanceEx)template.getVcsRootInstanceEntries().get(0).getVcsRoot();
+    setBranchSpec(instance, "bugfix/(*)");
+    RepositoryStateImpl state = new RepositoryStateImpl("myBranch");
+    state.setBranchRevision("bugfix/branch1", "rev1");
+    state.setBranchRevision("bugfix/branch2", "rev2");
+    myFixture.getSingletonService(RepositoryStateManager.class).setRepositoryState(instance, state);
+    // create custom shared resource
+    final Resource resource = addResource(myFixture, top, createCustomResource("resource", "val2", "val1"));
+    // create lock
+    addReadLock(template, resource);
+    // create build type from template
+    final BuildTypeEx buildType = (BuildTypeEx)top.createBuildType("bt");
+    buildType.addTemplate(template, false);
+
+    final MockBuildAgent agent2 = myFixture.createEnabledAgent("Ant");
+
+    // add build on branch1 to queue
+    // add build on branch2 to queue
+    BuildPromotionEx branch1Promo = buildType.createBuildPromotion("branch1");
+    branch1Promo.addToQueue("");
+    BuildPromotionEx branch2Promo = buildType.createBuildPromotion("branch2");
+    branch2Promo.addToQueue("");
+    myFixture.flushQueueAndWaitN(2);
+    finishAllBuilds();
+
+    final AgentBuild agentBuild1 = myBuildAgent.getAgentBuild();
+    String value1 = agentBuild1.getServerParameters().get("teamcity.locks.readLock." + resource.getName());
+    final AgentBuild agentBuild2 = agent2.getAgentBuild();
+    String value2 = agentBuild2.getServerParameters().get("teamcity.locks.readLock." + resource.getName());
+    assertNotEquals(value1, value2);
+    finishAllBuilds();
+
+    final String val1 = (String)branch1Promo.getAttribute(getReservedResourceAttributeKey(resource.getId()));
+    assertNotNull(val1);
+    final String val2 = (String)branch2Promo.getAttribute(getReservedResourceAttributeKey(resource.getId()));
+    assertNotNull(val2);
+    assertNotEquals(val1, val2, "Provided values for ANY locks are equal! " + val1 + ":" + val2);
   }
 }

@@ -20,6 +20,7 @@ import java.util.*;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
+import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
 import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
@@ -31,6 +32,8 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 
 /**
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -77,19 +80,29 @@ public class TakenLocksImpl implements TakenLocks {
           locks = myLocksStorage.load(bpEx);
         } else {
           locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
-          // here we need to look for values in build promotion. build is running -> we have values in build promotion parameters
         }
         if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
         final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
         // resolve locks against resources defined in project tree
-        for (Map.Entry<String, Lock> entry: locks.entrySet()) {
+        locks.forEach((name, lock) -> {
           // collection, promotion, resource, lock
-          final Resource resource = resources.get(entry.getKey());
+          final Resource resource = resources.get(name);
           if (resource != null) {
-            addLockToTaken(result, bpEx, resource, entry.getValue());
+            if (resource instanceof CustomResource
+                && lock.getType() == LockType.READ
+                && lock.getValue().equals("")) { // ANY LOCK
+              String reservedValue = (String)bpEx.getAttribute(getReservedResourceAttributeKey(resource.getId()));
+              if (reservedValue != null) {
+                addLockToTaken(result, bpEx, resource, Lock.createFrom(lock, reservedValue));
+              } else {
+                addLockToTaken(result, bpEx, resource, lock);
+              }
+            } else {
+              addLockToTaken(result, bpEx, resource, lock);
+            }
           }
-        }
+        });
       }
     }
 
