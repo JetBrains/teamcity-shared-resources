@@ -19,6 +19,7 @@ package jetbrains.buildServer.sharedResources.tests;
 import java.util.Map;
 import jetbrains.BuildServerCreator;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.impl.ProjectFeatureDescriptorFactory;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -111,6 +112,20 @@ public class SharedResourcesIntegrationTestsSupport {
                                      @NotNull final Map<String, String> resource) {
     return ResourceFactory.fromDescriptor(fixture.getSingletonService(ResourceProjectFeatures.class).addFeature(project, resource));
   }
+
+  /**
+   * Adds resource with specific id of underlying project feature
+   */
+  public static Resource addResource(@NotNull final BuildServerCreator fixture,
+                                     @NotNull final SProject project,
+                                     @NotNull final String id,
+                                     @NotNull final Map<String, String> resource) {
+    SProjectFeatureDescriptor descriptor = fixture.getSingletonService(ProjectFeatureDescriptorFactory.class)
+                                                  .createProjectFeature(id, SharedResourcesPluginConstants.FEATURE_TYPE, resource, project.getProjectId());
+    project.addFeature(descriptor);
+    return ResourceFactory.fromDescriptor(descriptor);
+  }
+
 
   public static Lock addWriteLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource) {
     return addWriteLock(settings, resource.getName());

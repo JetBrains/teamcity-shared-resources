@@ -36,7 +36,7 @@ public class ResourceProjectFeaturesImpl implements ResourceProjectFeatures {
 
   @Override
   public SProjectFeatureDescriptor addFeature(@NotNull final SProject project,
-                         @NotNull final Map<String, String> featureParameters) {
+                                              @NotNull final Map<String, String> featureParameters) {
     return project.addFeature(FEATURE_TYPE, featureParameters);
   }
 

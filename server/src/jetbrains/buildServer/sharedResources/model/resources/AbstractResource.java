@@ -1,5 +1,6 @@
 package jetbrains.buildServer.sharedResources.model.resources;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +28,11 @@ public abstract class AbstractResource implements Resource {
 
   private final boolean myState;
 
-  protected AbstractResource(@NotNull final String id,
-                             @NotNull final String projectId,
-                             @NotNull final String name,
-                             @NotNull final ResourceType type,
-                             boolean state) {
+  AbstractResource(@NotNull final String id,
+                   @NotNull final String projectId,
+                   @NotNull final String name,
+                   @NotNull final ResourceType type,
+                   boolean state) {
     myId = id;
     myName = name;
     myProjectId = projectId;
@@ -81,14 +82,15 @@ public abstract class AbstractResource implements Resource {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof AbstractResource)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
     final AbstractResource that = (AbstractResource)o;
-    return myId.equals(that.myId);
+    return myProjectId.equals(that.myProjectId) &&
+           myId.equals(that.myId);
   }
 
   @Override
   public int hashCode() {
-    return myId.hashCode();
+    return Objects.hash(myProjectId, myId);
   }
 
   @Override

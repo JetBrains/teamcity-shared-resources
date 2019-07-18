@@ -409,4 +409,29 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertNotNull(val2);
     assertNotEquals(val1, val2, "Provided values for ANY locks are equal! " + val1 + ":" + val2);
   }
+
+  /**
+   * Project features, created from Kotlin DSL can have same IDs on different branches of project hierarchy
+   * This test creates resources with same ids of underlying project feature and checks,
+   * whether builds in different subtrees are not affected by same ids of the resources
+   */
+  @Test
+  public void testSameIdDifferentLevels() {
+    final SProject top = myFixture.createProject("top");
+    final SProject child1 = top.createProject("child1", "Child 1");
+    final SProject child2 = top.createProject("child2", "Child 2");
+    final Resource rc1 = addResource(myFixture, child1, "PROJECT_EXT_1", createQuotedResource("rc_child1", 1));
+    final Resource rc2 = addResource(myFixture, child2, "PROJECT_EXT_1", createQuotedResource("rc_child2", 1));
+
+    final SBuildType bt1 = child1.createBuildType("bt1");
+    addReadLock(bt1, rc1);
+    final SBuildType bt2 = child2.createBuildType("bt2");
+    addReadLock(bt2, rc2);
+
+    myFixture.createEnabledAgent("Ant");
+
+    bt1.addToQueue("");
+    bt2.addToQueue("");
+    myFixture.flushQueueAndWaitN(2);
+  }
 }
