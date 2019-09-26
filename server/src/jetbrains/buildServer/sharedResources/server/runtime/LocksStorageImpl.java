@@ -19,12 +19,20 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.Striped;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TLongHashSet;
-import gnu.trove.impl.sync.TSynchronizedLongObjectMap;
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-import jetbrains.buildServer.serverSide.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+import jetbrains.buildServer.serverSide.BuildPromotion;
+import jetbrains.buildServer.serverSide.BuildServerAdapter;
+import jetbrains.buildServer.serverSide.BuildServerListener;
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -34,14 +42,9 @@ import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
-
 /**
  * Class {@code LocksStorageImpl}
- *
+ * <p>
  * Implements storage for taken locks during build execution
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
@@ -68,18 +71,18 @@ public class LocksStorageImpl implements LocksStorage {
   private final TLongHashSet existsSet = new TLongHashSet();
 
   /**
-   * Stores last N entries of taken locks
-   * It is highly unlikely, that we will have more than 300 running builds at the same time
-   * Ff we do, data for at least 300 of them will be accessed without accessing artifacts storage
+   * Global lock for cache/exists set modification
    */
+  @NotNull
+  private final ReadWriteLock myGlobalLock = new ReentrantReadWriteLock(true);
+
+  @SuppressWarnings("UnstableApiUsage")
   @NotNull
   private LoadingCache<BuildPromotion, Map<String, Lock>> myLocksCache;
 
-  /**
-   * Map with separate guarding lock for each build
-   */
+  @SuppressWarnings("UnstableApiUsage")
   @NotNull
-  private final TLongObjectMap<ReentrantLock> myGuards = new TSynchronizedLongObjectMap<>(new TLongObjectHashMap<>());
+  private final Striped<java.util.concurrent.locks.Lock> myGuards = Striped.lazyWeakLock(300);
 
   public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
     CacheLoader<BuildPromotion, Map<String, Lock>> loader = new CacheLoader<BuildPromotion, Map<String, Lock>>() {
@@ -92,7 +95,7 @@ public class LocksStorageImpl implements LocksStorage {
           try {
             final String content = FileUtil.readText(artifact, MY_ENCODING);
             final String[] lines = content.split("\\r?\\n");
-            for (String line: lines) {
+            for (String line : lines) {
               final Lock lock = deserializeTakenLock(line);
               if (lock != null) {
                 result.put(lock.getName(), lock);
@@ -102,7 +105,7 @@ public class LocksStorageImpl implements LocksStorage {
                 }
               }
             }
-          } catch(IOException e) {
+          } catch (IOException e) {
             log.warn("Failed to load taken locks for build [" + buildPromotion + "]; Message is: " + e.getMessage());
           }
         } else {
@@ -111,29 +114,24 @@ public class LocksStorageImpl implements LocksStorage {
         return result;
       }
     };
-    myLocksCache = CacheBuilder.<SBuild, Map<String, Lock>>newBuilder()
-            .maximumSize(300) // each entry corresponds to a running build
-            .build(loader);
+
+    myLocksCache = CacheBuilder.newBuilder()
+                               .maximumSize(300) // each entry corresponds to a running build
+                               .build(loader);
 
     dispatcher.addListener(new BuildServerAdapter() {
-
-      /**
-       * Evicts stored items from cache, as the build is finished and locks are no longer needed
-       */
       @Override
       public void buildFinished(@NotNull SRunningBuild build) {
-        final ReentrantLock l = myGuards.get(build.getBuildId());
-        try {
-          if (l != null) {
-            l.lock();
-          }
-          myLocksCache.invalidate(build);
-          existsSet.remove(build.getBuildId());
-        } finally {
-          if (l != null) {
-            l.unlock();
-          }
-        }
+        withLock(buildPromotionLock(build.getBuildPromotion()),
+                 () -> {
+                   withLock(myGlobalLock::writeLock,
+                            () -> {
+                              myLocksCache.invalidate(build.getBuildPromotion());
+                              existsSet.remove(build.getBuildPromotion().getId());
+                              return null;
+                            });
+                   return null;
+                 });
       }
     });
   }
@@ -142,70 +140,51 @@ public class LocksStorageImpl implements LocksStorage {
   public void store(@NotNull final BuildPromotion buildPromotion,
                     @NotNull final Map<Lock, String> takenLocks) {
     if (!takenLocks.isEmpty()) {
-      final Long promotionId = buildPromotion.getId();
-      final ReentrantLock l = new ReentrantLock(true);
-      try {
-        l.lock();
-        myGuards.put(promotionId, l);
+      withLock(buildPromotionLock(buildPromotion), () -> {
         final Collection<String> serializedStrings = new ArrayList<>();
-        Map<String, Lock> locksToStore = new HashMap<>();
-        for (Map.Entry<Lock, String> entry: takenLocks.entrySet()) {
-          serializedStrings.add(serializeTakenLock(entry.getKey(), entry.getValue()));
-          locksToStore.put(entry.getKey().getName(), Lock.createFrom(entry.getKey(), entry.getValue()));
-        }
+        final Map<String, Lock> locksToStore = new HashMap<>();
+        takenLocks.forEach((lock, value) -> {
+          serializedStrings.add(serializeTakenLock(lock, value));
+          locksToStore.put(lock.getName(), Lock.createFrom(lock, value));
+        });
         try {
           final File artifact = new File(buildPromotion.getArtifactsDirectory(), FILE_PATH);
           if (FileUtil.createParentDirs(artifact)) {
             FileUtil.writeFile(artifact, StringUtil.join(serializedStrings, "\n"), MY_ENCODING);
-            myLocksCache.put(buildPromotion, locksToStore);
-            existsSet.add(promotionId);
+            withLock(myGlobalLock::writeLock, () -> {
+              myLocksCache.put(buildPromotion, locksToStore);
+              existsSet.add(buildPromotion.getId());
+              return null;
+            });
           } else {
             log.warn("Failed to create parent dirs for file with taken locks for build {" + buildPromotion + "}");
           }
         } catch (IOException e) {
           log.warn("Failed to store taken locks for build [" + buildPromotion + "]; Message is: " + e.getMessage());
         }
-      } finally {
-        l.unlock();
-        myGuards.remove(promotionId);
-      }
+        return null;
+      });
     }
   }
 
   @NotNull
   @Override
   public Map<String, Lock> load(@NotNull final BuildPromotion buildPromotion) {
-    final ReentrantLock l = myGuards.get(buildPromotion.getId());
-    try {
-      if (l != null) {
-        l.lock();
-      }
-      try {
-        return myLocksCache.get(buildPromotion);
-      } catch (Exception e) {
-        log.warn(e);
-        return Collections.emptyMap();
-      }
-    } finally {
-      if (l != null) {
-        l.unlock();
-      }
-    }
+    return withLock(buildPromotionLock(buildPromotion), () -> getFromCacheSafe(buildPromotion));
   }
 
   @Override
   public boolean locksStored(@NotNull final BuildPromotion buildPromotion) {
-    final long id = buildPromotion.getId();
-    final ReentrantLock l = myGuards.get(id);
+    return withLock(buildPromotionLock(buildPromotion), () -> withLock(myGlobalLock::readLock, () -> existsSet.contains(buildPromotion.getId())));
+  }
+
+  @NotNull
+  private Map<String, Lock> getFromCacheSafe(@NotNull final BuildPromotion buildPromotion) {
     try {
-      if (l != null) {
-        l.lock();
-      }
-      return existsSet.contains(id);
-    } finally {
-      if (l != null) {
-        l.unlock();
-      }
+      return myLocksCache.get(buildPromotion); // guava cache is thread safe
+    } catch (Exception e) {
+      log.warn(e);
+      return Collections.emptyMap();
     }
   }
 
@@ -219,13 +198,31 @@ public class LocksStorageImpl implements LocksStorage {
     final List<String> strings = StringUtil.split(line, true, '\t'); // we need empty values for locks without values
     Lock result = null;
     if (strings.size() == 3) {
-      String value =  StringUtil.trim(strings.get(2));
+      String value = StringUtil.trim(strings.get(2));
       if (value == null) {
         value = "";
       }
-      result = new Lock(strings.get(0), LockType.byName(strings.get(1)), value);
+      final LockType type = LockType.byName(strings.get(1));
+      result = type == null ? null : new Lock(strings.get(0), type, value);
     }
     return result;
   }
 
+  private Supplier<java.util.concurrent.locks.Lock> buildPromotionLock(@NotNull final BuildPromotion promotion) {
+    return () -> myGuards.get(promotion);
+  }
+
+  private <T> T withLock(Supplier<java.util.concurrent.locks.Lock> s, Callable<T> block) {
+    java.util.concurrent.locks.Lock lock = s.get();
+    lock.lock();
+    T result = null;
+    try {
+      result = block.call();
+    } catch (Exception e) {
+      log.warn(e);
+    } finally {
+      lock.unlock();
+    }
+    return result;
+  }
 }
