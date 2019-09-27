@@ -29,10 +29,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
-import jetbrains.buildServer.serverSide.BuildPromotion;
-import jetbrains.buildServer.serverSide.BuildServerAdapter;
-import jetbrains.buildServer.serverSide.BuildServerListener;
-import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -82,7 +79,7 @@ public class LocksStorageImpl implements LocksStorage {
 
   @SuppressWarnings("UnstableApiUsage")
   @NotNull
-  private final Striped<java.util.concurrent.locks.Lock> myGuards = Striped.lazyWeakLock(300);
+  private final Striped<java.util.concurrent.locks.Lock> myGuards = Striped.lazyWeakLock(TeamCityProperties.getInteger("teamcity.sharedResources.locksStorage.stripedSize", 300));
 
   public LocksStorageImpl(@NotNull final EventDispatcher<BuildServerListener> dispatcher) {
     CacheLoader<BuildPromotion, Map<String, Lock>> loader = new CacheLoader<BuildPromotion, Map<String, Lock>>() {
@@ -116,7 +113,7 @@ public class LocksStorageImpl implements LocksStorage {
     };
 
     myLocksCache = CacheBuilder.newBuilder()
-                               .maximumSize(300) // each entry corresponds to a running build
+                               .maximumSize(TeamCityProperties.getInteger("teamcity.sharedResources.locksStorage.cacheSize", 300)) // each entry corresponds to a running build
                                .build(loader);
 
     dispatcher.addListener(new BuildServerAdapter() {
@@ -218,8 +215,8 @@ public class LocksStorageImpl implements LocksStorage {
     T result = null;
     try {
       result = block.call();
-    } catch (Exception e) {
-      log.warn(e);
+    } catch (Throwable t) {
+      log.warn(t);
     } finally {
       lock.unlock();
     }
