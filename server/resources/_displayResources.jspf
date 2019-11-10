@@ -12,7 +12,7 @@
   </c:choose>
 
   <c:set var="disabled" value="${not resource.enabled}"/>
-  <c:set var="overridden" value="${not empty overrides[resource.id]}"/>
+  <c:set var="overridden" value="${not ownResources and not empty overrides[resource.id]}"/>
 
   <c:set var="cellStyle">
     <c:choose>

@@ -82,7 +82,6 @@ public class SharedResourcesPage extends EditProjectTab {
     super.fillModel(model, request);
     final SProject project = getProject(request);
     if (project != null) {
-      model.put("overrides", overrides(project));
       model.put("bean", myBeansFactory.createProjectPageBean(project));
       model.put("configurationErrors", getConfigurationErrors(project));
       model.put("usedResources", myAnalyzer.findUsedResources(project));
@@ -114,27 +113,6 @@ public class SharedResourcesPage extends EditProjectTab {
                     p -> p.first,
                     p -> p.second
                   ));
-  }
-
-  /**
-   * Returns map of overridden resource names with corresponding projects,
-   * so that overridden resources can be deleted from the UI
-   * despite of usages
-   *
-   * @return map of overridden resource names and projects
-   */
-  private Map<String, String> overrides(@NotNull final SProject project) {
-    final Map<String, String> result = new HashMap<>();
-    final Set<String> ourResources = myResources.getOwnResources(project).stream()
-                                                .map(Resource::getName)
-                                                .collect(Collectors.toSet());
-    project.getProjectPath().stream()
-           .filter(p -> !p.equals(project))
-           .map(p -> new Pair<>(p, myResources.getOwnResources(p)))
-           .forEach(pair -> pair.getSecond().stream()
-                                .filter(rc -> ourResources.contains(rc.getName()))
-                                .forEach(rc -> result.put(rc.getName(), pair.getFirst().getExtendedName())));
-    return result;
   }
 
   private Map<String, Boolean> prepareDuplicates(@NotNull final SProject project) {
