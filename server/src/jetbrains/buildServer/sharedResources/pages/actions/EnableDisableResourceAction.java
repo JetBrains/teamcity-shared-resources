@@ -73,7 +73,7 @@ public class EnableDisableResourceAction extends BaseResourceAction implements C
         final Resource resourceInState = myResourceHelper.getResourceInState(projectId, resource, newState);
         myProjectFeatures.updateFeature(project, resourceInState.getId(), resourceInState.getParameters());
         final String changed = newState ? "enabled" : "disabled";
-        project.persist(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
+        project.schedulePersisting(myConfigActionFactory.createAction(project, "'" + resource.getName() + "' shared resource was " + changed));
         addMessage(request, "Resource " + resource.getName() + " was " + changed);
       }
     } else {

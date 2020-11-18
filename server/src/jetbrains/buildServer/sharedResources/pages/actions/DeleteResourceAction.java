@@ -68,7 +68,7 @@ public final class DeleteResourceAction extends BaseResourceAction implements Co
       SProjectFeatureDescriptor descriptor = myProjectFeatures.removeFeature(project, resourceId);
       if (descriptor != null) {
         final String resourceName = descriptor.getParameters().get(SharedResourcesPluginConstants.ProjectFeatureParameters.NAME);
-        project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' (" + resourceId + ") shared resource was removed"));
+        project.schedulePersisting(myConfigActionFactory.createAction(project, "'" + resourceName + "' (" + resourceId + ") shared resource was removed"));
         addMessage(request, "Resource " + resourceName + " was deleted");
       }
     } else {

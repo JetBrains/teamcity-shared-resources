@@ -98,17 +98,17 @@ public final class EditResourceAction extends BaseResourceAction implements Cont
               }
             }
             if (updated) {
-              p.persist(cause);
+              p.schedulePersisting(cause);
               if (!selfPersisted && p.equals(project)) { // make sure we persist current project even if no resource usages were detected
                 selfPersisted = true;
               }
             }
           }
           if (!selfPersisted) {
-            project.persist(cause);
+            project.schedulePersisting(cause);
           }
         } else { // just persist project so that settings will be saved
-          project.persist(cause);
+          project.schedulePersisting(cause);
         }
         addMessage(request, "Resource " + newName + " was updated");
       }

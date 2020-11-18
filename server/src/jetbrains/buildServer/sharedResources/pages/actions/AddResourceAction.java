@@ -74,7 +74,7 @@ public final class AddResourceAction extends BaseResourceAction implements Contr
           createNameError(ajaxResponse, resourceName);
         } else {
           myProjectFeatures.addFeature(project, resourceParameters);
-          project.persist(myConfigActionFactory.createAction(project, "'" + resourceName + "' shared resource was created"));
+          project.schedulePersisting(myConfigActionFactory.createAction(project, "'" + resourceName + "' shared resource was created"));
           addMessage(request, "Resource " + resourceName + " was added");
         }
       } else {
