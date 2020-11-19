@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.RunningBuildEx;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -48,7 +49,7 @@ public interface TakenLocks {
    * @return map of taken locks in format {@code <Resource, TakenLock>}
    */
   @NotNull
-  Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<SRunningBuild> runningBuilds,
+  Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<RunningBuildEx> runningBuilds,
                                              @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
 
   /**

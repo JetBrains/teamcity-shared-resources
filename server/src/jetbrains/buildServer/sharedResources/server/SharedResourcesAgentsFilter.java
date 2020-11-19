@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.serverSide.impl.RunningBuildsManagerEx;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -63,7 +64,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   private final TakenLocks myTakenLocks;
 
   @NotNull
-  private final RunningBuildsManager myRunningBuildsManager;
+  private final RunningBuildsManagerEx myRunningBuildsManager;
 
   @NotNull
   private final ConfigurationInspector myInspector;
@@ -77,7 +78,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   public SharedResourcesAgentsFilter(@NotNull final SharedResourcesFeatures features,
                                      @NotNull final Locks locks,
                                      @NotNull final TakenLocks takenLocks,
-                                     @NotNull final RunningBuildsManager runningBuildsManager,
+                                     @NotNull final RunningBuildsManagerEx runningBuildsManager,
                                      @NotNull final ConfigurationInspector inspector,
                                      @NotNull final LocksStorage locksStorage,
                                      @NotNull final Resources resources) {
@@ -97,7 +98,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
     final QueuedBuildInfo queuedBuild = context.getStartingBuild();
     final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
-    final List<SRunningBuild> runningBuilds = myRunningBuildsManager.getRunningBuilds();
+    final List<RunningBuildEx> runningBuilds = myRunningBuildsManager.getRunningBuildsEx();
 
     final AtomicReference<Map<Resource,TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
@@ -189,7 +190,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   private void actualizeResourceAffinity(@NotNull final ResourceAffinity resourceAffinity,
                                          @NotNull final Collection<QueuedBuildInfo> canBeStarted,
-                                         @NotNull final Collection<SRunningBuild> runningBuilds) {
+                                         @NotNull final Collection<RunningBuildEx> runningBuilds) {
     resourceAffinity.actualize(Stream.concat(
       canBeStarted.stream().map(QueuedBuildInfo::getBuildPromotionInfo).map(BuildPromotionInfo::getId),
       runningBuilds.stream().map(SRunningBuild::getBuildPromotion).map(BuildPromotion::getId)
@@ -206,7 +207,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   @Nullable
   private WaitReason processBuildInChain(@NotNull final DistributionDataAccessor accessor,
-                                         @NotNull final List<SRunningBuild> runningBuilds,
+                                         @NotNull final List<RunningBuildEx> runningBuilds,
                                          @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                          @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                          @NotNull final Map<String, Resource> chainNodeResources,
@@ -231,7 +232,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   private WaitReason processSingleBuild(@NotNull final BuildPromotionEx buildPromotion,
                                         @NotNull final DistributionDataAccessor accessor,
-                                        @NotNull final List<SRunningBuild> runningBuilds,
+                                        @NotNull final List<RunningBuildEx> runningBuilds,
                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                         @NotNull final BuildPromotion promotion,
@@ -321,7 +322,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
    * @param canBeStarted distributor output
    * @param takenLocks local taken locks reference
    */
-  private void gatherRuntimeInfo(@NotNull final List<SRunningBuild> runningBuilds,
+  private void gatherRuntimeInfo(@NotNull final List<RunningBuildEx> runningBuilds,
                                  @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
                                  @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
     if (takenLocks.get() == null) {

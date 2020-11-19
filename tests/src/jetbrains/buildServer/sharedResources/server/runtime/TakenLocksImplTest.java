@@ -158,7 +158,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "buildPromotion_1");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "buildPromotion_2");
 
-    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+    final Collection<RunningBuildEx> runningBuilds = new ArrayList<RunningBuildEx>() {{
       add(rb1);
       add(rb2);
     }};
@@ -224,7 +224,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testShouldNotAskParametersNoFeatures() {
     final RunningBuildEx rb = m.mock(RunningBuildEx.class, "rb");
     final SBuildType rb_bt = m.mock(SBuildType.class, "rb_bt");
-    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+    final Collection<RunningBuildEx> runningBuilds = new ArrayList<RunningBuildEx>() {{
       add(rb);
     }};
 
@@ -275,7 +275,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final QueuedBuildInfo qb1 = m.mock(QueuedBuildInfo.class, "qb-1");
     final BuildTypeEx qb1_bt = m.mock(BuildTypeEx.class, "qb1_bt");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp-2");
-    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+    final Collection<RunningBuildEx> runningBuilds = new ArrayList<RunningBuildEx>() {{
       add(rb1);
     }};
 
@@ -858,7 +858,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     final Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> rb1 = createMockRunningBuild(myProjectId);
     final Trinity<RunningBuildEx, BuildTypeEx, BuildPromotionEx> rb2 = createMockRunningBuild(myProjectId);
 
-    final Collection<SRunningBuild> runningBuilds = new ArrayList<SRunningBuild>() {{
+    final Collection<RunningBuildEx> runningBuilds = new ArrayList<RunningBuildEx>() {{
       add(rb1.getFirst());
       add(rb2.getFirst());
     }};

@@ -64,17 +64,17 @@ public class TakenLocksImpl implements TakenLocks {
 
   @NotNull
   @Override
-  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<SRunningBuild> runningBuilds,
+  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<RunningBuildEx> runningBuilds,
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<Resource, TakenLock> result = new HashMap<>();
     final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
-    for (SRunningBuild build: runningBuilds) {
+    for (RunningBuildEx build: runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
         // at this point we have features
-        final BuildPromotionEx bpEx = (BuildPromotionEx) ((RunningBuildEx) build).getBuildPromotionInfo();
+        final BuildPromotionEx bpEx = (BuildPromotionEx) build.getBuildPromotionInfo();
         Map<String, Lock> locks;
         if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
           locks = myLocksStorage.load(bpEx);

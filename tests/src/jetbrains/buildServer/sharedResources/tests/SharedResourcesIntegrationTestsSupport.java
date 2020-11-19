@@ -20,6 +20,7 @@ import java.util.Map;
 import jetbrains.BuildServerCreator;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.ProjectFeatureDescriptorFactory;
+import jetbrains.buildServer.serverSide.impl.RunningBuildsManagerEx;
 import jetbrains.buildServer.serverSide.parameters.BuildParametersProvider;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -75,7 +76,7 @@ public class SharedResourcesIntegrationTestsSupport {
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
     final SharedResourcesAgentsFilter filter =
-      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManager.class), inspector, locksStorage, resources);
+      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManagerEx.class), inspector, locksStorage, resources);
 
     final SharedResourcesContextProcessor processor =
       new SharedResourcesContextProcessor(features, locks, resources, locksStorage, buildUsedResourcesReport);
