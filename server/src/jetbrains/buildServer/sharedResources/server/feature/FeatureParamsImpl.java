@@ -55,8 +55,8 @@ public final class FeatureParamsImpl implements FeatureParams {
   public String describeParams(@NotNull final Map<String, String> params) {
     final StringBuilder sb = new StringBuilder();
     final Map<String, Lock> locks = myLocks.fromFeatureParameters(params);
-    final List<String> readLockNames = new ArrayList<String>();
-    final List<String> writeLockNames = new ArrayList<String>();
+    final List<String> readLockNames = new ArrayList<>();
+    final List<String> writeLockNames = new ArrayList<>();
     for (Lock lock : locks.values()) {
       switch (lock.getType()) {
         case READ:
@@ -67,8 +67,8 @@ public final class FeatureParamsImpl implements FeatureParams {
           break;
       }
     }
-    Collections.sort(readLockNames, RESOURCE_NAMES_COMPARATOR);
-    Collections.sort(writeLockNames, RESOURCE_NAMES_COMPARATOR);
+    readLockNames.sort(RESOURCE_NAMES_COMPARATOR);
+    writeLockNames.sort(RESOURCE_NAMES_COMPARATOR);
     if (!readLockNames.isEmpty()) {
       sb.append(READ_LOCKS_MESSAGE);
       sb.append(StringUtil.join(readLockNames, ", "));
@@ -88,7 +88,7 @@ public final class FeatureParamsImpl implements FeatureParams {
   @NotNull
   @Override
   public Map<String, String> getDefault() {
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = new HashMap<>();
     result.put(LOCKS_FEATURE_PARAM_KEY, "");
     return result;
   }

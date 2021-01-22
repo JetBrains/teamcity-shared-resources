@@ -88,6 +88,7 @@ BS.LocksUtil = {
     } else {
       result.description = this.locksDisplay[lock.type];
     }
+    result.parameter = "teamcity.locks." + lock.type + "." + lock.name;
     return result;
   }
 };
@@ -110,8 +111,11 @@ BS.SharedResourcesFeatureDialog = {
 
   refreshUI: function () {
     var tableBody = $j('#locksTaken tbody:last');
+    var parametersAnchor = $j('#paramsList');
     var textArea = $j('#${locksFeatureParamKey}');
+
     tableBody.children().remove();
+    parametersAnchor.children().remove();
     var locks = this.sortObject(this.locks);
     var textAreaContent = "";
     var needRendering = false;
@@ -120,7 +124,7 @@ BS.SharedResourcesFeatureDialog = {
         textAreaContent += BS.LocksUtil.lockToString(locks[key]);
         // if we have invalid lock - do not render it in the table
         if (!this.invalid[key]) {
-          this.renderSingleValidRow(tableBody, key);
+          this.renderSingleValidRow(tableBody, parametersAnchor, key);
           needRendering = true;
         }
       }
@@ -129,9 +133,11 @@ BS.SharedResourcesFeatureDialog = {
     if (needRendering) { // we have some locks
       this.reHighlight();
       BS.Util.show('locksTaken');
+      BS.Util.show('paramsDiv');
       BS.Util.hide('noLocksTaken');
     } else { // no locks are taken
       BS.Util.hide('locksTaken');
+      BS.Util.hide('paramsDiv');
       BS.Util.show('noLocksTaken');
     }
 
@@ -174,7 +180,7 @@ BS.SharedResourcesFeatureDialog = {
     }
   },
 
-  renderSingleValidRow: function(tableBody, key) {
+  renderSingleValidRow: function(tableBody, parametersAnchor, key) {
     var od, deleteCell;
     var oc, editCell;
     var hClass;
@@ -208,6 +214,9 @@ BS.SharedResourcesFeatureDialog = {
       row.append(deleteCell);
     }
     tableBody.append(row);
+
+    var paramRow = $j('<li>').append($j('<code>').text(tableRow.parameter));
+    parametersAnchor.append(paramRow);
   },
 
   removeInvalid: function() {
@@ -593,6 +602,11 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       <tbody>
       </tbody>
     </table>
+    <div id="paramsDiv">
+      <p>Parameters, provided to builds<bs:help file="Shared+Resources#resource-locks"/>:</p>
+      <ul id="paramsList">
+      </ul>
+    </div>
     <span class="smallNote" id="inheritedNote" style="display: none;">This feature is inherited. Locks can be edited in template this feature is inherited from.</span>
 
     <div id="noLocksTaken" style="display: none">
