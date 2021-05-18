@@ -365,14 +365,14 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       final Set<String> buildTypeNames = new HashSet<>();
       final TakenLock takenLock = takenLocks.get(entry.getKey());
       if (takenLock != null) {
-        for (BuildPromotionInfo promotion : takenLock.getReadLocks().keySet()) {
-          BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        for (BuildPromotionEx promotion : takenLock.getReadLocks().keySet()) {
+          BuildTypeEx bt = promotion.getBuildType();
           if (bt != null) {
             buildTypeNames.add(bt.getExtendedFullName());
           }
         }
-        for (BuildPromotionInfo promotion : takenLock.getWriteLocks().keySet()) {
-          BuildTypeEx bt = ((BuildPromotionEx) promotion).getBuildType();
+        for (BuildPromotionEx promotion : takenLock.getWriteLocks().keySet()) {
+          BuildTypeEx bt = promotion.getBuildType();
           if (bt != null) {
             buildTypeNames.add(bt.getExtendedFullName());
           }
