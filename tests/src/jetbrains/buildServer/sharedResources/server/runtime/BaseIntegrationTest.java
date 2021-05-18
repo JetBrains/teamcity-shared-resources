@@ -434,4 +434,25 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     bt2.addToQueue("");
     myFixture.flushQueueAndWaitN(2);
   }
+
+  @Test
+  @TestFor(issues = "TW-71555")
+  public void testCustomResourceDuplicateValues() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "value", "value"));
+    SBuildType btTop = top.createBuildType("btTop", "btTop");
+    addReadLock(btTop, resourceTop);
+    myFixture.createEnabledAgent("Ant");
+    final SQueuedBuild qbTop1 = btTop.addToQueue("");
+    assertNotNull(qbTop1);
+    myFixture.flushQueueAndWait();
+
+    final SQueuedBuild qbTop2 = btTop.addToQueue("");
+    assertNotNull(qbTop2);
+    myFixture.flushQueueAndWait();
+
+    finishAllBuilds();
+    assertContains(readArtifact(Objects.requireNonNull(qbTop1.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
+    assertContains(readArtifact(Objects.requireNonNull(qbTop2.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
+  }
 }

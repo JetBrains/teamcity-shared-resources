@@ -304,13 +304,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                        @NotNull final Map<Resource, TakenLock> takenLocks,
                                        @NotNull final BuildPromotion promotion,
                                        @NotNull final DistributionDataAccessor accessor) {
-    final Set<String> values = new HashSet<>(resource.getValues());
+    final List<String> values = new ArrayList<>(resource.getValues());
     // remove all values reserved by other builds in current distribution cycle
-    values.removeAll(accessor.getResourceAffinity().getOtherAssignedValues(resource, promotion));
+    accessor.getResourceAffinity().getOtherAssignedValues(resource, promotion).forEach(values::remove);
     // remove values from taken locks
     final TakenLock takenLock = takenLocks.get(resource);
     if (takenLock != null) {
-      values.removeAll(takenLock.getReadLocks().values());
+      takenLock.getReadLocks().values().forEach(values::remove);
     }
     return values.isEmpty() ? "" : values.iterator().next();
   }
