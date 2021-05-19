@@ -47,7 +47,7 @@ public class ResourceAffinity {
    * Stores resource affinity
    *
    * @param promotion promotion to store resource affinity for
-   * @param affinityMap map of requested resource values
+   * @param affinityMap map ({@code resourceId -> value}) of requested resource values
    */
   public void store(@NotNull final BuildPromotion promotion,
                     @NotNull final Map<String, String> affinityMap) {
@@ -70,17 +70,19 @@ public class ResourceAffinity {
    *
    * @param resource resource to compute for
    * @param currentPromotion promotion to compute the set for
-   * @return set of values for the given resource,
+   * @return list of values for the given resource,
    * assigned to promotions other that the given one
    */
   @NotNull
-  public Set<String> getOtherAssignedValues(@NotNull final Resource resource,
+  public List<String> getOtherAssignedValues(@NotNull final Resource resource,
                                             @NotNull final BuildPromotion currentPromotion) {
-    final TLongObjectHashMap<String> allValues = myLockedValues.get(resource.getId());
-    if (allValues != null) {
+    // every promotion can lock at most one value of the resource
+    final TLongObjectHashMap<String> allLockedValues = myLockedValues.get(resource.getId());
+    if (allLockedValues != null) {
       final long promotionId = currentPromotion.getId();
-      final Set<String> result = new HashSet<>();
-      allValues.forEachEntry((promoId, value) -> {
+      // list, as we allow duplicate values in custom resources, multiple instances of a value can be locked by other builds
+      final List<String> result = new ArrayList<>();
+      allLockedValues.forEachEntry((promoId, value) -> {
         if (promoId != promotionId) {
           result.add(value);
         }
@@ -88,7 +90,7 @@ public class ResourceAffinity {
       });
       return result;
     }
-    return Collections.emptySet();
+    return Collections.emptyList();
   }
 
   /**

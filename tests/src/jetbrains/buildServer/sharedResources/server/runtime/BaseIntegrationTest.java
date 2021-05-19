@@ -35,6 +35,7 @@ import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.vcs.RepositoryStateImpl;
 import jetbrains.buildServer.vcs.VcsRootInstanceEx;
 import jetbrains.buildServer.vcs.impl.RepositoryStateManager;
+import org.jetbrains.annotations.NotNull;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -439,20 +440,31 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
   @TestFor(issues = "TW-71555")
   public void testCustomResourceDuplicateValues() {
     final SProject top = myFixture.createProject("top");
-    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "value", "value"));
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "value", "value", "value"));
     SBuildType btTop = top.createBuildType("btTop", "btTop");
     addReadLock(btTop, resourceTop);
     myFixture.createEnabledAgent("Ant");
-    final SQueuedBuild qbTop1 = btTop.addToQueue("");
-    assertNotNull(qbTop1);
-    myFixture.flushQueueAndWait();
+    myFixture.createEnabledAgent("Ant");
 
-    final SQueuedBuild qbTop2 = btTop.addToQueue("");
+    final SQueuedBuild qbTop1 = enqueueCustomBuild(btTop);
+    assertNotNull(qbTop1);
+    final SQueuedBuild qbTop2 = enqueueCustomBuild(btTop);
     assertNotNull(qbTop2);
-    myFixture.flushQueueAndWait();
+    final SQueuedBuild qbTop3 = enqueueCustomBuild(btTop);
+    assertNotNull(qbTop3);
+
+    myFixture.flushQueueAndWaitN(3);
 
     finishAllBuilds();
     assertContains(readArtifact(Objects.requireNonNull(qbTop1.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
     assertContains(readArtifact(Objects.requireNonNull(qbTop2.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
+    assertContains(readArtifact(Objects.requireNonNull(qbTop3.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
+  }
+
+  private SQueuedBuild enqueueCustomBuild(@NotNull final SBuildType buildType) {
+    BuildCustomizerFactory factory = myFixture.getSingletonService(BuildCustomizerFactory.class);
+    final BuildCustomizer customizer = factory.createBuildCustomizer(buildType, null);
+    customizer.setParameters(Collections.singletonMap("custom_param", Long.toString(System.currentTimeMillis())));
+    return customizer.createPromotion().addToQueue("");
   }
 }
