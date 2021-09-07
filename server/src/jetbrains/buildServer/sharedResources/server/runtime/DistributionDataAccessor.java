@@ -16,7 +16,9 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.DistributionData;
@@ -37,7 +39,7 @@ public class DistributionDataAccessor {
     }
   }
 
-  public Set<String> getFairSet() {
+  public Map<String, List<BuildPromotion>> getFairSet() {
     return myData.getFairSet();
   }
 

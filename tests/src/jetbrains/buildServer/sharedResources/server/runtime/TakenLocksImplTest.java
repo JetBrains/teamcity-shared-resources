@@ -51,6 +51,8 @@ import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName
 @TestFor(testForClass = {TakenLocks.class, TakenLocksImpl.class})
 public class TakenLocksImplTest extends BaseTestCase {
 
+  private static final String myMockBuildTypeName = "Mock / mock";
+
   private Mockery m;
 
   private Locks myLocks;
@@ -70,7 +72,10 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   private DistributionDataAccessor myAccessor;
 
+  private SBuildType myBuildType;
+
   private final String myProjectId = "MY_PROJECT_ID";
+
 
   @BeforeMethod
   @Override
@@ -84,6 +89,14 @@ public class TakenLocksImplTest extends BaseTestCase {
     myLocksStorage = m.mock(LocksStorage.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myPromotion = m.mock(BuildPromotion.class);
+    myBuildType = m.mock(SBuildType.class);
+    m.checking(new Expectations() {{
+      allowing(any(BuildTypeEx.class)).method("getExtendedFullName");
+      will(returnValue(myMockBuildTypeName));
+
+      allowing(myPromotion).getBuildType();
+      will(returnValue(myBuildType));
+    }});
 
     myAccessor = new DistributionDataAccessor(new DefaultAgentsFilterContext(new HashMap<>()) {
       @NotNull
@@ -202,6 +215,12 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       oneOf(rb2_bt).getProjectId();
       will(returnValue(myProjectId));
+
+      allowing(rb1_bt).getExtendedFullName();
+      will(returnValue("rb1_bt"));
+
+      allowing(rb1_bt).getExtendedFullName();
+      will(returnValue("rb2_bt"));
 
     }});
 
@@ -346,18 +365,25 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("custom_resource1", LockType.WRITE));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "Custom_All_promo");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "Custom_All__bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.READ));
+
+      tl1.addLock(bp1, new Lock("custom_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -369,24 +395,29 @@ public class TakenLocksImplTest extends BaseTestCase {
     resources.put(myCustomResource.getName(), myCustomResource);
 
     final Collection<Lock> locksToTake = new ArrayList<Lock>() {{
-      add(new Lock("custom_resource1", LockType.WRITE, "v1"));
+      add(new Lock("custom_resource1", LockType.READ, "v1"));
     }};
+
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "Custom_Specific_promo");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "Custom_Specific_bt");
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.READ, "v1"));
+      tl1.addLock(bp1, new Lock("custom_resource1", LockType.READ, "v1"));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
-
   }
 
   @Test
@@ -400,20 +431,24 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("custom_resource1", LockType.READ));
     }};
 
+    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class, "Custom_Any_promo");
+    final BuildTypeEx buildType = m.mock(BuildTypeEx.class, "Custom_Any_bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class), new Lock("custom_resource1", LockType.WRITE));
+      tl1.addLock(promo, new Lock("custom_resource1", LockType.WRITE));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(promo).getBuildType();
+      will(returnValue(buildType));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));                  
     }});
 
-    
-
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -428,20 +463,32 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("custom_resource1", LockType.READ));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp2");
+
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1.bt");
+    final BuildTypeEx bp2bt = m.mock(BuildTypeEx.class, "bp2.bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(myCustomResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("custom_resource1", LockType.READ, "v1"));
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock("custom_resource1", LockType.READ, "v2"));
+      tl1.addLock(bp1, new Lock("custom_resource1", LockType.READ, "v1"));
+      tl1.addLock(bp2, new Lock("custom_resource1", LockType.READ, "v2"));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
+      allowing(bp2).getBuildType();
+      will(returnValue(bp2bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
     
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -456,20 +503,33 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("quoted_resource1", LockType.READ));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp2");
+
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1.bt");
+    final BuildTypeEx bp2bt = m.mock(BuildTypeEx.class, "bp2.bt");
+
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(bp1, new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(bp2, new Lock("quoted_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
+      allowing(bp2).getBuildType();
+      will(returnValue(bp2bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
     
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
 
@@ -485,18 +545,24 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("quoted_resource1", LockType.READ));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.WRITE));
+      tl1.addLock(bp1, new Lock("quoted_resource1", LockType.WRITE));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -511,20 +577,26 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock("quoted_resource1", LockType.WRITE));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       TakenLock tl1 = new TakenLock(quotedResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock("quoted_resource1", LockType.READ));
+      tl1.addLock(bp1, new Lock("quoted_resource1", LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
     
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
   }
@@ -554,25 +626,31 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock(infiniteResource.getName(), LockType.WRITE));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1bt");
+
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
+      tl1.addLock(bp1, new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
       oneOf(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
     
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
+    assertNotNull(result.get(infiniteResource));    
 
-    assertNotEmpty(myAccessor.getFairSet());
+    assertNotEmpty(myAccessor.getFairSet().keySet());
     assertEquals(1, myAccessor.getFairSet().size());
-    assertEquals(infiniteResource.getId(), myAccessor.getFairSet().iterator().next());
+    assertEquals(infiniteResource.getId(), myAccessor.getFairSet().keySet().iterator().next());
   }
 
   /**
@@ -603,42 +681,45 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock(infiniteResource.getName(), LockType.READ));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1bt");
+    
     final Map<Resource, TakenLock> takenLocks = new HashMap<Resource, TakenLock>() {{
-      final TakenLock tl1 = new TakenLock(infiniteResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(infiniteResource.getName(), LockType.READ));
+      final TakenLock tl1 = new TakenLock(infiniteResource);      
+      tl1.addLock(bp1, new Lock(infiniteResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+      
       allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
     }});
 
-
-    
-
     { // 1) Check that read-read locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+      final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
-      assertEmpty(myAccessor.getFairSet());
+      assertEquals(0, myAccessor.getFairSet().size());
     }
 
     { // 2) Check that fair set influences read lock processing
-      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+      Map<Resource, String> result = myTakenLocks.getUnavailableLocks(writeLockToTake, takenLocks, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
+      assertNotNull(result.get(infiniteResource));
       assertEquals(1, myAccessor.getFairSet().size());
-      assertEquals(infiniteResource.getId(), myAccessor.getFairSet().iterator().next());
+      assertEquals(infiniteResource.getId(), myAccessor.getFairSet().keySet().iterator().next());
 
       // now we have lock name in fair set. read lock must not be acquired
       result = myTakenLocks.getUnavailableLocks(readLockToTake, takenLocks, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(infiniteResource.getName(), result.get(infiniteResource).getName());
+      assertNotNull(result.get(infiniteResource));
       assertEquals(1, myAccessor.getFairSet().size());
-      assertEquals(infiniteResource.getId(), myAccessor.getFairSet().iterator().next());
+      assertEquals(infiniteResource.getId(), myAccessor.getFairSet().keySet().iterator().next());
     }
   }
 
@@ -661,53 +742,67 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(new Lock(customResource.getName(), LockType.READ));
     }};
 
+    final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "bp1");
+    final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "bp2");
+
+    final BuildTypeEx bp1bt = m.mock(BuildTypeEx.class, "bp1.bt");
+    final BuildTypeEx bp2bt = m.mock(BuildTypeEx.class, "bp2.bt");
+
+
     final Map<Resource, TakenLock> takenLocksAny = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl1 = new TakenLock(customResource);
-      tl1.addLock(m.mock(BuildPromotionEx.class, "bp1"), new Lock(customResource.getName(), LockType.READ));
+      tl1.addLock(bp1, new Lock(customResource.getName(), LockType.READ));
       put(tl1.getResource(), tl1);
     }};
 
     final Map<Resource, TakenLock> takenLocksSpecific = new HashMap<Resource, TakenLock>() {{
       final TakenLock tl = new TakenLock(customResource);
-      tl.addLock(m.mock(BuildPromotionEx.class, "bp2"), new Lock(customResource.getName(), LockType.READ, "val1"));
+      tl.addLock(bp2, new Lock(customResource.getName(), LockType.READ, "val1"));
       put(tl.getResource(), tl);
     }};
 
     m.checking(new Expectations() {{
+      allowing(bp1).getBuildType();
+      will(returnValue(bp1bt));
+
+      allowing(bp2).getBuildType();
+      will(returnValue(bp2bt));
+
       allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
+
     }});
 
 
     { // Check that any-any locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, myAccessor, myPromotion);
+      final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
-      assertEmpty(myAccessor.getFairSet());
+      assertEquals(0, myAccessor.getFairSet().size());
     }
 
     { // Check that any-specific locks are working
-      final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksSpecific, myProjectId, myAccessor, myPromotion);
+      final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksSpecific, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(0, result.size());
-      assertEmpty(myAccessor.getFairSet());
+      assertEquals(0, myAccessor.getFairSet().size());
     }
 
     { // Check that fair set influences read lock processing
-      Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, myAccessor, myPromotion);
+      Map<Resource, String> result = myTakenLocks.getUnavailableLocks(allLockToTake, takenLocksAny, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(customResource.getName(), result.get(customResource).getName());
+      assertNotNull(result.get(customResource));
       assertEquals(1, myAccessor.getFairSet().size());
-      assertEquals(customResource.getName(), myAccessor.getFairSet().iterator().next());
+      assertEquals(customResource.getId(), myAccessor.getFairSet().keySet().iterator().next());
 
       // now we have lock name in fair set. any lock must not be acquired
       result = myTakenLocks.getUnavailableLocks(anyLockToTake, takenLocksAny, myProjectId, myAccessor, myPromotion);
       assertNotNull(result);
       assertEquals(1, result.size());
-      assertEquals(customResource.getName(), result.get(customResource).getName());
+      assertNotNull(result.get(customResource));
       assertEquals(1, myAccessor.getFairSet().size());
-      assertEquals(customResource.getName(), myAccessor.getFairSet().iterator().next());
+      assertEquals(customResource.getId(), myAccessor.getFairSet().keySet().iterator().next());
     }
   }
 
@@ -728,12 +823,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(resources));
     }});
 
-    
-
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.emptyMap(), myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, Collections.emptyMap(), myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(lockToTake, result.get(quotedResource));
+    assertNotNull(result.keySet().stream().filter(it -> Objects.equals(it.getName(), lockToTake.getName())).findAny().orElse(null));
   }
 
   @Test
@@ -754,10 +847,11 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertGreater(result.size(), 0);
-    assertContains(result.values(), locksToTake.iterator().next());
+    String name = locksToTake.iterator().next().getName();
+    assertNotNull(result.keySet().stream().filter(it -> Objects.equals(it.getName(), name)).findAny().orElse(null));
   }
 
   @Test
@@ -779,10 +873,11 @@ public class TakenLocksImplTest extends BaseTestCase {
     
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertGreater(result.size(), 0);
-    assertContains(result.values(), locksToTake.iterator().next());
+    String name = locksToTake.iterator().next().getName();
+    assertNotNull(result.keySet().stream().filter(it -> Objects.equals(it.getName(), name)).findAny().orElse(null));
   }
 
   /**
@@ -813,7 +908,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = new HashMap<>();
 
-    final Map<Resource, Lock> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
+    final Map<Resource, String> result = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks, myProjectId, myAccessor, myPromotion);
     assertNotNull(result);
     assertEquals(0, result.size());
   }

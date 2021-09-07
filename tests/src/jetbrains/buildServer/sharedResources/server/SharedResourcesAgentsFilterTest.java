@@ -365,8 +365,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
     final BuildTypeEx buildTypeEx = m.mock(BuildTypeEx.class, "bpex-btex");
     final String name = "UNAVAILABLE";
 
-    final Map<Resource, Lock> unavailableLocks = new HashMap<Resource, Lock>() {{
-      put(resource1, lock);
+    final Map<Resource, String> unavailableLocks = new HashMap<Resource, String>() {{
+      put(resource1, "reason");
     }};
 
 
@@ -406,8 +406,8 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
 
     final Map<Resource, TakenLock> takenLocks = Collections.emptyMap();
 
-    final Map<Resource, Lock> unavailableLocks = new HashMap<Resource, Lock>() {{
-      put(resource1, lock);
+    final Map<Resource, String> unavailableLocks = new HashMap<Resource, String>() {{
+      put(resource1, "reason");
     }};
 
     setupLocks(locksToTake, features, canBeStarted, runningBuilds, takenLocks, unavailableLocks);
@@ -464,7 +464,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
                           final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
                           final Collection<RunningBuildEx> runningBuilds,
                           final Map<Resource, TakenLock> takenLocks,
-                          final Map<Resource, Lock> unavailableLocks) {
+                          final Map<Resource, String> unavailableLocks) {
     m.checking(new Expectations() {{
       oneOf(myQueuedBuild).getBuildPromotionInfo();
       will(returnValue(myBuildPromotion));

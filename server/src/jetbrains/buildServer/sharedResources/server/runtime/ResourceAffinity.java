@@ -46,7 +46,7 @@ public class ResourceAffinity {
   /**
    * Stores resource affinity
    *
-   * @param promotion promotion to store resource affinity for
+   * @param promotion   promotion to store resource affinity for
    * @param affinityMap map ({@code resourceId -> value}) of requested resource values
    */
   public void store(@NotNull final BuildPromotion promotion,
@@ -68,14 +68,14 @@ public class ResourceAffinity {
   /**
    * Returns set of values assigned to other build promotions
    *
-   * @param resource resource to compute for
+   * @param resource         resource to compute for
    * @param currentPromotion promotion to compute the set for
    * @return list of values for the given resource,
    * assigned to promotions other that the given one
    */
   @NotNull
   public List<String> getOtherAssignedValues(@NotNull final Resource resource,
-                                            @NotNull final BuildPromotion currentPromotion) {
+                                             @NotNull final BuildPromotion currentPromotion) {
     // every promotion can lock at most one value of the resource
     final TLongObjectHashMap<String> allLockedValues = myLockedValues.get(resource.getId());
     if (allLockedValues != null) {

@@ -461,6 +461,60 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
     assertContains(readArtifact(Objects.requireNonNull(qbTop3.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tvalue");
   }
 
+  @Test
+  @TestFor(issues = "TW-72881")
+  public void testWriteLockBeforeReadLockWaitReason() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resourceTop = addResource(myFixture, top, createQuotedResource("resource_top", 100));
+    SBuildType btRead1 = top.createBuildType("btRead1", "btRead1");
+    addReadLock(btRead1, resourceTop);
+    SBuildType btRead2 = top.createBuildType("btRead2", "btRead2");
+    addReadLock(btRead2, resourceTop);
+    SBuildType btWrite = top.createBuildType("btWrite", "btWrite");
+    addWriteLock(btWrite, resourceTop);
+    myFixture.createEnabledAgent("Ant");
+    myFixture.createEnabledAgent("Ant");
+    // Queue: [head] -> read1 -> write -> read2
+    // start read1
+    // check write has waitReason mentioning read1
+    // check read2 has waitReason mentioning write
+    btRead1.addToQueue("");
+
+    RunningBuildEx started = myFixture.flushQueueAndWait();
+    assertEquals(btRead1, started.getBuildType());
+
+    final SQueuedBuild writeQb = btWrite.addToQueue("");
+    assertNotNull(writeQb);
+    waitForReason(writeQb, "Build is waiting for the following resource to become available: resource_top (locked by top / btRead1)");
+
+    final SQueuedBuild read2Qb = btRead2.addToQueue("");
+    assertNotNull(read2Qb);
+    waitForReason(read2Qb, "Build is waiting for the following resource to become available: resource_top (write lock requested by top / btWrite)");
+  }
+
+  @Test
+  public void testSpecificValueLockedReason() {
+    final SProject top = myFixture.createProject("top");
+    final Resource resourceTop = addResource(myFixture, top, createCustomResource("resource_top", "a"));
+    final SBuildType btAny = top.createBuildType("btAny", "btAny");
+    addReadLock(btAny, resourceTop);
+
+    final SBuildType btSpecific = top.createBuildType("btSpecific", "btSpecific");
+    addSpecificLock(btSpecific, resourceTop, "a");
+
+    myFixture.createEnabledAgent("Ant");
+
+    final SQueuedBuild anyQ = btAny.addToQueue("");
+    assertNotNull(anyQ);
+
+    RunningBuildEx started = myFixture.flushQueueAndWait();
+    assertEquals(btAny, started.getBuildType());
+
+    final SQueuedBuild specificQ = btSpecific.addToQueue("");
+    assertNotNull(specificQ);
+    waitForReason(specificQ, "Build is waiting for the following resource to become available: resource_top (required value 'a' is occupied by top / btAny)");
+  }
+
   private SQueuedBuild enqueueCustomBuild(@NotNull final SBuildType buildType) {
     BuildCustomizerFactory factory = myFixture.getSingletonService(BuildCustomizerFactory.class);
     final BuildCustomizer customizer = factory.createBuildCustomizer(buildType, null);

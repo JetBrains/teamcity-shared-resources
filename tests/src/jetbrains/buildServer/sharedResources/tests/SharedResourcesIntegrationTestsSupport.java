@@ -147,6 +147,11 @@ public class SharedResourcesIntegrationTestsSupport {
   }
 
   @SuppressWarnings("UnusedReturnValue")
+  public static Lock addSpecificLock(@NotNull final BuildTypeSettings settings, @NotNull final Resource resource, @NotNull final String value) {
+    return addSpecificLock(settings, resource.getName(), value);
+  }
+
+  @SuppressWarnings("UnusedReturnValue")
   public static Lock addSpecificLock(@NotNull final BuildTypeSettings settings,
                                      @NotNull final String resourceName,
                                      @NotNull final String value) {

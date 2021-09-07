@@ -32,6 +32,7 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.CollectionsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 
@@ -68,18 +69,18 @@ public class TakenLocksImpl implements TakenLocks {
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
     final Map<Resource, TakenLock> result = new HashMap<>();
     final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
-    for (RunningBuildEx build: runningBuilds) {
+    for (RunningBuildEx build : runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
         // at this point we have features
-        final BuildPromotionEx bpEx = (BuildPromotionEx) build.getBuildPromotionInfo();
+        final BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
         Map<String, Lock> locks;
         if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
           locks = myLocksStorage.load(bpEx);
         } else {
-          locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+          locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
         }
         if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
@@ -107,16 +108,16 @@ public class TakenLocksImpl implements TakenLocks {
     }
 
     for (QueuedBuildInfo build : queuedBuilds) {
-      BuildPromotionEx bpEx = (BuildPromotionEx) build.getBuildPromotionInfo();
+      BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
       final BuildTypeEx buildType = bpEx.getBuildType();
       if (buildType != null) {
         final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
         if (features.isEmpty()) continue;
-        Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in future: <String, Set<Lock>>
+        Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
         if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
         final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
-        for (Map.Entry<String, Lock> entry: locks.entrySet()) {
+        for (Map.Entry<String, Lock> entry : locks.entrySet()) {
           // collection, promotion, resource, lock
           final Resource resource = resources.get(entry.getKey());
           if (resource != null) {
@@ -128,52 +129,53 @@ public class TakenLocksImpl implements TakenLocks {
     return result;
   }
 
-  @NotNull
-  private Map<String, Resource> getResources(@NotNull final String btProjectId,
-                                             @NotNull final Map<String, Map<String, Resource>> cachedResources) {
-    return cachedResources.computeIfAbsent(btProjectId, myResources::getResourcesMap);
-  }
-
-  @NotNull
-  @Override // todo: support several locks on resource here too -> Map<Resource, Collection<Lock>>
-  public Map<Resource, Lock> getUnavailableLocks(@NotNull Collection<Lock> locksToTake,
-                                                 @NotNull Map<Resource, TakenLock> takenLocks,
-                                                 @NotNull String projectId,
-                                                 @NotNull final DistributionDataAccessor distributionDataAccessor,
-                                                 @NotNull final BuildPromotion buildPromotion) {
+  @Override
+  public Map<Resource, String> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
+                                                   @NotNull final Map<Resource, TakenLock> takenLocks,
+                                                   @NotNull final String projectId,
+                                                   @NotNull final DistributionDataAccessor distributionDataAccessor,
+                                                   @NotNull final BuildPromotion promotion) {
     final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
-    final Map<Resource, Lock> result = new HashMap<>();
-    for (Lock lock : locksToTake) {
+    final Map<Resource, String> result = new HashMap<>();
+    locksToTake.forEach(lock -> {
       final Resource resource = resources.get(lock.getName());
       if (resource != null) {
-        if (!resource.isEnabled() || !checkAgainstResource(lock, takenLocks, resource, distributionDataAccessor, buildPromotion)) {
-          result.put(resource, lock);
+        if (!resource.isEnabled()) {
+          result.put(resource, "resource is disabled");
+        } else {
+          checkAgainstResource(lock, takenLocks, resource, distributionDataAccessor, promotion, result);
         }
       }
-    }
+    });
     return result;
   }
 
-  @NotNull
   @Override
-  public Map<Resource, Lock> getUnavailableLocks(@NotNull final Map<String, Lock> locksToTake,
-                                                 @NotNull final Map<Resource, TakenLock> takenLocks,
-                                                 @NotNull final DistributionDataAccessor distributionDataAccessor,
-                                                 @NotNull final Map<String, Resource> chainNodeResources,
-                                                 @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
-                                                 @NotNull final BuildPromotion buildPromotion) {
-    final Map<Resource, Lock> result = new HashMap<>();
+  public Map<Resource, String> getUnavailableLocks(@NotNull final Map<String, Lock> locksToTake,
+                                                   @NotNull final Map<Resource, TakenLock> takenLocks,
+                                                   @NotNull final DistributionDataAccessor distributionDataAccessor,
+                                                   @NotNull final Map<String, Resource> chainNodeResources,
+                                                   @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
+                                                   @NotNull final BuildPromotion promotion) {
+    final Map<Resource, String> result = new HashMap<>();
     Map<Resource, TakenLock> chainTakenLocks = purifyTakenLocks(takenLocks, chainLocks);
     locksToTake.forEach((name, lock) -> {
       final Resource resource = chainNodeResources.get(name);
       if (resource != null) {
-        if (!resource.isEnabled() || !checkAgainstResource(lock, chainTakenLocks, resource, distributionDataAccessor, buildPromotion)) {
-          result.put(resource, lock);
+        if (!resource.isEnabled()) {
+          result.put(resource, "resource is disabled");
+        } else {
+          checkAgainstResource(lock, chainTakenLocks, resource, distributionDataAccessor, promotion, result);
         }
       }
     });
-
     return result;
+  }
+
+  @NotNull
+  private Map<String, Resource> getResources(@NotNull final String btProjectId,
+                                             @NotNull final Map<String, Map<String, Resource>> cachedResources) {
+    return cachedResources.computeIfAbsent(btProjectId, myResources::getResourcesMap);
   }
 
   private Map<Resource, TakenLock> purifyTakenLocks(final Map<Resource, TakenLock> takenLocks,
@@ -206,28 +208,26 @@ public class TakenLocksImpl implements TakenLocks {
     return takenLocks.computeIfAbsent(resource, TakenLock::new);
   }
 
-  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-  private boolean checkAgainstResource(@NotNull final Lock lock,
-                                       @NotNull final Map<Resource, TakenLock> takenLocks,
-                                       @NotNull final Resource resource,
-                                       @NotNull final DistributionDataAccessor distributionDataAccessor,
-                                       @NotNull final BuildPromotion buildPromotion) {
-    boolean result = true;
+  private void checkAgainstResource(@NotNull final Lock lock,
+                                    @NotNull final Map<Resource, TakenLock> takenLocks,
+                                    @NotNull final Resource resource,
+                                    @NotNull final DistributionDataAccessor distributionDataAccessor,
+                                    @NotNull final BuildPromotion buildPromotion,
+                                    @NotNull final Map<Resource, String> result) {
     if (ResourceType.QUOTED.equals(resource.getType())) {
-      result = checkAgainstQuotedResource(lock, takenLocks, (QuotedResource) resource, distributionDataAccessor);
+      checkAgainstQuotedResource(lock, takenLocks, (QuotedResource)resource, distributionDataAccessor, buildPromotion, result);
     } else if (ResourceType.CUSTOM.equals(resource.getType())) {
-      result = checkAgainstCustomResource(lock, takenLocks, (CustomResource) resource, distributionDataAccessor, buildPromotion);
+      checkAgainstCustomResource(lock, takenLocks, (CustomResource)resource, distributionDataAccessor, buildPromotion, result);
     }
-    return result;
   }
 
-  private boolean checkAgainstCustomResource(@NotNull final Lock lock,
-                                             @NotNull final Map<Resource, TakenLock> takenLocks,
-                                             @NotNull final CustomResource resource,
-                                             @NotNull final DistributionDataAccessor distributionDataAccessor,
-                                             @NotNull final BuildPromotion buildPromotion) {
-    boolean result = true;
-    // what type of lock do we have
+  private void checkAgainstCustomResource(@NotNull final Lock lock,
+                                          @NotNull final Map<Resource, TakenLock> takenLocks,
+                                          @NotNull final CustomResource resource,
+                                          @NotNull final DistributionDataAccessor distributionDataAccessor,
+                                          @NotNull final BuildPromotion buildPromotion,
+                                          @NotNull final Map<Resource, String> result) {
+    // what type of lock do we have:
     // write            -> all
     // read with value  -> specific
     // read             -> any
@@ -235,23 +235,20 @@ public class TakenLocksImpl implements TakenLocks {
     switch (lock.getType()) {
       case READ:   // check at least one value is available
         // check for unique writeLocks
-        if (distributionDataAccessor.getFairSet().contains(lock.getName())) {
-          result = false;
+        List<BuildPromotion> promosInFairSet = distributionDataAccessor.getFairSet().get(resource.getId());
+        if (promosInFairSet != null && !promosInFairSet.isEmpty()) {
+          String description = describeLockingPromotions(promosInFairSet);
+          result.put(resource, "(write lock requested by " + description + ")");
           break;
         }
-
         // check for write locks
-        if (takenLock.hasWriteLocks()) { // ALL values are locked
-          result = false;
+        if (takenLock.hasWriteLocks()) {
+          // write lock can be in chain head, read locks can be in chain parts
+          String description = describeLockingPromotions(takenLock.getReadLocks().keySet(), takenLock.getWriteLocks().keySet());
+          result.put(resource, "(locked by " + description + ")");
           break;
         }
-        // 2) check for quota (read + write)
-        if (resource.getValues().size() <= takenLock.getLocksCount()) {
-          // quota exceeded
-          result = false;
-          break;
-        }
-        // 3) SPECIFIC case
+        // 2) SPECIFIC case
         if (!"".equals(lock.getValue())) { // we have custom lock
           final String requiredValue = lock.getValue();
           final Set<String> takenValues = new HashSet<>();
@@ -260,57 +257,125 @@ public class TakenLocksImpl implements TakenLocks {
           // get resource value affinity with other builds
           takenValues.addAll(distributionDataAccessor.getResourceAffinity().getOtherAssignedValues(resource, buildPromotion));
           if (takenValues.contains(requiredValue)) {
-            result = false;
+            StringBuilder builder = new StringBuilder("(required value '" + requiredValue + "' is occupied");
+            BuildPromotionEx occupyingPromo = occupyingPromo(takenLock, requiredValue);
+            if (occupyingPromo != null) {
+              String description = describeLockingPromotions(Collections.singleton(occupyingPromo));
+              builder.append(" by ");
+              builder.append(description);
+            }
+            builder.append(")");
+            result.put(resource, builder.toString());
             break;
           }
+        }
+        // 3) check for any unoccupied value
+        if (resource.getValues().size() <= takenLock.getLocksCount()) {
+          String description = describeLockingPromotions(takenLock.getReadLocks().keySet());
+          result.put(resource, "(all available values are occupied by " + description + ")");
+          break;
+          // quota exceeded
         }
         break;
       case WRITE:
         // 'ALL' case
         if (takenLock.hasReadLocks() || takenLock.hasWriteLocks()) {
-          distributionDataAccessor.getFairSet().add(lock.getName());
-          result = false;
+          addToFairSet(distributionDataAccessor, resource, buildPromotion);
+          String description = describeLockingPromotions(takenLock.getReadLocks().keySet(), takenLock.getWriteLocks().keySet());
+          result.put(resource, "(locked by " + description + ")");
           break;
         }
         break;
     }
-    return result;
   }
 
-  private boolean checkAgainstQuotedResource(@NotNull final Lock lock,
-                                             @NotNull final Map<Resource, TakenLock> takenLocks,
-                                             @NotNull final QuotedResource resource,
-                                             @NotNull final DistributionDataAccessor distributionDataAccessor) {
-    boolean result = true;
+  private void checkAgainstQuotedResource(@NotNull final Lock lock,
+                                          @NotNull final Map<Resource, TakenLock> takenLocks,
+                                          @NotNull final QuotedResource resource,
+                                          @NotNull final DistributionDataAccessor distributionDataAccessor,
+                                          @NotNull final BuildPromotion buildPromotion,
+                                          @NotNull final Map<Resource, String> result) {
     final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
     switch (lock.getType()) {
       case READ:
         // some build requested write lock on the current resource before us
-        if (distributionDataAccessor.getFairSet().contains(resource.getId())) {
-          result = false;
+        List<BuildPromotion> promosInFairSet = distributionDataAccessor.getFairSet().get(resource.getId());
+        if (promosInFairSet != null && !promosInFairSet.isEmpty()) {
+          String description = describeLockingPromotions(promosInFairSet);
+          result.put(resource, "(write lock requested by " + description + ")");
           break;
         }
-        // Check that no write lock exists
+        // Check that no WriteLocks exist
         if (takenLock.hasWriteLocks()) {
-          result = false;
+          String description = describeLockingPromotions(takenLock.getReadLocks().keySet(), takenLock.getWriteLocks().keySet());
+          result.put(resource, "(locked by " + description + ")");
           break;
         }
         if (isOverQuota(takenLock, resource)) {
-          result = false;
+          if (resource.getQuota() == 0) {
+            result.put(resource, "(has zero quota available)");
+          } else {
+            String description = describeLockingPromotions(takenLock.getReadLocks().keySet());
+            result.put(resource, "(locked by " + description + ")");
+          }
           break;
         }
         break;
       case WRITE:
         // if anyone is accessing the resource
         if (takenLock.hasReadLocks() || takenLock.hasWriteLocks() || isOverQuota(takenLock, resource)) {
-          distributionDataAccessor.getFairSet().add(resource.getId()); // remember write access request on the current resource
-          result = false;
+          addToFairSet(distributionDataAccessor, resource, buildPromotion);
+          if (resource.getQuota() == 0) {
+            result.put(resource, "(has zero quota available)");
+          } else {
+            String description = describeLockingPromotions(takenLock.getReadLocks().keySet(), takenLock.getWriteLocks().keySet());
+            result.put(resource, "(locked by " + description + ")");
+          }
         }
     }
-    return result;
+  }
+
+  @SafeVarargs
+  @NotNull
+  private final String describeLockingPromotions(@NotNull final Collection<? extends BuildPromotion>... promotions) {
+    List<String> parts = new ArrayList<>();
+    for (Collection<? extends BuildPromotion> collection : promotions) {
+      collection.stream()
+                .map(BuildPromotion::getBuildType)
+                .filter(Objects::nonNull)
+                .map(SBuildType::getExtendedFullName)
+                .sorted()
+                .forEach(parts::add);
+    }
+    return parts.isEmpty() ? "unknown" : String.join(", ", parts);
   }
 
   private boolean isOverQuota(@NotNull final TakenLock takenLock, @NotNull final QuotedResource resource) {
     return !resource.isInfinite() && takenLock.getLocksCount() >= resource.getQuota();
+  }
+
+  private void addToFairSet(@NotNull final DistributionDataAccessor distributionDataAccessor,
+                            @NotNull final Resource resource,
+                            @NotNull final BuildPromotion buildPromotion) {
+    distributionDataAccessor.getFairSet()
+                            .computeIfAbsent(resource.getId(), it -> new ArrayList<>())
+                            .add(buildPromotion);
+  }
+
+  @Nullable
+  private BuildPromotionEx occupyingPromo(@NotNull final TakenLock takenLock,
+                                          @NotNull final String value) {
+    for (Map.Entry<BuildPromotionEx, String> entry : takenLock.getReadLocks().entrySet()) {
+      if (value.equals(entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+
+    for (Map.Entry<BuildPromotionEx, String> entry : takenLock.getWriteLocks().entrySet()) {
+      if (entry.getValue().contains(value)) {
+        return entry.getKey();
+      }
+    }
+    return null;
   }
 }
