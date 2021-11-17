@@ -57,8 +57,8 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   @NotNull
   private Collection<SBuildFeatureDescriptor> getEnabledUnresolvedFeatureDescriptors(@NotNull final BuildTypeSettings settings) {
     final List<SBuildFeatureDescriptor> result = new ArrayList<>();
-    for (SBuildFeatureDescriptor descriptor : settings.getBuildFeatures()) {
-      if (FEATURE_TYPE.equals(descriptor.getType()) && settings.isEnabled(descriptor.getId())) {
+    for (SBuildFeatureDescriptor descriptor : settings.getBuildFeaturesOfType(FEATURE_TYPE)) {
+      if (settings.isEnabled(descriptor.getId())) {
         result.add(descriptor);
       }
     }
