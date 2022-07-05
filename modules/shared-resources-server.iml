@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="Spring" name="Spring">
+      <configuration>
+        <fileset id="fileset1" name="Xml Application Context" removed="false">
+          <file>file://$MODULE_DIR$/../server/src/META-INF/build-server-plugin-shared-resources.xml</file>
+          <file>file://$MODULE_DIR$/../server/fake-teamcity-server-plugin-context.xml</file>
+        </fileset>
+      </configuration>
+    </facet>
+    <facet type="web" name="server">
+      <configuration>
+        <webroots>
+          <root url="file://$MODULE_DIR$/../server/resources" relative="/plugins/TeamCity.SharedResources" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/../server/src" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../server">
+      <sourceFolder url="file://$MODULE_DIR$/../server/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../server/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="common" exported="" />
+    <orderEntry type="module" module-name="server-openapi" exported="" />
+    <orderEntry type="module" module-name="web-openapi" exported="" />
+    <orderEntry type="module" module-name="server" exported="" />
+    <orderEntry type="module" module-name="web" exported="" />
+  </component>
+</module>
