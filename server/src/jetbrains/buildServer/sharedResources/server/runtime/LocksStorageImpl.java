@@ -75,7 +75,7 @@ public class LocksStorageImpl implements LocksStorage {
 
   @SuppressWarnings("UnstableApiUsage")
   @NotNull
-  private LoadingCache<BuildPromotion, Map<String, Lock>> myLocksCache;
+  private final LoadingCache<BuildPromotion, Map<String, Lock>> myLocksCache;
 
   @SuppressWarnings("UnstableApiUsage")
   @NotNull
@@ -91,7 +91,7 @@ public class LocksStorageImpl implements LocksStorage {
           result = new HashMap<>();
           try {
             final String content = FileUtil.readText(artifact, MY_ENCODING);
-            final String[] lines = content.split("\\r?\\n");
+            final String[] lines = StringUtil.splitLines(content);
             for (String line : lines) {
               final Lock lock = deserializeTakenLock(line);
               if (lock != null) {

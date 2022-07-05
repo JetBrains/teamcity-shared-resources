@@ -19,8 +19,10 @@ package jetbrains.buildServer.sharedResources.pages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.*;
@@ -28,12 +30,7 @@ import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
-import java.util.List;
-
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
-import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -77,7 +74,7 @@ public class ResourceHelper {
       if (!isEmptyOrSpaces(values)) {
         final List<String> strings = StringUtil.split(values, true, '\r', '\n');
         if (!strings.isEmpty()) {
-          result.put(SharedResourcesPluginConstants.ProjectFeatureParameters.VALUES, strings.stream().collect(Collectors.joining("\n")));
+          result.put(SharedResourcesPluginConstants.ProjectFeatureParameters.VALUES, String.join("\n", strings));
           return validate(result);
         }
       }
@@ -89,7 +86,7 @@ public class ResourceHelper {
 
 
   private Map<String, String> validate(@NotNull final Map<String, String> params) {
-    if (params.values().stream().filter(StringUtil::isEmptyOrSpaces).findFirst().isPresent()) {
+    if (params.values().stream().anyMatch(StringUtil::isEmptyOrSpaces)) {
       return null;
     } else {
       return params;

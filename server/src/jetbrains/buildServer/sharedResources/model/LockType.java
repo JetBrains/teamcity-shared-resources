@@ -38,7 +38,7 @@ public enum LockType {
   @NotNull
   private final String name;
 
-  private LockType(@NotNull final String name) {
+  LockType(@NotNull final String name) {
     this.name = name;
   }
 

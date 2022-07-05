@@ -16,11 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
+import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.controllers.ActionMessages;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import org.jetbrains.annotations.NotNull;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created with IntelliJ IDEA.

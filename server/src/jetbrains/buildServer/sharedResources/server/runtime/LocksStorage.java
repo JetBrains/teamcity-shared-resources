@@ -16,11 +16,10 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.Map;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * Interface {@code LocksStorage}

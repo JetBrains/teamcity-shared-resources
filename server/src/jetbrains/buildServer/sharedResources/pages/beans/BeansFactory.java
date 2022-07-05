@@ -36,7 +36,7 @@ import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstan
 public class BeansFactory {
 
   @NotNull
-  private Resources myResources;
+  private final Resources myResources;
 
   public BeansFactory(@NotNull final Resources resources) {
     myResources = resources;

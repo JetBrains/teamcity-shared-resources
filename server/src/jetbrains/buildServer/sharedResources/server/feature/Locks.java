@@ -16,12 +16,11 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import java.util.Collection;
+import java.util.Map;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * Interface {@code Locks}

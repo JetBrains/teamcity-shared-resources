@@ -16,13 +16,11 @@
 
 package jetbrains.buildServer.sharedResources.model.resources;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Class {@code CustomResource}
@@ -63,7 +61,7 @@ public class CustomResource extends AbstractResource {
   @Override
   public Map<String, String> getParameters() {
     final Map<String, String> result = super.getParameters();
-    result.put("values", myValues.stream().collect(Collectors.joining("\n")));
+    result.put("values", String.join("\n", myValues));
     return result;
   }
 }

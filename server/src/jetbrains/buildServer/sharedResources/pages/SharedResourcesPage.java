@@ -17,7 +17,8 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.util.Pair;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.controllers.admin.projects.EditProjectTab;
@@ -27,7 +28,6 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.serverSide.auth.SecurityContext;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
-import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.pages.beans.BeansFactory;
 import jetbrains.buildServer.sharedResources.server.ConfigurationInspector;
 import jetbrains.buildServer.sharedResources.server.analysis.ResourceUsageAnalyzer;

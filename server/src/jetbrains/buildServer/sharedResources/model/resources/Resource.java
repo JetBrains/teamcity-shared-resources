@@ -16,9 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.model.resources;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface {@code Resource}

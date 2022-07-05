@@ -16,16 +16,14 @@
 
 package jetbrains.buildServer.sharedResources.server;
 
+import java.util.Map;
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.server.feature.FeatureParams;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
-import jetbrains.buildServer.web.util.WebUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Oleg Rybak

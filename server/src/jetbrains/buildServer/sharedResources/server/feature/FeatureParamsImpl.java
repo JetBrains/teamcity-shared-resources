@@ -17,10 +17,12 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import com.intellij.openapi.util.text.StringUtil;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_NAMES_COMPARATOR;
 

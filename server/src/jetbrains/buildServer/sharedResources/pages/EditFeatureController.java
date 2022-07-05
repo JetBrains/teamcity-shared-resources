@@ -17,10 +17,7 @@
 package jetbrains.buildServer.sharedResources.pages;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import java.lang.ref.Reference;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,12 +44,10 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.web.servlet.ModelAndView;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_HTML;
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.EDIT_FEATURE_PATH_JSP;
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.FEATURE_TYPE;
 
 /**
  * @author Oleg Rybak

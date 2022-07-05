@@ -16,15 +16,14 @@
 
 package jetbrains.buildServer.sharedResources.pages.beans;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
-
-import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.RESOURCE_BY_NAME_COMPARATOR;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,7 +42,7 @@ public class ProjectPageBean {
   private final Map<String, List<Resource>> myTreeResources;
 
   @NotNull
-  private Map<String, Resource> myOverridesMap;
+  private final Map<String, Resource> myOverridesMap;
 
   ProjectPageBean(@NotNull final SProject project,
                   @NotNull final List<Resource> allOwnResources,

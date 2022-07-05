@@ -79,9 +79,9 @@ public class SharedResourcesPluginConstants {
     String ENABLED = "enabled";
   }
 
-  public static Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
+  public static final Comparator<String> RESOURCE_NAMES_COMPARATOR = String::compareToIgnoreCase;
 
-  public static Comparator<Resource> RESOURCE_BY_NAME_COMPARATOR = (rc1, rc2) -> rc1.getName().compareToIgnoreCase(rc2.getName());
+  public static final Comparator<Resource> RESOURCE_BY_NAME_COMPARATOR = (rc1, rc2) -> rc1.getName().compareToIgnoreCase(rc2.getName());
 
   public static final String RESOURCES_IN_CHAINS_ENABLED = "teamcity.sharedResources.buildChains.enabled";
 

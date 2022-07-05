@@ -50,25 +50,25 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseResourceAction implements ControllerAction {
 
   @NotNull
-  final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
+  protected final Logger LOG = Logger.getInstance(BaseResourceAction.class.getName());
 
   @NotNull
-  final ProjectManager myProjectManager;
+  protected final ProjectManager myProjectManager;
 
   @NotNull
-  final ResourceHelper myResourceHelper;
+  protected final ResourceHelper myResourceHelper;
 
   @NotNull
   private final Messages myMessages;
 
   @NotNull
-  final ConfigActionFactory myConfigActionFactory;
+  protected final ConfigActionFactory myConfigActionFactory;
 
   @NotNull
   private final Resources myResources;
 
   @NotNull
-  final ResourceProjectFeatures myProjectFeatures;
+  protected final ResourceProjectFeatures myProjectFeatures;
 
 
   protected BaseResourceAction(@NotNull final ProjectManager projectManager,

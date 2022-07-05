@@ -121,7 +121,7 @@ public class ConfigurationInspector {
           ResourceType resourceType = ResourceType.fromString(type);
           if (resourceType == null) {
             errors.add("Value of parameter 'type' (" + type + ") is incorrect. Correct values are: " +
-                       ResourceType.getCorrectValues().stream().collect(Collectors.joining(", ")));
+                       String.join(", ", ResourceType.getCorrectValues()));
           } else {
             // we have correct type
             // check the parameters that this type requires

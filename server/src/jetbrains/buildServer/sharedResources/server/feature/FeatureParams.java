@@ -16,9 +16,8 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Interface {@code FeatureParams}

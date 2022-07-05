@@ -18,8 +18,6 @@ package jetbrains.buildServer.sharedResources.pages.beans;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;

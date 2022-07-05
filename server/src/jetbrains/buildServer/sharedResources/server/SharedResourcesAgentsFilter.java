@@ -35,7 +35,10 @@ import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
-import jetbrains.buildServer.sharedResources.server.runtime.*;
+import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
+import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
+import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
