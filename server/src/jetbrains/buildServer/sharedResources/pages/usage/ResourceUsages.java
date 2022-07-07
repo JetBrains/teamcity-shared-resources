@@ -17,15 +17,12 @@
 package jetbrains.buildServer.sharedResources.pages.usage;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.servlet.http.HttpServletRequest;
 import jetbrains.buildServer.controllers.admin.projects.UsagesReportPageExtension;
-import jetbrains.buildServer.serverSide.BuildTypeTemplate;
-import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.serverSide.SProject;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.auth.AccessDeniedException;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
@@ -69,8 +66,8 @@ public class ResourceUsages extends UsagesReportPageExtension {
     // resource can be inherited and acquired from another project. Search origin project. Display usages only in current subtree
     final String currentProjectId = request.getParameter("resourceProjectId");
     int totalUsagesNum = 0;
-    final Map<SBuildType, List<Lock>> buildTypes = new HashMap<>();
-    final Map<BuildTypeTemplate, List<Lock>> templates = new HashMap<>();
+    final Map<SBuildType, List<Lock>> buildTypes = new TreeMap<>(new BuildTypeComparator(myProjectManager));
+    final Map<BuildTypeTemplate, List<Lock>> templates = new TreeMap<>(new TemplateComparator(myProjectManager.getProjectsComparator()));
     final SProject project = findProject(currentProjectId);
     if (project != null) {
       final String resourceId = request.getParameter("resourceId");
