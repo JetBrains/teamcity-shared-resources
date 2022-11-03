@@ -29,7 +29,7 @@
       </th>
       <td>
         <forms:textField name="resource_name" id="resource_name" style="width: 90%"
-                         className="longField buildTypeParams" maxlength="40"/>
+                         className="longField buildTypeParams" maxlength="80"/>
         <span class="error" id="error_Name"></span>
         <span id="nameAttention" class="smallNoteAttention" style="display: none">
           <bs:out value="Are you sure you want to rename this resource? It may result in errors if the name is used as a"/>
