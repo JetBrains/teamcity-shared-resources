@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.*;
 import jetbrains.buildServer.serverSide.impl.RunningBuildsManagerEx;
@@ -37,7 +36,6 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
-import jetbrains.buildServer.sharedResources.server.runtime.ResourceAffinity;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +102,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // get or create our collection of resources
     WaitReason reason = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
-    actualizeResourceAffinity(accessor.getResourceAffinity(), canBeStarted.keySet(), runningBuilds);
+    accessor.getResourceAffinity().actualize(canBeStarted.keySet().stream()
+                                                         .map(QueuedBuildInfo::getBuildPromotionInfo)
+                                                         .map(BuildPromotionInfo::getId)
+                                                         .collect(Collectors.toSet()));
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -189,15 +190,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     return result;
   }
 
-  private void actualizeResourceAffinity(@NotNull final ResourceAffinity resourceAffinity,
-                                         @NotNull final Collection<QueuedBuildInfo> canBeStarted,
-                                         @NotNull final Collection<RunningBuildEx> runningBuilds) {
-    resourceAffinity.actualize(Stream.concat(
-      canBeStarted.stream().map(QueuedBuildInfo::getBuildPromotionInfo).map(BuildPromotionInfo::getId),
-      runningBuilds.stream().map(SRunningBuild::getBuildPromotion).map(BuildPromotion::getId)
-    ).collect(Collectors.toSet()));
-  }
-
   @Nullable
   private SBuildType getBuildTypeSafe(@NotNull final SQueuedBuild queuedBuild) {
     try {
@@ -252,7 +244,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           if (!locksToTake.isEmpty()) {
             gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
             // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
-            final Map<Resource, String> unavailableLocks =  myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, accessor, promotion);
+            final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, accessor, promotion);
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(unavailableLocks);
               if (LOG.isDebugEnabled()) {
