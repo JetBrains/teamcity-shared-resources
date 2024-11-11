@@ -159,7 +159,7 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
   private Map<String, Lock> extractLocks(@NotNull final BuildPromotion buildPromotion) {
     final Map<String, Lock> result = new HashMap<>();
     if (buildPromotion.getBuildType() != null) {
-      result.putAll(myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(buildPromotion.getBuildType())));
+      result.putAll(myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(buildPromotion)));
     }
     return result;
   }

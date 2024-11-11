@@ -235,6 +235,7 @@ public class TakenLocksImplTest extends BaseTestCase {
   public void testShouldNotAskParametersNoFeatures() {
     final RunningBuildEx rb = m.mock(RunningBuildEx.class, "rb");
     final SBuildType rb_bt = m.mock(SBuildType.class, "rb_bt");
+    final BuildPromotionEx rb_bp = m.mock(BuildPromotionEx.class, "rb_bp");
     final Collection<RunningBuildEx> runningBuilds = new ArrayList<RunningBuildEx>() {{
       add(rb);
     }};
@@ -244,9 +245,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       will(returnValue(rb_bt));
 
       oneOf(rb).getBuildPromotion();
-      will(returnValue(with(any(BuildPromotion.class))));
+      will(returnValue(rb_bp));
 
-      oneOf(myFeatures).searchForFeatures(with(any(BuildPromotion.class)));
+      oneOf(myFeatures).searchForFeatures(rb_bp);
       will(returnValue(Collections.emptyList()));
 
     }});
