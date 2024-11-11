@@ -155,7 +155,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           if (promoBuildType != null) {
             final String projectId = promoBuildType.getProjectId();
             chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
-            final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(promoBuildType);
+            final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion);
 
             if (!features.isEmpty()) {
               reason = checkForInvalidLocks(promoBuildType);
@@ -221,7 +221,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final SBuildType buildType = buildPromotion.getBuildType();
     WaitReason reason = null;
     if (buildType != null && projectId != null) {
-      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildPromotion);
       if (!features.isEmpty()) {
         reason = checkForInvalidLocks(buildType);
         if (reason == null) {

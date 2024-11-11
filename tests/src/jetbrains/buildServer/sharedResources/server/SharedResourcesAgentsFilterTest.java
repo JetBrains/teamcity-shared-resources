@@ -185,7 +185,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       allowing(myBuildPromotion).isPartOfBuildChain();
       will(returnValue(false));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
     }});
@@ -216,7 +216,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
       oneOf(myInspector).inspect(myBuildType);
@@ -255,7 +255,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
       oneOf(myInspector).inspect(myBuildType);
@@ -426,7 +426,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myBuildPromotion).getProjectId();
       will(returnValue(myProjectId));
 
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
       oneOf(myInspector).inspect(myBuildType);
@@ -462,6 +462,9 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       will(returnValue(myProjectId));
 
       oneOf(myFeatures).searchForFeatures(myBuildType);
+      will(returnValue(features));
+
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(features);

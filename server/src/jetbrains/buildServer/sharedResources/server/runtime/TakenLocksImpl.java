@@ -58,7 +58,7 @@ public class TakenLocksImpl implements TakenLocks {
     for (RunningBuildEx build : runningBuilds) {
       final SBuildType buildType = build.getBuildType();
       if (buildType != null) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildPromotion());
         if (features.isEmpty()) continue;
         // at this point we have features
         final BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
@@ -97,7 +97,7 @@ public class TakenLocksImpl implements TakenLocks {
       BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
       final BuildTypeEx buildType = bpEx.getBuildType();
       if (buildType != null) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildType);
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
         if (features.isEmpty()) continue;
         Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
         if (locks.isEmpty()) continue;

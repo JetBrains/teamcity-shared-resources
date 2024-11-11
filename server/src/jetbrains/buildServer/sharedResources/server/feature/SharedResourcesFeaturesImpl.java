@@ -2,11 +2,13 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildTypeSettings;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildType;
 import org.jetbrains.annotations.NotNull;
 
 import static jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature.FEATURE_TYPE;
@@ -32,6 +34,12 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
   }
 
   @NotNull
+  @Override
+  public Collection<SharedResourcesFeature> searchForFeatures(@NotNull final BuildPromotion promotion) {
+    return createFeatures(getEnabledUnresolvedFeatureDescriptors(promotion));
+  }
+
+  @NotNull
   private Collection<SharedResourcesFeature> createFeatures(@NotNull final Collection<SBuildFeatureDescriptor> descriptors) {
     final List<SharedResourcesFeature> result = new ArrayList<>();
     for (SBuildFeatureDescriptor descriptor : descriptors) {
@@ -49,5 +57,17 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
       }
     }
     return result;
+  }
+
+  @NotNull
+  private Collection<SBuildFeatureDescriptor> getEnabledUnresolvedFeatureDescriptors(@NotNull final BuildPromotion promotion) {
+    SBuildType bt = promotion.getBuildType();
+    if (bt == null) {
+      return Collections.emptyList();
+    }
+    Map<String, SBuildFeatureDescriptor> descriptors =
+      getEnabledUnresolvedFeatureDescriptors(promotion.getBuildType()).stream().collect(Collectors.toMap(SBuildFeatureDescriptor::getId, Function.identity()));
+    promotion.getBuildFeaturesOfType(FEATURE_TYPE).forEach(feature -> descriptors.putIfAbsent(feature.getId(), feature));
+    return descriptors.values();
   }
 }
