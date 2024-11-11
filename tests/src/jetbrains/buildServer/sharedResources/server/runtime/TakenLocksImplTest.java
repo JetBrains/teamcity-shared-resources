@@ -166,7 +166,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildType();
       will(returnValue(rb1_bt));
 
-      oneOf(myFeatures).searchForFeatures(rb1_bt);
+      oneOf(rb1).getBuildPromotion();
+      will(returnValue(bp1));
+
+      oneOf(myFeatures).searchForFeatures(bp1);
       will(returnValue(features));
 
       oneOf(rb1).getBuildPromotionInfo();
@@ -187,7 +190,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb2).getBuildType();
       will(returnValue(rb2_bt));
 
-      oneOf(myFeatures).searchForFeatures(rb2_bt);
+      oneOf(rb2).getBuildPromotion();
+      will(returnValue(bp2));
+
+      oneOf(myFeatures).searchForFeatures(bp2);
       will(returnValue(features));
 
       oneOf(rb2).getBuildPromotionInfo();
@@ -237,7 +243,10 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb).getBuildType();
       will(returnValue(rb_bt));
 
-      oneOf(myFeatures).searchForFeatures(rb_bt);
+      oneOf(rb).getBuildPromotion();
+      will(returnValue(with(any(BuildPromotion.class))));
+
+      oneOf(myFeatures).searchForFeatures(with(any(BuildPromotion.class)));
       will(returnValue(Collections.emptyList()));
 
     }});
@@ -295,10 +304,13 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
 
+      oneOf(rb1).getBuildPromotion();
+      will(returnValue(bp1));
+
       oneOf(myLocksStorage).locksStored(bp1);
       will(returnValue(false));
 
-      oneOf(myFeatures).searchForFeatures(rb1_bt);
+      oneOf(myFeatures).searchForFeatures(bp1);
       will(returnValue(rFeatures));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(rFeatures);
@@ -316,7 +328,7 @@ public class TakenLocksImplTest extends BaseTestCase {
       oneOf(bp2).getBuildType();
       will(returnValue(qb1_bt));
 
-      oneOf(myFeatures).searchForFeatures(qb1_bt);
+      oneOf(myFeatures).searchForFeatures(bp2);
       will(returnValue(qFeatures));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(qFeatures);
@@ -953,10 +965,16 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      allowing(myFeatures).searchForFeatures(rb1.getSecond());
+      oneOf(rb1.getFirst()).getBuildPromotion();
+      will(returnValue(rb1.getThird()));
+
+      oneOf(rb2.getFirst()).getBuildPromotion();
+      will(returnValue(rb2.getThird()));
+
+      allowing(myFeatures).searchForFeatures(rb1.getThird());
       will(returnValue(features));
 
-      allowing(myFeatures).searchForFeatures(rb2.getSecond());
+      allowing(myFeatures).searchForFeatures(rb2.getThird());
       will(returnValue(features));
 
       allowing(myLocksStorage).locksStored(with(any(BuildPromotion.class)));
@@ -971,13 +989,13 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myResources).getResourcesMap(myProjectId);
       will(returnValue(resources));
 
-      allowing(myFeatures).searchForFeatures(qb1.getSecond());
+      allowing(myFeatures).searchForFeatures(qb1.getThird());
       will(returnValue(featuresWithAllResources));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(featuresWithAllResources);
       will(returnValue(allExistingLocks));
 
-      allowing(myFeatures).searchForFeatures(qb2.getSecond());
+      allowing(myFeatures).searchForFeatures(qb2.getThird());
       will(returnValue(featuresWithDeletedResources));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(featuresWithDeletedResources);
