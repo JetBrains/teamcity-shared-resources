@@ -65,9 +65,14 @@ public final class SharedResourcesFeaturesImpl implements SharedResourcesFeature
     if (bt == null) {
       return Collections.emptyList();
     }
-    Map<String, SBuildFeatureDescriptor> descriptors =
-      getEnabledUnresolvedFeatureDescriptors(promotion.getBuildType()).stream().collect(Collectors.toMap(SBuildFeatureDescriptor::getId, Function.identity()));
-    promotion.getBuildFeaturesOfType(FEATURE_TYPE).forEach(feature -> descriptors.putIfAbsent(feature.getId(), feature));
-    return descriptors.values();
+    List<SBuildFeatureDescriptor> descriptors = new ArrayList<>(getEnabledUnresolvedFeatureDescriptors(promotion.getBuildType()));
+    Map<String, SBuildFeatureDescriptor> descriptorsMap = descriptors.stream().collect(Collectors.toMap(SBuildFeatureDescriptor::getId, Function.identity()));
+    promotion.getBuildFeaturesOfType(FEATURE_TYPE).forEach(feature -> {
+      if (!descriptorsMap.containsKey(feature.getId())) {
+        descriptors.add(0, feature);
+      }
+    });
+
+    return descriptors;
   }
 }

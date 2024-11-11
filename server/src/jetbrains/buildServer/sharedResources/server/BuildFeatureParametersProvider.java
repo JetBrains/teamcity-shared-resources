@@ -55,7 +55,7 @@ public class BuildFeatureParametersProvider extends AbstractBuildParametersProvi
     final Map<String, String> result = new HashMap<>();
     final SBuildType buildType = build.getBuildType();
     if (buildType != null) {
-      myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(buildType))
+      myLocks.fromBuildFeaturesAsMap(myFeatures.searchForFeatures(build.getBuildPromotion()))
              .values()
              .forEach(lock -> result.put(myLocks.asBuildParameter(lock), lock.getValue()));
     }

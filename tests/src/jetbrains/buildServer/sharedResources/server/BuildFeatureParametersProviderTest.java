@@ -4,10 +4,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.ResolvedSettings;
-import jetbrains.buildServer.serverSide.SBuild;
-import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
@@ -39,6 +36,9 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   /** BuildType under test */
   private SBuildType myBuildType;
 
+  /** BuildPromotion under test */
+  private BuildPromotionEx myBuildPromotion;
+
   /** Resolved setting of the build type */
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})      // todo: add test for resolved settings
   private ResolvedSettings myResolvedSettings;
@@ -59,6 +59,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     m = new Mockery();
     myBuild = m.mock(SBuild.class);
     myBuildType = m.mock(SBuildType.class);
+    myBuildPromotion = m.mock(BuildPromotionEx.class);
     myFeature = m.mock(SharedResourcesFeature.class);
     myResolvedSettings = m.mock(ResolvedSettings.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
@@ -66,15 +67,14 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     final Locks locks = new LocksImpl();
     final LocksStorage storage = m.mock(LocksStorage.class);
 
-    final BuildPromotionEx promo = m.mock(BuildPromotionEx.class);
     m.checking(new Expectations() {{
       oneOf(myBuild).getBuildType();
       will(returnValue(myBuildType));
 
       allowing(myBuild).getBuildPromotion();
-      will(returnValue(promo));
+      will(returnValue(myBuildPromotion));
 
-      allowing(promo).isCompositeBuild();
+      allowing(myBuildPromotion).isCompositeBuild();
       will(returnValue(false));
     }});
 
@@ -132,7 +132,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(descriptors));
 
       oneOf(myFeature).getLockedResources();
@@ -153,7 +153,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
     final Collection<SharedResourcesFeature> descriptors = Arrays.asList(features);
 
     m.checking(new Expectations() {{
-      oneOf(myFeatures).searchForFeatures(myBuildType);
+      oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(descriptors));
     }});
   }
