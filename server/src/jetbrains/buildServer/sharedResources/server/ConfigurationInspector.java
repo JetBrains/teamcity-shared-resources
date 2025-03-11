@@ -208,7 +208,7 @@ public class ConfigurationInspector {
 
   @NotNull
   private String tryMatch(@NotNull final Resource r, @NotNull final Lock lock) {
-    if (!"".equals(lock.getValue())) {
+    if (!lock.isAnyValueLock()) {
       if (ResourceType.CUSTOM == r.getType()) {
         if (!((CustomResource) r).getValues().contains(lock.getValue())) {
           // values domain does not contain required value
