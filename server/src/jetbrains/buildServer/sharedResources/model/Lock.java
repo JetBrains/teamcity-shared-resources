@@ -69,6 +69,10 @@ public class Lock {
     return myValue;
   }
 
+  public boolean isAnyValueLock() {
+    return myValue.isEmpty();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

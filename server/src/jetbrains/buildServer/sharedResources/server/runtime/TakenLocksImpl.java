@@ -78,7 +78,7 @@ public class TakenLocksImpl implements TakenLocks {
           if (resource != null) {
             if (resource instanceof CustomResource
                 && lock.getType() == LockType.READ
-                && lock.getValue().equals("")) { // ANY LOCK
+                && lock.isAnyValueLock()) {
               String reservedValue = (String)bpEx.getAttribute(getReservedResourceAttributeKey(resource.getId()));
               if (reservedValue != null) {
                 addLockToTaken(result, bpEx, resource, Lock.createFrom(lock, reservedValue));
@@ -235,13 +235,13 @@ public class TakenLocksImpl implements TakenLocks {
           break;
         }
         // 2) SPECIFIC case
-        if (!"".equals(lock.getValue())) { // we have custom lock
+        if (!lock.isAnyValueLock()) { // we have custom lock
           final String requiredValue = lock.getValue();
           final Set<String> takenValues = new HashSet<>();
           takenValues.addAll(takenLock.getReadLocks().values());
           takenValues.addAll(takenLock.getWriteLocks().values());
           // get resource value affinity with other builds
-          takenValues.addAll(distributionDataAccessor.getResourceAffinity().getOtherAssignedValues(resource, buildPromotion));
+          takenValues.addAll(distributionDataAccessor.getReservedValuesProvider().getValuesReservedByOtherBuilds(resource, buildPromotion));
           if (takenValues.contains(requiredValue)) {
             StringBuilder builder = new StringBuilder("(required value '" + requiredValue + "' is occupied");
             BuildPromotionEx occupyingPromo = occupyingPromo(takenLock, requiredValue);

@@ -29,7 +29,8 @@ public class DistributionDataAccessor {
     return myData.getFairSet();
   }
 
-  public ResourceAffinity getResourceAffinity() {
-    return myData.getResourceAffinity();
+  @NotNull
+  public ReservedValuesProvider getReservedValuesProvider() {
+    return myData.getReservedValuesProvider();
   }
 }

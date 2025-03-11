@@ -130,24 +130,24 @@ public class SharedResourcesContextProcessor implements BuildStartContextProcess
             final String name = entry.getKey();
             final Lock currentLock = locks.get(name);
             final String paramName = myLocks.asBuildParameter(currentLock);
-            String currentValue;
+            String reservedValue;
             if (LockType.READ.equals(currentLock.getType())) {
-              if (currentLock.getValue().equals("")) { // ANY lock
-                currentValue = (String)((BuildPromotionEx)currentBuildPromotion).getAttribute(getReservedResourceAttributeKey(entry.getValue().getId()));
-                if (currentValue == null) {
+              if (currentLock.isAnyValueLock()) { // ANY lock
+                reservedValue = (String)((BuildPromotionEx)currentBuildPromotion).getAttribute(getReservedResourceAttributeKey(entry.getValue().getId()));
+                if (reservedValue == null) {
                   final String message = "Expected reserved value for resource (" + entry.getValue().getId() + "|" + name
                                          + ") in build promotion " + currentBuildPromotion.getId() + ", got null";
                   LOG.error(message);
                   throw new RuntimeException(message);
                 }
               } else { // SPECIFIC lock
-                currentValue = currentLock.getValue();
+                reservedValue = currentLock.getValue();
               }
-              myTakenValues.put(currentLock, currentValue);
+              myTakenValues.put(currentLock, reservedValue);
             } else { // ALL lock
-              currentValue = StringUtil.join(values, ";");
+              reservedValue = StringUtil.join(values, ";");
             }
-            context.addSharedParameter(paramName, currentValue);
+            context.addSharedParameter(paramName, reservedValue);
           }
         }
       }
