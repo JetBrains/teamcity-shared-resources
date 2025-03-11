@@ -88,10 +88,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // get or create our collection of resources
     WaitReason reason = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
-    accessor.getResourceAffinity().actualize(canBeStarted.keySet().stream()
-                                                         .map(QueuedBuildInfo::getBuildPromotionInfo)
-                                                         .map(BuildPromotionInfo::getId)
-                                                         .collect(Collectors.toSet()));
+    accessor.getReservedValuesProvider().cleanupValuesReservedByObsoleteBuilds(canBeStarted.keySet().stream()
+                                                                                           .map(QueuedBuildInfo::getBuildPromotionInfo)
+                                                                                           .map(BuildPromotionInfo::getId)
+                                                                                           .collect(Collectors.toSet()));
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -198,7 +198,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final String projectId = buildPromotion.getProjectId();
     WaitReason reason = null;
     if (projectId != null) {
-      gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
+      takenLocks.compareAndSet(null, myTakenLocks.collectTakenLocks(runningBuilds, canBeStarted.keySet()));
       final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), accessor, chainNodeResources, chainLocks, buildPromotion);
       if (!unavailableLocks.isEmpty()) {
         reason = createWaitReason(unavailableLocks);
@@ -228,7 +228,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
-            gatherRuntimeInfo(runningBuilds, canBeStarted, takenLocks);
+            takenLocks.compareAndSet(null, myTakenLocks.collectTakenLocks(runningBuilds, canBeStarted.keySet()));
             // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
             final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, accessor, promotion);
             if (!unavailableLocks.isEmpty()) {
@@ -252,62 +252,53 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                       @NotNull final Collection<Lock> locksToTake,
                                       @NotNull final DistributionDataAccessor accessor,
                                       final boolean emulationMode) {
+    if (emulationMode) return;
+
     final Map<String, Resource> resources = myResources.getResourcesMap(projectId);
     final Map<String, String> affinityMap = new HashMap<>();
-    locksToTake.stream()
-               .filter(lock -> LockType.READ == lock.getType())
-               .forEach(lock -> {
-                 Resource r = resources.get(lock.getName());
-                 if (r instanceof CustomResource) {
-                   if (StringUtil.isEmptyOrSpaces(lock.getValue())) {
-                     // if lock is ANY lock -> choose next available value
-                     final String next = getNextAvailableValue((CustomResource)r, takenLocks, promotion, accessor);
-                     if (StringUtil.isEmptyOrSpaces(next)) {
-                       LOG.warn("Failed to allocate values for promotion: " + promotion + ", resource: " + r);
-                     }
-                     affinityMap.put(r.getId(), next);
-                   } else {
-                     // if lock is SPECIFIC lock - choose lock value
-                     affinityMap.put(r.getId(), lock.getValue());
-                   }
-                 }
-               });
-    if (!affinityMap.isEmpty() && !emulationMode) {
+    for (Lock lock: locksToTake) {
+      if (lock.getType() != LockType.READ) continue;
+
+      Resource r = resources.get(lock.getName());
+      if (r instanceof CustomResource) {
+        if (lock.isAnyValueLock()) {
+          // if lock is ANY lock -> choose next available value
+          final String nextVal = getNextAvailableValue((CustomResource)r, takenLocks, promotion, accessor);
+          if (nextVal == null) {
+            LOG.warn("Could not find a free shared resource value for promotion: " + promotion + ", resource: " + r);
+          } else {
+            affinityMap.put(r.getId(), nextVal);
+          }
+        } else {
+          // if lock is SPECIFIC lock - choose lock value
+          affinityMap.put(r.getId(), lock.getValue());
+        }
+      }
+    }
+
+    if (!affinityMap.isEmpty()) {
       // store assigned values in affinity set to be used by other builds inside current distribution cycle
-      accessor.getResourceAffinity().store(promotion, affinityMap);
+      accessor.getReservedValuesProvider().rememberReservedValues(promotion, affinityMap);
+
       // store assigned value from resource affinity inside build promotion
       affinityMap.forEach((resourceId, value) -> promotion.setAttribute(getReservedResourceAttributeKey(resourceId), value));
     }
   }
 
+  @Nullable
   private String getNextAvailableValue(@NotNull final CustomResource resource,
                                        @NotNull final Map<Resource, TakenLock> takenLocks,
                                        @NotNull final BuildPromotion promotion,
                                        @NotNull final DistributionDataAccessor accessor) {
     final List<String> values = new ArrayList<>(resource.getValues());
     // remove all values reserved by other builds in current distribution cycle
-    accessor.getResourceAffinity().getOtherAssignedValues(resource, promotion).forEach(values::remove);
+    accessor.getReservedValuesProvider().getValuesReservedByOtherBuilds(resource, promotion).forEach(values::remove);
     // remove values from taken locks
     final TakenLock takenLock = takenLocks.get(resource);
     if (takenLock != null) {
       takenLock.getReadLocks().values().forEach(values::remove);
     }
-    return values.isEmpty() ? "" : values.iterator().next();
-  }
-
-  /**
-   * Gathers information about running and distributed build from runtime
-   *
-   * @param runningBuilds local running build reference
-   * @param canBeStarted  distributor output
-   * @param takenLocks    local taken locks reference
-   */
-  private void gatherRuntimeInfo(@NotNull final List<RunningBuildEx> runningBuilds,
-                                 @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
-                                 @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks) {
-    if (takenLocks.get() == null) {
-      takenLocks.set(myTakenLocks.collectTakenLocks(runningBuilds, canBeStarted.keySet()));
-    }
+    return values.isEmpty() ? null : values.iterator().next();
   }
 
   /**
