@@ -2,23 +2,24 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectIterator;
-import gnu.trove.TLongObjectProcedure;
 import java.util.*;
 import javax.annotation.concurrent.NotThreadSafe;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.impl.LogUtil;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Contains information about custom resource values reserved during the build distribution.
+ * Contains information about custom resource values reserved by the queued builds during the build distribution.
  *
  * @author Oleg Rybak (oleg.rybak@jetbrains.com)
  */
 @NotThreadSafe
 public class ReservedValuesProvider {
+  private final static Logger LOG = Logger.getInstance(ReservedValuesProvider.class);
 
   /**
    * Storage for actual locked values associated with the build
@@ -38,7 +39,9 @@ public class ReservedValuesProvider {
       // store the value
       myReservedValues.computeIfAbsent(resourceId, it -> new TLongObjectHashMap<>()).put(promotionId, value);
     });
-
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Reserved resource values for " + LogUtil.describe(promotion) + ": " + reservedValues);
+    }
   }
 
   /**
@@ -64,6 +67,10 @@ public class ReservedValuesProvider {
         }
         return true;
       });
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Other builds reserved values are: " + result);
+      }
       return result;
     }
     return Collections.emptyList();
@@ -79,7 +86,15 @@ public class ReservedValuesProvider {
   public void cleanupValuesReservedByObsoleteBuilds(@NotNull final Set<Long> actualPromotionIds) {
     // only retain values which belong to actual build promotions
     myReservedValues.forEach((resourceId, valuesMap) -> {
-      valuesMap.retainEntries((id, val) -> actualPromotionIds.contains(id));
+      valuesMap.retainEntries((id, val) -> {
+        if (actualPromotionIds.contains(id)) {
+          return true;
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Removing value reserved by build: " + id + ", value: " + val);
+        }
+        return false;
+      });
     });
 
     // cleanup empty maps

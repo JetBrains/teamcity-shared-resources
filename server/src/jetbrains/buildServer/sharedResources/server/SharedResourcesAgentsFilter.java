@@ -141,8 +141,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                            chainLocks, locksToTake, compositeQueuedBuild.getBuildPromotion(), context.isEmulationMode());
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
-                  LOG.debug("Firing precondition for queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
-                  LOG.debug("Found blocked composite build on the path: " + compositeQueuedBuild);
+                  LOG.debug("Preventing start of the queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
                 }
                 break;
               }
@@ -234,7 +233,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(unavailableLocks);
               if (LOG.isDebugEnabled()) {
-                LOG.debug("Firing precondition for queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
+                LOG.debug("Preventing start of the queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
             } else {
               storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake, accessor, emulationMode); // assign ANY locks here

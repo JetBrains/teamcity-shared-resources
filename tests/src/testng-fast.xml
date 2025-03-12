@@ -2,6 +2,13 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="PLUGIN tests">
+  <test name="Integration tests">
+    <classes>
+      <class name="jetbrains.buildServer.sharedResources.server.runtime.CompositeBuildsIntegrationTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.runtime.BaseIntegrationTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.runtime.CustomValuesConcurrencyTest"/>
+    </classes>
+  </test>
   <test name="Feature tests">
     <classes>
       <class name="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProviderTest"/>
@@ -43,12 +50,6 @@
       <class name="jetbrains.buildServer.sharedResources.pages.ResourceHelperTest"/>
       <class name="jetbrains.buildServer.sharedResources.pages.actions.ActionsTest"/>
       <class name="jetbrains.buildServer.sharedResources.pages.beans.ProjectPageBeanTest"/>
-    </classes>
-  </test>
-  <test name="Integration tests">
-    <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.runtime.BaseIntegrationTest"/>
-      <class name="jetbrains.buildServer.sharedResources.server.runtime.CompositeBuildsIntegrationTest"/>
     </classes>
   </test>
 </suite>
