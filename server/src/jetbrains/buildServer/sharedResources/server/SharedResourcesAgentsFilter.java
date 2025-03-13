@@ -88,6 +88,10 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // get or create our collection of resources
     WaitReason reason = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
+
+    // we're preserving the values of distributed builds only, if our filter allowed some previous build
+    // to start and reserved a value for it, there can be another filter for the same build which actually
+    // prevented it from starting; by doing this cleanup we're removing reserved values of builds which could not start
     accessor.getReservedValuesProvider().cleanupValuesReservedByObsoleteBuilds(canBeStarted.keySet().stream()
                                                                                            .map(QueuedBuildInfo::getBuildPromotionInfo)
                                                                                            .map(BuildPromotionInfo::getId)
@@ -262,7 +266,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       if (r instanceof CustomResource) {
         if (lock.isAnyValueLock()) {
           // if lock is ANY lock -> choose next available value
-          final String nextVal = getNextAvailableValue((CustomResource)r, takenLocks, promotion, accessor);
+          final String nextVal = getNextAvailableValue((CustomResource)r, takenLocks, accessor);
           if (nextVal == null) {
             LOG.warn("Could not find a free shared resource value for promotion: " + promotion + ", resource: " + r);
           } else {
@@ -287,17 +291,34 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @Nullable
   private String getNextAvailableValue(@NotNull final CustomResource resource,
                                        @NotNull final Map<Resource, TakenLock> takenLocks,
-                                       @NotNull final BuildPromotion promotion,
                                        @NotNull final DistributionDataAccessor accessor) {
-    final List<String> values = new ArrayList<>(resource.getValues());
+    final List<String> allValues = new ArrayList<>(resource.getValues());
     // remove all values reserved by other builds in current distribution cycle
-    accessor.getReservedValuesProvider().getValuesReservedByOtherBuilds(resource, promotion).forEach(values::remove);
+    Map<Long, String> reservedOnDistributionCycle = accessor.getReservedValuesProvider().getReservedValues(resource);
+    List<String> reservedValues = new ArrayList<>(reservedOnDistributionCycle.values());
     // remove values from taken locks
     final TakenLock takenLock = takenLocks.get(resource);
     if (takenLock != null) {
-      takenLock.getReadLocks().values().forEach(values::remove);
+      takenLock.getReadLocks().forEach((bp, val) -> {
+        if (reservedOnDistributionCycle.containsKey(bp.getId())) return; // already added
+        reservedValues.add(val);
+      });
     }
-    return values.isEmpty() ? null : values.iterator().next();
+
+    for (String reserved: reservedValues) {
+      Iterator<String> availableIt = allValues.iterator();
+      while (availableIt.hasNext()) {
+        String value = availableIt.next();
+        if (reserved.equals(value)) {
+          availableIt.remove();
+          // we should only remove one value, not all of them
+          // because some resources have duplicate values configured
+          break;
+        }
+      }
+    }
+
+    return allValues.isEmpty() ? null : allValues.iterator().next();
   }
 
   /**

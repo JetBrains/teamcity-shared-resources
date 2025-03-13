@@ -53,15 +53,18 @@ public class TakenLocksImpl implements TakenLocks {
   @Override
   public Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<RunningBuildEx> runningBuilds,
                                                     @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
+    Set<BuildPromotionEx> buildPromotions = new HashSet<>();
+    runningBuilds.forEach(rb -> buildPromotions.add(rb.getBuildPromotion()));
+    queuedBuilds.forEach(qb -> buildPromotions.add((BuildPromotionEx)qb.getBuildPromotionInfo()));
+
     final Map<Resource, TakenLock> result = new HashMap<>();
     final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
-    for (RunningBuildEx build : runningBuilds) {
-      final SBuildType buildType = build.getBuildType();
+    for (BuildPromotionEx bpEx : buildPromotions) {
+      final SBuildType buildType = bpEx.getBuildType();
       if (buildType != null) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(build.getBuildPromotion());
+        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
         if (features.isEmpty()) continue;
         // at this point we have features
-        final BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
         Map<String, Lock> locks;
         if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
           locks = myLocksStorage.load(bpEx);
@@ -76,43 +79,32 @@ public class TakenLocksImpl implements TakenLocks {
           // collection, promotion, resource, lock
           final Resource resource = resources.get(name);
           if (resource != null) {
-            if (resource instanceof CustomResource
-                && lock.getType() == LockType.READ
-                && lock.isAnyValueLock()) {
-              String reservedValue = (String)bpEx.getAttribute(getReservedResourceAttributeKey(resource.getId()));
-              if (reservedValue != null) {
-                addLockToTaken(result, bpEx, resource, Lock.createFrom(lock, reservedValue));
-              } else {
-                addLockToTaken(result, bpEx, resource, lock);
-              }
-            } else {
-              addLockToTaken(result, bpEx, resource, lock);
-            }
+            updateTakenLocks(resource, lock, bpEx, result);
           }
         });
       }
     }
 
-    for (QueuedBuildInfo build : queuedBuilds) {
-      BuildPromotionEx bpEx = (BuildPromotionEx)build.getBuildPromotionInfo();
-      final BuildTypeEx buildType = bpEx.getBuildType();
-      if (buildType != null) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
-        if (features.isEmpty()) continue;
-        Map<String, Lock> locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
-        if (locks.isEmpty()) continue;
-        // get resources defined in project tree, respecting inheritance
-        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
-        for (Map.Entry<String, Lock> entry : locks.entrySet()) {
-          // collection, promotion, resource, lock
-          final Resource resource = resources.get(entry.getKey());
-          if (resource != null) {
-            addLockToTaken(result, bpEx, resource, entry.getValue());
-          }
-        }
-      }
-    }
     return result;
+  }
+
+  private void updateTakenLocks(@NotNull final Resource resource,
+                                @NotNull final Lock lock,
+                                @NotNull final BuildPromotionEx bpEx,
+                                @NotNull final Map<Resource, TakenLock> result) {
+    if (resource instanceof CustomResource
+        && lock.getType() == LockType.READ
+        && lock.isAnyValueLock()) {
+      String reservedValue = (String)bpEx.getAttribute(getReservedResourceAttributeKey(resource.getId()));
+      if (reservedValue != null) {
+        getOrCreateTakenLock(result, resource).addLock(bpEx, Lock.createFrom(lock, reservedValue));
+      } else {
+        // the value is not yet reserved, just add a lock with empty value
+        getOrCreateTakenLock(result, resource).addLock(bpEx, lock);
+      }
+    } else {
+      getOrCreateTakenLock(result, resource).addLock(bpEx, lock);
+    }
   }
 
   @Override
@@ -181,14 +173,6 @@ public class TakenLocksImpl implements TakenLocks {
   }
 
 
-  private void addLockToTaken(@NotNull final Map<Resource, TakenLock> takenLocks,
-                              @NotNull final BuildPromotionEx bpEx,
-                              @NotNull final Resource resource,
-                              @NotNull final Lock lock) {
-    final TakenLock takenLock = getOrCreateTakenLock(takenLocks, resource);
-    takenLock.addLock(bpEx, lock);
-  }
-
   private TakenLock getOrCreateTakenLock(@NotNull final Map<Resource, TakenLock> takenLocks,
                                          @NotNull final Resource resource) {
     return takenLocks.computeIfAbsent(resource, TakenLock::new);
@@ -240,8 +224,7 @@ public class TakenLocksImpl implements TakenLocks {
           final Set<String> takenValues = new HashSet<>();
           takenValues.addAll(takenLock.getReadLocks().values());
           takenValues.addAll(takenLock.getWriteLocks().values());
-          // get resource value affinity with other builds
-          takenValues.addAll(distributionDataAccessor.getReservedValuesProvider().getValuesReservedByOtherBuilds(resource, buildPromotion));
+          takenValues.addAll(distributionDataAccessor.getReservedValuesProvider().getReservedValues(resource).values());
           if (takenValues.contains(requiredValue)) {
             StringBuilder builder = new StringBuilder("(required value '" + requiredValue + "' is occupied");
             BuildPromotionEx occupyingPromo = occupyingPromo(takenLock, requiredValue);
