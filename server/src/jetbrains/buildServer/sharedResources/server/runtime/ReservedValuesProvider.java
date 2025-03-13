@@ -39,41 +39,28 @@ public class ReservedValuesProvider {
       // store the value
       myReservedValues.computeIfAbsent(resourceId, it -> new TLongObjectHashMap<>()).put(promotionId, value);
     });
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Reserved resource values for " + LogUtil.describe(promotion) + ": " + reservedValues);
-    }
   }
 
   /**
-   * Returns set of values assigned to other build promotions
+   * Returns set of values reserved during the current distribution cycle
    *
    * @param resource         resource to compute for
-   * @param currentPromotion promotion to compute the set for
-   * @return list of values for the given resource,
+   * @return map of values for the given resource where key is id of the build which reserved the value
    * assigned to promotions other that the given one
    */
   @NotNull
-  public List<String> getValuesReservedByOtherBuilds(@NotNull final Resource resource,
-                                                     @NotNull final BuildPromotion currentPromotion) {
+  public Map<Long, String> getReservedValues(@NotNull final Resource resource) {
     // every promotion can lock at most one value of the resource
+    final Map<Long, String> result = new HashMap<>();
     final TLongObjectHashMap<String> reservedValues = myReservedValues.get(resource.getId());
     if (reservedValues != null) {
-      final long promotionId = currentPromotion.getId();
-      // list, as we allow duplicate values in custom resources, multiple instances of a value can be locked by other builds
-      final List<String> result = new ArrayList<>();
       reservedValues.forEachEntry((promoId, value) -> {
-        if (promoId != promotionId) {
-          result.add(value);
-        }
+        result.put(promoId, value);
         return true;
       });
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Other builds reserved values are: " + result);
-      }
-      return result;
     }
-    return Collections.emptyList();
+
+    return result;
   }
 
   /**
@@ -86,15 +73,7 @@ public class ReservedValuesProvider {
   public void cleanupValuesReservedByObsoleteBuilds(@NotNull final Set<Long> actualPromotionIds) {
     // only retain values which belong to actual build promotions
     myReservedValues.forEach((resourceId, valuesMap) -> {
-      valuesMap.retainEntries((id, val) -> {
-        if (actualPromotionIds.contains(id)) {
-          return true;
-        }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Removing value reserved by build: " + id + ", value: " + val);
-        }
-        return false;
-      });
+      valuesMap.retainEntries((id, val) -> actualPromotionIds.contains(id));
     });
 
     // cleanup empty maps
