@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
+import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTest;
 import jetbrains.buildServer.util.ThreadUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,8 +77,6 @@ public class CustomValuesConcurrencyTest extends SharedResourcesIntegrationTest 
     for (SBuildType bt: resourceProj.getBuildTypes()) {
       bt.addToQueue("");
     }
-
-    enableDebug("jetbrains.buildServer.sharedResources.server.runtime");
 
     runAsync(1, () -> {
       while (!myFixture.getBuildQueue().isQueueEmpty()) {
