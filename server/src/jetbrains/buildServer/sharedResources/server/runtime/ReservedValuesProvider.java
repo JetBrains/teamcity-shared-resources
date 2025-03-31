@@ -5,6 +5,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TLongObjectHashMap;
 import java.util.*;
+import java.util.function.Supplier;
 import javax.annotation.concurrent.NotThreadSafe;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
@@ -68,9 +69,12 @@ public class ReservedValuesProvider {
    * Such builds appear when build is removed from the distribution cycle by other extensions
    * after SharedResources plugin has already processed the build
    *
-   * @param actualPromotionIds ids of promotions that participate in current distribution cycle
+   * @param actualPromotionIdsSupplier supplier of ids of promotions that participate in current distribution cycle
    */
-  public void cleanupValuesReservedByObsoleteBuilds(@NotNull final Set<Long> actualPromotionIds) {
+  public void cleanupValuesReservedByObsoleteBuilds(@NotNull final Supplier<Set<Long>> actualPromotionIdsSupplier) {
+    if (myReservedValues.isEmpty()) return;
+
+    Set<Long> actualPromotionIds = actualPromotionIdsSupplier.get();
     // only retain values which belong to actual build promotions
     myReservedValues.forEach((resourceId, valuesMap) -> {
       valuesMap.retainEntries((id, val) -> actualPromotionIds.contains(id));

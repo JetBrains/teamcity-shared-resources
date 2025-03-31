@@ -22,6 +22,7 @@ import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatu
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAccessor;
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
+import jetbrains.buildServer.sharedResources.server.runtime.ReservedValuesProvider;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,10 +93,11 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     // we're preserving the values of distributed builds only, if our filter allowed some previous build
     // to start and reserved a value for it, there can be another filter for the same build which actually
     // prevented it from starting; by doing this cleanup we're removing reserved values of builds which could not start
-    accessor.getReservedValuesProvider().cleanupValuesReservedByObsoleteBuilds(canBeStarted.keySet().stream()
-                                                                                           .map(QueuedBuildInfo::getBuildPromotionInfo)
-                                                                                           .map(BuildPromotionInfo::getId)
-                                                                                           .collect(Collectors.toSet()));
+    final ReservedValuesProvider reservedValuesProvider = accessor.getReservedValuesProvider();
+    reservedValuesProvider.cleanupValuesReservedByObsoleteBuilds(() -> canBeStarted.keySet().stream()
+                                                                                   .map(QueuedBuildInfo::getBuildPromotionInfo)
+                                                                                   .map(BuildPromotionInfo::getId)
+                                                                                   .collect(Collectors.toSet()));
 
     if (TeamCityProperties.getBooleanOrTrue(SharedResourcesPluginConstants.RESOURCES_IN_CHAINS_ENABLED) && myPromotion.isPartOfBuildChain()) {
       LOG.debug("Queued build is part of build chain");
@@ -152,6 +154,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             }
           }
         }
+
         // process build itself
         if (reason == null) {
           final BuildTypeEx promoBuildType = myPromotion.getBuildType();
