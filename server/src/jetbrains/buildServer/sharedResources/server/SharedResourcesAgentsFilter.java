@@ -134,17 +134,19 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
                                                    .filter(Objects::nonNull)
                                                    .collect(Collectors.toList());
         for (SQueuedBuild compositeQueuedBuild : queued) {
-          final SBuildType compositeQueuedBuildType = getBuildTypeSafe(compositeQueuedBuild);
-          if (compositeQueuedBuildType == null) continue;
-          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeQueuedBuildType);
+          final BuildPromotion compositeBp = compositeQueuedBuild.getBuildPromotion();
+          String projectId = compositeBp.getProjectId();
+          if (projectId == null) continue;
+
+          final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeBp);
           if (!features.isEmpty()) {
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
               // resolve locks that build wants to take against actual resources
-              chainResources.computeIfAbsent(compositeQueuedBuildType.getProjectId(), myResources::getResourcesMap);
+              chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
               reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks,
-                                           chainResources.get(compositeQueuedBuildType.getProjectId()),
-                                           chainLocks, locksToTake, compositeQueuedBuild.getBuildPromotion(), context.isEmulationMode());
+                                           chainResources.get(projectId),
+                                           chainLocks, locksToTake, compositeBp, context.isEmulationMode());
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Preventing start of the queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
@@ -164,7 +166,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion);
 
             if (!features.isEmpty()) {
-              reason = checkForInvalidLocks(promoBuildType);
+              reason = checkForInvalidLocks(myPromotion);
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
@@ -180,15 +182,6 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     final AgentsFilterResult result = new AgentsFilterResult();
     result.setWaitReason(reason);
     return result;
-  }
-
-  @Nullable
-  private SBuildType getBuildTypeSafe(@NotNull final SQueuedBuild queuedBuild) {
-    try {
-      return queuedBuild.getBuildType();
-    } catch (BuildTypeNotFoundException ignored) {
-    }
-    return null;
   }
 
   @Nullable
@@ -229,7 +222,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     if (buildType != null && projectId != null) {
       final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(buildPromotion);
       if (!features.isEmpty()) {
-        reason = checkForInvalidLocks(buildType);
+        reason = checkForInvalidLocks(buildPromotion);
         if (reason == null) {
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
@@ -359,12 +352,11 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
 
   @Nullable
   @SuppressWarnings("StringBufferReplaceableByString")
-  private WaitReason checkForInvalidLocks(@NotNull final SBuildType buildType) {
+  private WaitReason checkForInvalidLocks(@NotNull final BuildPromotionEx promotion) {
     WaitReason result = null;
-    final Map<Lock, String> invalidLocks = myInspector.inspect(buildType);
+    final Map<Lock, String> invalidLocks = myInspector.inspect(promotion);
     if (!invalidLocks.isEmpty()) {
-      final StringBuilder builder = new StringBuilder("Build configuration ");
-      builder.append(buildType.getExtendedName()).append(" has shared resources configuration error");
+      final StringBuilder builder = new StringBuilder("Build has shared resources configuration error");
       builder.append(invalidLocks.size() > 1 ? "s: " : ": ");
       builder.append(StringUtil.join(invalidLocks.values(), " "));
       result = new SimpleWaitReason(builder.toString());

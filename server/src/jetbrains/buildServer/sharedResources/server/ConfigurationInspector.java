@@ -4,6 +4,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -48,25 +49,15 @@ public class ConfigurationInspector {
   }
 
   @NotNull
-  public Map<Lock, String> inspect(@NotNull final SProject project, @NotNull final SharedResourcesFeature feature) {
-    return getInvalidLocks(project, Collections.singleton(feature));
+  public Map<Lock, String> inspect(@NotNull final BuildPromotionEx promotion) {
+    SBuildType buildType = promotion.getBuildType();
+    if (buildType == null) return Collections.emptyMap();
+    return getInvalidLocks(buildType.getProject(), myFeatures.searchForFeatures(promotion));
   }
 
-  /**
-   * Checks project path for duplicate resource definitions
-   * @param project project to check path for
-   * @return map of projects to the list of duplicate resources in the project
-   */
   @NotNull
-  Map<SProject, List<String>> getDuplicateResources(@NotNull final SProject project) {
-    final Map<SProject, List<String>> result = new HashMap<>();
-    project.getProjectPath().forEach(p -> {
-      final List<String> duplicateNames = getOwnDuplicateNames(p);
-      if (!duplicateNames.isEmpty()) {
-        result.put(p, duplicateNames);
-      }
-    });
-    return result;
+  public Map<Lock, String> inspect(@NotNull final SProject project, @NotNull final SharedResourcesFeature feature) {
+    return getInvalidLocks(project, Collections.singleton(feature));
   }
 
   /**

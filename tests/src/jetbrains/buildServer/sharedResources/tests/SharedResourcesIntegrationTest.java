@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.BuildEstimates;
 import jetbrains.buildServer.serverSide.SBuild;
@@ -14,6 +15,7 @@ import jetbrains.buildServer.serverSide.artifacts.BuildArtifactHolder;
 import jetbrains.buildServer.serverSide.artifacts.BuildArtifactsViewMode;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
+import jetbrains.buildServer.serverSide.impl.build.BuildSettingsOptionsImpl;
 import jetbrains.buildServer.serverSide.impl.timeEstimation.CachingBuildEstimator;
 import jetbrains.buildServer.util.WaitForAssert;
 import org.jetbrains.annotations.NotNull;
@@ -61,28 +63,19 @@ public abstract class SharedResourcesIntegrationTest extends BaseServerTestCase 
   protected void waitForReason(@NotNull final SQueuedBuild queuedBuild, @NotNull final String expectedReason) {
     final CachingBuildEstimator estimator = myFixture.getSingletonService(CachingBuildEstimator.class);
 
-    new WaitForAssert() {
+    AtomicReference<String> reportedReasonRef = new AtomicReference<>();
 
-      private String myReportedReason = "<default>";
-
-      @Override
-      protected boolean condition() {
-        estimator.invalidate(false);
-        final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
-        if (buildEstimates != null) {
-          final WaitReason waitReason = buildEstimates.getWaitReason();
-          if (waitReason != null) {
-            myReportedReason = waitReason.getDescription();
-          }
-          return myReportedReason != null && myReportedReason.equals(expectedReason);
+    waitForAssert(() -> {
+      estimator.invalidate(false);
+      final BuildEstimates buildEstimates = queuedBuild.getBuildEstimates();
+      if (buildEstimates != null) {
+        final WaitReason waitReason = buildEstimates.getWaitReason();
+        if (waitReason != null) {
+          reportedReasonRef.set(waitReason.getDescription());
         }
-        return false;
+        return reportedReasonRef.get() != null && reportedReasonRef.get().equals(expectedReason);
       }
-
-      @Override
-      protected String getAssertMessage() {
-        return "Expected wait reason [" + expectedReason + "], last reported: [" + myReportedReason + "]";
-      }
-    };
+      return false;
+    });
   }
 }

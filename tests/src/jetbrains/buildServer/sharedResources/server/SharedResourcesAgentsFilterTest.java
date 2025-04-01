@@ -219,7 +219,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
-      oneOf(myInspector).inspect(myBuildType);
+      oneOf(myInspector).inspect(myBuildPromotion);
       will(returnValue(invalidLocks));
 
       oneOf(myBuildType).getExtendedName();
@@ -258,7 +258,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
-      oneOf(myInspector).inspect(myBuildType);
+      oneOf(myInspector).inspect(myBuildPromotion);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myLocks).fromBuildFeaturesAsMap(features);
@@ -429,7 +429,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myFeatures).searchForFeatures(myBuildPromotion);
       will(returnValue(features));
 
-      oneOf(myInspector).inspect(myBuildType);
+      oneOf(myInspector).inspect(myBuildPromotion);
       will(returnValue(invalidLocks));
 
       oneOf(myBuildType).getExtendedName();
@@ -470,7 +470,7 @@ public class SharedResourcesAgentsFilterTest extends BaseTestCase {
       oneOf(myLocks).fromBuildFeaturesAsMap(features);
       will(returnValue(locksToTake));
 
-      oneOf(myInspector).inspect(myBuildType);
+      oneOf(myInspector).inspect(myBuildPromotion);
       will(returnValue(Collections.emptyMap()));
 
       oneOf(myRunningBuildsManager).getRunningBuildsEx();

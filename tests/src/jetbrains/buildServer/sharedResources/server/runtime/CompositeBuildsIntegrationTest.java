@@ -3,6 +3,7 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.util.text.StringUtil;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
