@@ -589,7 +589,7 @@ BS.LocksDialog = OO.extend(BS.AbstractModalDialog, {
       </tbody>
     </table>
     <div id="paramsDiv">
-      <p>Parameters, provided to builds<bs:help file="Shared+Resources#resource-locks"/>:</p>
+      <p>Parameters, provided to builds<bs:help file="sharedRes-locks"/>:</p>
       <ul id="paramsList">
       </ul>
     </div>

@@ -26,7 +26,7 @@
       </td>
     </tr>
     <tr>
-      <th style="white-space: nowrap">Resource type:<bs:help file="Shared+Resources" anchor="TypesofSharedResources"/></th>
+      <th style="white-space: nowrap">Resource type:<bs:help file="sharedRes-types"/></th>
       <td>
         <forms:select name="resoruce_type" id="resource_type" style="width: 90%"
                       onchange="BS.ResourceDialog.syncResourceSelectionState(); return true;"
