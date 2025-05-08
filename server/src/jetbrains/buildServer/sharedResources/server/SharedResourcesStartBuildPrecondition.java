@@ -1,14 +1,46 @@
-
+/*
+ * Copyright 2000-2025 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.*;
+import jetbrains.buildServer.BuildAgent;
+import jetbrains.buildServer.serverSide.BuildPromotion;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.BuildTypeEx;
+import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.serverSide.SQueuedBuild;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
+import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.buildDistribution.SimpleWaitReason;
+import jetbrains.buildServer.serverSide.buildDistribution.StartBuildPrecondition;
+import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.RunningBuildsManagerEx;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -29,15 +61,9 @@ import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 
-/**
- * Created with IntelliJ IDEA.
- *
- * @author Oleg Rybak (oleg.rybak@jetbrains.com)
- */
-public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
+public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondition {
 
-  @NotNull
-  private static final Logger LOG = Logger.getInstance(SharedResourcesAgentsFilter.class.getName());
+  public static final Logger LOG = Logger.getInstance(SharedResourcesStartBuildPrecondition.class);
 
   @NotNull
   private final SharedResourcesFeatures myFeatures;
@@ -60,13 +86,13 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   @NotNull
   private final Resources myResources;
 
-  public SharedResourcesAgentsFilter(@NotNull final SharedResourcesFeatures features,
-                                     @NotNull final Locks locks,
-                                     @NotNull final TakenLocks takenLocks,
-                                     @NotNull final RunningBuildsManagerEx runningBuildsManager,
-                                     @NotNull final ConfigurationInspector inspector,
-                                     @NotNull final LocksStorage locksStorage,
-                                     @NotNull final Resources resources) {
+  public SharedResourcesStartBuildPrecondition(@NotNull final SharedResourcesFeatures features,
+                                           @NotNull final Locks locks,
+                                           @NotNull final TakenLocks takenLocks,
+                                           @NotNull final RunningBuildsManagerEx runningBuildsManager,
+                                           @NotNull final ConfigurationInspector inspector,
+                                           @NotNull final LocksStorage locksStorage,
+                                           @NotNull final Resources resources) {
     myFeatures = features;
     myLocks = locks;
     myTakenLocks = takenLocks;
@@ -76,19 +102,19 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
     myResources = resources;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public AgentsFilterResult filterAgents(@NotNull final AgentsFilterContext context) {
-    final DistributionDataAccessor accessor = new DistributionDataAccessor(context);
-
-    final QueuedBuildInfo queuedBuild = context.getStartingBuild();
-    final Map<QueuedBuildInfo, SBuildAgent> canBeStarted = context.getDistributedBuilds();
+  public WaitReason canStart(@NotNull QueuedBuildInfo queuedBuildInfo,
+                             @NotNull Map<QueuedBuildInfo, BuildAgent> canBeStarted,
+                             @NotNull BuildDistributorInput buildDistributorInput,
+                             boolean isEmulationMode) {
+    final DistributionDataAccessor accessor = new DistributionDataAccessor(buildDistributorInput);
     final List<RunningBuildEx> runningBuilds = myRunningBuildsManager.getRunningBuildsEx();
 
     final AtomicReference<Map<Resource, TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
-    final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuild.getBuildPromotionInfo();
+    final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuildInfo.getBuildPromotionInfo();
 
     // we're preserving the values of distributed builds only, if our filter allowed some previous build
     // to start and reserved a value for it, there can be another filter for the same build which actually
@@ -104,7 +130,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
       if (depPromos.isEmpty()) {
         LOG.debug("Queued build does not have dependent composite promotions");
-        reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, context.isEmulationMode());
+        reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, isEmulationMode);
       } else {
         LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
         // contains resources and locks that are INSIDE the build chain
@@ -146,7 +172,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
               chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
               reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks,
                                            chainResources.get(projectId),
-                                           chainLocks, locksToTake, compositeBp, context.isEmulationMode());
+                                           chainLocks, locksToTake, compositeBp, isEmulationMode);
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Preventing start of the queued build [" + compositeQueuedBuild + "] with reason: [" + reason.getDescription() + "]");
@@ -171,23 +197,22 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
               reason = processBuildInChain(accessor, runningBuilds, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake, myPromotion,
-                                           context.isEmulationMode());
+                                           isEmulationMode);
             }
           }
         }
       }
     } else {
-      reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, context.isEmulationMode());
+      reason = processSingleBuild(myPromotion, accessor, runningBuilds, canBeStarted, takenLocks, myPromotion, isEmulationMode);
     }
-    final AgentsFilterResult result = new AgentsFilterResult();
-    result.setWaitReason(reason);
-    return result;
+
+    return reason;
   }
 
   @Nullable
   private WaitReason processBuildInChain(@NotNull final DistributionDataAccessor accessor,
                                          @NotNull final List<RunningBuildEx> runningBuilds,
-                                         @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                         @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
                                          @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                          @NotNull final Map<String, Resource> chainNodeResources,
                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
@@ -212,7 +237,7 @@ public class SharedResourcesAgentsFilter implements StartingBuildAgentsFilter {
   private WaitReason processSingleBuild(@NotNull final BuildPromotionEx buildPromotion,
                                         @NotNull final DistributionDataAccessor accessor,
                                         @NotNull final List<RunningBuildEx> runningBuilds,
-                                        @NotNull final Map<QueuedBuildInfo, SBuildAgent> canBeStarted,
+                                        @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
                                         @NotNull final BuildPromotion promotion,
                                         final boolean emulationMode) {

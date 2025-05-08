@@ -10,7 +10,7 @@
   <!-- ===  BUILD FEATURE ===-->
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesBuildFeature"/>
   <bean class="jetbrains.buildServer.sharedResources.server.BuildFeatureParametersProvider"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilter"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesStartBuildPrecondition"/>
   <bean class="jetbrains.buildServer.sharedResources.server.SharedResourcesContextProcessor"/>
 
   <!-- === HEALTH === -->

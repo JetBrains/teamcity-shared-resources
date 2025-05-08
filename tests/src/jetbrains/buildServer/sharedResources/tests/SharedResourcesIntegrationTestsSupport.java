@@ -61,8 +61,9 @@ public class SharedResourcesIntegrationTestsSupport {
     final TakenLocks takenLocks = new TakenLocksImpl(locks, resources, locksStorage, features);
     final ConfigurationInspector inspector = new ConfigurationInspector(features, resources);
 
-    final SharedResourcesAgentsFilter filter =
-      new SharedResourcesAgentsFilter(features, locks, takenLocks, fixture.getSingletonService(RunningBuildsManagerEx.class), inspector, locksStorage, resources);
+    final SharedResourcesStartBuildPrecondition startBuildPrecondition = new SharedResourcesStartBuildPrecondition(features, locks, takenLocks,
+                                                                                                       fixture.getSingletonService(RunningBuildsManagerEx.class),
+                                                                                                       inspector, locksStorage, resources);
 
     final SharedResourcesContextProcessor processor =
       new SharedResourcesContextProcessor(features, locks, resources, locksStorage, buildUsedResourcesReport);
@@ -86,7 +87,7 @@ public class SharedResourcesIntegrationTestsSupport {
     fixture.addService(features);
     fixture.addService(projectFeatures);
     fixture.addService(buildUsedResourcesReport);
-    fixture.addService(filter);
+    fixture.addService(startBuildPrecondition);
     fixture.addService(processor);
     fixture.addService(resources);
     fixture.addService(analyzer);

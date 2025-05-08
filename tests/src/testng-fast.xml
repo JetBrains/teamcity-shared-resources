@@ -26,7 +26,7 @@
   </test>
   <test name="Decision making tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesAgentsFilterTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.SharedResourcesStartBuildPreconditionTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.ContextProcessorTest"/>
     </classes>
   </test>

@@ -3,12 +3,23 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.util.Trinity;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.*;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
-import jetbrains.buildServer.serverSide.buildDistribution.DefaultAgentsFilterContext;
+import jetbrains.buildServer.serverSide.BuildPromotion;
+import jetbrains.buildServer.serverSide.BuildPromotionEx;
+import jetbrains.buildServer.serverSide.BuildTypeEx;
+import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.impl.buildDistribution.BuildDistributorInputEx;
+import jetbrains.buildServer.sharedResources.model.DistributionData;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -60,6 +71,8 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   private SBuildType myBuildType;
 
+  private BuildDistributorInputEx myBuildDistributorInput;
+
   private final String myProjectId = "MY_PROJECT_ID";
 
 
@@ -76,6 +89,7 @@ public class TakenLocksImplTest extends BaseTestCase {
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myPromotion = m.mock(BuildPromotion.class);
     myBuildType = m.mock(SBuildType.class);
+    myBuildDistributorInput = m.mock(BuildDistributorInputEx.class);
     m.checking(new Expectations() {{
       allowing(any(BuildTypeEx.class)).method("getExtendedFullName");
       will(returnValue(myMockBuildTypeName));
@@ -85,38 +99,12 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       allowing(myPromotion).getId();
       will(returnValue(201L));
+
+      allowing(myBuildDistributorInput).getCustomData(with(any(String.class)), with(any(Class.class)));
+      will(returnValue(new DistributionData()));
     }});
 
-    myAccessor = new DistributionDataAccessor(new DefaultAgentsFilterContext(new HashMap<>()) {
-      @NotNull
-      @Override
-      public QueuedBuildInfo getStartingBuild() {
-        return m.mock(QueuedBuildInfo.class, "context-queued-build");
-      }
-
-      @NotNull
-      @Override
-      public Collection<SBuildAgent> getAgentsForStartingBuild() {
-        return Collections.emptyList();
-      }
-
-      @NotNull
-      @Override
-      public Map<QueuedBuildInfo, SBuildAgent> getDistributedBuilds() {
-        return Collections.emptyMap();
-      }
-
-      @NotNull
-      @Override
-      public BuildDistributorInput getDistributorInput() {
-        return m.mock(BuildDistributorInput.class, "context-distributor-input");
-      }
-
-      @Override
-      public boolean isEmulationMode() {
-        return false;
-      }
-    });
+    myAccessor = new DistributionDataAccessor(myBuildDistributorInput);
     myTakenLocks = new TakenLocksImpl(myLocks, myResources, myLocksStorage, myFeatures);
   }
 
