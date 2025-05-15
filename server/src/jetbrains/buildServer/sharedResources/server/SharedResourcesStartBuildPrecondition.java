@@ -29,13 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.BuildAgent;
-import jetbrains.buildServer.serverSide.BuildPromotion;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.BuildTypeEx;
-import jetbrains.buildServer.serverSide.RunningBuildEx;
-import jetbrains.buildServer.serverSide.SBuildType;
-import jetbrains.buildServer.serverSide.SQueuedBuild;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
 import jetbrains.buildServer.serverSide.buildDistribution.BuildPromotionInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
@@ -118,6 +112,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
       }
     };
 
+    CachingProjectResourcesMap resourcesMap = new CachingProjectResourcesMap();
     final AtomicReference<Map<Resource, TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
@@ -142,19 +137,17 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
         LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
         // contains resources and locks that are INSIDE the build chain
         final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks = new HashMap<>(); // resource -> {promotion -> lock}
-        final Map<String, Map<String, Resource>> chainResources = new HashMap<>(); // projectID -> {name, resource}
         // first - get top of the chain. Builds that are already running.
         // they have locks already taken
-        depPromos.stream()
-                 .filter(it -> it.getProjectId() != null)
-                 .forEach(promo -> {
+        depPromos.forEach(promo -> {
                    if (myLocksStorage.locksStored(promo)) {
+                     final BuildTypeEx buildType = promo.getBuildType();
+                     if (buildType == null) return;
                      LOG.debug("build promotion" + promo.getId() + " is running. Loading locks");
                      final Map<String, Lock> currentNodeLocks = myLocksStorage.load(promo);
                      if (!currentNodeLocks.isEmpty()) {
-                       chainResources.computeIfAbsent(promo.getProjectId(), myResources::getResourcesMap);
                        // if there are locks - resolve locks against resources according to project hierarchy of composite build
-                       resolve(chainLocks, chainResources.get(promo.getProjectId()), promo, currentNodeLocks);
+                       resolve(chainLocks, resourcesMap.getResourcesMap(promo.getBuildType().getProject()), promo, currentNodeLocks);
                      }
                    }
                  });
@@ -168,17 +161,16 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
                                                    .collect(Collectors.toList());
         for (SQueuedBuild compositeQueuedBuild : queued) {
           final BuildPromotion compositeBp = compositeQueuedBuild.getBuildPromotion();
-          String projectId = compositeBp.getProjectId();
-          if (projectId == null) continue;
+          SBuildType compositeBuildType = compositeBp.getBuildType();
+          if (compositeBuildType == null) continue;
 
           final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(compositeBp);
           if (!features.isEmpty()) {
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
               // resolve locks that build wants to take against actual resources
-              chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
               reason = processBuildInChain(accessor, runningBuildsSupplier, canBeStarted, takenLocks,
-                                           chainResources.get(projectId),
+                                           resourcesMap.getResourcesMap(compositeBuildType.getProject()),
                                            chainLocks, locksToTake, compositeBp, isEmulationMode);
               if (reason != null) {
                 if (LOG.isDebugEnabled()) {
@@ -194,8 +186,6 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
         if (reason == null) {
           final BuildTypeEx promoBuildType = myPromotion.getBuildType();
           if (promoBuildType != null) {
-            final String projectId = promoBuildType.getProjectId();
-            chainResources.computeIfAbsent(projectId, myResources::getResourcesMap);
             final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(myPromotion);
 
             if (!features.isEmpty()) {
@@ -203,8 +193,8 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
-              reason = processBuildInChain(accessor, runningBuildsSupplier, canBeStarted, takenLocks, chainResources.get(projectId), chainLocks, locksToTake, myPromotion,
-                                           isEmulationMode);
+              reason = processBuildInChain(accessor, runningBuildsSupplier, canBeStarted, takenLocks,
+                                           resourcesMap.getResourcesMap(promoBuildType.getProject()), chainLocks, locksToTake, myPromotion, isEmulationMode);
             }
           }
         }
@@ -394,5 +384,35 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
       result = new SimpleWaitReason(builder.toString());
     }
     return result;
+  }
+
+  private class CachingProjectResourcesMap {
+    private final Map<String, Map<String, Resource>> myCache = new HashMap<>();
+
+    @NotNull
+    public Map<String, Resource> getResourcesMap(@NotNull final SProject project) {
+      final Map<String, Resource> resourcesMap = myCache.get(project.getProjectId());
+      if (resourcesMap != null) return resourcesMap;
+
+      Map<String, Resource> result = new HashMap<>();
+      final List<SProject> projectPath = project.getProjectPath();
+      for (SProject p : projectPath) {
+        Map<String, Resource> cached = myCache.get(project.getProjectId());
+        if (cached != null) {
+          result.putAll(cached);
+          continue;
+        }
+
+        final List<Resource> ownResources = myResources.getOwnResources(p);
+        for (Resource r : ownResources) {
+          result.put(r.getName(), r);
+        }
+
+        // store a copy of our intermediate result to the cache for the current project
+        myCache.computeIfAbsent(p.getProjectId(), id -> new HashMap<>(result));
+      }
+
+      return result;
+    }
   }
 }
