@@ -1,0 +1,107 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 http://maven.apache.org/xsd/assembly-2.2.0.xsd">
+  <id>devpackage</id>
+  <formats>
+    <format>dir</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>devPackage</outputDirectory>
+      <includes>
+        <include>:server-api:assembly</include>
+        <include>:common-api:assembly</include>
+        <include>:serviceMessages</include>
+        <include>:server-common-api</include>
+        <include>:ide-common:assembly</include>
+        <include>:idea-obsolete-openapi</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage</outputDirectory>
+      <includes>
+        <include>:vcs-plugin-api</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>server-vcs-api.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage</outputDirectory>
+      <includes>
+        <include>:agent-openapi</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>agent-api.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage</outputDirectory>
+      <includes>
+        <include>:web-openapi-webapp</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>server-web-api.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage/runtime</outputDirectory>
+      <includes>
+        <include>:runtime-util</include>
+        <include>:serviceMessages</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage/tests</outputDirectory>
+      <includes>
+        <include>:patches-test-core</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>patches-test.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage/tests</outputDirectory>
+      <includes>
+        <include>:integration-test</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>tests-integration.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage/tests</outputDirectory>
+      <includes>
+        <include>:tests-support</include>
+        <include>:spring-test</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>devPackage/tests</outputDirectory>
+      <includes>
+        <include>:junit</include>
+        <include>:testng</include>
+        <include>jmock:jmock</include>
+      </includes>
+      <scope>provided</scope>
+      <outputFileNameMapping>${artifact.artifactId}-${artifact.version}.${artifact.extension}</outputFileNameMapping>
+    </dependencySet>
+  </dependencySets>
+  <fileSets>
+    <fileSet>
+      <outputDirectory>devPackage</outputDirectory>
+      <directory>${project.build.directory}/${dependency.temp}</directory>
+    </fileSet>
+  </fileSets>
+</assembly>
