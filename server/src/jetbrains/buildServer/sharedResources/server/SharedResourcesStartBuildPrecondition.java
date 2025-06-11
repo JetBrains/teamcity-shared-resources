@@ -18,13 +18,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -105,14 +99,15 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
                              @NotNull BuildDistributorInput buildDistributorInput,
                              boolean isEmulationMode) {
     final DistributionDataAccessor accessor = new DistributionDataAccessor(buildDistributorInput);
-    final Supplier<List<RunningBuildEx>> runningBuildsSupplier = new Lazy<List<RunningBuildEx>>() {
+    Supplier<Map<Resource, TakenLock>> takenLocksSupplier = new Lazy<Map<Resource, TakenLock>>() {
       @Override
-      protected List<RunningBuildEx> createValue() {
-        return myRunningBuildsManager.getRunningBuildsEx();
+      protected Map<Resource, TakenLock> createValue() {
+        return myTakenLocks.collectTakenLocks(myRunningBuildsManager.getRunningBuildsEx(), canBeStarted.keySet());
       }
     };
 
     CachingProjectResourcesMap resourcesMap = new CachingProjectResourcesMap(myResources);
+
     final AtomicReference<Map<Resource, TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
@@ -132,7 +127,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
       final List<BuildPromotionEx> depPromos = myPromotion.getDependentCompositePromotions();
       if (depPromos.isEmpty()) {
         LOG.debug("Queued build does not have dependent composite promotions");
-        reason = processSingleBuild(myPromotion, accessor, runningBuildsSupplier, canBeStarted, takenLocks, myPromotion, isEmulationMode);
+        reason = processSingleBuild(myPromotion, accessor, takenLocksSupplier, myPromotion, isEmulationMode);
       } else {
         LOG.debug("Queued build does have " + depPromos.size() + " dependent composite " + StringUtil.pluralize("promotion", depPromos.size()));
         // contains resources and locks that are INSIDE the build chain
@@ -169,7 +164,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
               // resolve locks that build wants to take against actual resources
-              reason = processBuildInChain(accessor, runningBuildsSupplier, canBeStarted, takenLocks,
+              reason = processBuildInChain(accessor, takenLocksSupplier,
                                            resourcesMap.getResourcesMap(compositeBuildType.getProject()),
                                            chainLocks, locksToTake, compositeBp, isEmulationMode);
               if (reason != null) {
@@ -193,14 +188,13 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
             }
             final Map<String, Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features);
             if (!locksToTake.isEmpty()) {
-              reason = processBuildInChain(accessor, runningBuildsSupplier, canBeStarted, takenLocks,
-                                           resourcesMap.getResourcesMap(promoBuildType.getProject()), chainLocks, locksToTake, myPromotion, isEmulationMode);
+              reason = processBuildInChain(accessor, takenLocksSupplier, resourcesMap.getResourcesMap(promoBuildType.getProject()), chainLocks, locksToTake, myPromotion, isEmulationMode);
             }
           }
         }
       }
     } else {
-      reason = processSingleBuild(myPromotion, accessor, runningBuildsSupplier, canBeStarted, takenLocks, myPromotion, isEmulationMode);
+      reason = processSingleBuild(myPromotion, accessor, takenLocksSupplier, myPromotion, isEmulationMode);
     }
 
     return reason;
@@ -208,9 +202,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
 
   @Nullable
   private WaitReason processBuildInChain(@NotNull final DistributionDataAccessor accessor,
-                                         @NotNull final Supplier<List<RunningBuildEx>> runningBuildsSupplier,
-                                         @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
-                                         @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
+                                         @NotNull final Supplier<Map<Resource, TakenLock>> takenLocksSupplier,
                                          @NotNull final Map<String, Resource> chainNodeResources,
                                          @NotNull final Map<Resource, Map<BuildPromotionEx, Lock>> chainLocks,
                                          @NotNull final Map<String, Lock> locksToTake,
@@ -219,12 +211,11 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
     final String projectId = buildPromotion.getProjectId();
     WaitReason reason = null;
     if (projectId != null) {
-      takenLocks.compareAndSet(null, myTakenLocks.collectTakenLocks(runningBuildsSupplier.get(), canBeStarted.keySet()));
-      final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), accessor, chainNodeResources, chainLocks, buildPromotion);
+      final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocksSupplier.get(), accessor, chainNodeResources, chainLocks, buildPromotion);
       if (!unavailableLocks.isEmpty()) {
         reason = createWaitReason(unavailableLocks);
       } else {
-        storeResourcesAffinity((BuildPromotionEx)buildPromotion, projectId, takenLocks.get(), locksToTake.values(), accessor, emulationMode); // assign ANY locks here
+        storeResourcesAffinity((BuildPromotionEx)buildPromotion, projectId, takenLocksSupplier.get(), locksToTake.values(), accessor, emulationMode); // assign ANY locks here
         // if we are here, then the build will pass on to be started
       }
     }
@@ -233,9 +224,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
 
   private WaitReason processSingleBuild(@NotNull final BuildPromotionEx buildPromotion,
                                         @NotNull final DistributionDataAccessor accessor,
-                                        @NotNull final Supplier<List<RunningBuildEx>> runningBuildsSupplier,
-                                        @NotNull final Map<QueuedBuildInfo, BuildAgent> canBeStarted,
-                                        @NotNull final AtomicReference<Map<Resource, TakenLock>> takenLocks,
+                                        @NotNull final Supplier<Map<Resource, TakenLock>> takenLocksSupplier,
                                         @NotNull final BuildPromotion promotion,
                                         final boolean emulationMode) {
     final String projectId = buildPromotion.getProjectId();
@@ -249,16 +238,15 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
           // Collection<Lock> ---> Collection<ResolvedLock> (i.e. lock against resolved resource. With project and so on)
           final Collection<Lock> locksToTake = myLocks.fromBuildFeaturesAsMap(features).values();
           if (!locksToTake.isEmpty()) {
-            takenLocks.compareAndSet(null, myTakenLocks.collectTakenLocks(runningBuildsSupplier.get(), canBeStarted.keySet()));
             // Collection<Lock> --> Collection<ResolvedLock>. For quoted - number of insufficient quotes, for custom -> custom values
-            final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocks.get(), projectId, accessor, promotion);
+            final Map<Resource, String> unavailableLocks = myTakenLocks.getUnavailableLocks(locksToTake, takenLocksSupplier.get(), projectId, accessor, promotion);
             if (!unavailableLocks.isEmpty()) {
               reason = createWaitReason(unavailableLocks);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Preventing start of the queued build [" + buildPromotion.getQueuedBuild() + "] with reason: [" + reason.getDescription() + "]");
               }
             } else {
-              storeResourcesAffinity(buildPromotion, projectId, takenLocks.get(), locksToTake, accessor, emulationMode); // assign ANY locks here
+              storeResourcesAffinity(buildPromotion, projectId, takenLocksSupplier.get(), locksToTake, accessor, emulationMode); // assign ANY locks here
             }
           }
         }
