@@ -108,7 +108,6 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
 
     CachingProjectResourcesMap resourcesMap = new CachingProjectResourcesMap(myResources);
 
-    final AtomicReference<Map<Resource, TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
     final BuildPromotionEx myPromotion = (BuildPromotionEx)queuedBuildInfo.getBuildPromotionInfo();
