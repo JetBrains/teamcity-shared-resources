@@ -12,6 +12,7 @@ import jetbrains.buildServer.sharedResources.model.resources.CustomResource;
 import jetbrains.buildServer.sharedResources.model.resources.QuotedResource;
 import jetbrains.buildServer.sharedResources.model.resources.Resource;
 import jetbrains.buildServer.sharedResources.model.resources.ResourceType;
+import jetbrains.buildServer.sharedResources.server.CachingProjectResourcesMap;
 import jetbrains.buildServer.sharedResources.server.feature.Locks;
 import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
@@ -58,7 +59,7 @@ public class TakenLocksImpl implements TakenLocks {
     queuedBuilds.forEach(qb -> buildPromotions.add((BuildPromotionEx)qb.getBuildPromotionInfo()));
 
     final Map<Resource, TakenLock> result = new HashMap<>();
-    final Map<String, Map<String, Resource>> cachedResources = new HashMap<>();
+    CachingProjectResourcesMap projectResourcesMap = new CachingProjectResourcesMap(myResources);
     for (BuildPromotionEx bpEx : buildPromotions) {
       final SBuildType buildType = bpEx.getBuildType();
       if (buildType != null) {
@@ -73,7 +74,7 @@ public class TakenLocksImpl implements TakenLocks {
         }
         if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
-        final Map<String, Resource> resources = getResources(buildType.getProjectId(), cachedResources);
+        final Map<String, Resource> resources = projectResourcesMap.getResourcesMap(buildType.getProject());
         // resolve locks against resources defined in project tree
         locks.forEach((name, lock) -> {
           // collection, promotion, resource, lock

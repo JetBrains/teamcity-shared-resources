@@ -3,22 +3,13 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.util.Trinity;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.serverSide.BuildPromotion;
-import jetbrains.buildServer.serverSide.BuildPromotionEx;
-import jetbrains.buildServer.serverSide.BuildTypeEx;
-import jetbrains.buildServer.serverSide.RunningBuildEx;
-import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
+import jetbrains.buildServer.serverSide.impl.ProjectEx;
 import jetbrains.buildServer.serverSide.impl.buildDistribution.BuildDistributorInputEx;
+import jetbrains.buildServer.serverSide.impl.projects.ProjectImpl;
 import jetbrains.buildServer.sharedResources.model.DistributionData;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
@@ -145,6 +136,12 @@ public class TakenLocksImplTest extends BaseTestCase {
     final BuildTypeEx rb1_bt = m.mock(BuildTypeEx.class, "runningBuild_1-buildType");
     final BuildTypeEx rb2_bt = m.mock(BuildTypeEx.class, "runningBuild_2-buildType");
 
+    final ProjectEx proj = m.mock(ProjectEx.class, "project");
+    final ProjectEx root = m.mock(ProjectEx.class, "root");
+    List<SProject> projPath = new ArrayList<>();
+    projPath.add(root);
+    projPath.add(proj);
+
     final BuildPromotionEx bp1 = m.mock(BuildPromotionEx.class, "buildPromotion_1");
     final BuildPromotionEx bp2 = m.mock(BuildPromotionEx.class, "buildPromotion_2");
 
@@ -154,6 +151,15 @@ public class TakenLocksImplTest extends BaseTestCase {
     }};
 
     m.checking(new Expectations() {{
+      allowing(proj).getProjectId();
+      will(returnValue(myProjectId));
+
+      allowing(root).getProjectId();
+      will(returnValue(ProjectImpl.ROOT_PROJECT_ID));
+
+      allowing(proj).getProjectPath();
+      will(returnValue(projPath)); // this is technically incorrect but is ok for the test
+
       allowing(rb1).getBuildPromotion();
       will(returnValue(bp1));
 
@@ -172,11 +178,14 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myLocksStorage).load(bp1);
       will(returnValue(takenLocks1));
 
-      allowing(rb1_bt).getProjectId();
-      will(returnValue(myProjectId));
+      allowing(rb1_bt).getProject();
+      will(returnValue(proj));
 
-      allowing(myResources).getResourcesMap(myProjectId);
-      will(returnValue(resources));
+      allowing(myResources).getOwnResources(proj);
+      will(returnValue(new ArrayList<>(resources.values())));
+
+      allowing(myResources).getOwnResources(root);
+      will(returnValue(Collections.emptyList()));
 
       allowing(rb2).getBuildPromotion();
       will(returnValue(bp2));
@@ -196,8 +205,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myLocksStorage).load(bp2);
       will(returnValue(takenLocks2));
 
-      allowing(rb2_bt).getProjectId();
-      will(returnValue(myProjectId));
+      allowing(rb2_bt).getProject();
+      will(returnValue(proj));
 
       allowing(rb1_bt).getExtendedFullName();
       will(returnValue("rb1_bt"));
@@ -285,11 +294,26 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(rb1);
     }};
 
+    final ProjectEx proj = m.mock(ProjectEx.class, "project");
+    final ProjectEx root = m.mock(ProjectEx.class, "root");
+    List<SProject> projPath = new ArrayList<>();
+    projPath.add(root);
+    projPath.add(proj);
+
     final Collection<QueuedBuildInfo> queuedBuilds = new ArrayList<QueuedBuildInfo>() {{
       add(qb1);
     }};
 
     m.checking(new Expectations() {{
+      allowing(proj).getProjectId();
+      will(returnValue(myProjectId));
+
+      allowing(root).getProjectId();
+      will(returnValue(ProjectImpl.ROOT_PROJECT_ID));
+
+      allowing(proj).getProjectPath();
+      will(returnValue(projPath)); // this is technically incorrect but is ok for the test
+
       allowing(bp1).getBuildType();
       will(returnValue(rb1_bt));
 
@@ -311,11 +335,14 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myLocks).fromBuildFeaturesAsMap(rFeatures);
       will(returnValue(takenLocks1));
 
-      allowing(rb1_bt).getProjectId();
-      will(returnValue(myProjectId));
+      allowing(rb1_bt).getProject();
+      will(returnValue(proj));
 
-      allowing(myResources).getResourcesMap(myProjectId);
-      will(returnValue(resources));
+      allowing(myResources).getOwnResources(proj);
+      will(returnValue(new ArrayList<>(resources.values())));
+
+      allowing(myResources).getOwnResources(root);
+      will(returnValue(Collections.emptyList()));
 
       allowing(qb1).getBuildPromotionInfo();
       will(returnValue(bp2));
@@ -329,8 +356,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myLocks).fromBuildFeaturesAsMap(qFeatures);
       will(returnValue(takenLocks2));
 
-      allowing(qb1_bt).getProjectId();
-      will(returnValue(myProjectId));
+      allowing(qb1_bt).getProject();
+      will(returnValue(proj));
 
     }});
 
@@ -962,12 +989,39 @@ public class TakenLocksImplTest extends BaseTestCase {
       add(qb2.getFirst());
     }};
 
+    final ProjectEx proj = m.mock(ProjectEx.class, "project");
+    final ProjectEx root = m.mock(ProjectEx.class, "root");
+    List<SProject> projPath = new ArrayList<>();
+    projPath.add(root);
+    projPath.add(proj);
+
     m.checking(new Expectations() {{
+      allowing(proj).getProjectId();
+      will(returnValue(myProjectId));
+
+      allowing(root).getProjectId();
+      will(returnValue(ProjectImpl.ROOT_PROJECT_ID));
+
+      allowing(proj).getProjectPath();
+      will(returnValue(projPath)); // this is technically incorrect but is ok for the test
+
+      allowing(rb1.getSecond()).getProject();
+      will(returnValue(proj));
+
       allowing(rb1.getFirst()).getBuildPromotion();
       will(returnValue(rb1.getThird()));
 
       allowing(rb1.getThird()).getBuildType();
       will(returnValue(rb1.getSecond()));
+
+      allowing(rb2.getSecond()).getProject();
+      will(returnValue(proj));
+
+      allowing(qb1.getSecond()).getProject();
+      will(returnValue(proj));
+
+      allowing(qb2.getSecond()).getProject();
+      will(returnValue(proj));
 
       allowing(rb2.getFirst()).getBuildPromotion();
       will(returnValue(rb2.getThird()));
@@ -999,8 +1053,11 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myLocksStorage).load(rb2.getThird());
       will(returnValue(withDeletedLocks));
 
-      allowing(myResources).getResourcesMap(myProjectId);
-      will(returnValue(resources));
+      allowing(myResources).getOwnResources(proj);
+      will(returnValue(new ArrayList<>(resources.values())));
+
+      allowing(myResources).getOwnResources(root);
+      will(returnValue(Collections.emptyList()));
 
       allowing(myFeatures).searchForFeatures(qb1.getThird());
       will(returnValue(featuresWithAllResources));

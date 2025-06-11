@@ -112,7 +112,7 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
       }
     };
 
-    CachingProjectResourcesMap resourcesMap = new CachingProjectResourcesMap();
+    CachingProjectResourcesMap resourcesMap = new CachingProjectResourcesMap(myResources);
     final AtomicReference<Map<Resource, TakenLock>> takenLocks = new AtomicReference<>();
     // get or create our collection of resources
     WaitReason reason = null;
@@ -386,33 +386,4 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
     return result;
   }
 
-  private class CachingProjectResourcesMap {
-    private final Map<String, Map<String, Resource>> myCache = new HashMap<>();
-
-    @NotNull
-    public Map<String, Resource> getResourcesMap(@NotNull final SProject project) {
-      final Map<String, Resource> resourcesMap = myCache.get(project.getProjectId());
-      if (resourcesMap != null) return resourcesMap;
-
-      Map<String, Resource> result = new HashMap<>();
-      final List<SProject> projectPath = project.getProjectPath();
-      for (SProject p : projectPath) {
-        Map<String, Resource> cached = myCache.get(project.getProjectId());
-        if (cached != null) {
-          result.putAll(cached);
-          continue;
-        }
-
-        final List<Resource> ownResources = myResources.getOwnResources(p);
-        for (Resource r : ownResources) {
-          result.put(r.getName(), r);
-        }
-
-        // store a copy of our intermediate result to the cache for the current project
-        myCache.computeIfAbsent(p.getProjectId(), id -> new HashMap<>(result));
-      }
-
-      return result;
-    }
-  }
 }
