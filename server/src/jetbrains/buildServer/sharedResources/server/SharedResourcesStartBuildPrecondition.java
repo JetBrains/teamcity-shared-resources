@@ -46,13 +46,16 @@ import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.sharedResources.server.runtime.ReservedValuesProvider;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.util.impl.Lazy;
+import jetbrains.buildServer.util.positioning.PositionAware;
+import jetbrains.buildServer.util.positioning.PositionConstraint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 
-public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondition {
+public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondition, PositionAware {
 
+  public final static String ORDER_ID = SharedResourcesStartBuildPrecondition.class.getSimpleName();
   public static final Logger LOG = Logger.getInstance(SharedResourcesStartBuildPrecondition.class);
 
   @NotNull
@@ -371,6 +374,18 @@ public class SharedResourcesStartBuildPrecondition implements StartBuildPrecondi
       result = new SimpleWaitReason(builder.toString());
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public PositionConstraint getConstraint() {
+    return PositionConstraint.after("WaitApprovalBuildPrecondition"); // should be after approval precondition because the build won't start without the approval anyway
+  }
+
+  @NotNull
+  @Override
+  public String getOrderId() {
+    return ORDER_ID;
   }
 
 }
