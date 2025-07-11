@@ -40,7 +40,7 @@ public class ConfigurationInspectorTest extends BaseTestCase {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
     m = new Mockery();
     myResources = m.mock(Resources.class);
