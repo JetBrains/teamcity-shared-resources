@@ -61,18 +61,20 @@ public class TakenLocksImpl implements TakenLocks {
     final Map<Resource, TakenLock> result = new HashMap<>();
     CachingProjectResourcesMap projectResourcesMap = new CachingProjectResourcesMap(myResources);
     for (BuildPromotionEx bpEx : buildPromotions) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
+      if (features.isEmpty()) continue;
+
+      // at this point we have features
+      Map<String, Lock> locks;
+      if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
+        locks = myLocksStorage.load(bpEx);
+      } else {
+        locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
+      }
+      if (locks.isEmpty()) continue;
+
       final SBuildType buildType = bpEx.getBuildType();
       if (buildType != null) {
-        final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
-        if (features.isEmpty()) continue;
-        // at this point we have features
-        Map<String, Lock> locks;
-        if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
-          locks = myLocksStorage.load(bpEx);
-        } else {
-          locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
-        }
-        if (locks.isEmpty()) continue;
         // get resources defined in project tree, respecting inheritance
         final Map<String, Resource> resources = projectResourcesMap.getResourcesMap(buildType.getProject());
         // resolve locks against resources defined in project tree
