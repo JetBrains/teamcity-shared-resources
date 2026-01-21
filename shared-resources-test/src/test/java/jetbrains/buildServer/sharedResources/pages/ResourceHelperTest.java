@@ -2,6 +2,7 @@
 
 package jetbrains.buildServer.sharedResources.pages;
 
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.resources.*;
@@ -39,7 +40,7 @@ public class ResourceHelperTest extends BaseTestCase {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myRequest = m.mock(HttpServletRequest.class);
     myHelper = new ResourceHelper();
   }

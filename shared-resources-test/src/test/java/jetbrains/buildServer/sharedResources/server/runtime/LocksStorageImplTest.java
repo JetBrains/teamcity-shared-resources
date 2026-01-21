@@ -3,6 +3,7 @@
 package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.google.common.cache.Cache;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildServerListener;
@@ -17,6 +18,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -55,7 +57,7 @@ public class LocksStorageImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myPromotion = m.mock(BuildPromotion.class);
     myDispatcher = EventDispatcher.create(BuildServerListener.class);
     myLocksStorage = new LocksStorageImpl(myDispatcher);

@@ -4,6 +4,7 @@ package jetbrains.buildServer.sharedResources.server;
 
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.*;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -52,9 +53,7 @@ public class ContextProcessorTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery() {{
-      setImposteriser(ClassImposteriser.INSTANCE);
-    }};
+    m = TCJMockUtils.createInstance();
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myLocks = m.mock(Locks.class);
     myResources = m.mock(Resources.class);

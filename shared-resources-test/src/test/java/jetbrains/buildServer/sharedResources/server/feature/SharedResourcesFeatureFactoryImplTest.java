@@ -2,6 +2,7 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -33,7 +34,7 @@ public class SharedResourcesFeatureFactoryImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myLocks = m.mock(Locks.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
     myFactory = new SharedResourcesFeatureFactoryImpl(myLocks);

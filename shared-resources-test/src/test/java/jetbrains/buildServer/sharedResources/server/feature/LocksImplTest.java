@@ -2,6 +2,7 @@
 
 package jetbrains.buildServer.sharedResources.server.feature;
 
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
 import jetbrains.buildServer.sharedResources.TestUtils;
@@ -36,7 +37,7 @@ public class LocksImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myLocks = new LocksImpl();
   }
 

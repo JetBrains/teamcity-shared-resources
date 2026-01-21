@@ -3,6 +3,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import java.util.*;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -56,7 +57,7 @@ public class BuildFeatureParametersProviderTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myBuild = m.mock(SBuild.class);
     myBuildType = m.mock(SBuildType.class);
     myBuildPromotion = m.mock(BuildPromotionEx.class);

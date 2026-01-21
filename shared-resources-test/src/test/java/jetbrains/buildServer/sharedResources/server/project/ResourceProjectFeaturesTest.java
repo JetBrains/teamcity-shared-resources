@@ -5,6 +5,7 @@ package jetbrains.buildServer.sharedResources.server.project;
 import com.intellij.openapi.util.Pair;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SProject;
 import jetbrains.buildServer.serverSide.SProjectFeatureDescriptor;
@@ -41,7 +42,7 @@ public class ResourceProjectFeaturesTest extends BaseTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myFeatures = new ResourceProjectFeaturesImpl();
     myProject = m.mock(SProject.class, "My Project");
   }

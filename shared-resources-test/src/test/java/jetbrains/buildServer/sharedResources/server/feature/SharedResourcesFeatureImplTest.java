@@ -4,6 +4,7 @@ package jetbrains.buildServer.sharedResources.server.feature;
 
 import java.util.HashMap;
 import java.util.Map;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildTypeTemplate;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
@@ -43,7 +44,7 @@ public class SharedResourcesFeatureImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myLocks = m.mock(Locks.class);
     myBuildFeatureDescriptor = m.mock(SBuildFeatureDescriptor.class);
     myBuildType = m.mock(SBuildType.class);

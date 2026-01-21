@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.BuildAgent;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
@@ -94,9 +95,7 @@ public class SharedResourcesStartBuildPreconditionTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery() {{
-      setImposteriser(ClassImposteriser.INSTANCE);
-    }};
+    m = TCJMockUtils.createInstance();
     myLocks = m.mock(Locks.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myBuildType = m.mock(BuildTypeEx.class);

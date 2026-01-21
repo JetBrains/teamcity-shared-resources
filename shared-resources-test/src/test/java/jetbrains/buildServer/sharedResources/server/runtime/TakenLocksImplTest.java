@@ -4,6 +4,7 @@ package jetbrains.buildServer.sharedResources.server.runtime;
 
 import com.intellij.openapi.util.Trinity;
 import java.util.*;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
@@ -24,6 +25,7 @@ import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -71,9 +73,9 @@ public class TakenLocksImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery() {{
-      setImposteriser(ClassImposteriser.INSTANCE);
-    }};
+    m = TCJMockUtils.createInstance();
+    m.setThreadingPolicy(new Synchroniser());
+
     myLocks = m.mock(Locks.class);
     myResources = m.mock(Resources.class);
     myLocksStorage = m.mock(LocksStorage.class);

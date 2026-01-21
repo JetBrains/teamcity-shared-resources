@@ -3,6 +3,7 @@
 package jetbrains.buildServer.sharedResources.server.feature;
 
 import java.util.*;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.ProjectManager;
 import jetbrains.buildServer.serverSide.SProject;
@@ -51,9 +52,7 @@ public class ResourcesImplTest extends BaseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    m = new Mockery() {{
-      setImposteriser(ClassImposteriser.INSTANCE);
-    }};
+    m = TCJMockUtils.createInstance();
     myProjectManager = m.mock(ProjectManager.class);
     myProject = m.mock(SProject.class, "currentProject");
     myRootProject = m.mock(SProject.class, "rootProject");

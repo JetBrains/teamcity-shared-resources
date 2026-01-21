@@ -3,6 +3,7 @@
 package jetbrains.buildServer.sharedResources.server;
 
 import java.util.*;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.serverSide.SProject;
@@ -42,7 +43,7 @@ public class ConfigurationInspectorTest extends BaseTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    m = new Mockery();
+    m = TCJMockUtils.createInstance();
     myResources = m.mock(Resources.class);
     myFeatures = m.mock(SharedResourcesFeatures.class);
     myInspector = new ConfigurationInspector(myFeatures, myResources);
