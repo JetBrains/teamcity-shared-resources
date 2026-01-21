@@ -168,6 +168,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(bp1).getBuildType();
       will(returnValue(rb1_bt));
 
+      allowing(bp1).getBuildType();
+      will(returnValue(rb1_bt));
+
       allowing(myFeatures).searchForFeatures(bp1);
       will(returnValue(features));
 

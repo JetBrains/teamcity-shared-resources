@@ -19,6 +19,11 @@
       <artifactId>tests-support</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jetbrains.teamcity.internal</groupId>
+      <artifactId>web</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
