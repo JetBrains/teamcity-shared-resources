@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.jetbrains.teamcity.plugins</groupId>
+  <version>${revision}</version>
+  <artifactId>shared-resources</artifactId>
+  <name>Shared Resources</name>
+  <description>Allows defining resources and limiting concurrently running builds that use these resources </description>
+
+  <properties>
+    <revision>${PluginVersion}</revision>
+    <PluginVersion>${teamcity.version}</PluginVersion>
+    <teamcity.version>${MAJOR_VERSION}-SNAPSHOT</teamcity.version>
+    <MAJOR_VERSION>2026.1</MAJOR_VERSION>
+    <local.repo.path>${TC_LOCAL_REPO}</local.repo.path>
+    <TC_LOCAL_REPO>local-repo</TC_LOCAL_REPO>
+
+  </properties>
+
+  <url>https://github.com/JetBrains/teamcity-shared-resources</url>
+
+  <organization>
+    <name>JetBrains</name>
+    <url>https://www.jetbrains.com</url>
+  </organization>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>agent-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>tests-support</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jetbrains.teamcity</groupId>
+        <artifactId>bom</artifactId>
+        <version>${teamcity.version}</version>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <repositories>
+    <repository>
+      <id>local-teamcity-artifacts</id>
+      <url>file://${local.repo.path}</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>teamcity-space</id>
+      <url>https://packages.jetbrains.team/maven/p/tc/maven</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jetbrains.teamcity</groupId>
+        <artifactId>teamcity-maven-plugin</artifactId>
+        <configuration>
+          <server>
+            <pluginName>TeamCity.SharedResources</pluginName>
+            <spec>none</spec>
+            <descriptor>
+              <nodeResponsibilitiesAware>true</nodeResponsibilitiesAware>
+              <useSeparateClassloader>true</useSeparateClassloader>
+            </descriptor>
+          </server>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <version>2.4.0</version>
+        <configuration>
+          <thirdPartyFilename>third-party-libraries.json</thirdPartyFilename>
+          <fileTemplate>${maven.multiModuleProjectDirectory}/license-third-party.ftl</fileTemplate>
+          <force>true</force>
+          <includedScopes>compile,runtime</includedScopes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
