@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jetbrains.teamcity.plugins</groupId>
+    <artifactId>shared-resources</artifactId>
+    <version>${revision}</version>
+    <relativePath>../</relativePath>
+  </parent>
+  <artifactId>shared-resources-webapp</artifactId>
+  <packaging>war</packaging>
+  <name>Shared Resources</name>
+  <description>Allows defining resources and limiting concurrently running builds that use these resources </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.teamcity.plugins</groupId>
+      <artifactId>shared-resources-server</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jetbrains.teamcity</groupId>
+        <artifactId>teamcity-maven-plugin</artifactId>
+        <configuration>
+          <server>
+            <pluginName>TeamCity.SharedResources</pluginName>
+            <spec>.</spec>
+            <descriptor>
+              <nodeResponsibilitiesAware>true</nodeResponsibilitiesAware>
+              <useSeparateClassloader>true</useSeparateClassloader>
+            </descriptor>
+          </server>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
