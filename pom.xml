@@ -6,8 +6,7 @@
   <groupId>org.jetbrains.teamcity.plugins</groupId>
   <version>${revision}</version>
   <artifactId>shared-resources</artifactId>
-  <name>Shared Resources</name>
-  <description>Allows defining resources and limiting concurrently running builds that use these resources </description>
+  <packaging>pom</packaging>
 
   <properties>
     <revision>${PluginVersion}</revision>
@@ -16,8 +15,13 @@
     <MAJOR_VERSION>2026.1</MAJOR_VERSION>
     <local.repo.path>${TC_LOCAL_REPO}</local.repo.path>
     <TC_LOCAL_REPO>local-repo</TC_LOCAL_REPO>
-
   </properties>
+
+  <modules>
+    <module>shared-resources-server</module>
+    <module>shared-resources-webapp</module>
+    <module>shared-resources-test</module>
+  </modules>
 
   <url>https://github.com/JetBrains/teamcity-shared-resources</url>
 
@@ -26,24 +30,19 @@
     <url>https://www.jetbrains.com</url>
   </organization>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>agent-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>tests-support</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>org.jetbrains.teamcity.plugins</groupId>
+        <artifactId>shared-resources-server</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.jetbrains.teamcity</groupId>
         <artifactId>bom</artifactId>
         <version>${teamcity.version}</version>
+        <type>pom</type>
         <scope>import</scope>
       </dependency>
     </dependencies>
@@ -53,6 +52,10 @@
     <repository>
       <id>local-teamcity-artifacts</id>
       <url>file://${local.repo.path}</url>
+      <snapshots>
+        <checksumPolicy>ignore</checksumPolicy>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -66,17 +69,13 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.jetbrains.teamcity</groupId>
-        <artifactId>teamcity-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
         <configuration>
-          <server>
-            <pluginName>TeamCity.SharedResources</pluginName>
-            <spec>none</spec>
-            <descriptor>
-              <nodeResponsibilitiesAware>true</nodeResponsibilitiesAware>
-              <useSeparateClassloader>true</useSeparateClassloader>
-            </descriptor>
-          </server>
+          <source>8</source>
+          <target>8</target>
+<!--          <release>8</release>-->
         </configuration>
       </plugin>
       <plugin>
@@ -92,5 +91,30 @@
         </configuration>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.jetbrains.teamcity</groupId>
+          <artifactId>teamcity-maven-plugin</artifactId>
+          <version>1.6.36</version>
+          <executions>
+            <execution>
+              <id>teamcity-assemble-plugin</id>
+              <goals>
+                <goal>build</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>3.4.0</version>
+          <configuration>
+            <failOnMissingWebXml>false</failOnMissingWebXml>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 </project>
