@@ -10,8 +10,9 @@
 
   <properties>
     <revision>${PluginVersion}</revision>
-    <PluginVersion>${teamcity.version}</PluginVersion>
-    <teamcity.version>${MAJOR_VERSION}-SNAPSHOT</teamcity.version>
+    <PluginVersion>${BUILD_NUMBER}</PluginVersion>
+    <BUILD_NUMBER>SNAPSHOT</BUILD_NUMBER>
+    <teamcity.version>${MAJOR_VERSION}-${BUILD_NUMBER}</teamcity.version>
     <MAJOR_VERSION>2026.1</MAJOR_VERSION>
     <local.repo.path>${TC_LOCAL_REPO}</local.repo.path>
     <TC_LOCAL_REPO>local-repo</TC_LOCAL_REPO>
