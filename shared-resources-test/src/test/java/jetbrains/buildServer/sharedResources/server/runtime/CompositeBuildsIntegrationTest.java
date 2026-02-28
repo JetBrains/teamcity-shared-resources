@@ -131,7 +131,7 @@ public class CompositeBuildsIntegrationTest extends SharedResourcesIntegrationTe
     final SBuild depBuildFirst = qbDepFirst.getAssociatedBuild();
     assertTrue(depBuildFirst instanceof RunningBuildEx);
     // assert we have empty queue
-    assertEquals(0, myFixture.getBuildQueue().getNumberOfItems());
+    waitForAssert(() -> assertEquals(0, myFixture.getBuildQueue().getNumberOfItems()));
     // run second chain
     final QueuedBuildEx qbCompositeSecond = (QueuedBuildEx)btCompositeSecond.addToQueue("");
     assertNotNull(qbCompositeSecond);
