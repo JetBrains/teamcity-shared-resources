@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static jetbrains.buildServer.sharedResources.TestUtils.generateRandomName;
+import static jetbrains.buildServer.util.Util.map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -101,8 +102,12 @@ public class TakenLocksImplTest extends BaseTestCase {
 
   @Test
   public void testCollectTakenLocks_EmptyInput() {
-    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            Collections.emptyList(), Collections.emptyList());
+    m.checking(new Expectations() {{
+      allowing(myLocksStorage).getAllTakenLocks();
+      will(returnValue(Collections.emptyMap()));
+    }});
+
+    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(Collections.emptyList(), Collections.emptyList());
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -163,6 +168,9 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(rb1).getBuildPromotion();
       will(returnValue(bp1));
 
+      allowing(rb1).isStartedOnAgent();
+      will(returnValue(false));
+
       allowing(bp1).getBuildType();
       will(returnValue(rb1_bt));
 
@@ -171,12 +179,6 @@ public class TakenLocksImplTest extends BaseTestCase {
 
       allowing(rb1).getBuildPromotionInfo();
       will(returnValue(bp1));
-
-      allowing(myLocksStorage).locksStored(bp1);
-      will(returnValue(true));
-
-      allowing(myLocksStorage).load(bp1);
-      will(returnValue(takenLocks1));
 
       allowing(rb1_bt).getProject();
       will(returnValue(proj));
@@ -193,17 +195,20 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(bp2).getBuildType();
       will(returnValue(rb2_bt));
 
+      allowing(rb1).isStartedOnAgent();
+      will(returnValue(false));
+
       allowing(myFeatures).searchForFeatures(bp2);
       will(returnValue(features));
 
       allowing(rb2).getBuildPromotionInfo();
       will(returnValue(bp2));
 
-      allowing(myLocksStorage).locksStored(bp2);
-      will(returnValue(true));
+      allowing(rb2).isStartedOnAgent();
+      will(returnValue(false));
 
-      allowing(myLocksStorage).load(bp2);
-      will(returnValue(takenLocks2));
+      allowing(myLocksStorage).getAllTakenLocks();
+      will(returnValue(map(bp1, takenLocks1, bp2, takenLocks2)));
 
       allowing(rb2_bt).getProject();
       will(returnValue(proj));
@@ -216,8 +221,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     }});
 
-    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            runningBuilds, Collections.emptyList());
+    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(runningBuilds, Collections.emptyList());
     assertNotNull(result);
     assertEquals(2, result.size());
     final TakenLock tl1 = result.get(resource1);
@@ -247,13 +251,17 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(rb).getBuildPromotion();
       will(returnValue(rb_bp));
 
+      allowing(rb).isStartedOnAgent();
+      will(returnValue(false));
+
       allowing(myFeatures).searchForFeatures(rb_bp);
       will(returnValue(Collections.emptyList()));
 
+      allowing(myLocksStorage).getAllTakenLocks();
+      will(returnValue(Collections.emptyMap()));
     }});
 
-    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            runningBuilds, Collections.emptyList());
+    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(runningBuilds, Collections.emptyList());
     assertNotNull(result);
     assertEquals(0, result.size());
   }
@@ -323,11 +331,11 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(rb1).getBuildPromotion();
       will(returnValue(bp1));
 
-      allowing(myLocksStorage).locksStored(bp1);
+      allowing(rb1).isStartedOnAgent();
       will(returnValue(false));
 
-      allowing(myLocksStorage).locksStored(bp2);
-      will(returnValue(false));
+      allowing(myLocksStorage).getAllTakenLocks();
+      will(returnValue(Collections.emptyMap()));
 
       allowing(myFeatures).searchForFeatures(bp1);
       will(returnValue(rFeatures));
@@ -361,8 +369,7 @@ public class TakenLocksImplTest extends BaseTestCase {
 
     }});
 
-    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(
-            runningBuilds, queuedBuilds);
+    final Map<Resource, TakenLock> result = myTakenLocks.collectTakenLocks(runningBuilds, queuedBuilds);
     assertNotNull(result);
     assertEquals(2, result.size());
     final TakenLock tl1 = result.get(resource1);
@@ -1011,11 +1018,17 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(rb1.getFirst()).getBuildPromotion();
       will(returnValue(rb1.getThird()));
 
+      allowing(rb1.getFirst()).isStartedOnAgent();
+      will(returnValue(false));
+
       allowing(rb1.getThird()).getBuildType();
       will(returnValue(rb1.getSecond()));
 
       allowing(rb2.getSecond()).getProject();
       will(returnValue(proj));
+
+      allowing(rb2.getFirst()).isStartedOnAgent();
+      will(returnValue(false));
 
       allowing(qb1.getSecond()).getProject();
       will(returnValue(proj));
@@ -1035,23 +1048,8 @@ public class TakenLocksImplTest extends BaseTestCase {
       allowing(myFeatures).searchForFeatures(rb2.getThird());
       will(returnValue(features));
 
-      allowing(myLocksStorage).locksStored(with(rb1.getThird()));
-      will(returnValue(true));
-
-      allowing(myLocksStorage).locksStored(with(rb2.getThird()));
-      will(returnValue(true));
-
-      allowing(myLocksStorage).locksStored(with(qb1.getThird()));
-      will(returnValue(false));
-
-      allowing(myLocksStorage).locksStored(with(qb2.getThird()));
-      will(returnValue(false));
-
-      allowing(myLocksStorage).load(rb1.getThird());
-      will(returnValue(allExistingLocks));
-
-      allowing(myLocksStorage).load(rb2.getThird());
-      will(returnValue(withDeletedLocks));
+      allowing(myLocksStorage).getAllTakenLocks();
+      will(returnValue(map(rb1.getThird(), allExistingLocks, rb2.getThird(), withDeletedLocks)));
 
       allowing(myResources).getOwnResources(proj);
       will(returnValue(new ArrayList<>(resources.values())));

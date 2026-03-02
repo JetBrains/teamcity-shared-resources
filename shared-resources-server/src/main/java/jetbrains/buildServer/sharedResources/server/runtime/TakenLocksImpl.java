@@ -18,6 +18,7 @@ import jetbrains.buildServer.sharedResources.server.feature.Resources;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeature;
 import jetbrains.buildServer.sharedResources.server.feature.SharedResourcesFeatures;
 import jetbrains.buildServer.util.CollectionsUtil;
+import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,28 +53,31 @@ public class TakenLocksImpl implements TakenLocks {
 
   @NotNull
   @Override
-  public Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<RunningBuildEx> runningBuilds,
-                                                    @NotNull final Collection<QueuedBuildInfo> queuedBuilds) {
-    Set<BuildPromotionEx> buildPromotions = new HashSet<>();
-    runningBuilds.forEach(rb -> buildPromotions.add(rb.getBuildPromotion()));
-    queuedBuilds.forEach(qb -> buildPromotions.add((BuildPromotionEx)qb.getBuildPromotionInfo()));
+  public Map<Resource, TakenLock> collectTakenLocks(@NotNull Collection<RunningBuildEx> runningBuilds, @NotNull final Collection<QueuedBuildInfo> startingQueuedBuilds) {
+    Map<BuildPromotion, Map<String, Lock>> takenLocks = myLocksStorage.getAllTakenLocks();
+    Set<BuildPromotion> buildPromotions = new HashSet<>(takenLocks.keySet());
+    for (RunningBuildEx rb: runningBuilds) {
+      // if a build is not yet started on an agent, then it can still take some locks
+      if (!rb.isStartedOnAgent() || rb.isAgentLessBuild()) {
+        buildPromotions.add(rb.getBuildPromotion());
+      }
+    }
+    startingQueuedBuilds.forEach(qb -> buildPromotions.add((BuildPromotionEx)qb.getBuildPromotionInfo()));
 
     final Map<Resource, TakenLock> result = new HashMap<>();
     CachingProjectResourcesMap projectResourcesMap = new CachingProjectResourcesMap(myResources);
-    for (BuildPromotionEx bpEx : buildPromotions) {
-      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bpEx);
+    for (BuildPromotion bp : buildPromotions) {
+      final Collection<SharedResourcesFeature> features = myFeatures.searchForFeatures(bp);
       if (features.isEmpty()) continue;
 
       // at this point we have features
-      Map<String, Lock> locks;
-      if (myLocksStorage.locksStored(bpEx)) { // lock values are already resolved
-        locks = myLocksStorage.load(bpEx);
-      } else {
+      Map<String, Lock> locks = takenLocks.get(bp);
+      if (locks == null) {
         locks = myLocks.fromBuildFeaturesAsMap(features); // in the future: <String, Set<Lock>>
       }
       if (locks.isEmpty()) continue;
 
-      final SBuildType buildType = bpEx.getBuildType();
+      final SBuildType buildType = bp.getBuildType();
       if (buildType != null) {
         // get resources defined in project tree, respecting inheritance
         final Map<String, Resource> resources = projectResourcesMap.getResourcesMap(buildType.getProject());
@@ -82,7 +86,7 @@ public class TakenLocksImpl implements TakenLocks {
           // collection, promotion, resource, lock
           final Resource resource = resources.get(name);
           if (resource != null) {
-            updateTakenLocks(resource, lock, bpEx, result);
+            updateTakenLocks(resource, lock, (BuildPromotionEx)bp, result);
           }
         });
       }

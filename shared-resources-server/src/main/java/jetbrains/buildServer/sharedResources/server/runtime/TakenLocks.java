@@ -7,6 +7,7 @@ import java.util.Map;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.RunningBuildEx;
+import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.TakenLock;
@@ -19,21 +20,13 @@ import org.jetbrains.annotations.NotNull;
 public interface TakenLocks {
 
   /**
-   * For given project collects taken locks using both artifacts and build promotions.
-   * <p>
-   * For running builds :
-   * looking first into artifact
-   * secondly, if no artifact exists, looking into promotion+buildType
-   * <p>
-   * For queued builds looking only in promotion+buildType
-   *
-   * @param runningBuilds running builds
-   * @param queuedBuilds  queued builds
+   * Returns all currently taken locks as well as locks which will be taken by the starting running builds or by the queued builds which are scheduled to start.
+   * @param startingQueuedBuilds  queued builds which were scheduled to start
    * @return map of taken locks in format {@code <Resource, TakenLock>}
    */
   @NotNull
-  Map<Resource, TakenLock> collectTakenLocks(@NotNull final Collection<RunningBuildEx> runningBuilds,
-                                             @NotNull final Collection<QueuedBuildInfo> queuedBuilds);
+  Map<Resource, TakenLock> collectTakenLocks(@NotNull Collection<RunningBuildEx> runningBuilds,
+                                             @NotNull final Collection<QueuedBuildInfo> startingQueuedBuilds);
 
   Map<Resource, String> getUnavailableLocks(@NotNull final Collection<Lock> locksToTake,
                                             @NotNull final Map<Resource, TakenLock> takenLocks,

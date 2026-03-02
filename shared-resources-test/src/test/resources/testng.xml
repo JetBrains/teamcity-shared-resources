@@ -32,7 +32,7 @@
   </test>
   <test name="Feature runtime tests">
     <classes>
-      <class name="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImplTest"/>
+      <class name="jetbrains.buildServer.sharedResources.server.runtime.CDSBasedTakenLocksStorageTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImplTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.runtime.HierarchyTest"/>
       <class name="jetbrains.buildServer.sharedResources.server.report.UsedResourcesSerializerTest"/>

@@ -2,6 +2,7 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
+import java.util.Collection;
 import java.util.Map;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.sharedResources.model.Lock;
@@ -31,6 +32,22 @@ public interface LocksStorage {
    */
   @NotNull
   Map<String, Lock> load(@NotNull final BuildPromotion buildPromotion);
+
+  /**
+   * Loads taken locks for many build promotions at once
+   *
+   * @param buildPromotion build promotion to load locks for
+   * @return collection of taken locks for each build promotion
+   */
+  @NotNull
+  Map<BuildPromotion, Map<String, Lock>> loadMultiple(@NotNull final Collection<BuildPromotion> buildPromotions);
+
+  /**
+   * Returns build promotions and their taken locks.
+   * @return
+   */
+  @NotNull
+  Map<BuildPromotion, Map<String, Lock>> getAllTakenLocks();
 
   /**
    * Checks, whether locks has been already stored

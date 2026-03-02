@@ -40,7 +40,7 @@
 
   <!-- ===  INTERNALS  === -->
   <bean class="jetbrains.buildServer.sharedResources.server.project.ResourceProjectFeaturesImpl"/>
-  <bean class="jetbrains.buildServer.sharedResources.server.runtime.LocksStorageImpl"/>
+  <bean class="jetbrains.buildServer.sharedResources.server.runtime.CDSBasedTakenLocksStorage"/>
   <bean class="jetbrains.buildServer.sharedResources.server.runtime.TakenLocksImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.LocksImpl"/>
   <bean class="jetbrains.buildServer.sharedResources.server.feature.ResourcesImpl"/>
