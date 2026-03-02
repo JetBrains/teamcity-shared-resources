@@ -18,31 +18,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CDSBasedTakenLocksStorage implements LocksStorage {
-  @NotNull
   private static final String FILE_NAME = "taken_locks.txt";
-  @NotNull
   static final String FILE_PATH = SharedResourcesPluginConstants.BASE_ARTIFACT_PATH + "/" + FILE_NAME; // package visibility for tests
   private final static Logger LOG = Logger.getInstance(CDSBasedTakenLocksStorage.class);
   private static final String SHARED_RESOURCES_TAKEN_LOCKS_CDS_ID = "SharedResourcesTakenLocks";
-  public static final String BUILD_ID_PREFIX = "buildId:";
+  private static final String BUILD_ID_PREFIX = "buildId:";
 
   private final CustomDataStorage myTakenLocksStorage;
   private final BuildPromotionManager myBuildPromotionManager;
+  private final ServerResponsibility myServerResponsibility;
 
   public CDSBasedTakenLocksStorage(@NotNull ProjectManager projectManager,
                                    @NotNull BuildPromotionManager buildPromotionManager,
-                                   @NotNull final EventDispatcher<BuildServerListener> dispatcher) {
+                                   @NotNull ServerResponsibility serverResponsibility,
+                                   @NotNull EventDispatcher<BuildServerListener> dispatcher) {
     myBuildPromotionManager = buildPromotionManager;
+    myServerResponsibility = serverResponsibility;
     myTakenLocksStorage = projectManager.getRootProject().getCustomDataStorage(SHARED_RESOURCES_TAKEN_LOCKS_CDS_ID);
     dispatcher.addListener(new BuildServerAdapter() {
       @Override
       public void buildFinished(@NotNull SRunningBuild build) {
-        myTakenLocksStorage.putValue(buildLocksKey(build.getBuildPromotion()), null);
+        removeTakenLocks(build.getBuildPromotion());
       }
 
       @Override
       public void buildInterrupted(@NotNull SRunningBuild build) {
-        myTakenLocksStorage.putValue(buildLocksKey(build.getBuildPromotion()), null);
+        removeTakenLocks(build.getBuildPromotion());
+      }
+
+      private void removeTakenLocks(@NotNull BuildPromotion buildPromotion) {
+        removeTakenLocksForEntry(buildLocksKey(buildPromotion));
       }
     });
   }
@@ -57,13 +62,12 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
   @NotNull
   @Override
   public Map<String, Lock> load(@NotNull BuildPromotion buildPromotion) {
-    return readFromStorage(Collections.singleton(buildPromotion)).getOrDefault(buildPromotion, Collections.emptyMap());
-  }
+    String value = myTakenLocksStorage.getValue(buildLocksKey(buildPromotion));
+    if (value == null) {
+      return Collections.emptyMap();
+    }
 
-  @NotNull
-  @Override
-  public Map<BuildPromotion, Map<String, Lock>> loadMultiple(@NotNull Collection<BuildPromotion> buildPromotions) {
-    return readFromStorage(buildPromotions);
+    return deserializeTakenLocks(value);
   }
 
   @NotNull
@@ -76,25 +80,30 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
     for (Map.Entry<String, String> lockEntry: vals.entrySet()) {
       if (!lockEntry.getKey().startsWith(BUILD_ID_PREFIX)) {
         LOG.warn("Incorrect lock entry prefix " + lockEntry.getKey() + ", the entry will be removed");
-        myTakenLocksStorage.putValue(lockEntry.getKey(), null);
+        removeTakenLocksForEntry(lockEntry.getKey());
         continue;
       }
 
       try {
         Long buildId = Long.parseLong(lockEntry.getKey().substring(BUILD_ID_PREFIX.length()));
         BuildPromotion bp = myBuildPromotionManager.findPromotionById(buildId);
-        if (bp == null) {
-          myTakenLocksStorage.putValue(lockEntry.getKey(), null);
+        if (bp == null && myServerResponsibility.canManageBuilds()) {
+          removeTakenLocksForEntry(lockEntry.getKey());
         }
         res.put(bp, deserializeTakenLocks(lockEntry.getValue()));
       } catch (NumberFormatException e) {
         // broken entry
         LOG.warnAndDebugDetails("Could not parse build id from " + lockEntry.getKey() + ", the entry will be removed", e);
-        myTakenLocksStorage.putValue(lockEntry.getKey(), null);
+        removeTakenLocksForEntry(lockEntry.getKey());
       }
     }
 
     return res;
+  }
+
+  private void removeTakenLocksForEntry(@NotNull String key) {
+    if (!myServerResponsibility.canManageBuilds()) return;
+    myTakenLocksStorage.putValue(key, null);
   }
 
   @Override
@@ -149,22 +158,10 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
 
   private void saveToStorage(@NotNull BuildPromotion buildPromotion, @NotNull Map<Lock, String> takenLocks) {
     if (takenLocks.isEmpty()) {
-      myTakenLocksStorage.putValue(buildLocksKey(buildPromotion), null);
+      removeTakenLocksForEntry(buildLocksKey(buildPromotion));
     } else {
       myTakenLocksStorage.putValue(buildLocksKey(buildPromotion), serializeTakenLocks(takenLocks));
     }
-  }
-
-  @NotNull
-  private Map<BuildPromotion, Map<String, Lock>> readFromStorage(@NotNull Collection<BuildPromotion> buildPromotions) {
-    Map<BuildPromotion, Map<String, Lock>> res = new HashMap<>();
-    for (BuildPromotion bp: buildPromotions) {
-      String value = myTakenLocksStorage.getValue(buildLocksKey(bp));
-      if (value == null) continue;
-      res.put(bp, deserializeTakenLocks(value));
-    }
-
-    return res;
   }
 
   @NotNull

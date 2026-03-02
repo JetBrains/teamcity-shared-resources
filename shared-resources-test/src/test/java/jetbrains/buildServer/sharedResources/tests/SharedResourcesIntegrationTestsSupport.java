@@ -49,7 +49,7 @@ public class SharedResourcesIntegrationTestsSupport {
     final Locks locks = new LocksImpl();
     final SharedResourcesFeatureFactory factory = new SharedResourcesFeatureFactoryImpl(locks);
     final SharedResourcesFeatures features = new SharedResourcesFeaturesImpl(factory);
-    final LocksStorage locksStorage = new CDSBasedTakenLocksStorage(fixture.getProjectManager(), fixture.getBuildPromotionManager(), fixture.getEventDispatcher());
+    final LocksStorage locksStorage = new CDSBasedTakenLocksStorage(fixture.getProjectManager(), fixture.getBuildPromotionManager(), fixture.getServerResponsibility(), fixture.getEventDispatcher());
 
     final BuildUsedResourcesReport buildUsedResourcesReport = new BuildUsedResourcesReport(new UsedResourcesSerializer());
 
