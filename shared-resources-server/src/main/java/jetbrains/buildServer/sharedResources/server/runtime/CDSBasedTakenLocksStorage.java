@@ -24,9 +24,9 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
   private static final String SHARED_RESOURCES_TAKEN_LOCKS_CDS_ID = "SharedResourcesTakenLocks";
   private static final String BUILD_ID_PREFIX = "buildId:";
 
-  private final CustomDataStorage myTakenLocksStorage;
   private final BuildPromotionManager myBuildPromotionManager;
   private final ServerResponsibility myServerResponsibility;
+  private final ProjectManager myProjectManager;
 
   public CDSBasedTakenLocksStorage(@NotNull ProjectManager projectManager,
                                    @NotNull BuildPromotionManager buildPromotionManager,
@@ -34,7 +34,7 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
                                    @NotNull EventDispatcher<BuildServerListener> dispatcher) {
     myBuildPromotionManager = buildPromotionManager;
     myServerResponsibility = serverResponsibility;
-    myTakenLocksStorage = projectManager.getRootProject().getCustomDataStorage(SHARED_RESOURCES_TAKEN_LOCKS_CDS_ID);
+    myProjectManager = projectManager;
     dispatcher.addListener(new BuildServerAdapter() {
       @Override
       public void buildFinished(@NotNull SRunningBuild build) {
@@ -62,7 +62,7 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
   @NotNull
   @Override
   public Map<String, Lock> load(@NotNull BuildPromotion buildPromotion) {
-    String value = myTakenLocksStorage.getValue(buildLocksKey(buildPromotion));
+    String value = getTakenLocksStorage().getValue(buildLocksKey(buildPromotion));
     if (value == null) {
       return Collections.emptyMap();
     }
@@ -71,9 +71,14 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
   }
 
   @NotNull
+  private CustomDataStorage getTakenLocksStorage() {
+    return myProjectManager.getRootProject().getCustomDataStorage(SHARED_RESOURCES_TAKEN_LOCKS_CDS_ID);
+  }
+
+  @NotNull
   @Override
   public Map<BuildPromotion, Map<String, Lock>> getAllTakenLocks() {
-    Map<String, String> vals = myTakenLocksStorage.getValues();
+    Map<String, String> vals = getTakenLocksStorage().getValues();
     if (vals == null) return Collections.emptyMap();
 
     Map<BuildPromotion, Map<String, Lock>> res = new HashMap<>();
@@ -103,12 +108,12 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
 
   private void removeTakenLocksForEntry(@NotNull String key) {
     if (!myServerResponsibility.canManageBuilds()) return;
-    myTakenLocksStorage.putValue(key, null);
+    getTakenLocksStorage().putValue(key, null);
   }
 
   @Override
   public boolean locksStored(@NotNull BuildPromotion buildPromotion) {
-    return myTakenLocksStorage.getValue(buildLocksKey(buildPromotion)) != null;
+    return getTakenLocksStorage().getValue(buildLocksKey(buildPromotion)) != null;
   }
 
   @VisibleForTesting
@@ -160,7 +165,7 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
     if (takenLocks.isEmpty()) {
       removeTakenLocksForEntry(buildLocksKey(buildPromotion));
     } else {
-      myTakenLocksStorage.putValue(buildLocksKey(buildPromotion), serializeTakenLocks(takenLocks));
+      getTakenLocksStorage().putValue(buildLocksKey(buildPromotion), serializeTakenLocks(takenLocks));
     }
   }
 
