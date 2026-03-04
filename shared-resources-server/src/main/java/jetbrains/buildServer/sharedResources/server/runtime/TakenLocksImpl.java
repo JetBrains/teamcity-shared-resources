@@ -57,8 +57,14 @@ public class TakenLocksImpl implements TakenLocks {
     Map<BuildPromotion, Map<String, Lock>> takenLocks = myLocksStorage.getAllTakenLocks();
     Set<BuildPromotion> buildPromotions = new HashSet<>(takenLocks.keySet());
     for (RunningBuildEx rb: runningBuilds) {
-      // if a build is not yet started on an agent, then it can still take some locks
-      if (!rb.isStartedOnAgent() || rb.isAgentLessBuild()) {
+      if (!rb.isStartedOnAgent()) {
+        // if a build is not yet started on an agent, then it can still take some locks
+        buildPromotions.add(rb.getBuildPromotion());
+        continue;
+      }
+
+      if (rb.isCompositeBuild()) {
+        // a composite build does not take loks as a normal build, so we always need to treat it specially
         buildPromotions.add(rb.getBuildPromotion());
       }
     }
