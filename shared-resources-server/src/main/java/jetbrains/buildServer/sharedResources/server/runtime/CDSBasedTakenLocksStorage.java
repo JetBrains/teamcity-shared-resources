@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.LogUtil;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -27,12 +28,15 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
   private final BuildPromotionManager myBuildPromotionManager;
   private final ServerResponsibility myServerResponsibility;
   private final ProjectManager myProjectManager;
+  private final BuildsManager myBuildsManager;
 
   public CDSBasedTakenLocksStorage(@NotNull ProjectManager projectManager,
                                    @NotNull BuildPromotionManager buildPromotionManager,
+                                   @NotNull BuildsManager buildsManager,
                                    @NotNull ServerResponsibility serverResponsibility,
                                    @NotNull EventDispatcher<BuildServerListener> dispatcher) {
     myBuildPromotionManager = buildPromotionManager;
+    myBuildsManager = buildsManager;
     myServerResponsibility = serverResponsibility;
     myProjectManager = projectManager;
     dispatcher.addListener(new BuildServerAdapter() {
@@ -81,7 +85,7 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
     Map<String, String> vals = getTakenLocksStorage().getValues();
     if (vals == null) return Collections.emptyMap();
 
-    Map<BuildPromotion, Map<String, Lock>> res = new HashMap<>();
+    Map<Long, Map<String, Lock>> unfilteredLocks = new HashMap<>();
     for (Map.Entry<String, String> lockEntry: vals.entrySet()) {
       if (!lockEntry.getKey().startsWith(BUILD_ID_PREFIX)) {
         LOG.warn("Incorrect lock entry prefix " + lockEntry.getKey() + ", the entry will be removed");
@@ -91,12 +95,7 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
 
       try {
         Long buildId = Long.parseLong(lockEntry.getKey().substring(BUILD_ID_PREFIX.length()));
-        BuildPromotion bp = myBuildPromotionManager.findPromotionById(buildId);
-        if (myServerResponsibility.canManageBuilds() && (bp == null || !(bp.getAssociatedBuild() instanceof SRunningBuild))) {
-          removeTakenLocksForEntry(lockEntry.getKey());
-          continue;
-        }
-        res.put(bp, deserializeTakenLocks(lockEntry.getValue()));
+        unfilteredLocks.put(buildId, deserializeTakenLocks(lockEntry.getValue()));
       } catch (NumberFormatException e) {
         // broken entry
         LOG.warnAndDebugDetails("Could not parse build id from " + lockEntry.getKey() + ", the entry will be removed", e);
@@ -104,7 +103,32 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
       }
     }
 
-    return res;
+    Map<BuildPromotion, Map<String, Lock>> result = new HashMap<>();
+    // we need to go through the locks to ensure that they are taken by the existing builds
+    for (SBuild build: myBuildsManager.findBuildInstances(unfilteredLocks.keySet())) {
+      unfilteredLocks.remove(build.getBuildId());
+      if (build instanceof SRunningBuild) {
+        result.put(build.getBuildPromotion(), unfilteredLocks.get(build.getBuildId()));
+        continue;
+      }
+
+      if (myServerResponsibility.canManageBuilds()) {
+        // we're using debug logging because we have a buildFinished event handler which
+        // also removes the locks upon finishing of a build, and there is a chance it did not remove the locks yet,
+        // so the fact that we found a finished build here is not necessarily a problem
+        LOG.debug("Removing the stale locks belonging to an already finished build: " + LogUtil.describe(build));
+        removeTakenLocksForEntry(buildLocksKey(build.getBuildId()));
+      }
+    }
+
+    if (myServerResponsibility.canManageBuilds()) {
+      for (long buildId: unfilteredLocks.keySet()) {
+        LOG.warn("Removing the stale locks belonging to no longer existing build: " + buildId);
+        removeTakenLocksForEntry(buildLocksKey(buildId));
+      }
+    }
+
+    return result;
   }
 
   private void removeTakenLocksForEntry(@NotNull String key) {
@@ -172,7 +196,12 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
 
   @NotNull
   private static String buildLocksKey(@NotNull BuildPromotion promotion) {
-    return BUILD_ID_PREFIX + promotion.getId();
+    return buildLocksKey(promotion.getId());
+  }
+
+  @NotNull
+  private static String buildLocksKey(long buildId) {
+    return BUILD_ID_PREFIX + buildId;
   }
 
   private void saveTakenLocksArtifact(@NotNull final BuildPromotion buildPromotion, @NotNull final Map<Lock, String> takenLocks) {

@@ -41,7 +41,11 @@ public class CDSBasedTakenLocksStorageTest extends BaseServerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLocksStorage = new CDSBasedTakenLocksStorage(myFixture.getProjectManager(), myFixture.getBuildPromotionManager(), myFixture.getServerResponsibility(), myFixture.getEventDispatcher());
+    myLocksStorage = new CDSBasedTakenLocksStorage(myFixture.getProjectManager(),
+                                                   myFixture.getBuildPromotionManager(),
+                                                   myFixture.getBuildsManager(),
+                                                   myFixture.getServerResponsibility(),
+                                                   myFixture.getEventDispatcher());
   }
 
   @Test
