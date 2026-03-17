@@ -92,8 +92,9 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
       try {
         Long buildId = Long.parseLong(lockEntry.getKey().substring(BUILD_ID_PREFIX.length()));
         BuildPromotion bp = myBuildPromotionManager.findPromotionById(buildId);
-        if (bp == null && myServerResponsibility.canManageBuilds()) {
+        if (myServerResponsibility.canManageBuilds() && (bp == null || !(bp.getAssociatedBuild() instanceof SRunningBuild))) {
           removeTakenLocksForEntry(lockEntry.getKey());
+          continue;
         }
         res.put(bp, deserializeTakenLocks(lockEntry.getValue()));
       } catch (NumberFormatException e) {
