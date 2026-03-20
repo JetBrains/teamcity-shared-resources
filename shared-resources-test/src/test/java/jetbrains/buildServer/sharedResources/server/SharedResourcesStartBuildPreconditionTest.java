@@ -13,11 +13,7 @@ import jetbrains.buildServer.serverSide.BuildPromotionEx;
 import jetbrains.buildServer.serverSide.BuildTypeEx;
 import jetbrains.buildServer.serverSide.QueuedBuildEx;
 import jetbrains.buildServer.serverSide.RunningBuildEx;
-import jetbrains.buildServer.serverSide.SBuildAgent;
 import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.buildDistribution.AgentsFilterContext;
-import jetbrains.buildServer.serverSide.buildDistribution.BuildDistributorInput;
-import jetbrains.buildServer.serverSide.buildDistribution.DefaultAgentsFilterContext;
 import jetbrains.buildServer.serverSide.buildDistribution.QueuedBuildInfo;
 import jetbrains.buildServer.serverSide.buildDistribution.WaitReason;
 import jetbrains.buildServer.serverSide.impl.ProjectEx;
@@ -37,7 +33,6 @@ import jetbrains.buildServer.sharedResources.server.runtime.DistributionDataAcce
 import jetbrains.buildServer.sharedResources.server.runtime.LocksStorage;
 import jetbrains.buildServer.sharedResources.server.runtime.TakenLocks;
 import jetbrains.buildServer.util.TestFor;
-import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -487,39 +482,5 @@ public class SharedResourcesStartBuildPreconditionTest extends BaseTestCase {
       will(returnValue(myQueuedBuildEx));
 
     }});
-  }
-
-  private AgentsFilterContext createContext() {
-    return new DefaultAgentsFilterContext(myCustomData) {
-
-      @NotNull
-      @Override
-      public QueuedBuildInfo getStartingBuild() {
-        return myQueuedBuild;
-      }
-
-      @NotNull
-      @Override
-      public Collection<SBuildAgent> getAgentsForStartingBuild() {
-        return Collections.emptyList();
-      }
-
-      @NotNull
-      @Override
-      public Map<QueuedBuildInfo, SBuildAgent> getDistributedBuilds() {
-        return Collections.emptyMap();
-      }
-
-      @NotNull
-      @Override
-      public BuildDistributorInput getDistributorInput() {
-        return myBuildDistributorInput;
-      }
-
-      @Override
-      public boolean isEmulationMode() {
-        return false;
-      }
-    };
   }
 }
