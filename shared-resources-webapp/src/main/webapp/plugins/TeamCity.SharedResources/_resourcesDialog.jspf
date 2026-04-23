@@ -10,7 +10,7 @@
     <tr>
       <th style="white-space: nowrap">
         <label for="resource_name">
-          Resource name: <l:star/><bs:help file="Shared+Resources" anchor="name"/>
+          Resource name: <l:star/><bs:help file="Shared+Resources"/>
         </label>
       </th>
       <td>
