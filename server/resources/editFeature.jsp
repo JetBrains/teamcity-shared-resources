@@ -144,9 +144,11 @@ BS.SharedResourcesFeatureDialog = {
     var size = _.size(invalidLocks);
     if (size > 0) {
       var arr = [];
+      const fixer = document.createElement('span');
       for (var key in invalidLocks) {
         if (invalidLocks.hasOwnProperty(key)) {
-          arr.push('<strong>' + key + '</strong>');
+          fixer.innerText = key;
+          arr.push('<strong>' + fixer.innerHTML + '</strong>');
         }
       }
       var text = "Build feature contains invalid lock" + (size > 1 ? "s" : "") + ": " + arr.join(', ') + ". ";
