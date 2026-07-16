@@ -28,6 +28,7 @@
   </c:set>
 
   <c:set var="resourceName" value="${resource.name}"/>
+  <c:set var="resourceName4Js"><bs:escapeForJs text="${resourceName}" forHTMLAttribute="true"/></c:set>
   <c:set var="used" value="${not empty usedResources[resourceName]}"/>
 
   <tr>
@@ -105,11 +106,12 @@
                     </l:li>
                     <l:li>
                       <c:choose>
-                        <c:when test="${used && not overrides.containsKey(resource.name)}">
-                          <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resource.name}')"/>
+                        <c:when test="${used && not overrides.containsKey(resource.id)}">
+                          <c:set var="onclick" value="BS.SharedResourcesActions.alertCantDelete('${resourceName4Js}')"/>
                         </c:when>
-                        <c:when test="${used && overrides.containsKey(resource.name)}">
-                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResourceOverride('${resource.id}', '${resource.name}', '${overrides[resource.name]}')"/>
+                        <c:when test="${used && overrides.containsKey(resource.id)}">
+                          <c:set var="overrideNameSafe"><bs:escapeForJs forHTMLAttribute="true" text="${overrides[resource.id].name}"/></c:set>
+                          <c:set var="onclick" value="BS.SharedResourcesActions.deleteResourceOverride('${resource.id}', '${resourceName4Js}', '${overrideNameSafe}')"/>
                         </c:when>
                         <c:otherwise>
                           <c:set var="onclick" value="BS.SharedResourcesActions.deleteResource('${resource.id}')"/>
