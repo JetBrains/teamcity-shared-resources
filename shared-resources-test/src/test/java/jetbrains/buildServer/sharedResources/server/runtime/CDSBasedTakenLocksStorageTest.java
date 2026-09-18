@@ -2,30 +2,18 @@
 
 package jetbrains.buildServer.sharedResources.server.runtime;
 
-import com.google.common.cache.Cache;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.BuildServerListener;
+import jetbrains.buildServer.serverSide.SQueuedBuild;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.impl.BaseServerTestCase;
-import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
 import jetbrains.buildServer.sharedResources.model.Lock;
 import jetbrains.buildServer.sharedResources.model.LockType;
 import jetbrains.buildServer.util.EventDispatcher;
-import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.TestFor;
-import org.jetbrains.annotations.NotNull;
-import org.jmock.Expectations;
-import org.jmock.Mockery;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -159,6 +147,43 @@ public class CDSBasedTakenLocksStorageTest extends BaseServerTestCase {
     then(result.get(lock1.getName()).getValue()).isEmpty();
     then(result.get(lock2.getName()).getValue()).isEmpty();
     then(result.get(lock11.getName()).getValue()).isEqualTo(value);
+  }
+
+  @Test
+  public void testGetAllTakenLocks_RunningBuild() {
+    SRunningBuild build = myFixture.startBuild();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    myLocksStorage.store(build.getBuildPromotion(), Collections.singletonMap(lock, "_value_1_"));
+
+    final Map<BuildPromotion, Map<String, Lock>> allTakenLocks = myLocksStorage.getAllTakenLocks();
+    then(allTakenLocks).containsOnlyKeys(build.getBuildPromotion());
+    then(allTakenLocks.get(build.getBuildPromotion())).containsOnlyKeys(lock.getName());
+    then(allTakenLocks.get(build.getBuildPromotion()).get(lock.getName()).getValue()).isEqualTo("_value_1_");
+  }
+
+  @Test
+  public void testGetAllTakenLocks_BuildNotStartedYet() {
+    final SQueuedBuild queuedBuild = myBuildType.addToQueue("");
+    then(queuedBuild).isNotNull();
+    final BuildPromotion promotion = queuedBuild.getBuildPromotion();
+    final Lock lock = new Lock("lock1", LockType.READ);
+    myLocksStorage.store(promotion, Collections.singletonMap(lock, ""));
+
+    then(myLocksStorage.getAllTakenLocks()).containsOnlyKeys(promotion);
+    then(myLocksStorage.locksStored(promotion)).isTrue();
+  }
+
+  @Test
+  public void testGetAllTakenLocks_BuildRemovedFromQueue() {
+    final SQueuedBuild queuedBuild = myBuildType.addToQueue("");
+    then(queuedBuild).isNotNull();
+    final BuildPromotion promotion = queuedBuild.getBuildPromotion();
+    myLocksStorage.store(promotion, Collections.singletonMap(new Lock("lock1", LockType.READ), ""));
+
+    myFixture.getBuildQueue().removeItems(Collections.singleton(queuedBuild.getItemId()), null, null);
+
+    then(myLocksStorage.getAllTakenLocks()).isEmpty();
+    then(myLocksStorage.locksStored(promotion)).isFalse();
   }
 
   @Test
