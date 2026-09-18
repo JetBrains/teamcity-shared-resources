@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 
 import static jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants.getReservedResourceAttributeKey;
 import static jetbrains.buildServer.sharedResources.tests.SharedResourcesIntegrationTestsSupport.*;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.testng.Assert.assertNotEquals;
 
 /**
@@ -207,7 +208,9 @@ public class BaseIntegrationTest extends SharedResourcesIntegrationTest {
         finishBuild(specificRunningBuild, false);
         assertContains(readArtifact(Objects.requireNonNull(qbAny.getBuildPromotion().getAssociatedBuild())), "resource_top\treadLock\tval1");
       } else {
-        assertEquals(2, myFixture.getSingletonService(RunningBuildsManager.class).getRunningBuilds().size());
+        waitForAssert(() -> then(myFixture.getSingletonService(RunningBuildsManager.class).getRunningBuilds())
+          .as("both builds should be running: they have taken different values of the custom resource")
+          .hasSize(2));
         assert (qbSpecific.getBuildPromotion().getAssociatedBuild() instanceof RunningBuildEx);
         specificRunningBuild = (RunningBuildEx)qbSpecific.getBuildPromotion().getAssociatedBuild();
         finishBuild(runningBuild, false);
