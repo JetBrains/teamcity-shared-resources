@@ -5,8 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.impl.LogUtil;
 import jetbrains.buildServer.sharedResources.SharedResourcesPluginConstants;
@@ -94,21 +96,22 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
       }
 
       try {
-        Long buildId = Long.parseLong(lockEntry.getKey().substring(BUILD_ID_PREFIX.length()));
-        unfilteredLocks.put(buildId, deserializeTakenLocks(lockEntry.getValue()));
+        Long promotionId = Long.parseLong(lockEntry.getKey().substring(BUILD_ID_PREFIX.length()));
+        unfilteredLocks.put(promotionId, deserializeTakenLocks(lockEntry.getValue()));
       } catch (NumberFormatException e) {
         // broken entry
-        LOG.warnAndDebugDetails("Could not parse build id from " + lockEntry.getKey() + ", the entry will be removed", e);
+        LOG.warnAndDebugDetails("Could not parse build promotion id from " + lockEntry.getKey() + ", the entry will be removed", e);
         removeTakenLocksForEntry(lockEntry.getKey());
       }
     }
 
     Map<BuildPromotion, Map<String, Lock>> result = new HashMap<>();
-    // we need to go through the locks to ensure that they are taken by the existing builds
-    for (SBuild build: myBuildsManager.findBuildInstances(unfilteredLocks.keySet())) {
-      unfilteredLocks.remove(build.getBuildId());
-      if (build instanceof SRunningBuild) {
-        result.put(build.getBuildPromotion(), unfilteredLocks.get(build.getBuildId()));
+    for (BuildPromotion promotion : myBuildPromotionManager.findPromotionsByIds(unfilteredLocks.keySet())) {
+      Map<String, Lock> locks = unfilteredLocks.remove(promotion.getId());
+      if (locks == null) continue;
+
+      if (holdsLocks(promotion)) {
+        result.put(promotion, locks);
         continue;
       }
 
@@ -116,19 +119,28 @@ public class CDSBasedTakenLocksStorage implements LocksStorage {
         // we're using debug logging because we have a buildFinished event handler which
         // also removes the locks upon finishing of a build, and there is a chance it did not remove the locks yet,
         // so the fact that we found a finished build here is not necessarily a problem
-        LOG.debug("Removing the stale locks belonging to an already finished build: " + LogUtil.describe(build));
-        removeTakenLocksForEntry(buildLocksKey(build.getBuildId()));
+        LOG.debug("Removing the stale locks belonging to an already finished build: " + LogUtil.describe(promotion));
+        removeTakenLocksForEntry(buildLocksKey(promotion));
       }
     }
 
     if (myServerResponsibility.canManageBuilds()) {
-      for (long buildId: unfilteredLocks.keySet()) {
-        LOG.warn("Removing the stale locks belonging to no longer existing build: " + buildId);
-        removeTakenLocksForEntry(buildLocksKey(buildId));
+      for (long promotionId : unfilteredLocks.keySet()) {
+        LOG.warn("Removing the stale locks belonging to no longer existing build promotion: " + promotionId);
+        removeTakenLocksForEntry(buildLocksKey(promotionId));
       }
     }
 
     return result;
+  }
+
+  private boolean holdsLocks(@NotNull BuildPromotion promotion) {
+    Long buildId = promotion.getAssociatedBuildId();
+    if (buildId == null) {
+      return promotion.getQueuedBuild() != null;
+    }
+
+    return myBuildsManager.findRunningBuildById(buildId) != null || !((BuildPromotionEx)promotion).isAssociatedBuildFinished();
   }
 
   private void removeTakenLocksForEntry(@NotNull String key) {
